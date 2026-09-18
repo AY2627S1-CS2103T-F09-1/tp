@@ -26,3 +26,5 @@ docs/_site/
 
 # Temp files
 _temp/
+
+bin/
