@@ -21,11 +21,8 @@ src/test/data/sandbox/
 .DS_Store
 docs/_site/
 
-# AI Agents
-AGENTS.md
-CLAUDE.md
-/.claude/
-/.codex/
+# Beryl's temporary session state must never be committed.
+.beryl/agent/session-state.md
 
 # Temp files
 _temp/
