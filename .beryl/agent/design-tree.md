@@ -24,6 +24,7 @@ slices.
 | Product direction | TutorTrack serves a private one-to-one tutor with a small active roster. | 2026-09-18 | n/a |
 | Delivery approach | Preserve current AddressBook behaviour until ratified TutorTrack slices replace it deliberately. | 2026-09-18 | n/a |
 | First-release scope | Roster, student profile, chronological session history, and adding a short session note. | 2026-09-18 | n/a |
+| AddressBook remark compatibility | JSON records without a `remark` field load with an empty remark. | 2026-09-18 | n/a |
 
 ## Pressure Points
 
