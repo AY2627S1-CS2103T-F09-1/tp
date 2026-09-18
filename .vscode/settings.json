@@ -1,0 +1,11 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.import.gradle.java.home": "/Users/rogerzhang/.sdkman/candidates/java/current",
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-25",
+            "path": "/Users/rogerzhang/.sdkman/candidates/java/current",
+            "default": true
+        }
+    ]
+}
