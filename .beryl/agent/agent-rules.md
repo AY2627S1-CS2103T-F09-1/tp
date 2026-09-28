@@ -70,7 +70,6 @@ or GitHub Actions unless an explicit, ratified implementation task requires it.
 9. State commit boundaries before implementation.
 10. If multiple implementation paths exist, present options and wait for user approval unless the user explicitly allowed the agent to choose.
 11. Use `.beryl/agent/session-state.md` only for temporary, session-specific implementation state.
-12. Do not create sub-module agent structures unless the project has 3+ independently complex bounded contexts declared in root `.beryl/agent/architecture.md` (in which case, read through `.beryl/agent/guides/sub-module-agents.md` for more details). For smaller projects, the root `.beryl/agent/` is sufficient and sub-modules waste context.
 
 ## While Coding
 
