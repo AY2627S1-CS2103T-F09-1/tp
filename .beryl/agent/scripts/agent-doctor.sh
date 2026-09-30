@@ -408,7 +408,6 @@ check_agent_core() {
     "${BERYL_ROOT}/agent/task-routing.md"
     "${BERYL_ROOT}/agent/tool-instruction-template.md"
     "${BERYL_ROOT}/agent/mcp.json"
-    "${BERYL_ROOT}/agent/module-routing.md"
     "${BERYL_ROOT}/agent/templates/install/project-brief.md"
     "${BERYL_ROOT}/agent/templates/install/design-tree.md"
     "${BERYL_ROOT}/agent/templates/install/architecture.md"
