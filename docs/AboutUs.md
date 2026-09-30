@@ -19,12 +19,11 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Project Advisor
 
-### Jane Doe
+### Gerald Fong Shao En
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/geraldfse.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/geraldFSE)]
 
 * Role: Team Lead
 * Responsibilities: UI
