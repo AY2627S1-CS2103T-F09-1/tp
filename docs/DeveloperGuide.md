@@ -274,16 +274,36 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …​                                    | I want to …​                     | So that I can…​                                                        |
-| -------- | ------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------- |
-| `* * *`  | new user                                   | see usage instructions         | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person               |                                                                        |
-| `* * *`  | user                                       | delete a person                | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name          | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details   | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name           | locate a person easily                                                 |
-
-*{More to be added}*
+| Priority | As a …​                                              | I want to …​                                                              | So that I can…​                                                                   |
+| -------- | ---------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `* * *`  | new tutor user                                       | add a student to my roster                                               | begin keeping their tutoring context in one place                                |
+| `* * *`  | tutor                                                | record a student's parent or guardian contact details                    | find the correct contact when I need it                                          |
+| `* * *`  | tutor                                                | record the subject I teach a student                                     | identify the context of their tuition                                            |
+| `* * *`  | tutor                                                | record a student's current level                                         | prepare appropriately for them                                                   |
+| `* * *`  | tutor                                                | be stopped from adding the same student twice                            | avoid splitting one student's session notes across two records                   |
+| `* * *`  | tutor teaching siblings                              | add each sibling as a separate student with the same parent phone        | keep their learning histories separate while retaining the shared parent contact |
+| `* * *`  | tutor with several students                          | see all my students in one list                                          | keep track of everyone I am actively teaching                                    |
+| `* * *`  | tutor preparing for a lesson                         | view a student's subject, level, and parent contact together             | orient myself before the session                                                 |
+| `* * *`  | tutor preparing for a lesson                         | review a student's session notes with the most recent note first         | continue from where the student previously left off                              |
+| `* * *`  | tutor                                                | see the date and time each session note was written                      | understand how the student's learning has developed over time                    |
+| `* * *`  | tutor who has just completed a lesson                | add a short session note to a student's record                           | preserve details while they are still fresh                                      |
+| `* * *`  | tutor                                                | note a student's progress or difficulties in a session note              | remember what to reinforce in a future lesson                                    |
+| `* * *`  | tutor                                                | note what to revisit next with a student in a session note               | start my next lesson with that student from a clear point                        |
+| `* * *`  | tutor                                                | delete a student's record                                                | remove information I no longer need or should not retain                         |
+| `* * *`  | tutor                                                | have my records kept after I close the app                               | continue using them in my next session                                           |
+| `* *`    | tutor                                                | update a student's parent contact details without losing their notes     | keep my records reliable when a parent changes their number or email             |
+| `* *`    | tutor                                                | update a student's level without losing their notes                      | keep the record in line with their current stage of learning                     |
+| `* *`    | tutor                                                | update the subject I teach a student without losing their notes          | keep their record relevant when their tuition changes                            |
+| `* *`    | tutor preparing for a lesson                         | find a student by name                                                   | retrieve their context without scanning the whole roster                         |
+| `* *`    | tutor with students in different subjects or levels  | narrow my roster to students of a particular subject or level            | focus on the students I am working with                                          |
+| `* *`    | tutor                                                | undo my most recent change                                               | recover a student I deleted by mistake, together with their notes                |
+| `* *`    | new tutor user                                       | see usage instructions                                                   | refer to instructions when I forget how to use the app                           |
+| `*`      | potential tutor user exploring TutorTrack            | see representative student records and session notes                     | understand how the app supports tutoring work                                    |
+| `*`      | tutor ready to use TutorTrack for real               | remove all exploratory data at once                                      | start my roster with only my own students                                        |
+| `*`      | long-term tutor user                                 | archive a student who is no longer receiving tuition                     | keep my current roster uncluttered                                               |
+| `*`      | tutor                                                | view an archived student's record                                        | refer to their past context if I need it                                         |
+| `*`      | tutor whose former student resumes lessons           | restore an archived student to my active roster                          | continue teaching with their previous context available                          |
+| `*`      | tutor teaching siblings                              | link siblings to one shared parent record                                | update their parent's contact details once for all of them                       |
 
 ### Use cases
 
