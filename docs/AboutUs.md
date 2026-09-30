@@ -38,12 +38,12 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Product Manager
 * Responsibilities: Data and User Research
 
-### Jean Doe
+### Praneeth Suresh
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/praneeth-suresh.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/Praneeth-Suresh)]
+[[homepage](https://notes.praneeth-suresh-s.workers.dev/)]
 
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
