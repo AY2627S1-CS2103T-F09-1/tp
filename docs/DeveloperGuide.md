@@ -274,45 +274,245 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …​                                    | I want to …​                     | So that I can…​                                                        |
-| -------- | ------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------- |
-| `* * *`  | new user                                   | see usage instructions         | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person               |                                                                        |
-| `* * *`  | user                                       | delete a person                | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name          | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details   | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name           | locate a person easily                                                 |
-
-*{More to be added}*
+| Priority | As a …​                                             | I want to …​                                                                     | So that I can…​                                                                            |
+| -------- | --------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `* * *`  | tutor new to TutorTrack                             | add a student to my roster                                                       | begin keeping their tutoring context in one place                                          |
+| `* * *`  | tutor                                               | record a student's parent contact                                                | find the correct contact when I need it                                                    |
+| `* * *`  | tutor                                               | record the subject I teach a student                                             | identify the context of their tuition                                                      |
+| `* * *`  | tutor                                               | record a student's current level                                                 | prepare appropriately for them                                                             |
+| `* * *`  | tutor who types fast                                | add a student with all their details in a single command                         | record a new student quickly between lessons                                               |
+| `* * *`  | tutor                                               | be stopped from adding the same student twice                                    | avoid splitting one student's session notes across two entries in my roster                |
+| `* * *`  | tutor teaching siblings                             | add each sibling as a separate student with the same parent phone                | keep their learning histories separate while retaining their shared parent contact         |
+| `* * *`  | tutor                                               | see all the students in my roster                                                | keep track of all the students I am managing                                               |
+| `* * *`  | tutor                                               | see how many session notes each student in my roster has                         | tell apart students who share the same name                                                |
+| `* * *`  | tutor preparing for a lesson                        | view a student's subject, level, and parent contact together                     | orient myself before the lesson                                                            |
+| `* * *`  | tutor preparing for a lesson                        | review a student's recent session notes                                          | continue from where the student previously left off                                        |
+| `* * *`  | tutor                                               | see the date and time each session note was written                              | know when each lesson took place                                                           |
+| `* * *`  | tutor who has just completed a lesson               | add a short session note about a student's progress, difficulties, or next steps | preserve what happened while it is still fresh                                             |
+| `* * *`  | tutor                                               | delete a student from my roster                                                  | remove information I no longer need, or re-enter a student whose details I entered wrongly |
+| `* * *`  | tutor                                               | be told how many session notes were removed when I delete a student              | notice immediately if I deleted the wrong student                                          |
+| `* * *`  | tutor                                               | be told exactly what is wrong when a command fails                               | fix the mistake without guessing or retyping the whole command                             |
+| `* * *`  | tutor                                               | have my roster and session notes saved automatically after every change          | continue where I left off the next time I open TutorTrack                                  |
+| `* * *`  | tutor new to TutorTrack                             | see usage instructions                                                           | refer to instructions when I forget how to use TutorTrack                                  |
+| `* *`    | tutor trying TutorTrack for the first time          | see sample students and session notes                                            | understand how TutorTrack supports my tutoring work                                        |
+| `* *`    | tutor ready to use TutorTrack for real              | remove all sample data at once                                                   | start my roster with only my own students                                                  |
+| `* *`    | tutor                                               | update a student's parent contact without losing the student's session notes     | keep the parent contact reliable when a parent changes their phone number or email         |
+| `* *`    | tutor                                               | remove a parent email that is no longer valid                                    | avoid contacting an address that no longer works                                           |
+| `* *`    | tutor                                               | correct a misspelled student name without losing the student's session notes     | keep my roster accurate                                                                    |
+| `* *`    | tutor                                               | update a student's level without losing the student's session notes              | keep the student's details in line with their current stage of learning                    |
+| `* *`    | tutor                                               | update the subject I teach a student without losing the student's session notes  | keep the student's details relevant when their tuition changes                             |
+| `* *`    | tutor preparing for a lesson                        | find a student by name                                                           | retrieve their context without scanning my whole roster                                    |
+| `* *`    | tutor with students in different subjects or levels | narrow my roster to students of a particular subject or level                    | focus on the students I am working with                                                    |
+| `* *`    | tutor                                               | return to my full roster after a search                                          | select any student by their roster number again                                            |
+| `* *`    | tutor                                               | undo my most recent change                                                       | recover from a mistaken change, such as deleting the wrong student                         |
+| `* *`    | tutor new to TutorTrack                             | see the exact format of a specific command                                       | enter it correctly without trial and error                                                 |
+| `* *`    | tutor                                               | enter a parent phone with spaces or hyphens                                      | copy numbers from messages without reformatting them                                       |
+| `* *`    | tutor                                               | see my roster sorted by student name                                             | locate a student quickly                                                                   |
+| `* *`    | tutor                                               | back up my roster and session notes by copying a single data file                | avoid losing my students' history if my computer fails                                     |
+| `*`      | tutor who has used TutorTrack for a long time       | archive a student who is no longer receiving tuition                             | keep my current roster uncluttered                                                         |
+| `*`      | tutor                                               | view an archived student's details and session notes                             | refer to their past context if I need it                                                   |
+| `*`      | tutor whose former student resumes lessons          | restore an archived student to my roster                                         | continue teaching with their previous context available                                    |
+| `*`      | tutor teaching siblings                             | link siblings to one shared parent contact                                       | update the parent contact once for all of them                                             |
+| `*`      | tutor                                               | correct a mistake in a saved session note                                        | keep each student's history accurate                                                       |
+| `*`      | tutor                                               | delete several students in one command                                           | remove students who have stopped lessons quickly                                           |
+| `*`      | tutor                                               | confirm before a student is deleted                                              | avoid deleting the wrong student by accident                                               |
+| `*`      | tutor who works on more than one computer           | access my roster from any of my computers                                        | prepare for lessons wherever I am                                                          |
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+The following use cases describe the TutorTrack MVP at the same level of
+detail. Each use case focuses on the externally visible interaction between
+the tutor and the system.
 
-**Use case: Delete a person**
+**System:** `TutorTrack`
+
+**Actor:** `Tutor`
+
+**Use case: Add a student**
+
+**Preconditions:** The system is running and ready to accept requests.
+
+**Guarantees:** A valid student record is saved locally and appears in the
+student roster.
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. Tutor requests to add a student.
+2. Tutor provides the student's name, parent or guardian phone number, subject,
+   and current level, and optionally an email address.
+3. Tutor submits the student details.
+4. TutorTrack validates the details and creates the student record.
+5. TutorTrack saves the record and displays the updated roster in
+   case-insensitive alphabetical order.
 
-    Use case ends.
+   Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 2a. One or more required details are missing or invalid.
 
-  Use case ends.
+  * 2a1. TutorTrack reports the relevant validation error and makes no changes.
+  * 2a2. Tutor corrects the details.
 
-* 3a. The given index is invalid.
+    Use case resumes at step 2.
 
-    * 3a1. AddressBook shows an error message.
+* 4a. A student with the same name and parent or guardian phone number already
+  exists.
 
-      Use case resumes at step 2.
+  * 4a1. TutorTrack reports the duplicate and makes no changes.
 
-*{More to be added}*
+    Use case ends.
+
+* 5a. TutorTrack cannot save the updated data.
+
+  * 5a1. TutorTrack reports the storage error and does not create the record.
+
+    Use case ends.
+
+**Use case: List the student roster**
+
+**Preconditions:** The system is running and the student roster is available.
+
+**Guarantees:** The complete roster is displayed with stable indices that can
+be used to select a student in a subsequent use case. No data is changed.
+
+**MSS**
+
+1. Tutor requests to list the student roster.
+2. TutorTrack displays every student sorted by normalised name, together with
+   an index, subject, current level, and session-note count.
+3. TutorTrack reports the number of students shown and establishes the
+   displayed indices as the current selection context.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The roster is empty.
+
+  * 2a1. TutorTrack reports that there are no students and shows how to add
+    one.
+
+    Use case ends.
+
+* 1a. The request contains an index, parameter, or other extra input.
+
+  * 1a1. TutorTrack reports the correct usage and leaves the displayed roster
+    and selection context unchanged.
+
+    Use case ends.
+
+**Use case: View a student profile**
+
+**Preconditions:** The system is running and the current roster index context
+is available.
+
+**Guarantees:** The selected student's profile is displayed without changing
+the roster or stored data.
+
+**MSS**
+
+1. Tutor selects a student by the student's roster index.
+2. TutorTrack displays the student's name, parent or guardian contact details,
+   subject, and current level.
+3. TutorTrack displays all session notes for the student in newest-first order,
+   including each note's saved date and time.
+4. TutorTrack confirms that the student's profile is being shown.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is missing, invalid, or outside the roster.
+
+  * 1a1. TutorTrack reports the index error and leaves any currently displayed
+    profile unchanged.
+
+    Use case ends.
+
+* 3a. The student has no session notes.
+
+  * 3a1. TutorTrack reports that no session notes have been recorded.
+
+    Use case ends.
+
+**Use case: Add a session note**
+
+**Preconditions:** The system is running and the current roster index context
+is available.
+
+**Guarantees:** A valid session note is appended to the student's session
+history and saved locally. No other student record is changed.
+
+**MSS**
+
+1. Tutor selects a student by the student's roster index and provides a short
+   session note.
+2. TutorTrack validates the note.
+3. TutorTrack records the note with the current local date and time and saves
+   it in the student's session history.
+4. TutorTrack confirms that the note was added and updates the student's
+   session-note count.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is missing, invalid, or outside the roster.
+
+  * 1a1. TutorTrack reports the index error and makes no changes.
+
+    Use case ends.
+
+* 2a. The note is missing, empty, too long, or contains a line break or control
+  character.
+
+  * 2a1. TutorTrack reports the note validation error and makes no changes.
+
+    Use case ends.
+
+* 3a. TutorTrack cannot save the updated data.
+
+  * 3a1. TutorTrack reports the storage error and does not retain the note.
+
+    Use case ends.
+
+**Use case: Delete a student**
+
+**Preconditions:** The system is running and the current roster index context
+is available.
+
+**Guarantees:** The selected student and all of the student's session notes are
+removed from the roster and local storage.
+
+**MSS**
+
+1. Tutor selects a student by the student's roster index.
+2. TutorTrack identifies the selected student and the number of session notes
+   associated with the student.
+3. TutorTrack removes the student and all associated session notes and saves the
+   updated roster.
+4. TutorTrack confirms the deletion, including the student's name and the
+   number of session notes removed.
+5. TutorTrack displays the updated roster and establishes its displayed indices
+   as the current selection context.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is missing, invalid, or outside the roster.
+
+  * 1a1. TutorTrack reports the index error and makes no changes.
+
+    Use case ends.
+
+* 3a. TutorTrack cannot save the updated data.
+
+  * 3a1. TutorTrack reports the storage error and does not delete the student or
+    the session notes.
+
+    Use case ends.
 
 ### Non-Functional Requirements
 

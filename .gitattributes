@@ -1,1 +1,9 @@
+# Check out text files with LF line endings on every OS, so hashes in
+# tests/.manifest.sha256 match on Windows, macOS, Linux, and CI.
+* text=auto eol=lf
+
+# Windows batch scripts need CRLF line endings to run.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
 *.pdf binary
