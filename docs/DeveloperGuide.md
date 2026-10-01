@@ -320,32 +320,199 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+The following use cases describe the TutorTrack MVP at the same level of
+detail. Each use case focuses on the externally visible interaction between
+the tutor and the system.
 
-**Use case: Delete a person**
+**System:** `TutorTrack`
+
+**Actor:** `Tutor`
+
+**Use case: Add a student**
+
+**Preconditions:** The system is running and ready to accept requests.
+
+**Guarantees:** A valid student record is saved locally and appears in the
+student roster.
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. Tutor requests to add a student.
+2. Tutor provides the student's name, parent or guardian phone number, subject,
+   and current level, and optionally an email address.
+3. Tutor submits the student details.
+4. TutorTrack validates the details and creates the student record.
+5. TutorTrack saves the record and displays the updated roster in
+   case-insensitive alphabetical order.
 
-    Use case ends.
+   Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 2a. One or more required details are missing or invalid.
 
-  Use case ends.
+  * 2a1. TutorTrack reports the relevant validation error and makes no changes.
+  * 2a2. Tutor corrects the details.
 
-* 3a. The given index is invalid.
+    Use case resumes at step 2.
 
-    * 3a1. AddressBook shows an error message.
+* 4a. A student with the same name and parent or guardian phone number already
+  exists.
 
-      Use case resumes at step 2.
+  * 4a1. TutorTrack reports the duplicate and makes no changes.
 
-*{More to be added}*
+    Use case ends.
+
+* 5a. TutorTrack cannot save the updated data.
+
+  * 5a1. TutorTrack reports the storage error and does not create the record.
+
+    Use case ends.
+
+**Use case: List the student roster**
+
+**Preconditions:** The system is running and the student roster is available.
+
+**Guarantees:** The complete roster is displayed with stable indices that can
+be used to select a student in a subsequent use case. No data is changed.
+
+**MSS**
+
+1. Tutor requests to list the student roster.
+2. TutorTrack displays every student sorted by normalised name, together with
+   an index, subject, current level, and session-note count.
+3. TutorTrack reports the number of students shown and establishes the
+   displayed indices as the current selection context.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The roster is empty.
+
+  * 2a1. TutorTrack reports that there are no students and shows how to add
+    one.
+
+    Use case ends.
+
+* 1a. The request contains an index, parameter, or other extra input.
+
+  * 1a1. TutorTrack reports the correct usage and leaves the displayed roster
+    and selection context unchanged.
+
+    Use case ends.
+
+**Use case: View a student profile**
+
+**Preconditions:** The system is running and the current roster index context
+is available.
+
+**Guarantees:** The selected student's profile is displayed without changing
+the roster or stored data.
+
+**MSS**
+
+1. Tutor selects a student by the student's roster index.
+2. TutorTrack displays the student's name, parent or guardian contact details,
+   subject, and current level.
+3. TutorTrack displays all session notes for the student in newest-first order,
+   including each note's saved date and time.
+4. TutorTrack confirms that the student's profile is being shown.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is missing, invalid, or outside the roster.
+
+  * 1a1. TutorTrack reports the index error and leaves any currently displayed
+    profile unchanged.
+
+    Use case ends.
+
+* 3a. The student has no session notes.
+
+  * 3a1. TutorTrack reports that no session notes have been recorded.
+
+    Use case ends.
+
+**Use case: Add a session note**
+
+**Preconditions:** The system is running and the current roster index context
+is available.
+
+**Guarantees:** A valid session note is appended to the student's session
+history and saved locally. No other student record is changed.
+
+**MSS**
+
+1. Tutor selects a student by the student's roster index and provides a short
+   session note.
+2. TutorTrack validates the note.
+3. TutorTrack records the note with the current local date and time and saves
+   it in the student's session history.
+4. TutorTrack confirms that the note was added and updates the student's
+   session-note count.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is missing, invalid, or outside the roster.
+
+  * 1a1. TutorTrack reports the index error and makes no changes.
+
+    Use case ends.
+
+* 2a. The note is missing, empty, too long, or contains a line break or control
+  character.
+
+  * 2a1. TutorTrack reports the note validation error and makes no changes.
+
+    Use case ends.
+
+* 3a. TutorTrack cannot save the updated data.
+
+  * 3a1. TutorTrack reports the storage error and does not retain the note.
+
+    Use case ends.
+
+**Use case: Delete a student**
+
+**Preconditions:** The system is running and the current roster index context
+is available.
+
+**Guarantees:** The selected student and all of the student's session notes are
+removed from the roster and local storage.
+
+**MSS**
+
+1. Tutor selects a student by the student's roster index.
+2. TutorTrack identifies the selected student and the number of session notes
+   associated with the student.
+3. TutorTrack removes the student and all associated session notes and saves the
+   updated roster.
+4. TutorTrack confirms the deletion, including the student's name and the
+   number of session notes removed.
+5. TutorTrack displays the updated roster and establishes its displayed indices
+   as the current selection context.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is missing, invalid, or outside the roster.
+
+  * 1a1. TutorTrack reports the index error and makes no changes.
+
+    Use case ends.
+
+* 3a. TutorTrack cannot save the updated data.
+
+  * 3a1. TutorTrack reports the storage error and does not delete the student or
+    the session notes.
+
+    Use case ends.
 
 ### Non-Functional Requirements
 
