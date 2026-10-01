@@ -41,6 +41,14 @@ These operating defaults apply in every agent session even when the user does no
   `.beryl/agent/coding-policy.md` before changing code, tests, documentation,
   configuration, or Git history, and follow its complete check loop before
   finishing.
+* The shared TutorTrack API contract is required context alongside the coding
+  policy. Read `docs/TutorTrackAPIContract.md` before changing TutorTrack code,
+  tests, documentation, configuration, or Git history. The coding policy
+  governs engineering practice; the API contract governs shared domain APIs,
+  command syntax, validation, persistence, failure behavior, and bounded
+  context ownership. If an intentional design change alters the contract,
+  update the contract and relevant design artifacts in the same change before
+  implementing dependent work.
 * Treat installed readiness as lock-aware: report an explicitly preserved root
   contract or hook as external ownership, never as silent Beryl enforcement.
 * Use `install.sh --bootstrap-agent` only as a standalone action after a locked
