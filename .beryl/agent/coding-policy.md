@@ -1,4 +1,4 @@
-# Style Policy
+# Coding Policy
 
 This policy is the implementation agent's working contract for the CS2103/T
 team project. It translates the tP grading rubric, course constraints, and
