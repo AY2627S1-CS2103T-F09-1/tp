@@ -37,6 +37,7 @@ The following provides a quick overview of the main components and their interac
 **Main components of the architecture**
 
 **`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -101,10 +102,10 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
+2. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
+3. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+4. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -115,10 +116,10 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
+
 **API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
 
 <img src="images/ModelClassDiagram.png" width="450" />
-
 
 The `Model` component,
 
@@ -141,6 +142,7 @@ The `Model` component,
 <img src="images/StorageClassDiagram.png" width="550" />
 
 The `Storage` component,
+
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
@@ -229,11 +231,12 @@ The following activity diagram summarizes what happens when a user executes a ne
 **Aspect: How undo & redo execute:**
 
 * **Alternative 1 (current choice):** Saves the entire address book.
+
   * Pros: Easy to implement.
   * Cons: May have performance issues in terms of memory usage.
-
 * **Alternative 2:** Individual command knows how to undo/redo by
   itself.
+
   * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
 
@@ -269,13 +272,13 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
 
-
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …​                                             | I want to …​                                                                     | So that I can…​                                                                            |
-| -------- | --------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+
+| Priority | As a …                                             | I want to …                                                                     | So that I can…                                                                            |
+| ---------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `* * *`  | tutor new to TutorTrack                             | add a student to my roster                                                       | begin keeping their tutoring context in one place                                          |
 | `* * *`  | tutor                                               | record a student's parent contact                                                | find the correct contact when I need it                                                    |
 | `* * *`  | tutor                                               | record the subject I teach a student                                             | identify the context of their tuition                                                      |
@@ -355,14 +358,12 @@ student roster.
   * 2a2. Tutor corrects the details.
 
     Use case resumes at step 2.
-
 * 4a. A student with the same name and parent or guardian phone number already
   exists.
 
   * 4a1. TutorTrack reports the duplicate and makes no changes.
 
     Use case ends.
-
 * 5a. TutorTrack cannot save the updated data.
 
   * 5a1. TutorTrack reports the storage error and does not create the record.
@@ -394,7 +395,6 @@ be used to select a student in a subsequent use case. No data is changed.
     one.
 
     Use case ends.
-
 * 1a. The request contains an index, parameter, or other extra input.
 
   * 1a1. TutorTrack reports the correct usage and leaves the displayed roster
@@ -429,7 +429,6 @@ the roster or stored data.
     profile unchanged.
 
     Use case ends.
-
 * 3a. The student has no session notes.
 
   * 3a1. TutorTrack reports that no session notes have been recorded.
@@ -463,14 +462,12 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the index error and makes no changes.
 
     Use case ends.
-
 * 2a. The note is missing, empty, too long, or contains a line break or control
   character.
 
   * 2a1. TutorTrack reports the note validation error and makes no changes.
 
     Use case ends.
-
 * 3a. TutorTrack cannot save the updated data.
 
   * 3a1. TutorTrack reports the storage error and does not retain the note.
@@ -506,7 +503,6 @@ removed from the roster and local storage.
   * 1a1. TutorTrack reports the index error and makes no changes.
 
     Use case ends.
-
 * 3a. TutorTrack cannot save the updated data.
 
   * 3a1. TutorTrack reports the storage error and does not delete the student or
@@ -516,18 +512,26 @@ removed from the roster and local storage.
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+1. Should run on Windows, Linux, and macOS with Java `25` installed, without
+   requiring an installer or a separate server.
+2. Should support a tutor with 40 active students and at least 1000 archived
+   or historical student records.
+3. A roster search, filter, or student-profile view should respond within two
+   seconds for a roster of up to 1000 student records.
+4. Saving or loading the local data file should complete within five seconds
+   for a roster of up to 1000 student records on a typical modern computer.
+5. The application should start within ten seconds on a typical modern
+   computer when loading a data file containing up to 1000 student records.
+6. The user interface should be intuitive for users who generally prefer only
+   using a keyboard.
 
 ### Glossary
 
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
+* **Typical modern computer**: A computer that can run Java `25` comfortably
+  and has at least 8 GB of memory.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Appendix: Instructions for manual testing**
 
@@ -543,40 +547,31 @@ testers are expected to do more *exploratory* testing.
 1. Initial launch
 
    1. Download the JAR file and copy it into an empty folder.
-
-   1. Double-click the JAR file.<br>
+   2. Double-click the JAR file.
       Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
-
-1. Saving window preferences
+2. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
-
-   1. Relaunch the app by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
-
-1. _{ more test cases …​ }_
+   2. Relaunch the app by double-clicking the JAR file.
+      Expected: The most recent window size and location are retained.
+3. _{ more test cases … }_
 
 ### Deleting a person
 
 1. Deleting a person while all persons are being shown
 
    1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
-
-   1. Test case: `delete 1`<br>
+   2. Test case: `delete 1`
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
-
-   1. Test case: `delete 0`<br>
+   3. Test case: `delete 0`
       Expected: No person is deleted. The status message shows error details.
-
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
+   4. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)
       Expected: Similar to previous.
-
-1. _{ more test cases …​ }_
+2. _{ more test cases … }_
 
 ### Saving data
 
 1. Dealing with missing/corrupted data files
 
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
-
-1. _{ more test cases …​ }_
+2. _{ more test cases … }_
