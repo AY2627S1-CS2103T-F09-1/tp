@@ -25,6 +25,7 @@ Then read the smallest relevant set of canonical files requested by that workflo
 * `.beryl/agent/ubiquitous-language.md`
 * `.beryl/agent/testing-policy.md`
 * `.beryl/agent/agent-rules.md`
+* `.beryl/agent/coding-policy.md`
 
 Load additional files only when relevant.
 
@@ -36,6 +37,18 @@ These operating defaults apply in every agent session even when the user does no
 * Treat ratified feature implementation as `adding-features` work by default.
 * Use `.beryl/agent/session-state.md` only as internal temporary state when needed, and clear it when the feature, repair, or debugging thread is complete.
 * After edits, run the formatter command if one is configured, then narrow checks, then the broader deterministic gate `./.beryl/scripts/check.sh`.
+* The coding policy is the primary implementation contract. Read
+  `.beryl/agent/coding-policy.md` before changing code, tests, documentation,
+  configuration, or Git history, and follow its complete check loop before
+  finishing.
+* The shared TutorTrack API contract is required context alongside the coding
+  policy. Read `docs/TutorTrackAPIContract.md` before changing TutorTrack code,
+  tests, documentation, configuration, or Git history. The coding policy
+  governs engineering practice; the API contract governs shared domain APIs,
+  command syntax, validation, persistence, failure behavior, and bounded
+  context ownership. If an intentional design change alters the contract,
+  update the contract and relevant design artifacts in the same change before
+  implementing dependent work.
 * Treat installed readiness as lock-aware: report an explicitly preserved root
   contract or hook as external ownership, never as silent Beryl enforcement.
 * Use `install.sh --bootstrap-agent` only as a standalone action after a locked
@@ -43,8 +56,9 @@ These operating defaults apply in every agent session even when the user does no
   transaction.
 * Never weaken tests to make implementation pass.
 * If tests change intentionally, run `./.beryl/scripts/update-test-manifest.sh` and explain why the test and manifest changes were required.
-* Follow `.beryl/agent/style-policy.md` and run its available style checks before finishing a change.
-* When a commit is explicitly authorized, create a complete, reviewable logical commit: stage every change in its boundary, separate unrelated work, verify that the staged changes and boundary agree, and follow the full commit-message rules in `.beryl/agent/style-policy.md`. Do not create partial, placeholder, or message-less commits.
+* Follow `.beryl/agent/coding-policy.md` and run every available style check it
+  names before finishing a change.
+* When a commit is explicitly authorized, create a complete, reviewable logical commit: stage every change in its boundary, separate unrelated work, verify that the staged changes and boundary agree, and follow the full commit-message rules in `.beryl/agent/coding-policy.md`. Do not create partial, placeholder, or message-less commits.
 * Do not use sub-agents unless the user explicitly asks for sub-agents, parallel agents, reviewer agents, or competing agent implementations.
 * For an explicit large or greenfield application request, load the `initial-build` workflow. Discover the repository, ask clarification questions one at a time, and obtain plan ratification before creating `.beryl/agent/hierarchy.md` or editing build code.
 * Treat `.beryl/agent/hierarchy.md` as Git-tracked active-build state. Resume it when present, update it after each dependency-ordered slice, and delete it only after every node and check passes and durable context has been promoted.
@@ -124,6 +138,9 @@ For static-site changes, source inspection is not enough. Verify affected genera
 ## Verification
 
 Run checks required by `.beryl/agent/testing-policy.md` and local project tooling.
+The complete style and coding check sequence is defined by
+`.beryl/agent/coding-policy.md`; do not stop after a formatter or one linter
+when additional named checks are available.
 
 Final response must include:
 

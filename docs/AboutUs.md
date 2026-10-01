@@ -11,7 +11,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ### Roger Zhang
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/rogerzhang888.png" width="200px">
 
 [[homepage](http://rogerzhang888.github.io)]
 [[github](https://github.com/rogerzhang888)]
