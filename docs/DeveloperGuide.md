@@ -358,10 +358,10 @@ student roster.
   * 2a2. Tutor corrects the details.
 
     Use case resumes at step 2.
-* 4a. A student with the same name and parent or guardian phone number already
-  exists.
+* 4a. A student with the same normalized name and normalized parent or guardian
+  phone number already exists.
 
-  * 4a1. TutorTrack reports the duplicate and makes no changes.
+  * 4a1. TutorTrack reports the duplicate and does not add the student.
 
     Use case ends.
 * 5a. TutorTrack cannot save the updated data.
@@ -380,7 +380,7 @@ be used to select a student in a subsequent use case. No data is changed.
 **MSS**
 
 1. Tutor requests to list the student roster.
-2. TutorTrack displays every student sorted by normalised name, together with
+2. TutorTrack displays every student sorted by normalized name, together with
    an index, subject, current level, and session-note count.
 3. TutorTrack reports the number of students shown and establishes the
    displayed indices as the current selection context.
