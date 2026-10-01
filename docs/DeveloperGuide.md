@@ -358,10 +358,10 @@ student roster.
   * 2a2. Tutor corrects the details.
 
     Use case resumes at step 2.
-* 4a. A student with the same name and parent or guardian phone number already
-  exists.
+* 4a. A student with the same normalized name and normalized parent or guardian
+  phone number already exists.
 
-  * 4a1. TutorTrack reports the duplicate and makes no changes.
+  * 4a1. TutorTrack reports the duplicate and does not add the student.
 
     Use case ends.
 * 5a. TutorTrack cannot save the updated data.
@@ -380,7 +380,7 @@ be used to select a student in a subsequent use case. No data is changed.
 **MSS**
 
 1. Tutor requests to list the student roster.
-2. TutorTrack displays every student sorted by normalised name, together with
+2. TutorTrack displays every student sorted by normalized name, together with
    an index, subject, current level, and session-note count.
 3. TutorTrack reports the number of students shown and establishes the
    displayed indices as the current selection context.
@@ -527,9 +527,23 @@ removed from the roster and local storage.
 
 ### Glossary
 
+* **Student**: A learner whose tutoring information is managed in TutorTrack.
+* **Student roster**: The collection of active student records managed by the tutor.
+* **Student profile**: A view containing one student’s details, parent or guardian contact, subject, current level, and session history.
+* **Parent or guardian contact**: The required phone number and optional email address of the adult responsible for a student.
+* **Current level**: The student’s current stage of study in the recorded subject.
+* **Session note**: A timestamped record of the student’s progress, difficulties, or next steps from a lesson.
+* **Session history**: All session notes belonging to one student, displayed newest first.
+* **Roster index**: The positive, one-based number assigned to a student in the currently displayed roster.
+* **Current selection context**: The mapping between the displayed roster indices and their students; it changes when the roster is redrawn.
+* **Duplicate student**: Two student records whose normalized names and normalized parent phone numbers both match.
+* **Normalized name**: A student's name after leading and trailing whitespace is removed and consecutive internal spaces are collapsed to one. Normalized names are compared case-insensitively for sorting and duplicate detection.
+* **Normalized parent phone number**: A parent or guardian phone number after spaces and hyphens are removed.
+* **Active student**: A student currently receiving tuition and included in the normal roster.
+* **Archived student**: A former or inactive student whose details and session history are retained but excluded from the active roster.
 * **Typical modern computer**: A computer that can run Java `25` comfortably
   and has at least 8 GB of memory.
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+
 
 ---
 
