@@ -8,6 +8,7 @@ import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
+import seedu.address.model.student.Student;
 
 /**
  * Wraps all data at the address-book level.
@@ -16,6 +17,7 @@ import seedu.address.model.person.UniquePersonList;
 public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
+    private final List<Student> students = new java.util.ArrayList<>();
 
     public AddressBook() {}
 
@@ -44,6 +46,8 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(newData);
 
         setPersons(newData.getPersonList());
+        students.clear();
+        students.addAll(newData.getStudentList());
     }
 
     //// person-level operations
@@ -83,6 +87,26 @@ public class AddressBook implements ReadOnlyAddressBook {
         persons.remove(key);
     }
 
+    /**
+     * Returns whether a student with the same identity as {@code student} exists.
+     */
+    public boolean hasStudent(Student student) {
+        requireNonNull(student);
+        return students.stream().anyMatch(student::hasSameIdentity);
+    }
+
+    /**
+     * Adds a student to the address book.
+     * The student must not already exist.
+     */
+    public void addStudent(Student student) {
+        requireNonNull(student);
+        if (hasStudent(student)) {
+            throw new IllegalArgumentException("Duplicate student");
+        }
+        students.add(student);
+    }
+
     //// util methods
 
     @Override
@@ -98,6 +122,11 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     @Override
+    public List<Student> getStudentList() {
+        return List.copyOf(students);
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (other == this) {
             return true;
@@ -108,11 +137,11 @@ public class AddressBook implements ReadOnlyAddressBook {
             return false;
         }
 
-        return persons.equals(otherAddressBook.persons);
+        return persons.equals(otherAddressBook.persons) && students.equals(otherAddressBook.students);
     }
 
     @Override
     public int hashCode() {
-        return persons.hashCode();
+        return 31 * persons.hashCode() + students.hashCode();
     }
 }

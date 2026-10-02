@@ -578,6 +578,15 @@ testers are expected to do more *exploratory* testing.
       Expected: The most recent window size and location are retained.
 3. _{ more test cases … }_
 
+### Adding a student
+
+1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
+   Expected: TutorTrack confirms that Alicia Lim was added.
+2. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
+   Expected: TutorTrack rejects it as a duplicate student and preserves the existing record.
+3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
+   Expected: TutorTrack accepts the sibling because the student name differs.
+
 ### Deleting a person
 
 1. Deleting a person while all persons are being shown
