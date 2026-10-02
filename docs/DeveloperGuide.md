@@ -157,6 +157,12 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Student identity
+
+TutorTrack's first student-domain slice introduces immutable `Student`, `StudentName`, `ParentGuardianContact`, `Subject`, and `CurrentLevel` value types. The `StudentIdentity` value object is the single source of truth for duplicate detection. It compares a student's name after trimming, collapsing internal whitespace, and converting it to lower case with the parent or guardian phone number after removing spaces and hyphens. Subject, current level, and parent email do not affect identity, so siblings may share a parent phone number.
+
+The command and storage layers will construct `Student` values and delegate duplicate comparisons to `StudentIdentity`; they must not reproduce this normalization logic. This keeps the same duplicate outcome for typed commands and manually edited persisted data.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
