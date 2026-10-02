@@ -163,7 +163,11 @@ Markdown follows GitHub Flavored Markdown and the repository's Markdownlint conf
 ### Documentation and comments in Java
 
 * Every public class and public method MUST have a descriptive Javadoc header, except getters/setters, test code, and overrides whose inherited contract applies exactly.
-* Javadoc MUST state what the operation guarantees, document meaningful parameters and return values, and document thrown exceptions where useful. The first sentence should start with a verb such as `Returns`, `Adds`, or `Sends`.
+* Javadoc MUST state what the operation guarantees, document meaningful parameters and return values, and document thrown exceptions where useful.
+* A method Javadoc opening `/**` MUST be on its own line. Its first sentence MUST be a short summary suitable for the generated method-summary table and index, and MUST begin with a third-person verb such as `Returns`, `Sends`, or `Adds`; do not use forms such as `Return` or `Returning`.
+* In a multi-line Javadoc block, each subsequent `*` MUST align with the opening `*` and be followed by one space. Leave one empty Javadoc line between the description and any `@param`, `@return`, or `@throws` tags, but leave no blank source line between the closing `*/` and the documented declaration.
+* Parameter and tag descriptions MUST end with punctuation. Document either every parameter with `@param` or none: omit all `@param` tags only when every parameter name is self-explanatory or already explained in the main description. Omit `@return` when a method returns nothing or its return value is obvious from the rest of the comment.
+* An overriding method whose inherited contract applies exactly MAY use `@inheritDoc`; add local Javadoc only to document a behavior difference. A concise member Javadoc MAY be written on one line, for example `/** Number of connections to this database */`.
 * Comments MUST explain what or why, not narrate obvious mechanics. Improve confusing code before adding a comment that explains how it works.
 * Comments MUST be written for future readers, not as private notes about a temporary bug or the author's intentions.
 * Non-trivial private methods and fields SHOULD have a concise explanatory header when their purpose or invariant is not obvious from their names.

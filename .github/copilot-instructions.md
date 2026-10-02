@@ -21,6 +21,7 @@ The coding policy is the primary contract. Follow the selected workflow only whe
 * Do not implement a feature without a user-ratified plan.
 * Do not use sub-agents unless the user explicitly requests them.
 * Never weaken tests to make implementation pass. If tests change intentionally, run `./.beryl/scripts/update-test-manifest.sh`.
+* For method Javadocs, start the first summary sentence with a third-person verb such as `Returns`, `Sends`, or `Adds`; follow the full formatting rules in `.beryl/agent/coding-policy.md`.
 * Use `.beryl/agent/session-state.md` only for temporary state; clear it when the task ends.
 * Run the formatter if configured, focused checks, and `./.beryl/scripts/check.sh` after edits.
 * Update the design tree, architecture, vocabulary, or ADRs when durable knowledge changes.
