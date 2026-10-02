@@ -48,6 +48,18 @@ When a peer, tutor, or acceptance test reports a possible bug or feature flaw:
 * Preserve the reporter's original reproduction steps and evidence. Do not rewrite, delete, or obscure a report to make the product appear healthier.
 * Test platform-specific reports on the affected operating system when possible. A bug limited to one supported platform is still a valid bug.
 
+### Input quality and defect triage
+
+* Distinguish deliberate sabotage from foreseeable mistakes. Extreme input need not be supported when it can arise only through intentional abuse, but an accidental malformed command, omitted separator, numeric overflow, or other plausible mistake MUST NOT crash the application, corrupt data, or leave it unusable.
+* Input limits MAY protect usability and safety only when reasonable for the target user and real-world data. Treat unusually long values as a UI-resilience concern: prevent layout breakage and important information from being hidden or truncated. Classify a merely cosmetic effect as very low severity, but raise severity when it hinders the user.
+* Do not reject symbols or otherwise valid-looking user data merely because they are inconvenient to parse unless the restriction has a documented operational justification. A restriction that prevents users from recording expected real-world data is a feature flaw; prefer a parser or representation that accepts it when practical.
+* Prefer warnings over blocking for non-harmful deviations from an expected format, including multiple contact details in a free-text field or past dates kept for records. Conversely, block or clearly warn about input that could harm operation, data integrity, or user understanding.
+* User-facing validation errors MUST identify the specific failed rule and offer recovery. Distinguish an invalid value from an incorrect format when doing so is practical; an inclusive message such as "invalid date or incorrect format" is acceptable when the distinction adds no useful value.
+* Command formats MUST optimize for accurate, fast typing: avoid needless case sensitivity, long keywords, and hard-to-type delimiters. Where it improves recall and speed without ambiguity, support equivalent short and long forms. Match case sensitivity to the represented real-world entity; names and ordinary search terms SHOULD be case-insensitive.
+* Judge feature usefulness, not only technical correctness. Searches SHOULD favor case-insensitive matching and OR-style multi-keyword retrieval when that helps users recover results despite imperfect recall; a stricter behavior needs a product rationale.
+* Keep terminal output presentable and non-alarming to a user who sees it. Terminal-only issues can be lower severity or out of scope, but misleading or alarming output remains a defect candidate.
+* When classifying a mismatch, use `FunctionalityBug` or `FeatureFlaw` if product behavior must change, and `DocumentationBug` only if the User Guide must change. Do not relabel a product defect as documentation merely to avoid a behavior fix.
+
 ### Documentation
 
 * A change that affects user behavior MUST update `docs/UserGuide.md` in the same feature boundary.
@@ -73,7 +85,7 @@ Unless a later course instruction or ratified team decision explicitly changes o
 * **Typing preferred:** design for users who type quickly and prefer typing to other input methods.
 * **Single user:** do not introduce multi-user accounts, shared-user data, concurrent remote access, or a shared data file used by different users.
 * **Incremental delivery:** implement breadth-first vertical slices with a reasonably consistent delivery rate; do not postpone the whole product to one late burst.
-* **Local editable persistence:** store data locally in a human-editable text file and retain at least the existing AddressBook-level editing support. Serialization details belong behind the persistence boundary.
+* **Local editable persistence:** store data locally in a human-editable text file and retain at least the existing AddressBook-level editing support: correctly edited data must load, while a wrongly edited file may lose data only to the extent documented by the baseline User Guide. Do not reduce this support, promise more in the User Guide without delivering it, or use a format unsuitable for manual editing. Serialization details belong behind the persistence boundary.
 * **No DBMS:** do not use a database management system for product data.
 * **Object orientation:** use object-oriented design as the primary style; mix in other styles only where there is a clear, documented benefit.
 * **Platform independence:** support Windows, Linux, and macOS. Avoid operating-system-specific libraries, paths, shell commands, and behavior.
@@ -197,6 +209,7 @@ Markdown follows GitHub Flavored Markdown and the repository's Markdownlint conf
 * Catch exceptions only where the layer can recover, translate, or present a useful message. Never use an empty `catch`; if an unavoidable no-op exists, explain its reason in a comment and preserve relevant diagnostic context.
 * Never catch `Exception` or a broad superclass merely to suppress failure. Catch the narrowest meaningful type and either recover, wrap with context, or propagate it.
 * User-facing errors MUST state what failed, why the input or operation was rejected when known, and what the user can do next. Error text in the User Guide and tests must match the product.
+* Detect overflow and invalid numeric conversion at input boundaries. Handle a foreseeable malformed or oversized value safely rather than allowing a low-level exception, wraparound, data corruption, or unusable interface.
 * Use assertions for programmer assumptions, class invariants, preconditions, postconditions, and impossible control-flow states. Assertions MUST NOT perform required work because assertions may be disabled.
 * Use logging at meaningful application boundaries and failure paths. Logs should help diagnose startup, command, persistence, and unexpected failures without logging passwords, private student data, parent/guardian contact details, lesson content, or full user input.
 * Enforce compulsory associations and non-null invariants at the domain boundary. Do not rely on every caller remembering a rule.
@@ -213,6 +226,7 @@ For every behavior change, add or identify tests for:
 
 * the normal successful path;
 * each distinct invalid-input or rejected-operation path;
+* foreseeable user mistakes at input boundaries, including missing separators, overflow, unusually long values, and symbols that resemble ordinary real-world data;
 * empty, boundary, duplicate, missing, and repeated-use cases that the feature can encounter;
 * persistence and reload behavior when data is stored;
 * user-visible error text or result state when the contract specifies it;

@@ -30,6 +30,19 @@ Use Java 25 for application and build tasks. Gradle 9.1 is supplied through the 
 6. Repair from actual tool output.
 7. For web UI or HTML/CSS work, include a Playwright MCP browser verification step.
 
+## Input Resilience Coverage
+
+For changed input paths, select the relevant cases below. The objective is safe recovery from plausible mistakes, not support for deliberate sabotage:
+
+* missing separators or accidentally concatenated parameters;
+* values too large for the receiving numeric type and other conversion overflows;
+* long text and large numeric values, including their UI presentation where visible;
+* ordinary symbols in names, notes, and free-text fields;
+* harmless non-standard values that should warn rather than block; and
+* specific, actionable validation messages for each materially different rejected value.
+
+When persistence changes, prove that a correctly manually edited data file remains loadable at least to the AddressBook baseline, and that malformed edits follow the documented recovery behavior without silently corrupting valid in-memory data.
+
 ## Generated Output Verification
 
 For static-site changes, source inspection is not enough. Always verify generated output that users, crawlers, or downstream tooling receive.
