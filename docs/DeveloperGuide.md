@@ -512,18 +512,12 @@ removed from the roster and local storage.
 
 ### Non-Functional Requirements
 
-1. Should run on Windows, Linux, and macOS with Java `25` installed, without
-   requiring an installer or a separate server.
-2. Should support a tutor with 40 active students and at least 1000 archived
-   or historical student records.
-3. A roster search, filter, or student-profile view should respond within two
-   seconds for a roster of up to 1000 student records.
-4. Saving or loading the local data file should complete within five seconds
-   for a roster of up to 1000 student records on a typical modern computer.
-5. The application should start within ten seconds on a typical modern
-   computer when loading a data file containing up to 1000 student records.
-6. The user interface should be intuitive for users who generally prefer only
-   using a keyboard.
+1. Should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or a separate server.
+2. Should support a tutor with 40 active students and at least 1000 archived or historical student records.
+3. A roster search, filter, or student-profile view should respond within two seconds for a roster of up to 1000 student records.
+4. Saving or loading the local data file should complete within five seconds for a roster of up to 1000 student records on a typical modern computer.
+5. The application should start within ten seconds on a typical modern computer when loading a data file containing up to 1000 student records.
+6. The user interface should be intuitive for users who generally prefer only using a keyboard.
 
 ### Glossary
 
