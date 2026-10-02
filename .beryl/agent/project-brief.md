@@ -2,35 +2,21 @@
 
 ## Product Goal
 
-Build **TutorTrack** for private one-to-one tutors managing roughly 10–40 active
-students so they can keep student contacts and lesson context organised, prepare
-quickly for each lesson, and record what matters afterwards.
+Build **TutorTrack** for private one-to-one tutors managing roughly 10–40 active students so they can keep student contacts and lesson context organised, prepare quickly for each lesson, and record what matters afterwards.
 
 ## Value Proposition
 
-TutorTrack helps private tutors keep student contacts organised alongside the
-context they need for each lesson: parent contact, subject, current level, and
-short notes on recent sessions so they can prepare quickly.
+TutorTrack helps private tutors keep student contacts organised alongside the context they need for each lesson: parent contact, subject, current level, and short notes on recent sessions so they can prepare quickly.
 
 ## Primary Workflows
 
-1. **Maintain a student roster**: a tutor can add a selectable student record
-   containing the student's name, parent or guardian contact details, subject,
-   and current level, then browse all current students in one roster view.
-2. **Retrieve lesson context**: a tutor can open a student profile and see the
-   parent or guardian contact details, subject, current level, and chronological
-   session-note history, with the most recent note easy to identify.
-3. **Record a session note**: from a student's profile, a tutor can add a short
-   lesson note that is saved with that student and appears in the session
-   history.
+1. **Maintain a student roster**: a tutor can add a selectable student record containing the student's name, parent or guardian contact details, subject, and current level, then browse all current students in one roster view.
+2. **Retrieve lesson context**: a tutor can open a student profile and see the parent or guardian contact details, subject, current level, and chronological session-note history, with the most recent note easy to identify.
+3. **Record a session note**: from a student's profile, a tutor can add a short lesson note that is saved with that student and appears in the session history.
 
 ## Brownfield Baseline
 
-The repository currently contains the AddressBook Level 3 JavaFX application.
-Its behaviour, build, tests, documentation, and GitHub Actions are preserved
-until a ratified TutorTrack implementation plan deliberately changes them.
-TutorTrack is the target product context for future work; it does not claim
-that the current AddressBook implementation already provides these workflows.
+The repository currently contains the AddressBook Level 3 JavaFX application. Its behaviour, build, tests, documentation, and GitHub Actions are preserved until a ratified TutorTrack implementation plan deliberately changes them. TutorTrack is the target product context for future work; it does not claim that the current AddressBook implementation already provides these workflows.
 
 ## Non-Goals
 

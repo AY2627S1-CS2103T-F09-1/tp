@@ -403,28 +403,16 @@ check_agent_core() {
     "${BERYL_ROOT}/agent/ubiquitous-language.md"
     "${BERYL_ROOT}/agent/architecture.md"
     "${BERYL_ROOT}/agent/testing-policy.md"
-    "${BERYL_ROOT}/agent/security-policy.md"
+    "${BERYL_ROOT}/agent/coding-policy.md"
     "${BERYL_ROOT}/agent/agent-rules.md"
-    "${BERYL_ROOT}/agent/task-routing.md"
     "${BERYL_ROOT}/agent/tool-instruction-template.md"
     "${BERYL_ROOT}/agent/mcp.json"
-    "${BERYL_ROOT}/agent/templates/install/project-brief.md"
-    "${BERYL_ROOT}/agent/templates/install/design-tree.md"
-    "${BERYL_ROOT}/agent/templates/install/architecture.md"
-    "${BERYL_ROOT}/agent/templates/install/ubiquitous-language.md"
-    "${BERYL_ROOT}/agent/templates/install/testing-policy.md"
-    "${BERYL_ROOT}/agent/templates/install/adr/0001-record-architecture-decisions.md"
     "${BERYL_ROOT}/agent/adr/0001-record-architecture-decisions.md"
     "${BERYL_ROOT}/agent/skills/planning/SKILL.md"
     "${BERYL_ROOT}/agent/skills/adding-features/SKILL.md"
-    "${BERYL_ROOT}/agent/skills/initial-build/SKILL.md"
     "${BERYL_ROOT}/agent/skills/debugging/SKILL.md"
     "${BERYL_ROOT}/agent/skills/explaining-codebase/SKILL.md"
     "${BERYL_ROOT}/agent/skills/grill-me/SKILL.md"
-    "${BERYL_ROOT}/agent/skills/interview-me/SKILL.md"
-    "${BERYL_ROOT}/agent/skills/testing-vertical-slices/SKILL.md"
-    "${BERYL_ROOT}/agent/skills/improving-architecture/SKILL.md"
-    "${BERYL_ROOT}/agent/skills/tracking-entropy/SKILL.md"
   )
   local file
   for file in "${required_canonical[@]}"; do
@@ -433,7 +421,6 @@ check_agent_core() {
 
   local required_exec=(
     "${BERYL_ROOT}/agent/scripts/agent-doctor.sh"
-    "${BERYL_ROOT}/agent/scripts/seed-agent-context.sh"
     "${BERYL_ROOT}/agent/scripts/sync-agent-env.sh"
   )
   for file in "${required_exec[@]}"; do
@@ -447,7 +434,7 @@ check_agent_core() {
     fail ".gitignore must not be a symlink"
   fi
   if [[ -f "${REPO_ROOT}/.gitignore" ]]; then
-    grep -qxF ".beryl/agent/session-state.md" "${REPO_ROOT}/.gitignore" || \
+    tr -d '\r' < "${REPO_ROOT}/.gitignore" | grep -qxF ".beryl/agent/session-state.md" || \
       fail ".gitignore must ignore .beryl/agent/session-state.md"
   else
     fail "missing file: .gitignore"
@@ -483,10 +470,6 @@ check_checks_component() {
     "${BERYL_ROOT}/scripts/check-md.sh"
     "${BERYL_ROOT}/scripts/check-affected.sh"
     "${BERYL_ROOT}/scripts/check-tests-unchanged.sh"
-    "${BERYL_ROOT}/scripts/check-project.sh"
-    "${BERYL_ROOT}/scripts/validate-components.sh"
-    "${BERYL_ROOT}/scripts/check-install-surface.sh"
-    "${BERYL_ROOT}/scripts/check-initial-build-workflow.sh"
     "${BERYL_ROOT}/scripts/check-secrets.sh"
     "${BERYL_ROOT}/scripts/update-test-manifest.sh"
     "${BERYL_ROOT}/scripts/paths.sh"

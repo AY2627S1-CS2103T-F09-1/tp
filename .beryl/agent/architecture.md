@@ -2,11 +2,7 @@
 
 ## Brownfield Baseline
 
-The current codebase is AddressBook Level 3: a Java 25 Gradle/JavaFX desktop
-application rooted in `seedu.address`. Its existing model, logic, storage, UI,
-tests, documentation, and GitHub Actions remain authoritative for current
-behaviour. This document records the intended TutorTrack boundaries; it does
-not authorise speculative renaming or replacement before a ratified plan.
+The current codebase is AddressBook Level 3: a Java 25 Gradle/JavaFX desktop application rooted in `seedu.address`. Its existing model, logic, storage, UI, tests, documentation, and GitHub Actions remain authoritative for current behaviour. This document records the intended TutorTrack boundaries; it does not authorise speculative renaming or replacement before a ratified plan.
 
 ## Intended TutorTrack Bounded Contexts
 
@@ -27,6 +23,4 @@ not authorise speculative renaming or replacement before a ratified plan.
 
 ## Public Interface Rule
 
-Keep public interfaces small, explicit, and expressed in TutorTrack vocabulary.
-Avoid exposing JavaFX controls, Jackson DTOs, mutable collections, or file-path
-details outside their owning boundary.
+Keep public interfaces small, explicit, and expressed in TutorTrack vocabulary. Avoid exposing JavaFX controls, Jackson DTOs, mutable collections, or file-path details outside their owning boundary.

@@ -10,13 +10,6 @@ Turn a requested change into a small, reviewable plan before implementation.
 * A feature request has no approved implementation plan yet.
 * The change is non-trivial, cross-context, security-sensitive, or architecturally ambiguous.
 
-## Initial Build Handoff
-
-When the request explicitly describes a large or greenfield application, route to
-`.beryl/agent/skills/initial-build/SKILL.md` instead of using this general planning
-workflow. A request to plan an ordinary feature remains in this workflow. If an
-active `.beryl/agent/hierarchy.md` exists, resume the initial-build workflow.
-
 ## Process
 
 1. Restate the requested outcome.
@@ -27,8 +20,7 @@ active `.beryl/agent/hierarchy.md` exists, resume the initial-build workflow.
 6. Propose commit boundaries for implementation. Each boundary needs one purpose, expected files, and the check command that validates it.
 7. Split implementation into internal feature slices when more than one safe implementation step is involved.
 8. For risky or ambiguous work, run `grill-me` locally and fold the critique into the plan.
-9. Run `interview-me` only if `grill-me` leaves an unresolved user-judgment question that cannot be answered from the repo.
-10. Present the user-facing plan and wait for user ratification before implementation.
+9. Present the user-facing plan and wait for user ratification before implementation.
 
 ## Internal State
 

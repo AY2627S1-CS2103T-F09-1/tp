@@ -10,11 +10,6 @@ Feature implementation requires an approved plan.
 
 * If no approved plan exists, run the planning workflow first and stop after presenting the plan.
 * Do not edit implementation code until the user ratifies the plan.
-* If `.beryl/agent/hierarchy.md` exists, route back to the initial-build workflow
-  and implement only a dependency-ready hierarchy node. Do not create a second
-  feature plan outside the active hierarchy.
-* An explicit large or greenfield build request must use the initial-build
-  workflow before this feature workflow is selected.
 * After ratification, implement only the next internal feature slice.
 * Before coding, state the success checks that will prove the selected slice or redirect worked.
 * Before coding, propose commit boundaries for the selected work.
@@ -42,11 +37,7 @@ Each commit boundary must:
 * Include the check command that validates it.
 * Avoid mixing generated output, docs, tests, and source unless one boundary genuinely requires them together.
 
-When a commit is authorized, implement the complete boundary and create one
-reviewable logical commit for it. Stage all and only the boundary's changes,
-verify them against the stated purpose and checks, and follow the full commit
-message rules in `.beryl/agent/coding-policy.md`. Split an unfocused boundary
-before committing; never create a partial, placeholder, or message-less commit.
+When a commit is authorized, implement the complete boundary and create one reviewable logical commit for it. Stage all and only the boundary's changes, verify them against the stated purpose and checks, and follow the full commit message rules in `.beryl/agent/coding-policy.md`. Split an unfocused boundary before committing; never create a partial, placeholder, or message-less commit.
 
 If the approved plan has no commit boundaries, define them before coding. If a changed file falls outside the boundaries, either stop and ask for approval or flag it clearly in the final response.
 
@@ -64,7 +55,7 @@ If the approved plan has no commit boundaries, define them before coding. If a c
 4. Select exactly one internal feature slice before coding.
 5. State the success checks for the selected slice.
 6. State the commit boundaries for the selected work.
-7. Run `testing-vertical-slices` to choose the smallest useful test/check.
+7. Choose the smallest useful test/check from `.beryl/agent/testing-policy.md`.
 8. Implement the selected slice behind the intended public interface.
 9. Run the formatter command, narrow checks, then the broader project check.
 10. Update `.beryl/agent/session-state.md` only if more work remains or the slice is blocked.
