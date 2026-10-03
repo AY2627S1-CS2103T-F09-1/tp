@@ -14,11 +14,10 @@ Find and fix a failing behavior using evidence from deterministic checks.
 6. Identify the smallest behavior test/check that proves the bug.
 7. State success checks for the fix before coding: reproduced or inspected failure, narrow proof command, expected after-fix behavior, broader check command, and user-visible behavior when applicable.
 8. Run `grill-me` locally if ownership, expected behavior, or boundary impact is ambiguous.
-9. Run `interview-me` only if `grill-me` leaves a user-judgment question that cannot be answered from the repo.
-10. Apply the smallest fix that addresses the root cause.
-11. Run the narrow check first, then broader relevant checks.
-12. Clear resolved debugging entries from `.beryl/agent/session-state.md`.
-13. Update design files only if the bug reveals durable behavior, boundary, or language knowledge.
+9. Apply the smallest fix that addresses the root cause.
+10. Run the narrow check first, then broader relevant checks.
+11. Clear resolved debugging entries from `.beryl/agent/session-state.md`.
+12. Update design files only if the bug reveals durable behavior, boundary, or language knowledge.
 
 ## Session Error History
 

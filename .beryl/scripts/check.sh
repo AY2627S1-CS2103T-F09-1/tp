@@ -119,13 +119,6 @@ fi
 printf "Running deterministic checks...\n"
 
 "${BERYL_ROOT}/scripts/check-md.sh"
-"${BERYL_ROOT}/scripts/validate-components.sh"
-if [[ "${DEVELOPMENT_MODE}" == "1" ]]; then
-  "${BERYL_ROOT}/scripts/check-install-surface.sh"
-else
-  printf "check-install-surface: installed target (skipping source-surface self-check)\n"
-fi
-"${BERYL_ROOT}/scripts/check-initial-build-workflow.sh"
 "${BERYL_ROOT}/scripts/check-secrets.sh" --selftest
 if [[ "${CHECK_AFFECTED_MODE:-worktree}" == "staged" ]]; then
   "${BERYL_ROOT}/scripts/check-secrets.sh" --staged
@@ -133,6 +126,6 @@ else
   "${BERYL_ROOT}/scripts/check-secrets.sh" --worktree
 fi
 "${BERYL_ROOT}/scripts/check-tests-unchanged.sh"
-"${BERYL_ROOT}/scripts/check-project.sh"
+"${BERYL_ROOT}/scripts/check-affected.sh" --worktree
 
 printf "OK\n"

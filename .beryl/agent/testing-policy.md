@@ -18,8 +18,7 @@
 
 ## Java Requirement
 
-Use Java 25 for application and build tasks. Gradle 9.1 is supplied through the
-Gradle Wrapper to run Checkstyle and JUnit 5 tests.
+Use Java 25 for application and build tasks. Gradle 9.1 is supplied through the Gradle Wrapper to run Checkstyle and JUnit 5 tests.
 
 ## Default Loop
 
@@ -30,6 +29,19 @@ Gradle Wrapper to run Checkstyle and JUnit 5 tests.
 5. Run narrow checks first, then broader checks.
 6. Repair from actual tool output.
 7. For web UI or HTML/CSS work, include a Playwright MCP browser verification step.
+
+## Input Resilience Coverage
+
+For changed input paths, select the relevant cases below. The objective is safe recovery from plausible mistakes, not support for deliberate sabotage:
+
+* missing separators or accidentally concatenated parameters;
+* values too large for the receiving numeric type and other conversion overflows;
+* long text and large numeric values, including their UI presentation where visible;
+* ordinary symbols in names, notes, and free-text fields;
+* harmless non-standard values that should warn rather than block; and
+* specific, actionable validation messages for each materially different rejected value.
+
+When persistence changes, prove that a correctly manually edited data file remains loadable at least to the AddressBook baseline, and that malformed edits follow the documented recovery behavior without silently corrupting valid in-memory data.
 
 ## Generated Output Verification
 
@@ -46,15 +58,10 @@ If generated output is unavailable, explain why and run the closest deterministi
 
 ## Affected Test Gate
 
-Commit-time checks are deliberately limited to fast, deterministic validation.
-Full deterministic checks run only when a push targets the `main` branch.
+Commit-time checks are deliberately limited to fast, deterministic validation. Full deterministic checks run only when a push targets the `main` branch.
 
-* The pre-commit hook sets `CHECK_AFFECTED_MODE=staged` and runs
-  `./.beryl/scripts/check.sh --fast`. This runs Markdown sanity, staged-secret,
-  and test-manifest checks without resolving the agent workspace or running
-  project tests.
-* The pre-push hook runs `./.beryl/scripts/check.sh` only when the remote ref
-  is `refs/heads/main`; pushes to other branches skip slow checks.
+* The pre-commit hook sets `CHECK_AFFECTED_MODE=staged` and runs `./.beryl/scripts/check.sh --fast`. This runs Markdown sanity, staged-secret, and test-manifest checks without resolving the agent workspace or running project tests.
+* The pre-push hook runs `./.beryl/scripts/check.sh` only when the remote ref is `refs/heads/main`; pushes to other branches skip slow checks.
 * Manual `./.beryl/scripts/check.sh` uses worktree mode by default and selects from all changes relative to `HEAD`.
 * `.beryl/scripts/check-affected.sh` reads `.beryl/agent/affected-tests.conf`.
 * Changes to broad configuration, dependency, hook, or test-strategy files force `FULL_TEST_CMD` when configured.

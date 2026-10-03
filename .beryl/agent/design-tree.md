@@ -2,12 +2,7 @@
 
 ## Current Design Concept
 
-TutorTrack will evolve the existing JavaFX desktop application into a focused
-local workspace for a private tutor. The core domain is a student roster: each
-student owns stable lesson-preparation context and a chronological history of
-short session notes. The existing AddressBook implementation remains the
-baseline until a feature plan is ratified and implemented in small vertical
-slices.
+TutorTrack will evolve the existing JavaFX desktop application into a focused local workspace for a private tutor. The core domain is a student roster: each student owns stable lesson-preparation context and a chronological history of short session notes. The existing AddressBook implementation remains the baseline until a feature plan is ratified and implemented in small vertical slices.
 
 ## Open Decisions
 
@@ -27,15 +22,10 @@ slices.
 
 ## Pressure Points
 
-* The inherited AddressBook model and documentation use contact-centric names;
-  do not silently mix those terms into new TutorTrack domain code.
-* Parent or guardian contact details and session notes are personal data; avoid
-  logging them or placing realistic private data in tests and fixtures.
-* Existing data compatibility, migration, and UI replacement require explicit
-  design decisions before implementation.
+* The inherited AddressBook model and documentation use contact-centric names; do not silently mix those terms into new TutorTrack domain code.
+* Parent or guardian contact details and session notes are personal data; avoid logging them or placing realistic private data in tests and fixtures.
+* Existing data compatibility, migration, and UI replacement require explicit design decisions before implementation.
 
 ## Recording Rule (Design Tree vs ADR)
 
-Update this file for evolving decisions or short-lived comparisons. Create an
-ADR for durable module boundaries, persistence shape, data migration, security
-model, naming used across contexts, or test strategy.
+Update this file for evolving decisions or short-lived comparisons. Create an ADR for durable module boundaries, persistence shape, data migration, security model, naming used across contexts, or test strategy.

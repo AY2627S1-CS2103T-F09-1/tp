@@ -1,7 +1,6 @@
 # Code Quality Guidelines
 
-Use this checklist when changing production Java code. It is a project-local,
-actionable summary of the CS2103 code-quality guidance.
+Use this checklist when changing production Java code. It is a project-local, actionable summary of the CS2103 code-quality guidance.
 
 ## Readability
 
@@ -29,6 +28,4 @@ actionable summary of the CS2103 code-quality guidance.
 
 ## Review Requirement
 
-Review every changed production file against this checklist. A code-quality
-increment is behaviour-preserving unless it also has an explicit feature or bug
-requirement and protecting tests.
+Review every changed production file against this checklist. A code-quality increment is behaviour-preserving unless it also has an explicit feature or bug requirement and protecting tests.
