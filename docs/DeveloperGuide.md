@@ -163,6 +163,8 @@ TutorTrack's first student-domain slice introduces immutable `Student`, `Student
 
 The command and storage layers will construct `Student` values and delegate duplicate comparisons to `StudentIdentity`; they must not reproduce this normalization logic. This keeps the same duplicate outcome for typed commands and manually edited persisted data.
 
+Student JSON uses `name`, `parentPhone`, optional `parentEmail`, `subject`, and `currentLevel` fields. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableStudentRoster` then checks each loaded Student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
