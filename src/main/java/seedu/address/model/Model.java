@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
+import seedu.address.model.student.Student;
 
 /**
  * The API of the Model component.
@@ -52,6 +53,20 @@ public interface Model {
      * {@code person} must not already exist in the address book.
      */
     void addPerson(Person person);
+
+    /**
+     * Returns whether a student with the same identity as {@code student} exists.
+     */
+    default boolean hasStudent(Student student) {
+        return getAddressBook().getStudentList().stream().anyMatch(student::hasSameIdentity);
+    }
+
+    /**
+     * Adds a student to the model.
+     */
+    default void addStudent(Student student) {
+        throw new UnsupportedOperationException("Student additions are not supported by this model.");
+    }
 
     /**
      * Replaces the given person {@code target} with {@code editedPerson}.
