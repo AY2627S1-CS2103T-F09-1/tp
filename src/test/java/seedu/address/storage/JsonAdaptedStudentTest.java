@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.Optional;
@@ -23,6 +24,26 @@ public class JsonAdaptedStudentTest {
     @Test
     public void toModelType_validStudent_returnsStudent() throws Exception {
         assertEquals(VALID_STUDENT, new JsonAdaptedStudent(VALID_STUDENT).toModelType());
+        assertEquals(VALID_STUDENT.getId(), new JsonAdaptedStudent(VALID_STUDENT).toModelType().getId());
+    }
+
+    @Test
+    public void toModelType_legacyStudent_derivesStableId() throws Exception {
+        JsonAdaptedStudent firstLoad = new JsonAdaptedStudent("Test Learner", "9123 4567", null,
+                "Mathematics", "Secondary 3");
+        JsonAdaptedStudent secondLoad = new JsonAdaptedStudent("Test Learner", "9123 4567", null,
+                "Mathematics", "Secondary 3");
+
+        assertEquals(firstLoad.toModelType().getId(), secondLoad.toModelType().getId());
+        assertNotEquals(VALID_STUDENT.getId(), firstLoad.toModelType().getId());
+    }
+
+    @Test
+    public void toModelType_invalidStudentId_throwsIllegalValueException() {
+        JsonAdaptedStudent student = new JsonAdaptedStudent("not-a-uuid", "Test Learner", "9123 4567", null,
+                "Mathematics", "Secondary 3");
+
+        assertThrows(IllegalValueException.class, JsonAdaptedStudent.INVALID_ID_MESSAGE, student::toModelType);
     }
 
     @Test

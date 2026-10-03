@@ -34,6 +34,13 @@ public final class StudentIdentity {
         return equals(otherIdentity);
     }
 
+    /**
+     * Returns the canonical value used to derive a legacy student's stable identifier.
+     */
+    public String getStableValue() {
+        return normalizedName + "\u0000" + normalizedParentPhone;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {
