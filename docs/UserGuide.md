@@ -89,6 +89,8 @@ Examples:
 
 Lists all students in normalized alphabetical order and reports how many students are in the roster. When the roster is empty, TutorTrack reports that there are no students and suggests using the `add` command.
 
+Each student card shows the roster index, student name, subject, current academic level, and number of session notes. The roster can be scrolled when it contains more students than fit in the window.
+
 Format: `list`
 
 ### Editing a person: `edit`
