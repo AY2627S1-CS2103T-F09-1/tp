@@ -8,8 +8,6 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 
 | Decision | Options | Current Lean | Why |
 | --- | --- | --- | --- |
-| Student identity and duplicate policy | Name only; generated identifier; composite identity | Decide during roster design | Names can collide; persistence and editing need a stable policy. |
-| Parent or guardian contact shape | Single free-text field; structured name/phone/email fields | Decide during roster design | The product requires contact details but has not fixed validation or fields. |
 | Session-note timestamp source | System timestamp; tutor-entered date; both | System timestamp unless requirements change | Chronological history needs a deterministic ordering source. |
 
 ## Settled Decisions
@@ -19,6 +17,8 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Product direction | TutorTrack serves a private one-to-one tutor with a small active roster. | 2026-09-18 | n/a |
 | Delivery approach | Preserve current AddressBook behaviour until ratified TutorTrack slices replace it deliberately. | 2026-09-18 | n/a |
 | First-release scope | Roster, student profile, chronological session history, and adding a short session note. | 2026-09-18 | n/a |
+| Student identity | Duplicate students have the same case-insensitive, whitespace-normalized name and parent or guardian phone number after spaces and hyphens are removed. | 2026-10-02 | n/a |
+| Parent or guardian contact | A Student has a required phone number and optional email address for the responsible adult. | 2026-10-02 | n/a |
 
 ## Pressure Points
 

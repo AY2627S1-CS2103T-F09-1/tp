@@ -92,6 +92,10 @@ Intentional test changes are allowed only when all conditions are met:
 4. The final response explains why tests changed.
 5. `.beryl/agent/test-manifest.conf` is updated if new test locations/patterns are introduced.
 
+## Coverage-Gate Preflight
+
+Codecov evaluates coverage of changed production lines independently from whether the local test suite passes. When a feature adds or substantially changes production classes, developers MUST inspect the relevant local JaCoCo HTML report after running the focused tests and before opening a PR. Add behavior-focused tests for public accessors, equality and hash-code contracts, null and invalid-input boundaries, and true and false branches that the changed code introduces. Treat a passing Gradle test task as insufficient evidence that the Codecov patch threshold will pass; verify the PR's Codecov result after push and address any missed changed lines with meaningful tests rather than lowering the coverage requirement.
+
 ## Immutability Enforcement Scope
 
 * The SHA manifest mechanism provides deterministic change detection, not cryptographic immutability guarantees against privileged users.
