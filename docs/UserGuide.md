@@ -58,8 +58,8 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
+* Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
+  For example, `help 123` is interpreted as `help`. The `list` command rejects extra input because it only accepts the exact format shown below.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
@@ -79,15 +79,15 @@ Adds a student with the responsible parent or guardian's contact details, subjec
 
 Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 
-The name, parent phone, subject, and current level are required. Parent email is optional. A duplicate is a student whose normalized name and parent phone both match an existing student; spaces and hyphens in a parent phone do not make a distinct student.
+The name, parent phone, subject, and current level are required. Parent email is optional. TutorTrack preserves each student's identity when the data file is saved and reloaded. A duplicate is a student whose normalized name and parent phone both match an existing student; spaces and hyphens in a parent phone do not make a distinct student.
 
 Examples:
 * `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`
 * `add sub/English Literature l/JC 1 n/Dev Patel p/91234567`
 
-### Listing all persons: `list`
+### Listing the student roster: `list`
 
-Shows a list of all persons in the address book.
+Lists all students in normalized alphabetical order and reports how many students are in the roster. When the roster is empty, TutorTrack reports that there are no students and suggests using the `add` command.
 
 Format: `list`
 
@@ -156,7 +156,7 @@ AddressBook automatically saves data after every command. You do not need to sav
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Student records include an internal `studentId` that should be preserved when manually editing the data file. Advanced users are welcome to update data directly by editing that data file.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>

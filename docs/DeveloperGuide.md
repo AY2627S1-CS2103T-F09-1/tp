@@ -163,7 +163,13 @@ TutorTrack's first student-domain slice introduces immutable `Student`, `Student
 
 The command and storage layers will construct `Student` values and delegate duplicate comparisons to `StudentIdentity`; they must not reproduce this normalization logic. This keeps the same duplicate outcome for typed commands and manually edited persisted data.
 
-Student JSON uses `name`, `parentPhone`, optional `parentEmail`, `subject`, and `currentLevel` fields. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableStudentRoster` then checks each loaded Student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
+Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, and `currentLevel` fields. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableStudentRoster` then checks each loaded Student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
+
+### Student roster contract
+
+`Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Note counts are supplied as projection data so the student-roster context does not own session-note storage; the current student-only model defaults them to zero until the session-note context is integrated.
+
+The `list` command parses only the exact command word and obtains a fresh roster snapshot through `Model#getStudentRoster()`. It reports the number of students for a populated roster and gives an actionable add-student message for an empty roster. JavaFX presentation consumes the same model-facing roster API in the subsequent UI slice.
 
 ### \[Proposed\] Undo/redo feature
 
