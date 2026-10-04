@@ -1,7 +1,9 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -73,5 +75,26 @@ public class RosterListingIntegrationTest {
         StudentRoster roster = new StudentRoster(model.getAddressBook().getStudentList(), Map.of(studentId, 3));
 
         assertEquals(3, roster.getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void legacyStudent_saveAfterReload_writesMigratedStudentId() throws Exception {
+        Path filePath = testFolder.resolve("addressbook.json");
+        Files.writeString(filePath, "{\n"
+                + "  \"persons\": [],\n"
+                + "  \"students\": [{\n"
+                + "    \"name\": \"Legacy Learner\",\n"
+                + "    \"parentPhone\": \"9123 4567\",\n"
+                + "    \"subject\": \"Mathematics\",\n"
+                + "    \"currentLevel\": \"Secondary 3\"\n"
+                + "  }]\n"
+                + "}");
+
+        ReadOnlyAddressBook loadedData = storage.readAddressBook().orElseThrow();
+        String migratedStudentId = loadedData.getStudentList().get(0).getId().getValue();
+        storage.saveAddressBook(loadedData);
+
+        String savedJson = Files.readString(filePath);
+        assertTrue(savedJson.contains("\"studentId\" : \"" + migratedStudentId + "\""));
     }
 }

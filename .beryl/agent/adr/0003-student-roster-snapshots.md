@@ -10,7 +10,7 @@ The list feature needs stable display data without exposing mutable student coll
 
 ## Decision
 
-Expose `Model#getStudentRoster()` as an immutable `StudentRoster` snapshot. Each `StudentRosterEntry` contains the stable student ID, one-based display index, student fields, and a non-negative session-note count. `StudentRoster` sorts by normalized student name and accepts note counts as projection input rather than owning session-note data.
+Expose `Model#getStudentRoster()` as an immutable `StudentRoster` snapshot. Each `StudentRosterEntry` contains the stable student ID, one-based display index, student fields, and a non-negative session-note count. `StudentRoster` sorts by normalized student name, then normalized parent or guardian phone number, and finally stable student ID; it accepts note counts as projection input rather than owning session-note data.
 
 ## Consequences
 
