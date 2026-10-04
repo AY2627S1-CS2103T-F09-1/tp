@@ -39,6 +39,7 @@ b332fd6942daa338e377c41fef6c3a4d939fe643af908634730ef5961e6e0725  src/test/java/
 f54a78723e3389bae0ea503aeb3dc4363cc4bc63679553b8653e6cf8e4a02e95  src/test/java/seedu/address/logic/parser/ParserUtilTest.java
 8ee2725f4c85c2dd3a294587035750c7589f386512bc9865f8f1e4598bdf54ce  src/test/java/seedu/address/model/AddressBookTest.java
 8d6962eea5f80b83d77a2c9bab28250c70937edbc2e783e0cd0772c01b30f916  src/test/java/seedu/address/model/ModelManagerTest.java
+ae7044b123f6e240c837019ce99f4a56b09d71866c85e7a10ef21c8417c3b074  src/test/java/seedu/address/model/ModelTest.java
 1c4348c34d65839be2891fe8c1ac99f70e53f97101b308b5f95c1c0d419e3ab2  src/test/java/seedu/address/model/UserPrefsTest.java
 d108d44cd790059e70a65284ef7aa7853e4dfa90e01853cac39417edb6d1dfb0  src/test/java/seedu/address/model/person/AddressTest.java
 bc249f341ab4d470f288527d720f7ad4e7fe796c4272c6b852e64029e84c58e4  src/test/java/seedu/address/model/person/EmailTest.java
@@ -50,7 +51,7 @@ b750914398987b00db0c98bc26b7deec35a81f4185169528f94e5cb648795c8d  src/test/java/
 c580530cfa90fcab68e0a1d1872184b9686c52267b857141eb9c57e37ed20acb  src/test/java/seedu/address/model/student/CurrentLevelTest.java
 7f2b55dd9cfa5ed3cc4735fe24062cd27201810f68b1fb1191c5db32e41c5228  src/test/java/seedu/address/model/student/ParentGuardianContactTest.java
 ed1155400e871a34ea13d8cd39000d61417a8a8958a94b0a7d2b9dcb0a7763e3  src/test/java/seedu/address/model/student/StudentNameTest.java
-e4e95d1b589d3164cd01de8bcddc887ced282fa81664526fc28578e5d33e358d  src/test/java/seedu/address/model/student/StudentRosterTest.java
+6af1085fb9057aad702aebed60a97287dcb7208c9e2a49a145305cab91bb5de6  src/test/java/seedu/address/model/student/StudentRosterTest.java
 fad6b9116835b576358cf105f6e95ab59fafe457432882535e9ecc59280781ec  src/test/java/seedu/address/model/student/StudentTest.java
 94e38de32ab0d979c1b0987c08a5b5a0d302aef4e6e9e1bec2100d4d19089389  src/test/java/seedu/address/model/student/StudentValueObjectCoverageTest.java
 a073fac580f1b4218abe545e80b9c78efccddeea89911ed9dda68856dc9e71ce  src/test/java/seedu/address/model/student/SubjectTest.java

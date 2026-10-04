@@ -36,6 +36,7 @@ public class StudentRosterTest {
                 firstEntry.getCurrentLevel(), 2));
         assertEquals(firstEntry.hashCode(), new StudentRosterEntry(ALEX_ID, 1, firstEntry.getName(),
                 firstEntry.getSubject(), firstEntry.getCurrentLevel(), 2).hashCode());
+        assertEquals(firstEntry, firstEntry);
         assertFalse(firstEntry.equals(null));
         assertFalse(firstEntry.equals("not an entry"));
         assertEquals(2, roster.getEntries().get(1).getRosterIndex());
@@ -74,6 +75,26 @@ public class StudentRosterTest {
                 student.getSubject(), student.getCurrentLevel(), 0));
     }
 
+    @Test
+    public void entry_negativeNoteCount_throwsIllegalArgumentException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+
+        assertThrows(IllegalArgumentException.class, () -> new StudentRosterEntry(ALEX_ID, 1, student.getName(),
+                student.getSubject(), student.getCurrentLevel(), -1));
+    }
+
+    @Test
+    public void entry_differentFields_areNotEqual() {
+        StudentRosterEntry entry = entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 0);
+
+        assertFalse(entry.equals(entry(BEA_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 2, "Alex Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Bea Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "English", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "JC 1", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 1)));
+    }
+
     private static StudentId id(String value) {
         return StudentId.fromString(value);
     }
@@ -81,5 +102,12 @@ public class StudentRosterTest {
     private Student student(String name, StudentId id, String subject, String level) {
         return new Student(new StudentName(name), new ParentGuardianContact("9123 4567", Optional.empty()),
                 new Subject(subject), new CurrentLevel(level), id);
+    }
+
+    private StudentRosterEntry entry(StudentId id, int rosterIndex, String name, String subject, String level,
+            int noteCount) {
+        Student student = student(name, id, subject, level);
+        return new StudentRosterEntry(id, rosterIndex, student.getName(), student.getSubject(),
+                student.getCurrentLevel(), noteCount);
     }
 }
