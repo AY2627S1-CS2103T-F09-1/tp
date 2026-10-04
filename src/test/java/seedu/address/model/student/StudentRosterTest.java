@@ -80,6 +80,13 @@ public class StudentRosterTest {
     }
 
     @Test
+    public void constructor_unknownNoteCountStudentId_throwsIllegalArgumentException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+
+        assertThrows(IllegalArgumentException.class, () -> new StudentRoster(List.of(student), Map.of(ZOE_ID, 1)));
+    }
+
+    @Test
     public void constructor_duplicateStudentIds_throwsIllegalArgumentException() {
         Student firstStudent = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
         Student secondStudent = student("Bea Tan", ALEX_ID, "English", "JC 1");
@@ -87,6 +94,26 @@ public class StudentRosterTest {
         assertThrows(IllegalArgumentException.class, () -> new StudentRoster(List.of(firstStudent, secondStudent)));
     }
 
+    @Test
+    public void entry_negativeNoteCount_throwsIllegalArgumentException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+
+        assertThrows(IllegalArgumentException.class, () -> new StudentRosterEntry(ALEX_ID, 1, student.getName(),
+                student.getSubject(), student.getCurrentLevel(), -1));
+    }
+
+    @Test
+    public void entry_differentFields_areNotEqual() {
+        StudentRosterEntry entry = entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 0);
+
+        assertFalse(entry.equals(entry(BEA_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 2, "Alex Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Bea Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "English", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "JC 1", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 1)));
+    }
+    
     @Test
     public void constructor_unknownNoteCountStudentId_throwsIllegalArgumentException() {
         Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
