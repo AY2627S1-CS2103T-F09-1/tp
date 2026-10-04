@@ -39,10 +39,22 @@ public class StudentRosterTest {
         assertEquals(firstEntry, firstEntry);
         assertFalse(firstEntry.equals(null));
         assertFalse(firstEntry.equals("not an entry"));
+        assertEquals(firstEntry, firstEntry);
         assertEquals(2, roster.getEntries().get(1).getRosterIndex());
         assertEquals(3, roster.getEntries().get(2).getRosterIndex());
         assertEquals(2, roster.getEntries().get(0).getNoteCount());
         assertEquals(0, roster.getEntries().get(1).getNoteCount());
+    }
+
+    @Test
+    public void constructor_equalNamesAreOrderedByNormalizedParentPhone() {
+        Student laterPhone = student("Alex Tan", "9876 5432", ZOE_ID, "Mathematics", "Secondary 3");
+        Student earlierPhone = student(" alex   tan ", "9123-4567", ALEX_ID, "English", "JC 1");
+
+        StudentRoster roster = new StudentRoster(List.of(laterPhone, earlierPhone));
+
+        assertEquals(List.of(ALEX_ID, ZOE_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
     }
 
     @Test
@@ -101,6 +113,13 @@ public class StudentRosterTest {
         assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "JC 1", 0)));
         assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 1)));
     }
+    
+    @Test
+    public void constructor_unknownNoteCountStudentId_throwsIllegalArgumentException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+
+        assertThrows(IllegalArgumentException.class, () -> new StudentRoster(List.of(student), Map.of(ZOE_ID, 1)));
+    }
 
     @Test
     public void entry_nonPositiveIndex_throwsIllegalArgumentException() {
@@ -110,12 +129,36 @@ public class StudentRosterTest {
                 student.getSubject(), student.getCurrentLevel(), 0));
     }
 
+    @Test
+    public void entry_negativeNoteCount_throwsIllegalArgumentException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+
+        assertThrows(IllegalArgumentException.class, () -> new StudentRosterEntry(ALEX_ID, 1, student.getName(),
+                student.getSubject(), student.getCurrentLevel(), -1));
+    }
+
+    @Test
+    public void entry_differentFields_areNotEqual() {
+        StudentRosterEntry entry = entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 0);
+
+        assertFalse(entry.equals(entry(BEA_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 2, "Alex Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Bea Tan", "Mathematics", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "English", "Secondary 3", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "JC 1", 0)));
+        assertFalse(entry.equals(entry(ALEX_ID, 1, "Alex Tan", "Mathematics", "Secondary 3", 1)));
+    }
+
     private static StudentId id(String value) {
         return StudentId.fromString(value);
     }
 
     private Student student(String name, StudentId id, String subject, String level) {
-        return new Student(new StudentName(name), new ParentGuardianContact("9123 4567", Optional.empty()),
+        return student(name, "9123 4567", id, subject, level);
+    }
+
+    private Student student(String name, String phone, StudentId id, String subject, String level) {
+        return new Student(new StudentName(name), new ParentGuardianContact(phone, Optional.empty()),
                 new Subject(subject), new CurrentLevel(level), id);
     }
 

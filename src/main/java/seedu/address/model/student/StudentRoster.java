@@ -18,6 +18,7 @@ public final class StudentRoster {
 
     private static final Comparator<Student> BY_NORMALIZED_NAME = Comparator
             .comparing((Student student) -> student.getName().getValue(), String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(student -> student.getParentGuardianContact().getNormalizedPhone())
             .thenComparing(student -> student.getId().getValue());
 
     private final List<StudentRosterEntry> entries;
