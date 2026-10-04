@@ -9,6 +9,8 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentId;
+import seedu.address.model.student.StudentIdentity;
 import seedu.address.model.student.StudentName;
 import seedu.address.model.student.Subject;
 
@@ -18,7 +20,9 @@ import seedu.address.model.student.Subject;
 class JsonAdaptedStudent {
 
     static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
+    static final String INVALID_ID_MESSAGE = "Student's ID is invalid!";
 
+    private final String studentId;
     private final String name;
     private final String parentPhone;
     private final String parentEmail;
@@ -29,9 +33,11 @@ class JsonAdaptedStudent {
      * Constructs a Jackson-friendly student from persisted fields.
      */
     @JsonCreator
-    JsonAdaptedStudent(@JsonProperty("name") String name, @JsonProperty("parentPhone") String parentPhone,
+    JsonAdaptedStudent(@JsonProperty("studentId") String studentId, @JsonProperty("name") String name,
+            @JsonProperty("parentPhone") String parentPhone,
             @JsonProperty("parentEmail") String parentEmail, @JsonProperty("subject") String subject,
             @JsonProperty("currentLevel") String currentLevel) {
+        this.studentId = studentId;
         this.name = name;
         this.parentPhone = parentPhone;
         this.parentEmail = parentEmail;
@@ -40,9 +46,17 @@ class JsonAdaptedStudent {
     }
 
     /**
+     * Constructs a legacy Jackson-friendly student without an identifier.
+     */
+    JsonAdaptedStudent(String name, String parentPhone, String parentEmail, String subject, String currentLevel) {
+        this(null, name, parentPhone, parentEmail, subject, currentLevel);
+    }
+
+    /**
      * Constructs a Jackson-friendly student from a domain student.
      */
     JsonAdaptedStudent(Student source) {
+        studentId = source.getId().getValue();
         name = source.getName().getValue();
         parentPhone = source.getParentGuardianContact().getPhone();
         parentEmail = source.getParentGuardianContact().getEmail().orElse(null);
@@ -60,7 +74,20 @@ class JsonAdaptedStudent {
         ParentGuardianContact modelContact = new ParentGuardianContact(requireValidPhone(), optionalValidEmail());
         Subject modelSubject = new Subject(requireValidSubject());
         CurrentLevel modelCurrentLevel = new CurrentLevel(requireValidCurrentLevel());
-        return new Student(modelName, modelContact, modelSubject, modelCurrentLevel);
+        return new Student(modelName, modelContact, modelSubject, modelCurrentLevel,
+                getStudentId(modelName, modelContact));
+    }
+
+    private StudentId getStudentId(StudentName modelName, ParentGuardianContact modelContact)
+            throws IllegalValueException {
+        if (studentId == null) {
+            return StudentId.fromLegacyIdentity(new StudentIdentity(modelName, modelContact));
+        }
+        try {
+            return StudentId.fromString(studentId);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalValueException(INVALID_ID_MESSAGE);
+        }
     }
 
     private String requireValidName() throws IllegalValueException {

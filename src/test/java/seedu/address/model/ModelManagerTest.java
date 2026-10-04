@@ -14,6 +14,11 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.ParentGuardianContact;
+import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentName;
+import seedu.address.model.student.Subject;
 import seedu.address.testutil.AddressBookBuilder;
 
 public class ModelManagerTest {
@@ -71,6 +76,18 @@ public class ModelManagerTest {
     @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> modelManager.getFilteredPersonList().remove(0));
+    }
+
+    @Test
+    public void getStudentRoster_returnsImmutableStudentSnapshot() {
+        Student student = new Student(new StudentName("Alex Tan"),
+                new ParentGuardianContact("9123 4567", java.util.Optional.empty()), new Subject("Mathematics"),
+                new CurrentLevel("Secondary 3"));
+        modelManager.addStudent(student);
+
+        assertEquals(List.of(student.getId()), modelManager.getStudentRoster().getEntries().stream()
+                .map(entry -> entry.getStudentId()).toList());
+        assertThrows(UnsupportedOperationException.class, () -> modelManager.getStudentRoster().getEntries().clear());
     }
 
     @Test

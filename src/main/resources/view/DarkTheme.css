@@ -132,6 +132,12 @@
     -fx-text-fill: #010504;
 }
 
+.empty-roster-message {
+    -fx-padding: 24px;
+    -fx-font-size: 14px;
+    -fx-text-fill: white;
+}
+
 .stack-pane {
      -fx-background-color: derive(#1d1d1d, 20%);
 }

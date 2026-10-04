@@ -14,6 +14,7 @@ public final class Student {
     private final Subject subject;
     private final CurrentLevel currentLevel;
     private final StudentIdentity identity;
+    private final StudentId id;
 
     /**
      * Constructs a student with all required tutoring context.
@@ -25,12 +26,27 @@ public final class Student {
      */
     public Student(StudentName name, ParentGuardianContact parentGuardianContact, Subject subject,
             CurrentLevel currentLevel) {
-        requireAllNonNull(name, parentGuardianContact, subject, currentLevel);
+        this(name, parentGuardianContact, subject, currentLevel, StudentId.generate());
+    }
+
+    /**
+     * Constructs a student with all required tutoring context and a stable identifier.
+     *
+     * @param name The student's name.
+     * @param parentGuardianContact The responsible adult's contact details.
+     * @param subject The subject taught to the student.
+     * @param currentLevel The student's current level in the subject.
+     * @param id The student's stable internal identifier.
+     */
+    public Student(StudentName name, ParentGuardianContact parentGuardianContact, Subject subject,
+            CurrentLevel currentLevel, StudentId id) {
+        requireAllNonNull(name, parentGuardianContact, subject, currentLevel, id);
         this.name = name;
         this.parentGuardianContact = parentGuardianContact;
         this.subject = subject;
         this.currentLevel = currentLevel;
         identity = new StudentIdentity(name, parentGuardianContact);
+        this.id = id;
     }
 
     /**
@@ -59,6 +75,13 @@ public final class Student {
      */
     public CurrentLevel getCurrentLevel() {
         return currentLevel;
+    }
+
+    /**
+     * Returns the student's stable internal identifier.
+     */
+    public StudentId getId() {
+        return id;
     }
 
     /**
