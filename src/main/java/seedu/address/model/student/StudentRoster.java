@@ -6,8 +6,10 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents an immutable, display-ready snapshot of the student's roster.
@@ -39,7 +41,8 @@ public final class StudentRoster {
     public StudentRoster(Collection<Student> students, Map<StudentId, Integer> noteCounts) {
         requireNonNull(students);
         requireNonNull(noteCounts);
-        validateNoteCounts(noteCounts);
+        Set<StudentId> studentIds = collectStudentIds(students);
+        validateNoteCounts(noteCounts, studentIds);
         entries = createEntries(students, noteCounts);
     }
 
@@ -57,9 +60,19 @@ public final class StudentRoster {
         return entries.size();
     }
 
-    private static void validateNoteCounts(Map<StudentId, Integer> noteCounts) {
+    private static Set<StudentId> collectStudentIds(Collection<Student> students) {
+        Set<StudentId> studentIds = new HashSet<>();
+        students.forEach(student -> {
+            requireNonNull(student);
+            checkArgument(studentIds.add(student.getId()), "Student IDs must be unique.");
+        });
+        return studentIds;
+    }
+
+    private static void validateNoteCounts(Map<StudentId, Integer> noteCounts, Set<StudentId> studentIds) {
         noteCounts.forEach((studentId, noteCount) -> {
             requireAllNonNull(studentId, noteCount);
+            checkArgument(studentIds.contains(studentId), "Session-note counts must refer to roster students.");
             checkArgument(noteCount >= 0, "Session-note counts must not be negative.");
         });
     }

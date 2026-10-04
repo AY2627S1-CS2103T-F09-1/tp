@@ -39,6 +39,7 @@ public class StudentRosterTest {
         assertEquals(firstEntry, firstEntry);
         assertFalse(firstEntry.equals(null));
         assertFalse(firstEntry.equals("not an entry"));
+        assertEquals(firstEntry, firstEntry);
         assertEquals(2, roster.getEntries().get(1).getRosterIndex());
         assertEquals(3, roster.getEntries().get(2).getRosterIndex());
         assertEquals(2, roster.getEntries().get(0).getNoteCount());
@@ -76,6 +77,21 @@ public class StudentRosterTest {
         Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
 
         assertThrows(IllegalArgumentException.class, () -> new StudentRoster(List.of(student), Map.of(ALEX_ID, -1)));
+    }
+
+    @Test
+    public void constructor_duplicateStudentIds_throwsIllegalArgumentException() {
+        Student firstStudent = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+        Student secondStudent = student("Bea Tan", ALEX_ID, "English", "JC 1");
+
+        assertThrows(IllegalArgumentException.class, () -> new StudentRoster(List.of(firstStudent, secondStudent)));
+    }
+
+    @Test
+    public void constructor_unknownNoteCountStudentId_throwsIllegalArgumentException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+
+        assertThrows(IllegalArgumentException.class, () -> new StudentRoster(List.of(student), Map.of(ZOE_ID, 1)));
     }
 
     @Test
