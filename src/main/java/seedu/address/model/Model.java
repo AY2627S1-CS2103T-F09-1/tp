@@ -6,6 +6,7 @@ import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
 import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentRoster;
 
 /**
  * The API of the Model component.
@@ -66,6 +67,13 @@ public interface Model {
      */
     default void addStudent(Student student) {
         throw new UnsupportedOperationException("Student additions are not supported by this model.");
+    }
+
+    /**
+     * Returns an immutable snapshot of the student roster.
+     */
+    default StudentRoster getStudentRoster() {
+        return new StudentRoster(getAddressBook().getStudentList());
     }
 
     /**

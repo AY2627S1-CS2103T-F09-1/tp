@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +46,10 @@ public class StudentValueObjectCoverageTest {
         StudentIdentity identity = new StudentIdentity(student.getName(), student.getParentGuardianContact());
         StudentIdentity matchingIdentity = new StudentIdentity(new StudentName("ari tan"),
                 new ParentGuardianContact("9123-4567", Optional.empty()));
+        StudentId stableId = new StudentId(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+        Student identifiedStudent = new Student(new StudentName("Ari Tan"),
+                new ParentGuardianContact("9123 4567", Optional.empty()), new Subject("Mathematics"),
+                new CurrentLevel("Secondary 3"), stableId);
 
         assertEquals("Ari Tan", student.getName().getValue());
         assertEquals("9123 4567", student.getParentGuardianContact().getPhone());
@@ -57,6 +62,11 @@ public class StudentValueObjectCoverageTest {
         assertTrue(identity.matches(matchingIdentity));
         assertEquals(identity, matchingIdentity);
         assertEquals(identity.hashCode(), matchingIdentity.hashCode());
+        assertEquals(stableId, identifiedStudent.getId());
+        assertEquals(stableId.toString(), stableId.getValue());
+        assertEquals(stableId, StudentId.fromString(stableId.getValue()));
+        assertEquals(stableId.hashCode(), StudentId.fromString(stableId.getValue()).hashCode());
+        assertFalse(stableId.equals(null));
         assertFalse(identity.equals(null));
         assertThrows(NullPointerException.class, () -> identity.matches(null));
     }
