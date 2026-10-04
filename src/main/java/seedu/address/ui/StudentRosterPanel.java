@@ -54,7 +54,7 @@ public class StudentRosterPanel extends UiPart<Region> {
     /**
      * Displays one roster entry as a student card.
      */
-    private static class StudentRosterListViewCell extends ListCell<StudentRosterEntry> {
+    static class StudentRosterListViewCell extends ListCell<StudentRosterEntry> {
         @Override
         protected void updateItem(StudentRosterEntry entry, boolean empty) {
             super.updateItem(entry, empty);

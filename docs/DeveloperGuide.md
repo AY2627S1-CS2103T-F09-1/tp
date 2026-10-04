@@ -167,7 +167,7 @@ Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `s
 
 ### Student roster contract
 
-`Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Note counts are supplied as projection data so the student-roster context does not own session-note storage; the current student-only model defaults them to zero until the session-note context is integrated.
+`Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Note counts are supplied as projection data so the student-roster context does not own session-note storage; the current student-only model defaults them to zero until the session-note context is integrated. Snapshot construction rejects duplicate student IDs and note-count keys that do not belong to the supplied students.
 
 The `list` command parses only the exact command word and obtains a fresh roster snapshot through `Model#getStudentRoster()`. It reports the number of students for a populated roster and gives an actionable add-student message for an empty roster. JavaFX presentation consumes the same model-facing roster API in the subsequent UI slice.
 
