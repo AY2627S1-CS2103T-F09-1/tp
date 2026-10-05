@@ -1,11 +1,14 @@
 package seedu.address.storage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.model.session.SessionHistory;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -21,6 +24,7 @@ class JsonAdaptedStudent {
 
     static final String MISSING_FIELD_MESSAGE_FORMAT = "Student's %s field is missing!";
     static final String INVALID_ID_MESSAGE = "Student's ID is invalid!";
+    static final String MISSING_SESSION_NOTE_MESSAGE = "Student's session notes contain an empty entry!";
 
     private final String studentId;
     private final String name;
@@ -28,21 +32,35 @@ class JsonAdaptedStudent {
     private final String parentEmail;
     private final String subject;
     private final String currentLevel;
+    private final List<JsonAdaptedSessionNote> sessionNotes = new ArrayList<>();
 
     /**
      * Constructs a Jackson-friendly student from persisted fields.
+     * A missing {@code sessionNotes} field is treated as an empty session history.
      */
     @JsonCreator
     JsonAdaptedStudent(@JsonProperty("studentId") String studentId, @JsonProperty("name") String name,
             @JsonProperty("parentPhone") String parentPhone,
             @JsonProperty("parentEmail") String parentEmail, @JsonProperty("subject") String subject,
-            @JsonProperty("currentLevel") String currentLevel) {
+            @JsonProperty("currentLevel") String currentLevel,
+            @JsonProperty("sessionNotes") List<JsonAdaptedSessionNote> sessionNotes) {
         this.studentId = studentId;
         this.name = name;
         this.parentPhone = parentPhone;
         this.parentEmail = parentEmail;
         this.subject = subject;
         this.currentLevel = currentLevel;
+        if (sessionNotes != null) {
+            this.sessionNotes.addAll(sessionNotes);
+        }
+    }
+
+    /**
+     * Constructs a Jackson-friendly student without session notes from persisted fields.
+     */
+    JsonAdaptedStudent(String studentId, String name, String parentPhone, String parentEmail, String subject,
+            String currentLevel) {
+        this(studentId, name, parentPhone, parentEmail, subject, currentLevel, null);
     }
 
     /**
@@ -53,15 +71,23 @@ class JsonAdaptedStudent {
     }
 
     /**
-     * Constructs a Jackson-friendly student from a domain student.
+     * Constructs a Jackson-friendly student from a domain student without session notes.
      */
     JsonAdaptedStudent(Student source) {
+        this(source, SessionHistory.empty());
+    }
+
+    /**
+     * Constructs a Jackson-friendly student from a domain student and that student's session history.
+     */
+    JsonAdaptedStudent(Student source, SessionHistory sessionHistory) {
         studentId = source.getId().getValue();
         name = source.getName().getValue();
         parentPhone = source.getParentGuardianContact().getPhone();
         parentEmail = source.getParentGuardianContact().getEmail().orElse(null);
         subject = source.getSubject().getValue();
         currentLevel = source.getCurrentLevel().getValue();
+        sessionHistory.getNotes().stream().map(JsonAdaptedSessionNote::new).forEach(sessionNotes::add);
     }
 
     /**
@@ -76,6 +102,22 @@ class JsonAdaptedStudent {
         CurrentLevel modelCurrentLevel = new CurrentLevel(requireValidCurrentLevel());
         return new Student(modelName, modelContact, modelSubject, modelCurrentLevel,
                 getStudentId(modelName, modelContact));
+    }
+
+    /**
+     * Returns the validated session history represented by this JSON object's session notes.
+     *
+     * @throws IllegalValueException if a session note is empty or invalid.
+     */
+    SessionHistory toModelSessionHistory() throws IllegalValueException {
+        SessionHistory history = SessionHistory.empty();
+        for (JsonAdaptedSessionNote sessionNote : sessionNotes) {
+            if (sessionNote == null) {
+                throw new IllegalValueException(MISSING_SESSION_NOTE_MESSAGE);
+            }
+            history = history.withNote(sessionNote.toModelType());
+        }
+        return history;
     }
 
     private StudentId getStudentId(StudentName modelName, ParentGuardianContact modelContact)

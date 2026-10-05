@@ -3,6 +3,9 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.Clock;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -11,8 +14,9 @@ import javafx.collections.transformation.FilteredList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Person;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.Student;
-import seedu.address.model.student.StudentRoster;
+import seedu.address.model.student.StudentId;
 
 /**
  * Represents the in-memory model of the address book data.
@@ -23,18 +27,29 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private final Clock clock;
 
     /**
-     * Initializes a ModelManager with the given addressBook and userPrefs.
+     * Initializes a ModelManager with the given addressBook and userPrefs, timestamping session notes with
+     * the system clock.
      */
     public ModelManager(ReadOnlyAddressBook addressBook, ReadOnlyUserPrefs userPrefs) {
-        requireAllNonNull(addressBook, userPrefs);
+        this(addressBook, userPrefs, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Initializes a ModelManager with the given addressBook and userPrefs, timestamping session notes with
+     * {@code clock}.
+     */
+    public ModelManager(ReadOnlyAddressBook addressBook, ReadOnlyUserPrefs userPrefs, Clock clock) {
+        requireAllNonNull(addressBook, userPrefs, clock);
 
         logger.fine("Initializing with address book: " + addressBook + " and user prefs " + userPrefs);
 
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
+        this.clock = clock;
     }
 
     public ModelManager() {
@@ -99,9 +114,22 @@ public class ModelManager implements Model {
         addressBook.addStudent(student);
     }
 
+    /**
+     * {@inheritDoc}
+     * The timestamp is truncated to whole seconds.
+     */
     @Override
-    public StudentRoster getStudentRoster() {
-        return new StudentRoster(addressBook.getStudentList());
+    public SessionNote addSessionNote(StudentId studentId, String text) {
+        requireAllNonNull(studentId, text);
+        OffsetDateTime recordedAt = OffsetDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
+        SessionNote note = new SessionNote(text, recordedAt);
+        addressBook.addSessionNote(studentId, note);
+        return note;
+    }
+
+    @Override
+    public int removeSessionHistory(StudentId studentId) {
+        return addressBook.removeSessionHistory(studentId);
     }
 
     @Override

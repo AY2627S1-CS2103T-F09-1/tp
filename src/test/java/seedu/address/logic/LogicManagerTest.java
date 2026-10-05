@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -8,11 +9,12 @@ import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
-import static seedu.address.testutil.TypicalPersons.AMY;
+import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,20 +23,22 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.person.Person;
+import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
-import seedu.address.testutil.PersonBuilder;
 
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
+    private static final String SAVE_FAILURE_MESSAGE =
+            String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
     private static final IOException DUMMY_AD_EXCEPTION = new AccessDeniedException("dummy access denied exception");
 
     @TempDir
@@ -80,6 +84,47 @@ public class LogicManagerTest {
     public void execute_storageThrowsAdException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_AD_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, DUMMY_AD_EXCEPTION.getMessage()));
+    }
+
+    @Test
+    public void execute_noteWithStorageFailure_restoresSessionHistory() {
+        Model studentModel = new ModelManager();
+        studentModel.addStudent(ALEX);
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
+        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic
+                .execute(NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices."));
+
+        assertTrue(studentModel.getSessionHistory(ALEX.getId()).isEmpty());
+        assertEquals(0, failingLogic.getStudentRoster().getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void execute_addStudentWithStorageFailure_restoresRoster() {
+        Model studentModel = new ModelManager();
+        studentModel.addStudent(ALEX);
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
+        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic
+                .execute("add n/Bea Lim p/9876 5432 sub/English l/JC 1"));
+
+        assertEquals(List.of(ALEX.getId()), failingLogic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_successAfterStorageFailure_savesOnlyLaterChange() throws Exception {
+        Model studentModel = new ModelManager();
+        studentModel.addStudent(ALEX);
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
+        assertThrows(CommandException.class, () -> failingLogic.execute(NoteCommand.COMMAND_WORD
+                + " 1 nt/Reviewed indices."));
+
+        failingLogic.execute("add n/Bea Lim p/9876 5432 sub/English l/JC 1");
+
+        Path savedFile = temporaryFolder.resolve("addressBook.json");
+        JsonAddressBookStorage savedStorage = new JsonAddressBookStorage(savedFile);
+        ReadOnlyAddressBook savedData = savedStorage.readAddressBook().orElseThrow();
+        assertEquals(2, savedData.getStudentList().size());
+        assertTrue(savedData.getSessionHistory(ALEX.getId()).isEmpty());
     }
 
     @Test
@@ -168,12 +213,44 @@ public class LogicManagerTest {
 
         logic = new LogicManager(model, storage);
 
-        // Triggers the saveAddressBook method by executing an add command
+        // Triggers the saveAddressBook method by executing an add command.
+        // Saving fails, so the person added by the command is removed again.
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
         ModelManager expectedModel = new ModelManager();
-        expectedModel.addPerson(expectedPerson);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+    }
+
+    /**
+     * Returns a {@code LogicManager} for {@code model} whose address book storage writes to a temporary file,
+     * but throws {@code DUMMY_IO_EXCEPTION} for the first {@code failureCount} saves.
+     */
+    private LogicManager createLogicWithFailingSaves(Model model, int failureCount) {
+        JsonAddressBookStorage addressBookStorage =
+                new FailingAddressBookStorage(temporaryFolder.resolve("addressBook.json"), failureCount);
+        JsonUserPrefsStorage userPrefsStorage =
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
+        return new LogicManager(model, new StorageManager(addressBookStorage, userPrefsStorage));
+    }
+
+    /**
+     * A {@code JsonAddressBookStorage} that fails a given number of saves before saving normally.
+     */
+    private static class FailingAddressBookStorage extends JsonAddressBookStorage {
+        private int remainingFailures;
+
+        FailingAddressBookStorage(Path filePath, int failureCount) {
+            super(filePath);
+            remainingFailures = failureCount;
+        }
+
+        @Override
+        public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+            if (remainingFailures > 0) {
+                remainingFailures--;
+                throw DUMMY_IO_EXCEPTION;
+            }
+            super.saveAddressBook(addressBook);
+        }
     }
 }

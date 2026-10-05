@@ -12,6 +12,7 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 import seedu.address.model.student.StudentRoster;
@@ -45,19 +46,34 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
-        commandResult = command.execute(model);
+        AddressBook dataBeforeCommand = new AddressBook(model.getAddressBook());
+        CommandResult commandResult = command.execute(model);
+        saveOrRestore(dataBeforeCommand);
+        return commandResult;
+    }
 
+    /**
+     * Saves the model's address book, restoring {@code dataBeforeCommand} into the model if saving fails,
+     * so that a command whose changes cannot be saved leaves the model unchanged.
+     *
+     * @throws CommandException if the address book cannot be saved.
+     */
+    private void saveOrRestore(AddressBook dataBeforeCommand) throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
+            restore(dataBeforeCommand);
             throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
         } catch (IOException ioe) {
+            restore(dataBeforeCommand);
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
+    }
 
-        return commandResult;
+    private void restore(AddressBook dataBeforeCommand) {
+        logger.warning("Could not save data; restoring the data from before the command.");
+        model.setAddressBook(dataBeforeCommand);
     }
 
     @Override

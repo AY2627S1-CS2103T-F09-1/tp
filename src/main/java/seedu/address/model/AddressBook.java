@@ -1,14 +1,21 @@
 package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.List;
+import java.util.Objects;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
+import seedu.address.model.session.SessionHistory;
+import seedu.address.model.session.SessionNote;
+import seedu.address.model.session.StudentSessionHistories;
 import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentId;
 
 /**
  * Wraps all data at the address-book level.
@@ -16,8 +23,11 @@ import seedu.address.model.student.Student;
  */
 public class AddressBook implements ReadOnlyAddressBook {
 
+    static final String MESSAGE_UNKNOWN_STUDENT = "Session notes must belong to a student in the roster.";
+
     private final UniquePersonList persons = new UniquePersonList();
     private final List<Student> students = new java.util.ArrayList<>();
+    private final StudentSessionHistories sessionHistories = new StudentSessionHistories();
 
     public AddressBook() {}
 
@@ -48,6 +58,11 @@ public class AddressBook implements ReadOnlyAddressBook {
         setPersons(newData.getPersonList());
         students.clear();
         students.addAll(newData.getStudentList());
+        sessionHistories.clear();
+        for (Student student : students) {
+            StudentId studentId = student.getId();
+            sessionHistories.setHistory(studentId, newData.getSessionHistory(studentId));
+        }
     }
 
     //// person-level operations
@@ -107,6 +122,39 @@ public class AddressBook implements ReadOnlyAddressBook {
         students.add(student);
     }
 
+    //// session-note operations
+
+    /**
+     * Adds {@code note} to the session history of the student with {@code studentId}.
+     *
+     * @throws IllegalArgumentException if no student in the roster has {@code studentId}.
+     */
+    public void addSessionNote(StudentId studentId, SessionNote note) {
+        requireAllNonNull(studentId, note);
+        checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
+        sessionHistories.addNote(studentId, note);
+    }
+
+    /**
+     * Removes the session history of the student with {@code studentId}.
+     *
+     * @return The number of session notes removed, which is zero if the student had none.
+     */
+    public int removeSessionHistory(StudentId studentId) {
+        requireNonNull(studentId);
+        return sessionHistories.removeHistory(studentId);
+    }
+
+    @Override
+    public SessionHistory getSessionHistory(StudentId studentId) {
+        requireNonNull(studentId);
+        return sessionHistories.getHistory(studentId);
+    }
+
+    private boolean hasStudentWithId(StudentId studentId) {
+        return students.stream().anyMatch(student -> student.getId().equals(studentId));
+    }
+
     //// util methods
 
     @Override
@@ -137,11 +185,13 @@ public class AddressBook implements ReadOnlyAddressBook {
             return false;
         }
 
-        return persons.equals(otherAddressBook.persons) && students.equals(otherAddressBook.students);
+        return persons.equals(otherAddressBook.persons)
+                && students.equals(otherAddressBook.students)
+                && sessionHistories.equals(otherAddressBook.sessionHistories);
     }
 
     @Override
     public int hashCode() {
-        return 31 * persons.hashCode() + students.hashCode();
+        return Objects.hash(persons, students, sessionHistories);
     }
 }

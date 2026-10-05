@@ -4,7 +4,9 @@ import java.util.List;
 
 import javafx.collections.ObservableList;
 import seedu.address.model.person.Person;
+import seedu.address.model.session.SessionHistory;
 import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentId;
 
 /**
  * Unmodifiable view of an address book
@@ -22,6 +24,14 @@ public interface ReadOnlyAddressBook {
      */
     default List<Student> getStudentList() {
         return List.of();
+    }
+
+    /**
+     * Returns the newest-first session history of the student with {@code studentId}.
+     * Returns an empty history if the student has no session notes.
+     */
+    default SessionHistory getSessionHistory(StudentId studentId) {
+        return SessionHistory.empty();
     }
 
 }

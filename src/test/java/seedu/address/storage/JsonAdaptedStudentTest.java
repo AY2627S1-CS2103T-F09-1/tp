@@ -3,12 +3,18 @@ package seedu.address.storage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
+import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.model.session.SessionHistory;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -66,6 +72,47 @@ public class JsonAdaptedStudentTest {
                 Subject.MESSAGE_CONSTRAINTS);
         assertInvalidField("Test Learner", "9123 4567", "guardian@example.com", "Mathematics", "",
                 CurrentLevel.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void toModelSessionHistory_noSessionNotes_returnsEmptyHistory() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
+                "Mathematics", "Secondary 3", null);
+
+        assertEquals(SessionHistory.empty(), student.toModelSessionHistory());
+        assertEquals(SessionHistory.empty(), new JsonAdaptedStudent(VALID_STUDENT).toModelSessionHistory());
+    }
+
+    @Test
+    public void toModelSessionHistory_withSessionNotes_returnsHistory() throws Exception {
+        SessionHistory history = SessionHistory.empty().withNote(INDICES_NOTE).withNote(FACTORISATION_NOTE);
+
+        JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_STUDENT, history);
+
+        assertEquals(history, student.toModelSessionHistory());
+        assertEquals(VALID_STUDENT, student.toModelType());
+    }
+
+    @Test
+    public void toModelSessionHistory_emptyEntry_throwsIllegalValueException() {
+        JsonAdaptedSessionNote validNote = new JsonAdaptedSessionNote(INDICES_NOTE);
+        List<JsonAdaptedSessionNote> sessionNotes = Arrays.asList(validNote, null);
+        JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
+                "Mathematics", "Secondary 3", sessionNotes);
+
+        assertThrows(IllegalValueException.class, JsonAdaptedStudent.MISSING_SESSION_NOTE_MESSAGE,
+                student::toModelSessionHistory);
+    }
+
+    @Test
+    public void toModelSessionHistory_invalidNote_throwsIllegalValueException() {
+        List<JsonAdaptedSessionNote> sessionNotes = List.of(
+                new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Line one\nLine two"));
+        JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
+                "Mathematics", "Secondary 3", sessionNotes);
+
+        assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS,
+                student::toModelSessionHistory);
     }
 
     private void assertMissingField(String name, String phone, String email, String subject, String currentLevel,

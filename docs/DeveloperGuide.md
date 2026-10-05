@@ -105,7 +105,8 @@ How the `Logic` component works:
 2. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 3. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-4. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+4. `LogicManager` saves the address book. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
+5. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -163,11 +164,11 @@ TutorTrack's first student-domain slice introduces immutable `Student`, `Student
 
 The command and storage layers will construct `Student` values and delegate duplicate comparisons to `StudentIdentity`; they must not reproduce this normalization logic. This keeps the same duplicate outcome for typed commands and manually edited persisted data.
 
-Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, and `currentLevel` fields. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableStudentRoster` then checks each loaded Student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
+Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableStudentRoster` then checks each loaded Student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
 
 ### Student roster contract
 
-`Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Note counts are supplied as projection data so the student-roster context does not own session-note storage; the current student-only model defaults them to zero until the session-note context is integrated. Snapshot construction rejects duplicate student IDs and note-count keys that do not belong to the supplied students.
+`Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, then normalized parent or guardian phone number, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Student ID is the final tie-breaker for students with equal names and normalized parent or guardian phone numbers. Note counts are supplied as projection data so the student-roster context does not own session-note storage; `Model#getStudentRoster()` takes each student's count from that student's session history.
 
 The `list` command parses only the exact command word and obtains a fresh roster snapshot through `Model#getStudentRoster()`. It reports the number of students for a populated roster and gives an actionable add-student message for an empty roster. JavaFX presentation consumes the same model-facing roster API in the subsequent UI slice.
 
@@ -177,7 +178,66 @@ The `list` command parses only the exact command word and obtains a fresh roster
 
 ### Roster listing integration
 
-`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the empty persisted-roster path and the roster projection's note-count input. Non-zero counts from actual session notes remain dependent on the separate Session Note implementation; the current student-only application reports zero for newly added students.
+`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the empty persisted-roster path and the roster projection's note-count input. Newly added students report zero notes; `ModelManagerTest` covers non-zero counts from recorded session notes, and `SessionNoteIntegrationTest` checks that notes added with `note` are saved, reloaded, and counted.
+
+### Session note types
+
+Session notes live in the `seedu.address.model.session` package, separate from `seedu.address.model.student`, because the student roster only consumes note counts and does not own session-note data.
+
+`SessionNote` is an immutable value holding the note text and the `OffsetDateTime` at which it was recorded. Its text is stripped of surrounding whitespace, while internal spaces are kept exactly as typed. Valid text has 1 to 500 characters, counted as Unicode code points so that an emoji counts as one character, and contains no control characters (such as line breaks or tabs) or Unicode line and paragraph separators. Identical text may be recorded more than once because each note describes a separate lesson. `SessionNote` does not read the clock itself; the caller supplies `recordedAt`, which keeps the type deterministic to test and lets the model decide when a note is timestamped.
+
+`SessionHistory` is the immutable, newest-first collection of one student's notes. `SessionHistory#empty()` returns a history without notes, and `SessionHistory#withNote(SessionNote)` returns a new history with the note inserted, leaving the original unchanged. Notes are ordered by the instant they were recorded rather than by their local clock reading, so notes recorded with different time-zone offsets still appear in the correct order. Notes with equal instants keep the order in which they were added. `SessionHistory#getNotes()` returns an unmodifiable list, and `SessionHistory#size()` provides the note count shown in the roster.
+
+### Session note model integration
+
+`AddressBook` stores session histories in a `StudentSessionHistories` object, which maps each `StudentId` to that student's `SessionHistory`, in the same way that it delegates person rules to `UniquePersonList`. Students without notes have no stored entry and report an empty history. Histories are kept beside the student list rather than inside `Student`, so adding a note does not replace the `Student` or change its equality, and the roster, duplicate detection, and student JSON are unaffected by notes.
+
+`AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
+
+The `Model` API offers three session-note operations:
+
+* `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
+* `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
+* `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed, which the delete feature reports.
+
+### Session note persistence
+
+Each student's session notes are saved inside that student's JSON record as a `sessionNotes` list, newest first:
+
+```json
+"sessionNotes": [ { "recordedAt": "2026-09-18T18:35:00+08:00", "text": "Reviewed factorisation." } ]
+```
+
+Notes are nested in the student record so that the data file stays easy to read and edit by hand, even though the model keeps histories beside the student list. `JsonSerializableAddressBook` writes each student with `ReadOnlyAddressBook#getSessionHistory(StudentId)`, and when loading, it adds each student first and then adds that student's notes through `AddressBook#addSessionNote`.
+
+`JsonAdaptedSessionNote` writes `recordedAt` with `DateTimeFormatter.ISO_OFFSET_DATE_TIME`, which always includes seconds; `OffsetDateTime#toString()` would leave out seconds that are zero. Loading rebuilds each note through `SessionNote`, so persisted notes follow the same validation as notes entered through the app. Notes with equal timestamps keep their saved order, and notes in a hand-edited file are sorted newest first when loaded.
+
+A student record without a `sessionNotes` field loads with an empty history, so data files saved before session notes existed remain loadable. A missing `recordedAt` or `text`, a timestamp without an offset (such as `2026-09-18T18:35:00`), invalid note text, or an empty list entry is a load error, which follows the same recovery path as an invalid student field.
+
+### Session note command
+
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing or invalid index is reported as an invalid command format, as `DeleteCommandParser` does, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
+
+`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that `list` and the roster panel show, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
+
+`NoteCommand#toString` omits the note text, because notes may contain private lesson details.
+
+### Save-failure rollback
+
+A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command, `LogicManager#execute` copies the address book with `new AddressBook(model.getAddressBook())`. If `Storage#saveAddressBook` then throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws the same `CommandException` as before.
+
+The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
+
+**Design considerations:**
+
+* **Alternative 1 (current choice):** `LogicManager` copies the address book before every command and restores it when saving fails.
+  * Pros: Covers every command, including future ones, in one place.
+  * Cons: Copies the address book even for commands that do not change it.
+* **Alternative 2:** Each command undoes its own changes when saving fails.
+  * Pros: Copies nothing for commands that do not change data.
+  * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
+
+Restoring the model does not protect the data file from a write that fails partway through, which could leave the file incomplete.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -609,6 +669,22 @@ testers are expected to do more *exploratory* testing.
       Expected: The roster remains usable through the list's vertical scrolling.
    3. Add another student and enter `list` again.
       Expected: The displayed roster refreshes and indices match the new alphabetical order.
+
+### Adding a session note
+
+1. Prerequisites: add at least two students and enter `list`.
+1. Enter `note 1 nt/Reviewed factorisation.`
+   Expected: TutorTrack reports `Added session note for <name of student 1>.` and that student's session-note count increases by one.
+1. Close and relaunch TutorTrack, then enter `list`.
+   Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
+1. Enter `note 1 nt/Next: 3 sub/topics`.
+   Expected: The note is added with `sub/topics` as part of its text.
+1. Enter each of `note`, `note 1`, `note 0 nt/text`, `note x nt/text`, and `note 1 2 nt/text`.
+   Expected: Each shows an invalid command format error, and no note count changes.
+1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
+   Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
+1. Enter `note N nt/text`, where `N` is one more than the number of students.
+   Expected: TutorTrack reports that the student index is invalid, and no note count changes.
 
 ### Deleting a person
 

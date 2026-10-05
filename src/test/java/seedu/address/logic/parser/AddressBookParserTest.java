@@ -21,6 +21,7 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
@@ -79,6 +80,14 @@ public class AddressBookParserTest {
     public void parseCommand_help() throws Exception {
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD) instanceof HelpCommand);
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD + " 3") instanceof HelpCommand);
+    }
+
+    @Test
+    public void parseCommand_note() throws Exception {
+        String userInput = NoteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased()
+                + " nt/Reviewed factorisation.";
+        NoteCommand command = (NoteCommand) parser.parseCommand(userInput);
+        assertEquals(new NoteCommand(INDEX_FIRST_PERSON, "Reviewed factorisation."), command);
     }
 
     @Test
