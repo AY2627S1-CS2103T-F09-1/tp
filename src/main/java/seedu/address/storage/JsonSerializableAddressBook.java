@@ -12,6 +12,7 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.Student;
 
 /**
@@ -46,7 +47,9 @@ class JsonSerializableAddressBook {
      */
     public JsonSerializableAddressBook(ReadOnlyAddressBook source) {
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
-        students.addAll(source.getStudentList().stream().map(JsonAdaptedStudent::new).collect(Collectors.toList()));
+        students.addAll(source.getStudentList().stream()
+                .map(student -> new JsonAdaptedStudent(student, source.getSessionHistory(student.getId())))
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -69,6 +72,9 @@ class JsonSerializableAddressBook {
                 throw new IllegalValueException(JsonSerializableStudentRoster.MESSAGE_DUPLICATE_STUDENT);
             }
             addressBook.addStudent(student);
+            for (SessionNote note : jsonAdaptedStudent.toModelSessionHistory().getNotes()) {
+                addressBook.addSessionNote(student.getId(), note);
+            }
         }
         return addressBook;
     }
