@@ -8,7 +8,6 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 
 | Decision | Options | Current Lean | Why |
 | --- | --- | --- | --- |
-| Session-note timestamp source | System timestamp; tutor-entered date; both | System timestamp unless requirements change | Chronological history needs a deterministic ordering source. |
 
 ## Settled Decisions
 
@@ -21,6 +20,7 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Parent or guardian contact | A Student has a required phone number and optional email address for the responsible adult. | 2026-10-02 | n/a |
 | Student internal identity | Each Student has an immutable UUID-backed `StudentId`; legacy records without an ID derive one deterministically from their normalized duplicate identity. | 2026-10-03 | [ADR 0002](adr/0002-stable-student-identifiers.md) |
 | Student roster projection | `Model#getStudentRoster()` returns immutable `StudentRosterEntry` snapshots ordered by normalized name, normalized parent or guardian phone number, and stable student ID, with one-based display indices and note counts supplied by the owning session context. | 2026-10-03 | [ADR 0003](adr/0003-student-roster-snapshots.md) |
+| Session-note timestamp | A `SessionNote` records the system date-time with its time-zone offset as an `OffsetDateTime`; `SessionHistory` orders notes newest first by instant and keeps insertion order for equal instants. | 2026-10-05 | n/a |
 
 ## Pressure Points
 
