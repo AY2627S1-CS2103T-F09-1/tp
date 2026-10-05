@@ -89,9 +89,26 @@ Examples:
 
 Lists all students in normalized alphabetical order and reports how many students are in the roster. When the roster is empty, TutorTrack reports that there are no students and suggests using the `add` command.
 
-Each student card shows the roster index, student name, subject, current academic level, and number of session notes. The current student-only implementation displays zero session notes for newly added students; session-note counts will be populated when session-note integration is implemented. The roster can be scrolled when it contains more students than fit in the window.
+Each student card shows the roster index, student name, subject, current academic level, and number of session notes. The roster can be scrolled when it contains more students than fit in the window.
 
 Format: `list`
+
+### Adding a session note: `note`
+
+Adds a short note about a lesson to a student, such as what was covered, where the student struggled, or what to do next time. TutorTrack records the current date and time with the note and adds one to the student's session-note count in the roster.
+
+Format: `note INDEX nt/NOTE`
+
+* `INDEX` is the student's number in the roster shown by `list`. It must be a positive whole number, such as 1, 2, or 3.
+* `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed.
+* Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
+* You can add the same note text more than once, because each note records a separate lesson.
+
+Examples:
+* `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.`
+* `note 3 nt/Completed past-year paper 2 (scored 34/40).`
+
+If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note.
 
 ### Editing a person: `edit`
 
@@ -158,7 +175,7 @@ AddressBook automatically saves data after every command. You do not need to sav
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Student records include an internal `studentId` that should be preserved when manually editing the data file. Advanced users are welcome to update data directly by editing that data file.
+AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Student records include an internal `studentId` that should be preserved when manually editing the data file. Each student's session notes are stored in that student's `sessionNotes` list, and each note has a `recordedAt` date and time with a time-zone offset, such as `2026-09-18T18:35:00+08:00`, and its `text`. A `recordedAt` without the offset (for example `2026-09-18T18:35:00`) makes the data file invalid. Advanced users are welcome to update data directly by editing that data file.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
@@ -195,4 +212,5 @@ Action | Format, Examples
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
+**Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`
 **Help** | `help`

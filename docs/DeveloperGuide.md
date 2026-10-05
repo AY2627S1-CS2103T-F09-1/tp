@@ -177,7 +177,7 @@ The `list` command parses only the exact command word and obtains a fresh roster
 
 ### Roster listing integration
 
-`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the empty persisted-roster path and the roster projection's note-count input. Newly added students report zero notes; `ModelManagerTest` covers non-zero counts from recorded session notes.
+`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the empty persisted-roster path and the roster projection's note-count input. Newly added students report zero notes; `ModelManagerTest` covers non-zero counts from recorded session notes, and `SessionNoteIntegrationTest` checks that notes added with `note` are saved, reloaded, and counted.
 
 ### Session note types
 
@@ -212,6 +212,14 @@ Notes are nested in the student record so that the data file stays easy to read 
 `JsonAdaptedSessionNote` writes `recordedAt` with `DateTimeFormatter.ISO_OFFSET_DATE_TIME`, which always includes seconds; `OffsetDateTime#toString()` would leave out seconds that are zero. Loading rebuilds each note through `SessionNote`, so persisted notes follow the same validation as notes entered through the app. Notes with equal timestamps keep their saved order, and notes in a hand-edited file are sorted newest first when loaded.
 
 A student record without a `sessionNotes` field loads with an empty history, so data files saved before session notes existed remain loadable. A missing `recordedAt` or `text`, a timestamp without an offset (such as `2026-09-18T18:35:00`), invalid note text, or an empty list entry is a load error, which follows the same recovery path as an invalid student field.
+
+### Session note command
+
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing or invalid index is reported as an invalid command format, as `DeleteCommandParser` does, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
+
+`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that `list` and the roster panel show, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
+
+`NoteCommand#toString` omits the note text, because notes may contain private lesson details.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -643,6 +651,22 @@ testers are expected to do more *exploratory* testing.
       Expected: The roster remains usable through the list's vertical scrolling.
    3. Add another student and enter `list` again.
       Expected: The displayed roster refreshes and indices match the new alphabetical order.
+
+### Adding a session note
+
+1. Prerequisites: add at least two students and enter `list`.
+1. Enter `note 1 nt/Reviewed factorisation.`
+   Expected: TutorTrack reports `Added session note for <name of student 1>.` and that student's session-note count increases by one.
+1. Close and relaunch TutorTrack, then enter `list`.
+   Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
+1. Enter `note 1 nt/Next: 3 sub/topics`.
+   Expected: The note is added with `sub/topics` as part of its text.
+1. Enter each of `note`, `note 1`, `note 0 nt/text`, `note x nt/text`, and `note 1 2 nt/text`.
+   Expected: Each shows an invalid command format error, and no note count changes.
+1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
+   Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
+1. Enter `note N nt/text`, where `N` is one more than the number of students.
+   Expected: TutorTrack reports that the student index is invalid, and no note count changes.
 
 ### Deleting a person
 
