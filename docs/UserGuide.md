@@ -173,6 +173,8 @@ Format: `exit`
 
 AddressBook automatically saves data after every command. You do not need to save manually.
 
+If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster and session notes stay as they were before the command.
+
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Student records include an internal `studentId` that should be preserved when manually editing the data file. Each student's session notes are stored in that student's `sessionNotes` list, and each note has a `recordedAt` date and time with a time-zone offset, such as `2026-09-18T18:35:00+08:00`, and its `text`. A `recordedAt` without the offset (for example `2026-09-18T18:35:00`) makes the data file invalid. Advanced users are welcome to update data directly by editing that data file.
