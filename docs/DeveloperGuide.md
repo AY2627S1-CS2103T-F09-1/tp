@@ -105,7 +105,8 @@ How the `Logic` component works:
 2. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 3. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-4. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+4. `LogicManager` saves the address book. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
+5. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -220,6 +221,23 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that `list` and the roster panel show, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
 `NoteCommand#toString` omits the note text, because notes may contain private lesson details.
+
+### Save-failure rollback
+
+A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command, `LogicManager#execute` copies the address book with `new AddressBook(model.getAddressBook())`. If `Storage#saveAddressBook` then throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws the same `CommandException` as before.
+
+The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
+
+**Design considerations:**
+
+* **Alternative 1 (current choice):** `LogicManager` copies the address book before every command and restores it when saving fails.
+  * Pros: Covers every command, including future ones, in one place.
+  * Cons: Copies the address book even for commands that do not change it.
+* **Alternative 2:** Each command undoes its own changes when saving fails.
+  * Pros: Copies nothing for commands that do not change data.
+  * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
+
+Restoring the model does not protect the data file from a write that fails partway through, which could leave the file incomplete.
 
 ### \[Proposed\] Undo/redo feature
 
