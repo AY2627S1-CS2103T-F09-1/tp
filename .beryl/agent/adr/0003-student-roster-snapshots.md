@@ -18,3 +18,4 @@ Expose `Model#getStudentRoster()` as an immutable `StudentRoster` snapshot. Each
 * Sorting changes display indices without changing student identity.
 * Session-note code remains responsible for calculating note counts.
 * The current student-only implementation reports zero note counts until session history is integrated.
+* Update (2026-10-05): session history is now integrated, and `Model#getStudentRoster()` supplies each student's note count from their session history.

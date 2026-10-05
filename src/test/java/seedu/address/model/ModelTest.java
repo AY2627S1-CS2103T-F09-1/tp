@@ -2,6 +2,8 @@ package seedu.address.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalSessionNotes.ALEX;
+import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,35 @@ public class ModelTest {
                 .map(entry -> entry.getStudentId()).toList());
         assertEquals(0, roster.getEntries().get(0).getNoteCount());
         assertThrows(UnsupportedOperationException.class, () -> roster.getEntries().clear());
+    }
+
+    @Test
+    public void defaultGetStudentRoster_withSessionNotes_reportsNoteCounts() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        Model model = new ModelStub(addressBook);
+
+        assertEquals(1, model.getStudentRoster().getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void defaultGetSessionHistory_returnsHistoryFromAddressBook() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        Model model = new ModelStub(addressBook);
+
+        assertEquals(List.of(INDICES_NOTE), model.getSessionHistory(ALEX.getId()).getNotes());
+    }
+
+    @Test
+    public void defaultSessionNoteMutations_throwUnsupportedOperationException() {
+        Model model = new ModelStub(new AddressBook());
+
+        assertThrows(UnsupportedOperationException.class, () -> model.addSessionNote(ALEX.getId(),
+                "Reviewed indices."));
+        assertThrows(UnsupportedOperationException.class, () -> model.removeSessionHistory(ALEX.getId()));
     }
 
     private static class ModelStub implements Model {

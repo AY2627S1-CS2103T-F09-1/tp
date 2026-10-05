@@ -7,13 +7,20 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalSessionNotes.ALEX;
+import static seedu.address.testutil.TypicalSessionNotes.BEA;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -88,6 +95,74 @@ public class ModelManagerTest {
         assertEquals(List.of(student.getId()), modelManager.getStudentRoster().getEntries().stream()
                 .map(entry -> entry.getStudentId()).toList());
         assertThrows(UnsupportedOperationException.class, () -> modelManager.getStudentRoster().getEntries().clear());
+    }
+
+    @Test
+    public void constructor_nullClock_throwsNullPointerException() {
+        AddressBook addressBook = new AddressBook();
+        UserPrefs userPrefs = new UserPrefs();
+
+        assertThrows(NullPointerException.class, () -> new ModelManager(addressBook, userPrefs, null));
+    }
+
+    @Test
+    public void addSessionNote_validText_timestampsWithClockToWholeSeconds() {
+        Clock clock = Clock.fixed(Instant.parse("2026-09-18T10:35:00.123456Z"), ZoneOffset.ofHours(8));
+        ModelManager model = new ModelManager(new AddressBook(), new UserPrefs(), clock);
+        model.addStudent(ALEX);
+
+        SessionNote note = model.addSessionNote(ALEX.getId(), "  Reviewed factorisation.  ");
+
+        assertEquals("Reviewed factorisation.", note.getText());
+        assertEquals(OffsetDateTime.parse("2026-09-18T18:35:00+08:00"), note.getRecordedAt());
+        assertEquals(List.of(note), model.getSessionHistory(ALEX.getId()).getNotes());
+    }
+
+    @Test
+    public void addSessionNote_invalidText_throwsIllegalArgumentExceptionAndKeepsHistory() {
+        modelManager.addStudent(ALEX);
+
+        assertThrows(IllegalArgumentException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> modelManager
+                .addSessionNote(ALEX.getId(), "Line one\nLine two"));
+        assertTrue(modelManager.getSessionHistory(ALEX.getId()).isEmpty());
+    }
+
+    @Test
+    public void addSessionNote_studentNotInRoster_throwsIllegalArgumentException() {
+        modelManager.addStudent(ALEX);
+
+        assertThrows(IllegalArgumentException.class, () -> modelManager.addSessionNote(BEA.getId(),
+                "Reviewed factorisation."));
+    }
+
+    @Test
+    public void addSessionNote_nullArguments_throwsNullPointerException() {
+        String text = "Reviewed indices.";
+
+        assertThrows(NullPointerException.class, () -> modelManager.addSessionNote(null, text));
+        assertThrows(NullPointerException.class, () -> modelManager.addSessionNote(ALEX.getId(), null));
+    }
+
+    @Test
+    public void getStudentRoster_withSessionNotes_reportsNoteCounts() {
+        modelManager.addStudent(ALEX);
+        modelManager.addStudent(BEA);
+        modelManager.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        modelManager.addSessionNote(ALEX.getId(), "Reviewed factorisation.");
+
+        List<Integer> noteCounts = modelManager.getStudentRoster().getEntries().stream()
+                .map(entry -> entry.getNoteCount()).toList();
+
+        assertEquals(List.of(2, 0), noteCounts);
+    }
+
+    @Test
+    public void removeSessionHistory_studentWithNotes_returnsCountAndResetsRosterCount() {
+        modelManager.addStudent(ALEX);
+        modelManager.addSessionNote(ALEX.getId(), "Reviewed indices.");
+
+        assertEquals(1, modelManager.removeSessionHistory(ALEX.getId()));
+        assertEquals(0, modelManager.getStudentRoster().getEntries().get(0).getNoteCount());
     }
 
     @Test
