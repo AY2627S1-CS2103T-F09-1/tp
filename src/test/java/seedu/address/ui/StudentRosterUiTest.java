@@ -146,6 +146,75 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void profilePanel_initially_showsEmptyState() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+        StackPane root = (StackPane) panel.getRoot();
+        VBox emptyState = (VBox) root.getChildren().get(0);
+        VBox profileContent = (VBox) root.getChildren().get(1);
+
+        assertTrue(emptyState.isVisible());
+        assertTrue(emptyState.isManaged());
+        assertFalse(profileContent.isVisible());
+        assertFalse(profileContent.isManaged());
+    }
+
+    @Test
+    public void setProfile_populatedProfile_displaysContactAndContext() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+        StudentProfile profile = profile("alex.parent@example.com");
+
+        onFxThread(() -> {
+            panel.setProfile(profile);
+            return null;
+        });
+
+        VBox profileContent = getProfileContent(panel);
+        GridPane details = (GridPane) profileContent.getChildren().get(1);
+        assertEquals("Alex Tan", ((Label) profileContent.getChildren().get(0)).getText());
+        assertEquals("9123 4567", ((Label) details.getChildren().get(1)).getText());
+        assertEquals("alex.parent@example.com", ((Label) details.getChildren().get(3)).getText());
+        assertEquals("Mathematics", ((Label) details.getChildren().get(5)).getText());
+        assertEquals("Secondary 3", ((Label) details.getChildren().get(7)).getText());
+        assertTrue(profileContent.isVisible());
+        assertFalse(((VBox) ((StackPane) panel.getRoot()).getChildren().get(0)).isVisible());
+    }
+
+    @Test
+    public void setProfile_missingEmail_displaysFallback() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null));
+            return null;
+        });
+
+        GridPane details = (GridPane) getProfileContent(panel).getChildren().get(1);
+        assertEquals("Not provided", ((Label) details.getChildren().get(3)).getText());
+    }
+
+    @Test
+    public void setProfile_nullProfile_throwsNullPointerException() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        assertThrows(NullPointerException.class, () -> panel.setProfile(null));
+    }
+
+    @Test
+    public void clearProfile_populatedPanel_restoresEmptyState() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null));
+            panel.clearProfile();
+            return null;
+        });
+
+        StackPane root = (StackPane) panel.getRoot();
+        assertTrue(root.getChildren().get(0).isVisible());
+        assertFalse(root.getChildren().get(1).isVisible());
+    }
+
+    @Test
     public void executeCommand_successfulCommand_refreshesRoster() throws Exception {
         StudentRoster initialRoster = new StudentRoster(List.of());
         StudentRoster refreshedRoster = new StudentRoster(List.of(student("Alex Tan")));
@@ -158,6 +227,27 @@ public class StudentRosterUiTest {
             assertEquals(refreshedRoster.getEntries(), getListView(mainWindow.getStudentRosterPanel()).getItems());
             return null;
         });
+    }
+
+    @Test
+    public void executeCommand_viewResult_displaysRequestedProfile() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        StudentProfile profile = profile("alex.parent@example.com");
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            assertEquals("Alex Tan", ((Label) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            return null;
+        });
+    }
+
+    private VBox getProfileContent(StudentProfilePanel panel) {
+        return (VBox) ((StackPane) panel.getRoot()).getChildren().get(1);
     }
 
     @SuppressWarnings("unchecked")
@@ -174,6 +264,12 @@ public class StudentRosterUiTest {
     private Student student(String name) {
         return new Student(new StudentName(name), new ParentGuardianContact("9123 4567", Optional.empty()),
                 new Subject("Mathematics"), new CurrentLevel("Secondary 3"), ALEX_ID);
+    }
+
+    private StudentProfile profile(String email) {
+        ParentGuardianContact contact = new ParentGuardianContact("9123 4567", Optional.ofNullable(email));
+        return new StudentProfile(ALEX_ID, new StudentName("Alex Tan"), contact, new Subject("Mathematics"),
+                new CurrentLevel("Secondary 3"), List.of());
     }
 
     private void updateCell(ListCell<StudentRosterEntry> cell, StudentRosterEntry entry, boolean isEmpty) {
@@ -194,17 +290,26 @@ public class StudentRosterUiTest {
 
     private static class TestLogic implements Logic {
         private final StudentRoster rosterAfterCommand;
+        private final CommandResult commandResult;
+        private final Optional<StudentProfile> profile;
         private StudentRoster roster;
 
         TestLogic(StudentRoster initialRoster, StudentRoster rosterAfterCommand) {
+            this(initialRoster, rosterAfterCommand, new CommandResult("Command executed."), Optional.empty());
+        }
+
+        TestLogic(StudentRoster initialRoster, StudentRoster rosterAfterCommand, CommandResult commandResult,
+                Optional<StudentProfile> profile) {
             roster = initialRoster;
             this.rosterAfterCommand = rosterAfterCommand;
+            this.commandResult = commandResult;
+            this.profile = profile;
         }
 
         @Override
         public CommandResult execute(String commandText) {
             roster = rosterAfterCommand;
-            return new CommandResult("Command executed.");
+            return commandResult;
         }
 
         @Override
@@ -219,7 +324,7 @@ public class StudentRosterUiTest {
 
         @Override
         public Optional<StudentProfile> getStudentProfile(StudentId studentId) {
-            return Optional.empty();
+            return profile.filter(studentProfile -> studentProfile.getStudentId().equals(studentId));
         }
 
         @Override

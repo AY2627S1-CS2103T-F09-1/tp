@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           styleClass="student-profile-panel">
+  <VBox fx:id="emptyState" alignment="CENTER" spacing="8" styleClass="profile-empty-state">
+    <Label text="No student selected" styleClass="profile-empty-title" />
+    <Label text="Use view INDEX to open a student profile." wrapText="true" />
+  </VBox>
+
+  <VBox fx:id="profileContent" spacing="18" visible="false" managed="false">
+    <Label fx:id="studentName" styleClass="profile-name" wrapText="true" />
+    <GridPane hgap="14" vgap="12">
+      <Label text="Parent/guardian phone" styleClass="profile-field-label" GridPane.columnIndex="0"
+             GridPane.rowIndex="0" />
+      <Label fx:id="parentGuardianPhone" styleClass="profile-field-value" wrapText="true"
+             GridPane.columnIndex="1" GridPane.rowIndex="0" />
+      <Label text="Parent/guardian email" styleClass="profile-field-label" GridPane.columnIndex="0"
+             GridPane.rowIndex="1" />
+      <Label fx:id="parentGuardianEmail" styleClass="profile-field-value" wrapText="true"
+             GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      <Label text="Subject" styleClass="profile-field-label" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+      <Label fx:id="subject" styleClass="profile-field-value" wrapText="true"
+             GridPane.columnIndex="1" GridPane.rowIndex="2" />
+      <Label text="Current level" styleClass="profile-field-label" GridPane.columnIndex="0"
+             GridPane.rowIndex="3" />
+      <Label fx:id="currentLevel" styleClass="profile-field-value" wrapText="true"
+             GridPane.columnIndex="1" GridPane.rowIndex="3" />
+    </GridPane>
+    <padding>
+      <Insets top="20" right="20" bottom="20" left="20" />
+    </padding>
+  </VBox>
+</StackPane>

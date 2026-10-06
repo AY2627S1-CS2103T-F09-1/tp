@@ -110,6 +110,19 @@ Examples:
 
 If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note.
 
+### Viewing a student profile: `view`
+
+Displays one student's profile beside the roster. The profile shows the student's name, parent or guardian phone and email, subject, and current academic level. If no email was recorded, TutorTrack displays `Not provided`.
+
+Format: `view INDEX`
+
+* `INDEX` is the student's number in the roster shown by `list`.
+* `INDEX` must be a positive whole number and must refer to a student currently in the roster.
+
+Example: `view 2`
+
+If the index is missing, invalid, or larger than the number of students in the roster, TutorTrack shows an error and keeps the current display unchanged.
+
 ### Editing a person: `edit`
 
 Edits an existing person in the address book.
@@ -215,4 +228,5 @@ Action | Format, Examples
 **Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
 **Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`
+**View** | `view INDEX`<br> e.g., `view 2`
 **Help** | `help`
