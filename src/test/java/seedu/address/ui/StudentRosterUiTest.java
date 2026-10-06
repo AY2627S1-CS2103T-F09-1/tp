@@ -31,6 +31,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.model.person.Person;
+import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -214,6 +215,11 @@ public class StudentRosterUiTest {
         @Override
         public StudentRoster getStudentRoster() {
             return roster;
+        }
+
+        @Override
+        public Optional<StudentProfile> getStudentProfile(StudentId studentId) {
+            return Optional.empty();
         }
 
         @Override
