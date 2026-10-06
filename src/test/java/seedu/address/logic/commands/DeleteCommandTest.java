@@ -30,8 +30,21 @@ public class DeleteCommandTest {
     public void execute_validIndex_deletesStudentFromSortedRoster() {
         DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
 
-        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName());
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName(), 0);
 
+        ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.deleteStudent(ALEX.getId());
+
+        assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_studentWithNotes_reportsNameAndRemovedNoteCount() {
+        model.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        model.addSessionNote(ALEX.getId(), "Reviewed factorisation.");
+        DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
+
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName(), 2);
         ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         expectedModel.deleteStudent(ALEX.getId());
 
