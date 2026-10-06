@@ -372,21 +372,24 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void executeCommand_studentRemoved_clearsOpenProfile() throws Exception {
-        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
-        TestLogic logic = new TestLogic(roster, roster,
+    public void executeCommand_deleteDisplayedStudent_clearsOpenProfile() throws Exception {
+        StudentRoster initialRoster = new StudentRoster(List.of(student("Alex Tan")));
+        StudentRoster emptyRoster = new StudentRoster(List.of());
+        TestLogic logic = new TestLogic(initialRoster, emptyRoster,
                 new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
 
         onFxThread(() -> {
             MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
             mainWindow.fillInnerParts();
             mainWindow.executeCommand("view 1");
-            logic.setCommandResult(new CommandResult("Deleted student: Alex Tan."));
+            logic.setCommandResult(new CommandResult(
+                    "Deleted student: Alex Tan. Session notes removed: 0."));
             logic.setProfile(Optional.empty());
             mainWindow.executeCommand("delete 1");
             StackPane root = (StackPane) mainWindow.getStudentProfilePanel().getRoot();
             assertTrue(root.getChildren().get(0).isVisible());
             assertFalse(root.getChildren().get(1).isVisible());
+            assertTrue(getListView(mainWindow.getStudentRosterPanel()).getItems().isEmpty());
             return null;
         });
     }
