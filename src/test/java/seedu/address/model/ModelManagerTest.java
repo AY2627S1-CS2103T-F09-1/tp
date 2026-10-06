@@ -197,6 +197,18 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void deleteStudent_studentWithNotes_removesStudentAndReturnsNoteCount() {
+        modelManager.addStudent(ALEX);
+        modelManager.addStudent(BEA);
+        modelManager.addSessionNote(ALEX.getId(), "Reviewed indices.");
+
+        assertEquals(1, modelManager.deleteStudent(ALEX.getId()));
+        assertEquals(List.of(BEA.getId()), modelManager.getStudentRoster().getEntries().stream()
+                .map(entry -> entry.getStudentId()).toList());
+        assertTrue(modelManager.getSessionHistory(ALEX.getId()).isEmpty());
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();

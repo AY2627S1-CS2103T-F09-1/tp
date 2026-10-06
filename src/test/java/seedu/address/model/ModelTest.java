@@ -67,6 +67,7 @@ public class ModelTest {
         assertThrows(UnsupportedOperationException.class, () -> model.addSessionNote(ALEX.getId(),
                 "Reviewed indices."));
         assertThrows(UnsupportedOperationException.class, () -> model.removeSessionHistory(ALEX.getId()));
+        assertThrows(UnsupportedOperationException.class, () -> model.deleteStudent(ALEX.getId()));
     }
 
     private static class ModelStub implements Model {
