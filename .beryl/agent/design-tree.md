@@ -22,6 +22,7 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Student roster projection | `Model#getStudentRoster()` returns immutable `StudentRosterEntry` snapshots ordered by normalized name, normalized parent or guardian phone number, and stable student ID, with one-based display indices and note counts supplied by the owning session context. | 2026-10-03 | [ADR 0003](adr/0003-student-roster-snapshots.md) |
 | Session-note timestamp | A `SessionNote` records the system date-time with its time-zone offset as an `OffsetDateTime`; `SessionHistory` orders notes newest first by instant and keeps insertion order for equal instants. | 2026-10-05 | n/a |
 | Save-failure rollback | `LogicManager` copies the address book before each command and restores it when saving fails, so a failed save leaves the model unchanged for every command. | 2026-10-05 | n/a |
+| Student profile projection | `Model#getStudentProfile(StudentId)` returns an optional immutable `StudentProfile` snapshot; an absent ID returns an empty optional so UI state can recover safely after deletion. | 2026-10-06 | n/a |
 
 ## Pressure Points
 

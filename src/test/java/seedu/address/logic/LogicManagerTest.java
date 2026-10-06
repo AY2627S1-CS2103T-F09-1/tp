@@ -137,6 +137,13 @@ public class LogicManagerTest {
         assertEquals(model.getStudentRoster().getEntries(), logic.getStudentRoster().getEntries());
     }
 
+    @Test
+    public void getStudentProfile_returnsModelProfile() {
+        model.addStudent(ALEX);
+
+        assertEquals(model.getStudentProfile(ALEX.getId()), logic.getStudentProfile(ALEX.getId()));
+    }
+
     /**
      * Executes the command and confirms that
      * - no exceptions are thrown <br>

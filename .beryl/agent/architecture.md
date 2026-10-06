@@ -9,7 +9,7 @@ The current codebase is AddressBook Level 3: a Java 25 Gradle/JavaFX desktop app
 | Context | Owns | Does Not Own | Public Entry Point |
 | --- | --- | --- | --- |
 | Student roster | Student records and roster operations. | UI controls, file formats, session-note rendering. | A small model-facing roster API. |
-| Student profile and sessions | Profile composition and a student's chronological session notes. | Cross-student queries and storage implementation. | `Model#addSessionNote`, `Model#getSessionHistory`, and `Model#removeSessionHistory`. |
+| Student profile and sessions | Profile composition and a student's chronological session notes. | Cross-student queries and storage implementation. | `Model#getStudentProfile`, `Model#addSessionNote`, `Model#getSessionHistory`, and `Model#removeSessionHistory`. |
 | Persistence | Serialisation, loading, saving, and migration of local data. | Domain validation or JavaFX state. | Storage interface/manager. |
 | JavaFX UI | Roster and profile presentation plus user input. | Domain rules and serialisation. | Existing UI/controller boundary. |
 

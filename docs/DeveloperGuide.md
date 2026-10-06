@@ -200,6 +200,10 @@ The `Model` API offers three session-note operations:
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
 * `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed, which the delete feature reports.
 
+### Student profile projection
+
+`Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. `Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
+
 ### Session note persistence
 
 Each student's session notes are saved inside that student's JSON record as a `sessionNotes` list, newest first:

@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
@@ -15,6 +16,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.profile.StudentProfile;
+import seedu.address.model.student.StudentId;
 import seedu.address.model.student.StudentRoster;
 import seedu.address.storage.Storage;
 
@@ -84,6 +87,11 @@ public class LogicManager implements Logic {
     @Override
     public StudentRoster getStudentRoster() {
         return model.getStudentRoster();
+    }
+
+    @Override
+    public Optional<StudentProfile> getStudentProfile(StudentId studentId) {
+        return model.getStudentProfile(studentId);
     }
 
     @Override
