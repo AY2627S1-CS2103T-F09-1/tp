@@ -97,6 +97,8 @@ Format: `list`
 
 Adds a short note about a lesson to a student, such as what was covered, where the student struggled, or what to do next time. TutorTrack records the current date and time with the note and adds one to the student's session-note count in the roster.
 
+If that student's profile is open, the new note appears there immediately after the command succeeds.
+
 Format: `note INDEX nt/NOTE`
 
 * `INDEX` is the student's number in the roster shown by `list`. It must be a positive whole number, such as 1, 2, or 3.
@@ -112,7 +114,9 @@ If the index is missing, not a positive whole number, or larger than the number 
 
 ### Viewing a student profile: `view`
 
-Displays one student's profile beside the roster. The profile shows the student's name, parent or guardian phone and email, subject, and current academic level. If no email was recorded, TutorTrack displays `Not provided`.
+Displays one student's profile beside the roster. The profile shows the student's name, parent or guardian phone and email, subject, current academic level, and session notes. If no email was recorded, TutorTrack displays `Not provided`.
+
+Session notes are shown newest first with the saved date, time, and UTC offset. Long notes wrap within the panel, and the history can be scrolled. A student without notes displays `No session notes recorded.` The open profile refreshes after each successful command and closes if that student is deleted; a failed command leaves it unchanged.
 
 Format: `view INDEX`
 
