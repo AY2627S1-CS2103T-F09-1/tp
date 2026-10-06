@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -30,8 +31,10 @@ import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -202,9 +205,11 @@ public class StudentRosterUiTest {
     @Test
     public void clearProfile_populatedPanel_restoresEmptyState() throws Exception {
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+        SessionNote note = new SessionNote("Reviewed factorisation.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
 
         onFxThread(() -> {
-            panel.setProfile(profile(null));
+            panel.setProfile(profile(null, List.of(note)));
             panel.clearProfile();
             return null;
         });
@@ -212,6 +217,85 @@ public class StudentRosterUiTest {
         StackPane root = (StackPane) panel.getRoot();
         assertTrue(root.getChildren().get(0).isVisible());
         assertFalse(root.getChildren().get(1).isVisible());
+        assertTrue(getSessionNoteListView(panel).getItems().isEmpty());
+    }
+
+    @Test
+    public void setProfile_sessionNotes_preservesNewestFirstOrderAndHidesEmptyMessage() throws Exception {
+        SessionNote newestNote = new SessionNote("Plan next lesson.",
+                OffsetDateTime.parse("2026-09-19T09:10:00+08:00"));
+        SessionNote olderNote = new SessionNote("Reviewed factorisation.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null, List.of(newestNote, olderNote)));
+            return null;
+        });
+
+        ListView<SessionNote> listView = getSessionNoteListView(panel);
+        assertEquals(List.of(newestNote, olderNote), listView.getItems());
+        assertFalse(getEmptyNotesMessage(panel).isVisible());
+        assertFalse(getEmptyNotesMessage(panel).isManaged());
+    }
+
+    @Test
+    public void setProfile_emptyHistory_showsEmptyNotesMessage() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null));
+            return null;
+        });
+
+        assertTrue(getSessionNoteListView(panel).getItems().isEmpty());
+        assertEquals("No session notes recorded.", getEmptyNotesMessage(panel).getText());
+        assertTrue(getEmptyNotesMessage(panel).isVisible());
+        assertTrue(getEmptyNotesMessage(panel).isManaged());
+    }
+
+    @Test
+    public void sessionNoteCard_note_displaysFriendlyOffsetTimestampAndWrappedText() throws Exception {
+        SessionNote note = new SessionNote("A long note that should wrap instead of widening the profile panel.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+
+        VBox card = (VBox) onFxThread(() -> new SessionNoteCard(note).getRoot());
+
+        assertEquals("18 Sep 2026, 6:35 PM (UTC+08:00)", ((Label) card.getChildren().get(0)).getText());
+        assertEquals(note.getText(), ((Label) card.getChildren().get(1)).getText());
+        assertTrue(((Label) card.getChildren().get(1)).isWrapText());
+        assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-09-18T10:35:00Z")));
+        assertThrows(NullPointerException.class, () -> SessionNoteCard.formatRecordedAt(null));
+    }
+
+    @Test
+    public void sessionNoteListCell_populatedAndEmptyNotes_updateGraphic() throws Exception {
+        SessionNote note = new SessionNote("Reviewed indices.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+        ListView<SessionNote> listView = getSessionNoteListView(panel);
+        ListCell<SessionNote> cell = onFxThread(() -> listView.getCellFactory().call(listView));
+
+        onFxThread(() -> {
+            updateNoteCell(cell, note, false);
+            return null;
+        });
+        assertTrue(cell.getGraphic() instanceof VBox);
+
+        onFxThread(() -> {
+            updateNoteCell(cell, null, false);
+            return null;
+        });
+        assertNull(cell.getGraphic());
+        assertNull(cell.getText());
+
+        onFxThread(() -> {
+            updateNoteCell(cell, null, true);
+            return null;
+        });
+        assertNull(cell.getGraphic());
+        assertNull(cell.getText());
     }
 
     @Test
@@ -246,8 +330,80 @@ public class StudentRosterUiTest {
         });
     }
 
+    @Test
+    public void executeCommand_successAfterView_refreshesOpenProfile() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+        SessionNote addedNote = new SessionNote("Reviewed indices.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Added session note for Alex Tan."));
+            logic.setProfile(Optional.of(profile(null, List.of(addedNote))));
+            mainWindow.executeCommand("note 1 nt/Reviewed indices.");
+            assertEquals(List.of(addedNote), getSessionNoteListView(mainWindow.getStudentProfilePanel()).getItems());
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_failedAfterView_leavesOpenProfileUnchanged() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+        SessionNote unseenNote = new SessionNote("Must not be displayed.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setProfile(Optional.of(profile(null, List.of(unseenNote))));
+            logic.setCommandFailure(new CommandException("Unable to add note."));
+            assertThrows(CommandException.class, () ->
+                    mainWindow.executeCommand("note 1 nt/Must not be displayed."));
+            assertTrue(getSessionNoteListView(mainWindow.getStudentProfilePanel()).getItems().isEmpty());
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_studentRemoved_clearsOpenProfile() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Deleted student: Alex Tan."));
+            logic.setProfile(Optional.empty());
+            mainWindow.executeCommand("delete 1");
+            StackPane root = (StackPane) mainWindow.getStudentProfilePanel().getRoot();
+            assertTrue(root.getChildren().get(0).isVisible());
+            assertFalse(root.getChildren().get(1).isVisible());
+            return null;
+        });
+    }
+
     private VBox getProfileContent(StudentProfilePanel panel) {
         return (VBox) ((StackPane) panel.getRoot()).getChildren().get(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ListView<SessionNote> getSessionNoteListView(StudentProfilePanel panel) {
+        StackPane notesContainer = (StackPane) getProfileContent(panel).getChildren().get(3);
+        return (ListView<SessionNote>) notesContainer.getChildren().get(0);
+    }
+
+    private Label getEmptyNotesMessage(StudentProfilePanel panel) {
+        StackPane notesContainer = (StackPane) getProfileContent(panel).getChildren().get(3);
+        return (Label) notesContainer.getChildren().get(1);
     }
 
     @SuppressWarnings("unchecked")
@@ -267,15 +423,25 @@ public class StudentRosterUiTest {
     }
 
     private StudentProfile profile(String email) {
+        return profile(email, List.of());
+    }
+
+    private StudentProfile profile(String email, List<SessionNote> sessionNotes) {
         ParentGuardianContact contact = new ParentGuardianContact("9123 4567", Optional.ofNullable(email));
         return new StudentProfile(ALEX_ID, new StudentName("Alex Tan"), contact, new Subject("Mathematics"),
-                new CurrentLevel("Secondary 3"), List.of());
+                new CurrentLevel("Secondary 3"), sessionNotes);
     }
 
     private void updateCell(ListCell<StudentRosterEntry> cell, StudentRosterEntry entry, boolean isEmpty) {
         StudentRosterPanel.StudentRosterListViewCell rosterCell =
                 (StudentRosterPanel.StudentRosterListViewCell) cell;
         rosterCell.updateItem(entry, isEmpty);
+    }
+
+    private void updateNoteCell(ListCell<SessionNote> cell, SessionNote sessionNote, boolean isEmpty) {
+        StudentProfilePanel.SessionNoteListViewCell noteCell =
+                (StudentProfilePanel.SessionNoteListViewCell) cell;
+        noteCell.updateItem(sessionNote, isEmpty);
     }
 
     private <T> T onFxThread(ThrowingSupplier<T> supplier) throws Exception {
@@ -290,8 +456,9 @@ public class StudentRosterUiTest {
 
     private static class TestLogic implements Logic {
         private final StudentRoster rosterAfterCommand;
-        private final CommandResult commandResult;
-        private final Optional<StudentProfile> profile;
+        private CommandResult commandResult;
+        private Optional<StudentProfile> profile;
+        private CommandException commandFailure;
         private StudentRoster roster;
 
         TestLogic(StudentRoster initialRoster, StudentRoster rosterAfterCommand) {
@@ -307,9 +474,24 @@ public class StudentRosterUiTest {
         }
 
         @Override
-        public CommandResult execute(String commandText) {
+        public CommandResult execute(String commandText) throws CommandException {
+            if (commandFailure != null) {
+                throw commandFailure;
+            }
             roster = rosterAfterCommand;
             return commandResult;
+        }
+
+        void setCommandResult(CommandResult commandResult) {
+            this.commandResult = commandResult;
+        }
+
+        void setProfile(Optional<StudentProfile> profile) {
+            this.profile = profile;
+        }
+
+        void setCommandFailure(CommandException commandFailure) {
+            this.commandFailure = commandFailure;
         }
 
         @Override

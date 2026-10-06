@@ -169,6 +169,41 @@
     -fx-text-fill: white;
 }
 
+.profile-section-heading {
+    -fx-font-size: 18px;
+    -fx-text-fill: white;
+}
+
+.session-note-list {
+    -fx-background-color: transparent;
+}
+
+.session-note-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 8px 0;
+}
+
+.session-note-card {
+    -fx-background-color: derive(#1d1d1d, 28%);
+    -fx-background-radius: 4px;
+}
+
+.session-note-timestamp {
+    -fx-font-size: 12px;
+    -fx-text-fill: #b7c4cc;
+}
+
+.session-note-text {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-text-fill: white;
+}
+
+.empty-notes-message {
+    -fx-padding: 18px;
+    -fx-text-fill: #d8d8d8;
+}
+
 .stack-pane {
      -fx-background-color: derive(#1d1d1d, 20%);
 }
