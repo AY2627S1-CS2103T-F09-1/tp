@@ -103,7 +103,7 @@ How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 2. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-3. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
+3. The command can communicate with the `Model` when it is executed (e.g. to resolve the sorted roster and delete a student by stable ID).
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 4. `LogicManager` saves the address book. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
 5. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
@@ -198,7 +198,9 @@ The `Model` API offers three session-note operations:
 
 * `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
-* `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed, which the delete feature reports.
+* `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed.
+
+Student deletion crosses the roster and session-history contexts through one model boundary. `Model#deleteStudent(StudentId)` validates that the stable ID identifies a roster student, then removes the student and session history together and returns the removed-note count. Keeping this coordination inside the model prevents commands from leaving an orphaned student or history if validation fails.
 
 ### Student profile projection
 
@@ -229,6 +231,14 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that `list` and the roster panel show, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
 `NoteCommand#toString` omits the note text, because notes may contain private lesson details.
+
+### Student deletion
+
+`delete INDEX` is parsed by `DeleteCommandParser`, which accepts exactly one positive whole-number index. `DeleteCommand#execute` resolves that index against `Model#getStudentRoster()`, the same sorted snapshot displayed by `list`, and reports the student-specific invalid-index error before mutation when the index is outside the roster.
+
+The command passes the selected entry's stable `StudentId` to `Model#deleteStudent`, which removes the student and session history atomically and returns the number of notes removed. The command result reports the student's name and note count. `LogicManager` then saves the complete address book; its existing rollback restores both records if saving fails.
+
+After a successful command, `MainWindow` requests a fresh roster snapshot, so the remaining students receive consecutive one-based indices. It also refreshes the displayed profile by stable ID; if the deleted student was open, the absent profile causes the panel to close without UI code reaching into the model.
 
 ### Save-failure rollback
 
@@ -694,18 +704,17 @@ testers are expected to do more *exploratory* testing.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid, and no note count changes.
 
-### Deleting a person
+### Deleting a student
 
-1. Deleting a person while all persons are being shown
-
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
-   2. Test case: `delete 1`
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
-   3. Test case: `delete 0`
-      Expected: No person is deleted. The status message shows error details.
-   4. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)
-      Expected: Similar to previous.
-2. _{ more test cases … }_
+1. Add Ari Tan and Bea Tan, add two session notes to Ari, enter `list`, and open Ari's profile with `view 1`.
+1. Enter `delete 1`.
+   Expected: TutorTrack reports `Deleted student: Ari Tan. Session notes removed: 2.` Ari and the two notes are removed, Bea becomes roster index 1, and Ari's open profile closes.
+1. Close and relaunch TutorTrack, then enter `list`.
+   Expected: Ari and the notes remain absent, while Bea remains at index 1.
+1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, and `delete 1-2`.
+   Expected: Each command reports an invalid command format and leaves the roster, notes, open profile, and data file unchanged.
+1. Enter `delete N`, where `N` is one more than the number of students.
+   Expected: TutorTrack reports that the student index is invalid and makes no changes.
 
 ### Saving data
 
