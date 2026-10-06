@@ -3,8 +3,10 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.student.StudentId;
 
 /**
  * Represents the result of a command execution.
@@ -19,13 +21,21 @@ public class CommandResult {
     /** The application should exit. */
     private final boolean exit;
 
+    /** Stable ID of the student profile that should be displayed, if any. */
+    private final StudentId profileStudentId;
+
     /**
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
+        this(feedbackToUser, showHelp, exit, null);
+    }
+
+    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, StudentId profileStudentId) {
         this.feedbackToUser = requireNonNull(feedbackToUser);
         this.showHelp = showHelp;
         this.exit = exit;
+        this.profileStudentId = profileStudentId;
     }
 
     /**
@@ -34,6 +44,13 @@ public class CommandResult {
      */
     public CommandResult(String feedbackToUser) {
         this(feedbackToUser, false, false);
+    }
+
+    /**
+     * Constructs a {@code CommandResult} that requests display of one student profile.
+     */
+    public CommandResult(String feedbackToUser, StudentId profileStudentId) {
+        this(feedbackToUser, false, false, requireNonNull(profileStudentId));
     }
 
     public String getFeedbackToUser() {
@@ -46,6 +63,13 @@ public class CommandResult {
 
     public boolean isExit() {
         return exit;
+    }
+
+    /**
+     * Returns the stable ID of the student profile to display, if this result requests one.
+     */
+    public Optional<StudentId> getProfileStudentId() {
+        return Optional.ofNullable(profileStudentId);
     }
 
     @Override
@@ -61,12 +85,13 @@ public class CommandResult {
 
         return feedbackToUser.equals(otherCommandResult.feedbackToUser)
                 && showHelp == otherCommandResult.showHelp
-                && exit == otherCommandResult.exit;
+                && exit == otherCommandResult.exit
+                && Objects.equals(profileStudentId, otherCommandResult.profileStudentId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedbackToUser, showHelp, exit);
+        return Objects.hash(feedbackToUser, showHelp, exit, profileStudentId);
     }
 
     @Override
@@ -75,6 +100,7 @@ public class CommandResult {
                 .add("feedbackToUser", feedbackToUser)
                 .add("showHelp", showHelp)
                 .add("exit", exit)
+                .add("profileStudentId", profileStudentId)
                 .toString();
     }
 

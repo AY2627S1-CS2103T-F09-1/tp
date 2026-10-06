@@ -34,6 +34,7 @@ public class MainWindow extends UiPart<Stage> {
 
     // Independent Ui parts residing in this Ui container
     private StudentRosterPanel studentRosterPanel;
+    private StudentProfilePanel studentProfilePanel;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
 
@@ -45,6 +46,9 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private StackPane studentRosterPanelPlaceholder;
+
+    @FXML
+    private StackPane studentProfilePanelPlaceholder;
 
     @FXML
     private StackPane resultDisplayPlaceholder;
@@ -117,6 +121,9 @@ public class MainWindow extends UiPart<Stage> {
         studentRosterPanel = new StudentRosterPanel(logic.getStudentRoster());
         studentRosterPanelPlaceholder.getChildren().add(studentRosterPanel.getRoot());
 
+        studentProfilePanel = new StudentProfilePanel();
+        studentProfilePanelPlaceholder.getChildren().add(studentProfilePanel.getRoot());
+
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
 
@@ -171,6 +178,10 @@ public class MainWindow extends UiPart<Stage> {
         return studentRosterPanel;
     }
 
+    StudentProfilePanel getStudentProfilePanel() {
+        return studentProfilePanel;
+    }
+
     /**
      * Executes the command and returns the result.
      *
@@ -180,6 +191,8 @@ public class MainWindow extends UiPart<Stage> {
         try {
             CommandResult commandResult = logic.execute(commandText);
             studentRosterPanel.setRoster(logic.getStudentRoster());
+            commandResult.getProfileStudentId().ifPresent(studentId -> logic.getStudentProfile(studentId)
+                    .ifPresentOrElse(studentProfilePanel::setProfile, studentProfilePanel::clearProfile));
             logger.info("Result: " + commandResult.getFeedbackToUser());
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 

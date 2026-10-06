@@ -138,6 +138,37 @@
     -fx-text-fill: white;
 }
 
+.student-profile-panel {
+    -fx-background-color: derive(#1d1d1d, 20%);
+}
+
+.profile-empty-state {
+    -fx-padding: 24px;
+}
+
+.profile-empty-state .label {
+    -fx-text-fill: #d8d8d8;
+    -fx-text-alignment: center;
+}
+
+.profile-empty-title {
+    -fx-font-size: 18px;
+}
+
+.profile-name {
+    -fx-font-family: "Segoe UI Light";
+    -fx-font-size: 28px;
+    -fx-text-fill: white;
+}
+
+.profile-field-label {
+    -fx-text-fill: #b7c4cc;
+}
+
+.profile-field-value {
+    -fx-text-fill: white;
+}
+
 .stack-pane {
      -fx-background-color: derive(#1d1d1d, 20%);
 }
