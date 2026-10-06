@@ -204,7 +204,9 @@ The `Model` API offers three session-note operations:
 
 `Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. `Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
 
-The `view INDEX` command resolves the chosen roster entry to its stable `StudentId` and carries that ID in `CommandResult`. `MainWindow` then asks `Logic` for a fresh profile snapshot and passes it to `StudentProfilePanel`; the command layer does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
+The `view INDEX` command resolves the chosen roster entry to its stable `StudentId` and carries that ID in `CommandResult`. `MainWindow` retains that stable ID, asks `Logic` for a fresh profile snapshot after every successful command, and passes it to `StudentProfilePanel`; the command layer does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears the panel and discards the stale selection.
+
+`StudentProfilePanel` preserves the model's newest-first note order. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use a wrapping cell inside a `ListView`, so long text remains within the profile column and longer histories scroll.
 
 ### Session note persistence
 
