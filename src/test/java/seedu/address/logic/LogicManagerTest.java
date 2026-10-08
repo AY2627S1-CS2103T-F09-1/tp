@@ -2,7 +2,7 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
@@ -13,6 +13,7 @@ import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -65,7 +66,7 @@ public class LogicManagerTest {
     @Test
     public void execute_commandExecutionError_throwsCommandException() {
         String deleteCommand = "delete 9";
-        assertCommandException(deleteCommand, MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandException(deleteCommand, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
     }
 
     @Test
@@ -108,6 +109,25 @@ public class LogicManagerTest {
 
         assertEquals(List.of(ALEX.getId()), failingLogic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_deleteWithStorageFailure_restoresStudentAndSessionHistory() throws Exception {
+        Model studentModel = new ModelManager();
+        studentModel.addStudent(ALEX);
+        studentModel.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        Path savedFile = temporaryFolder.resolve("addressBook.json");
+        new JsonAddressBookStorage(savedFile).saveAddressBook(studentModel.getAddressBook());
+        String savedData = Files.readString(savedFile);
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
+
+        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic.execute("delete 1"));
+
+        StudentRosterEntry restoredEntry = failingLogic.getStudentRoster().getEntries().get(0);
+        assertEquals(ALEX.getId(), restoredEntry.getStudentId());
+        assertEquals(1, restoredEntry.getNoteCount());
+        assertEquals(1, studentModel.getSessionHistory(ALEX.getId()).size());
+        assertEquals(savedData, Files.readString(savedFile));
     }
 
     @Test

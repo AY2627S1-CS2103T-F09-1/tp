@@ -49,10 +49,16 @@ deactivate AddressBookParser
 LogicManager -> DeleteCommand : execute(m)
 activate DeleteCommand
 
-DeleteCommand -> Model : deletePerson(1)
+DeleteCommand -> Model : getStudentRoster()
 activate Model
 
-Model --> DeleteCommand
+Model --> DeleteCommand : roster
+deactivate Model
+
+DeleteCommand -> Model : deleteStudent(studentId)
+activate Model
+
+Model --> DeleteCommand : removedNoteCount
 deactivate Model
 
 create CommandResult

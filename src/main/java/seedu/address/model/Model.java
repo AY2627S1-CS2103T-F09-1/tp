@@ -78,6 +78,15 @@ public interface Model {
     }
 
     /**
+     * Deletes the student with {@code studentId} and that student's session history.
+     *
+     * @return The number of session notes removed with the student.
+     */
+    default int deleteStudent(StudentId studentId) {
+        throw new UnsupportedOperationException("Student deletions are not supported by this model.");
+    }
+
+    /**
      * Returns an immutable snapshot of the student roster, including each student's session-note count.
      */
     default StudentRoster getStudentRoster() {
