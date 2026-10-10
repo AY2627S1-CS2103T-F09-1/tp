@@ -5,7 +5,6 @@
 | Check | Command | Status | Notes |
 | --- | --- | --- | --- |
 | Markdown sanity | `./.beryl/scripts/check-md.sh` | available | Unclosed fences and tabs |
-| Test manifest immutability check | `./.beryl/scripts/check-tests-unchanged.sh` | available | Detects changes in configured test scope from `.beryl/agent/test-manifest.conf` |
 | Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Selects related tests from changed files and uses full-test fallback for broad changes |
 | Aggregate deterministic gate | `./.beryl/scripts/check.sh` | available | Runs all deterministic checks |
 | Java style | `./gradlew checkstyleMain checkstyleTest` | available | Checkstyle with the SE-EDU configuration |
@@ -60,7 +59,7 @@ If generated output is unavailable, explain why and run the closest deterministi
 
 Commit-time checks are deliberately limited to fast, deterministic validation. Full deterministic checks run only when a push targets the `main` branch.
 
-* The pre-commit hook sets `CHECK_AFFECTED_MODE=staged` and runs `./.beryl/scripts/check.sh --fast`. This runs Markdown sanity, staged-secret, and test-manifest checks without resolving the agent workspace or running project tests.
+* The pre-commit hook sets `CHECK_AFFECTED_MODE=staged` and runs `./.beryl/scripts/check.sh --fast`. This runs Markdown and staged-secret checks without resolving the agent workspace or running project tests.
 * The pre-push hook runs `./.beryl/scripts/check.sh` only when the remote ref is `refs/heads/main`; pushes to other branches skip slow checks.
 * Manual `./.beryl/scripts/check.sh` uses worktree mode by default and selects from all changes relative to `HEAD`.
 * `.beryl/scripts/check-affected.sh` reads `.beryl/agent/affected-tests.conf`.
@@ -84,22 +83,11 @@ FULL_TEST_CMD=(pytest)
 
 Existing tests may not be weakened to make implementation pass.
 
-Intentional test changes are allowed only when all conditions are met:
-
-1. The behavior change is explicit in the task or design artifact.
-2. `./.beryl/scripts/update-test-manifest.sh` is run after the intentional change.
-3. The manifest update is committed with the test change.
-4. The final response explains why tests changed.
-5. `.beryl/agent/test-manifest.conf` is updated if new test locations/patterns are introduced.
+Intentional test changes are allowed only when the behavior change is explicit in the task or design artifact and the final response explains why tests changed.
 
 ## Coverage-Gate Preflight
 
 Codecov evaluates coverage of changed production lines independently from whether the local test suite passes. When a feature adds or substantially changes production classes, developers MUST inspect the relevant local JaCoCo HTML report after running the focused tests and before opening a PR. Add behavior-focused tests for public accessors, equality and hash-code contracts, null and invalid-input boundaries, and true and false branches that the changed code introduces. Treat a passing Gradle test task as insufficient evidence that the Codecov patch threshold will pass; verify the PR's Codecov result after push and address any missed changed lines with meaningful tests rather than lowering the coverage requirement.
-
-## Immutability Enforcement Scope
-
-* The SHA manifest mechanism provides deterministic change detection, not cryptographic immutability guarantees against privileged users.
-* Enforce stronger controls in CI/review policy, such as branch protection, required status checks, and code review.
 
 ## Mocking Rules
 

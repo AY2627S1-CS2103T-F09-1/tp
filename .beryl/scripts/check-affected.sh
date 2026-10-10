@@ -6,8 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/paths.sh"
 # shellcheck source=safe-conf.sh
 source "${SCRIPT_DIR}/safe-conf.sh"
-# shellcheck source=test-manifest-lib.sh
-source "${SCRIPT_DIR}/test-manifest-lib.sh"
 CONFIG_PATH="${BERYL_ROOT}/agent/affected-tests.conf"
 
 fail() {
@@ -66,6 +64,16 @@ RELATED_TEST_CMD=()
 GLOBAL_CHANGE_GLOBS=()
 RELATED_CHANGE_GLOBS=()
 IGNORED_CHANGE_GLOBS=()
+
+matches_any() {
+  local path="$1"
+  shift
+  local pattern
+  for pattern in "$@"; do
+    [[ "${path}" == ${pattern} ]] && return 0
+  done
+  return 1
+}
 
 # Parsed as data, never sourced: a hostile .conf in a PR must not be able to
 # execute shell in CI or at pre-commit.
@@ -139,18 +147,18 @@ while IFS= read -r rel; do
   [[ -z "${rel}" ]] && continue
   changed_count=$((changed_count + 1))
 
-  if ((${#GLOBAL_CHANGE_GLOBS[@]} > 0)) && tm_match_any "${rel}" "${GLOBAL_CHANGE_GLOBS[@]}"; then
+  if ((${#GLOBAL_CHANGE_GLOBS[@]} > 0)) && matches_any "${rel}" "${GLOBAL_CHANGE_GLOBS[@]}"; then
     printf "check-affected: global trigger changed: %s\n" "${rel}"
     run_full_tests
     exit 0
   fi
 
-  if ((${#RELATED_CHANGE_GLOBS[@]} > 0)) && tm_match_any "${rel}" "${RELATED_CHANGE_GLOBS[@]}"; then
+  if ((${#RELATED_CHANGE_GLOBS[@]} > 0)) && matches_any "${rel}" "${RELATED_CHANGE_GLOBS[@]}"; then
     related_files+=("${rel}")
     continue
   fi
 
-  if ((${#IGNORED_CHANGE_GLOBS[@]} > 0)) && tm_match_any "${rel}" "${IGNORED_CHANGE_GLOBS[@]}"; then
+  if ((${#IGNORED_CHANGE_GLOBS[@]} > 0)) && matches_any "${rel}" "${IGNORED_CHANGE_GLOBS[@]}"; then
     continue
   fi
 done <<EOF

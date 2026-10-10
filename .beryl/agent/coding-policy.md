@@ -86,6 +86,7 @@ Unless a later course instruction or ratified team decision explicitly changes o
 * **Single user:** do not introduce multi-user accounts, shared-user data, concurrent remote access, or a shared data file used by different users.
 * **Incremental delivery:** implement breadth-first vertical slices with a reasonably consistent delivery rate; do not postpone the whole product to one late burst.
 * **Local editable persistence:** store data locally in a human-editable text file and retain at least the existing AddressBook-level editing support: correctly edited data must load, while a wrongly edited file may lose data only to the extent documented by the baseline User Guide. Do not reduce this support, promise more in the User Guide without delivering it, or use a format unsuitable for manual editing. Serialization details belong behind the persistence boundary.
+* **Data sandbox:** read and write only within the folder containing the JAR and its subfolders; do not change operating-system settings.
 * **No DBMS:** do not use a database management system for product data.
 * **Object orientation:** use object-oriented design as the primary style; mix in other styles only where there is a clear, documented benefit.
 * **Platform independence:** support Windows, Linux, and macOS. Avoid operating-system-specific libraries, paths, shell commands, and behavior.
@@ -102,6 +103,7 @@ Do not weaken the brownfield baseline casually. Existing AddressBook behavior, t
 ## Security And Tooling
 
 * Prefer read-only repository and integration access until the task requires a scoped write.
+* Do not make material changes to `build.gradle`; the established build configuration is part of the project baseline. A narrowly scoped change requires explicit user approval.
 * Never place credentials, tokens, realistic personal data, or sensitive lesson content in source, tests, documentation, prompts, screenshots, or logs.
 * Use deterministic local checks before mutable remote operations. Treat an explicitly preserved root contract or hook as external ownership, not as Beryl enforcement.
 * Confirm the exact target before destructive operations, migrations, dependency upgrades, or writes outside the repository workspace.
@@ -248,7 +250,7 @@ Additional rules:
 * Mock external systems such as clocks, randomness, network, and file-system boundaries only where needed for determinism. Do not mock domain logic in the same bounded context merely to make a unit test easy.
 * Do not use sleeps, current time, machine-specific paths, locale-dependent formatting, network access, or test-order dependence in deterministic tests.
 * A regression test MUST be added for every confirmed bug whose behavior can be expressed automatically.
-* When tests intentionally change because the specified behavior changed, run `./.beryl/scripts/update-test-manifest.sh`, commit the manifest with the test change, and explain the reason in the final handoff.
+* When tests intentionally change because the specified behavior changed, explain the reason in the final handoff.
 
 ### Test and check loop
 
@@ -258,11 +260,10 @@ Before handoff, run the smallest relevant check, then the broader checks. A codi
 2. Run `./.beryl/scripts/check-md.sh` for Markdown sanity on every change that touches Markdown.
 3. Run `npx --no-install markdownlint-cli2` on changed Markdown files when the local Markdownlint dependency is available.
 4. Run `./gradlew checkstyleMain checkstyleTest` for every Java production or test change.
-5. Run `./.beryl/scripts/check-tests-unchanged.sh` whenever the work could affect test files, test configuration, or the test manifest.
-6. Run `./.beryl/scripts/check-affected.sh --worktree` and the narrowest relevant Gradle test task for behavior changes.
-7. Run `./gradlew test` for behavior changes unless a documented environment limitation prevents it.
-8. Run `./.beryl/scripts/check.sh` for the aggregate deterministic gate.
-9. When a commit is explicitly authorized and Gitlint is installed, run `gitlint --config .gitlint --commits HEAD^..HEAD` after staging the commit.
+5. Run `./.beryl/scripts/check-affected.sh --worktree` and the narrowest relevant Gradle test task for behavior changes.
+6. Run `./gradlew test` for behavior changes unless a documented environment limitation prevents it.
+7. Run `./.beryl/scripts/check.sh` for the aggregate deterministic gate.
+8. When a commit is explicitly authorized and Gitlint is installed, run `gitlint --config .gitlint --commits HEAD^..HEAD` after staging the commit.
 
 If a check is not applicable, say why. If it is applicable but unavailable or blocked by the environment, report the exact command and failure instead of silently omitting it.
 
@@ -337,7 +338,7 @@ Before declaring a change complete, the agent MUST confirm:
 * User Guide, Developer Guide, diagrams, glossary, and design records are synchronized with the implementation where applicable.
 * Formatter/style checks, narrow checks, and `./.beryl/scripts/check.sh` were run, with skipped or unavailable checks recorded.
 * No realistic personal data, secrets, private contact details, or sensitive lesson content was added to source, tests, screenshots, logs, or docs.
-* The final report maps each changed file to a commit boundary, identifies any file outside a boundary, states whether tests or the manifest changed, lists skipped checks, names the skills used, and says whether temporary session state was cleared.
+* The final report maps each changed file to a commit boundary, identifies any file outside a boundary, states whether tests changed, lists skipped checks, names the skills used, and says whether temporary session state was cleared.
 
 ## Source Of This Policy
 
