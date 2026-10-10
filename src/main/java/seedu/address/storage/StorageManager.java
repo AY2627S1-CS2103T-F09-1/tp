@@ -60,6 +60,12 @@ public class StorageManager implements Storage {
     }
 
     @Override
+    public Path backupAddressBookFile() throws IOException {
+        logger.fine("Backing up data file: " + addressBookStorage.getAddressBookFilePath());
+        return addressBookStorage.backupAddressBookFile();
+    }
+
+    @Override
     public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
         logger.fine("Attempting to write to data file: " + addressBookStorage.getAddressBookFilePath());
         addressBookStorage.saveAddressBook(addressBook);
