@@ -12,10 +12,11 @@
 * Feature implementation needs a user-ratified plan.
 * Do not use sub-agents unless the user explicitly asks.
 * Use `.beryl/agent/session-state.md` only for temporary state and clear it when work ends.
-* Never weaken tests to make an implementation pass. If tests change intentionally, run `./.beryl/scripts/update-test-manifest.sh` and commit the updated manifest with them.
+* Never weaken tests to make an implementation pass.
+* Do not make material changes to `build.gradle` without explicit user approval for a necessary, narrowly scoped change.
 * After edits, run the formatter if configured, focused checks, and `./.beryl/scripts/check.sh`.
 * Record durable architecture, vocabulary, or test-strategy decisions in the design tree or an ADR, not in temporary state.
 
 ## Completion
 
-Report changed files and their commit boundary, checks run or skipped, design-record updates, test-manifest changes, and whether temporary state was cleared.
+Report changed files and their commit boundary, checks run or skipped, design-record updates, and whether temporary state was cleared.

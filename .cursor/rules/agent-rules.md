@@ -20,7 +20,8 @@ The coding policy is the primary contract. Follow the selected workflow only whe
 
 * Do not implement a feature without a user-ratified plan.
 * Do not use sub-agents unless the user explicitly requests them.
-* Never weaken tests to make implementation pass. If tests change intentionally, run `./.beryl/scripts/update-test-manifest.sh`.
+* Never weaken tests to make implementation pass.
+* Do not make material changes to `build.gradle`; the established build configuration must be preserved unless the user explicitly approves a necessary, narrowly scoped change.
 * For method Javadocs, start the first summary sentence with a third-person verb such as `Returns`, `Sends`, or `Adds`; follow the full formatting rules in `.beryl/agent/coding-policy.md`.
 * Use `.beryl/agent/session-state.md` only for temporary state; clear it when the task ends.
 * Run the formatter if configured, focused checks, and `./.beryl/scripts/check.sh` after edits.
@@ -29,4 +30,4 @@ The coding policy is the primary contract. Follow the selected workflow only whe
 
 ## Completion
 
-Report what changed, each changed file's commit boundary, checks run or skipped, design updates, test-manifest changes, and whether temporary state was cleared.
+Report what changed, each changed file's commit boundary, checks run or skipped, design updates, and whether temporary state was cleared.
