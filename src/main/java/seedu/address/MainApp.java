@@ -42,6 +42,7 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private String dataLoadErrorMessage;
 
     @Override
     public void init() throws Exception {
@@ -57,7 +58,7 @@ public class MainApp extends Application {
 
         logic = new LogicManager(model, storage);
 
-        ui = new UiManager(logic, storage.getAddressBookFilePath());
+        ui = new UiManager(logic, storage.getAddressBookFilePath(), dataLoadErrorMessage);
     }
 
     /**
@@ -80,10 +81,26 @@ public class MainApp extends Application {
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with an empty AddressBook.");
+            dataLoadErrorMessage = createDataLoadErrorMessage(storage);
             initialData = new AddressBook();
         }
 
         return new ModelManager(initialData, userPrefs);
+    }
+
+    /**
+     * Returns an error message after preserving a data file that could not be loaded.
+     */
+    private String createDataLoadErrorMessage(Storage storage) {
+        try {
+            Path backupFilePath = storage.backupAddressBookFile();
+            return "TutorTrack could not load your data file. A copy was kept at " + backupFilePath
+                    + ". Correct the original file, then restart TutorTrack.";
+        } catch (IOException e) {
+            logger.warning("Failed to back up data file " + StringUtil.getDetails(e));
+            return "TutorTrack could not load or back up your data file. Correct the original file before "
+                    + "running a command that saves data.";
+        }
     }
 
     /**
