@@ -1,7 +1,9 @@
 package seedu.address.storage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -22,6 +24,7 @@ import seedu.address.model.student.Student;
 class JsonSerializableAddressBook {
 
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
+    public static final String MESSAGE_DUPLICATE_STUDENT_ID = "Students list contains duplicate student IDs.";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedStudent> students = new ArrayList<>();
@@ -66,8 +69,12 @@ class JsonSerializableAddressBook {
             }
             addressBook.addPerson(person);
         }
+        Set<String> studentIds = new HashSet<>();
         for (JsonAdaptedStudent jsonAdaptedStudent : students) {
             Student student = jsonAdaptedStudent.toModelType();
+            if (!studentIds.add(student.getId().getValue())) {
+                throw new IllegalValueException(MESSAGE_DUPLICATE_STUDENT_ID);
+            }
             if (addressBook.hasStudent(student)) {
                 throw new IllegalValueException(JsonSerializableStudentRoster.MESSAGE_DUPLICATE_STUDENT);
             }

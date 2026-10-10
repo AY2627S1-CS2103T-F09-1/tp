@@ -1,0 +1,7 @@
+{
+  "persons": [],
+  "students": [
+    { "studentId": "123e4567-e89b-12d3-a456-426614174000", "name": "Alex Tan", "parentPhone": "9123 4567", "subject": "Mathematics", "currentLevel": "Secondary 3" },
+    { "studentId": "123e4567-e89b-12d3-a456-426614174000", "name": "Bea Lim", "parentPhone": "9876 5432", "subject": "English", "currentLevel": "JC 1" }
+  ]
+}
