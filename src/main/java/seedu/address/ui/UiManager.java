@@ -25,6 +25,7 @@ public class UiManager implements Ui {
 
     private Logic logic;
     private Path dataFilePath;
+    private String dataLoadErrorMessage;
     private MainWindow mainWindow;
 
     /**
@@ -32,8 +33,16 @@ public class UiManager implements Ui {
      * to show in the status bar.
      */
     public UiManager(Logic logic, Path dataFilePath) {
+        this(logic, dataFilePath, null);
+    }
+
+    /**
+     * Creates a {@code UiManager} with an optional startup data-loading error message.
+     */
+    public UiManager(Logic logic, Path dataFilePath, String dataLoadErrorMessage) {
         this.logic = logic;
         this.dataFilePath = dataFilePath;
+        this.dataLoadErrorMessage = dataLoadErrorMessage;
     }
 
     @Override
@@ -47,6 +56,10 @@ public class UiManager implements Ui {
             mainWindow = new MainWindow(primaryStage, logic, dataFilePath);
             mainWindow.show(); //This should be called before creating other UI parts
             mainWindow.fillInnerParts();
+            if (dataLoadErrorMessage != null) {
+                showAlertDialogAndWait(AlertType.ERROR, "Data file could not be loaded", "Your data was preserved",
+                        dataLoadErrorMessage);
+            }
 
         } catch (Throwable e) {
             logger.severe(StringUtil.getDetails(e));
