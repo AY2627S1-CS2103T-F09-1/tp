@@ -114,6 +114,11 @@ public class ModelManager implements Model {
         addressBook.addStudent(student);
     }
 
+    @Override
+    public int deleteStudent(StudentId studentId) {
+        return addressBook.removeStudent(studentId);
+    }
+
     /**
      * {@inheritDoc}
      * The timestamp is truncated to whole seconds.

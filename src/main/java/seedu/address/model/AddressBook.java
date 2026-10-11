@@ -24,6 +24,7 @@ import seedu.address.model.student.StudentId;
 public class AddressBook implements ReadOnlyAddressBook {
 
     static final String MESSAGE_UNKNOWN_STUDENT = "Session notes must belong to a student in the roster.";
+    static final String MESSAGE_STUDENT_NOT_FOUND = "Student must exist in the roster.";
 
     private final UniquePersonList persons = new UniquePersonList();
     private final List<Student> students = new java.util.ArrayList<>();
@@ -120,6 +121,23 @@ public class AddressBook implements ReadOnlyAddressBook {
             throw new IllegalArgumentException("Duplicate student");
         }
         students.add(student);
+    }
+
+    /**
+     * Removes the student with {@code studentId} and that student's session history.
+     *
+     * @return The number of session notes removed with the student.
+     * @throws IllegalArgumentException if no student in the roster has {@code studentId}.
+     */
+    public int removeStudent(StudentId studentId) {
+        requireNonNull(studentId);
+        Student studentToRemove = students.stream()
+                .filter(student -> student.getId().equals(studentId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_STUDENT_NOT_FOUND));
+
+        students.remove(studentToRemove);
+        return sessionHistories.removeHistory(studentId);
     }
 
     //// session-note operations

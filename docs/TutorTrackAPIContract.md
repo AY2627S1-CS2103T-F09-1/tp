@@ -99,8 +99,8 @@ result for the success message.
 
 ```java
 public interface StudentProfileService {
-    /** Composes the read-only profile for one student. */
-    StudentProfile getProfile(StudentId studentId);
+    /** Composes the read-only profile for one student when that student exists. */
+    Optional<StudentProfile> getProfile(StudentId studentId);
 
     /** Validates, timestamps, and appends one session note. */
     SessionNote addSessionNote(StudentId studentId, String noteText);
@@ -110,9 +110,7 @@ public interface StudentProfileService {
 }
 ```
 
-`StudentProfile` contains the student's name, parent or guardian contact,
-subject, current level, and an immutable list of `SessionNote` objects ordered
-newest first. `SessionNote` contains its saved timestamp and text.
+`StudentProfile` contains the student's stable ID, name, parent or guardian contact, subject, current level, and an immutable list of `SessionNote` objects ordered newest first. `SessionNote` contains its saved timestamp and text. An unknown or deleted student ID returns an empty optional, which lets the UI discard stale profile state without exposing model internals.
 
 Neither API exposes JavaFX controls, Jackson DTOs, mutable collections, or file
 paths. The profile/session context does not perform cross-student searches or

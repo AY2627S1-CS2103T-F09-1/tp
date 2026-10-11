@@ -134,6 +134,34 @@ public class AddressBookTest {
     }
 
     @Test
+    public void removeStudent_studentWithNotes_removesStudentAndHistory() {
+        addressBook.addStudent(ALEX);
+        addressBook.addStudent(BEA);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        addressBook.addSessionNote(ALEX.getId(), FACTORISATION_NOTE);
+
+        assertEquals(2, addressBook.removeStudent(ALEX.getId()));
+        assertEquals(List.of(BEA), addressBook.getStudentList());
+        assertTrue(addressBook.getSessionHistory(ALEX.getId()).isEmpty());
+    }
+
+    @Test
+    public void removeStudent_unknownStudent_throwsAndLeavesDataUnchanged() {
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        AddressBook original = new AddressBook(addressBook);
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_STUDENT_NOT_FOUND, () ->
+                addressBook.removeStudent(BEA.getId()));
+        assertEquals(original, addressBook);
+    }
+
+    @Test
+    public void removeStudent_nullStudentId_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> addressBook.removeStudent(null));
+    }
+
+    @Test
     public void resetData_withSessionNotes_copiesSessionHistories() {
         AddressBook original = new AddressBook();
         original.addStudent(ALEX);

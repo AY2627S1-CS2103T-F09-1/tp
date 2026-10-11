@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox id="sessionNoteCard" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      spacing="5" styleClass="session-note-card">
+  <Label fx:id="timestamp" styleClass="session-note-timestamp" />
+  <Label fx:id="noteText" maxWidth="Infinity" styleClass="session-note-text" wrapText="true" />
+  <padding>
+    <Insets top="10" right="12" bottom="10" left="12" />
+  </padding>
+</VBox>

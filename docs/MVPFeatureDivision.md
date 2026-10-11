@@ -12,7 +12,7 @@ mostly new.
 | List student roster | Partial | [`ListCommand`](../src/main/java/seedu/address/logic/commands/ListCommand.java), filtered list, numbered UI cards | Display student-specific fields, note count, sorted roster, empty state, and stable selection indices |
 | View student profile | New | Command/parser framework and JavaFX window | Add the `view` command, profile model/API, profile panel, contact/context display, and chronological notes |
 | Add session note | New | Command execution and JSON persistence infrastructure | Add `SessionNote`, session history, timestamps, the `note` command, validation, storage, and profile refresh |
-| Delete student | Partial | [`DeleteCommand`](../src/main/java/seedu/address/logic/commands/DeleteCommand.java), index selection, removal flow | Cascade-delete session notes, show the note count, update profile/indices, and handle save failures atomically |
+| Delete student | Complete | [`DeleteCommand`](../src/main/java/seedu/address/logic/commands/DeleteCommand.java), sorted-roster selection, atomic student and note removal, rollback, roster/profile refresh, and integration tests | None for the agreed MVP contract |
 
 The main base-app layers are:
 
@@ -22,10 +22,7 @@ The main base-app layers are:
 * Roster UI: [`PersonListPanel`](../src/main/java/seedu/address/ui/PersonListPanel.java) and `PersonCard`
 * Application shell: [`MainWindow`](../src/main/java/seedu/address/ui/MainWindow.java)
 
-One important gap is transactional saving: the logic layer saves after
-mutating the model, but does not currently restore the model if saving fails.
-The MVP requires failed commands to leave both the model and the file
-unchanged.
+`LogicManager` now snapshots the address book before executing each command and restores it if saving fails. This rollback covers student deletion and every other mutating command, leaving the model and file unchanged when a save cannot complete.
 
 ## Recommended five-person split
 

@@ -1,11 +1,15 @@
 package seedu.address.logic;
 
+import java.util.Optional;
+
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Person;
+import seedu.address.model.profile.StudentProfile;
+import seedu.address.model.student.StudentId;
 import seedu.address.model.student.StudentRoster;
 
 /**
@@ -28,6 +32,12 @@ public interface Logic {
      * Returns an immutable snapshot of the student roster.
      */
     StudentRoster getStudentRoster();
+
+    /**
+     * Returns an immutable profile of the student with {@code studentId}, or an empty optional if the student is
+     * absent.
+     */
+    Optional<StudentProfile> getStudentProfile(StudentId studentId);
 
     /**
      * Returns the user prefs' GUI settings.

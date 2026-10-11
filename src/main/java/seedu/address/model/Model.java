@@ -1,12 +1,15 @@
 package seedu.address.model;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
+import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.Student;
@@ -75,6 +78,15 @@ public interface Model {
     }
 
     /**
+     * Deletes the student with {@code studentId} and that student's session history.
+     *
+     * @return The number of session notes removed with the student.
+     */
+    default int deleteStudent(StudentId studentId) {
+        throw new UnsupportedOperationException("Student deletions are not supported by this model.");
+    }
+
+    /**
      * Returns an immutable snapshot of the student roster, including each student's session-note count.
      */
     default StudentRoster getStudentRoster() {
@@ -92,6 +104,21 @@ public interface Model {
      */
     default SessionHistory getSessionHistory(StudentId studentId) {
         return getAddressBook().getSessionHistory(studentId);
+    }
+
+    /**
+     * Returns an immutable profile of the student with {@code studentId}, or an empty optional if the student is
+     * absent.
+     */
+    default Optional<StudentProfile> getStudentProfile(StudentId studentId) {
+        Objects.requireNonNull(studentId);
+        ReadOnlyAddressBook addressBook = getAddressBook();
+        return addressBook.getStudentList().stream()
+                .filter(student -> student.getId().equals(studentId))
+                .findFirst()
+                .map(student -> new StudentProfile(student.getId(), student.getName(),
+                        student.getParentGuardianContact(), student.getSubject(), student.getCurrentLevel(),
+                        addressBook.getSessionHistory(studentId).getNotes()));
     }
 
     /**

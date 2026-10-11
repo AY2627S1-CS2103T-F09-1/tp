@@ -30,7 +30,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
    * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `delete 3` : Deletes the 3rd student shown in the current roster and all of that student's session notes.
 
    * `clear` : Deletes all contacts.
 
@@ -97,6 +97,8 @@ Format: `list`
 
 Adds a short note about a lesson to a student, such as what was covered, where the student struggled, or what to do next time. TutorTrack records the current date and time with the note and adds one to the student's session-note count in the roster.
 
+If that student's profile is open, the new note appears there immediately after the command succeeds.
+
 Format: `note INDEX nt/NOTE`
 
 * `INDEX` is the student's number in the roster shown by `list`. It must be a positive whole number, such as 1, 2, or 3.
@@ -109,6 +111,21 @@ Examples:
 * `note 3 nt/Completed past-year paper 2 (scored 34/40).`
 
 If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note.
+
+### Viewing a student profile: `view`
+
+Displays one student's profile beside the roster. The profile shows the student's name, parent or guardian phone and email, subject, current academic level, and session notes. If no email was recorded, TutorTrack displays `Not provided`.
+
+Session notes are shown newest first with the saved date, time, and UTC offset. Long notes wrap within the panel, and the history can be scrolled. A student without notes displays `No session notes recorded.` The open profile refreshes after each successful command and closes if that student is deleted; a failed command leaves it unchanged.
+
+Format: `view INDEX`
+
+* `INDEX` is the student's number in the roster shown by `list`.
+* `INDEX` must be a positive whole number and must refer to a student currently in the roster.
+
+Example: `view 2`
+
+If the index is missing, invalid, or larger than the number of students in the roster, TutorTrack shows an error and keeps the current display unchanged.
 
 ### Editing a person: `edit`
 
@@ -143,19 +160,22 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
-### Deleting a person: `delete`
+### Deleting a student: `delete`
 
-Deletes the specified person from the address book.
+Deletes the specified student and all session notes belonging to that student.
 
 Format: `delete INDEX`
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
-* The index **must be a positive integer** 1, 2, 3, …​
+* `INDEX` is the student's number in the sorted roster shown by `list`.
+* `INDEX` must be a positive whole number and must refer to a student currently in the roster.
+* TutorTrack reports the deleted student's name and the number of session notes removed.
+* The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes.
 
-Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+Example:
+
+* `list` followed by `delete 2` deletes the 2nd student in the roster.
+
+If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save the deletion, it restores the student and session notes.
 
 ### Clearing all entries: `clear`
 
@@ -215,4 +235,5 @@ Action | Format, Examples
 **Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
 **Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`
+**View** | `view INDEX`<br> e.g., `view 2`
 **Help** | `help`

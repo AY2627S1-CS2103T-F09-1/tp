@@ -27,6 +27,11 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_invalidArgs_throwsParseException() {
-        assertParseFailure(parser, "a", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
+        String[] invalidArguments = {"", "0", "-1", "1.5", "a", "1 2", "1-2", "2147483648"};
+
+        for (String invalidArgument : invalidArguments) {
+            assertParseFailure(parser, invalidArgument, expectedMessage);
+        }
     }
 }

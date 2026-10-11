@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
@@ -157,12 +158,54 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void getStudentProfile_studentInRoster_returnsComposedProfile() {
+        Clock clock = Clock.fixed(Instant.parse("2026-09-18T10:35:00Z"), ZoneOffset.ofHours(8));
+        ModelManager model = new ModelManager(new AddressBook(), new UserPrefs(), clock);
+        model.addStudent(ALEX);
+        SessionNote firstNote = model.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        SessionNote secondNote = model.addSessionNote(ALEX.getId(), "Reviewed factorisation.");
+
+        StudentProfile profile = model.getStudentProfile(ALEX.getId()).orElseThrow();
+
+        assertEquals(ALEX.getId(), profile.getStudentId());
+        assertEquals(ALEX.getName(), profile.getName());
+        assertEquals(ALEX.getParentGuardianContact(), profile.getParentGuardianContact());
+        assertEquals(ALEX.getSubject(), profile.getSubject());
+        assertEquals(ALEX.getCurrentLevel(), profile.getCurrentLevel());
+        assertEquals(List.of(firstNote, secondNote), profile.getSessionNotes());
+    }
+
+    @Test
+    public void getStudentProfile_unknownStudent_returnsEmptyOptional() {
+        modelManager.addStudent(ALEX);
+
+        assertTrue(modelManager.getStudentProfile(BEA.getId()).isEmpty());
+    }
+
+    @Test
+    public void getStudentProfile_nullStudentId_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> modelManager.getStudentProfile(null));
+    }
+
+    @Test
     public void removeSessionHistory_studentWithNotes_returnsCountAndResetsRosterCount() {
         modelManager.addStudent(ALEX);
         modelManager.addSessionNote(ALEX.getId(), "Reviewed indices.");
 
         assertEquals(1, modelManager.removeSessionHistory(ALEX.getId()));
         assertEquals(0, modelManager.getStudentRoster().getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void deleteStudent_studentWithNotes_removesStudentAndReturnsNoteCount() {
+        modelManager.addStudent(ALEX);
+        modelManager.addStudent(BEA);
+        modelManager.addSessionNote(ALEX.getId(), "Reviewed indices.");
+
+        assertEquals(1, modelManager.deleteStudent(ALEX.getId()));
+        assertEquals(List.of(BEA.getId()), modelManager.getStudentRoster().getEntries().stream()
+                .map(entry -> entry.getStudentId()).toList());
+        assertTrue(modelManager.getSessionHistory(ALEX.getId()).isEmpty());
     }
 
     @Test

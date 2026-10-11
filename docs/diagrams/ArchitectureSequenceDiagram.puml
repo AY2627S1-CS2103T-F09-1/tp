@@ -14,10 +14,16 @@ activate ui UI_COLOR
 ui -[UI_COLOR]> logic : execute("delete 1")
 activate logic LOGIC_COLOR
 
-logic -[LOGIC_COLOR]> model : deletePerson(p)
+logic -[LOGIC_COLOR]> model : getStudentRoster()
 activate model MODEL_COLOR
 
-model -[MODEL_COLOR]-> logic
+model -[MODEL_COLOR]-> logic : roster
+deactivate model
+
+logic -[LOGIC_COLOR]> model : deleteStudent(studentId)
+activate model MODEL_COLOR
+
+model -[MODEL_COLOR]-> logic : removedNoteCount
 deactivate model
 
 logic -[LOGIC_COLOR]> storage : saveAddressBook(addressBook)

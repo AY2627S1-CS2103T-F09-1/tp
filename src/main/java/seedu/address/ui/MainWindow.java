@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
@@ -17,6 +18,7 @@ import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.student.StudentId;
 
 /**
  * The Main Window. Provides the basic application layout containing
@@ -31,9 +33,11 @@ public class MainWindow extends UiPart<Stage> {
     private Stage primaryStage;
     private Logic logic;
     private Path dataFilePath;
+    private Optional<StudentId> displayedProfileStudentId = Optional.empty();
 
     // Independent Ui parts residing in this Ui container
     private StudentRosterPanel studentRosterPanel;
+    private StudentProfilePanel studentProfilePanel;
     private ResultDisplay resultDisplay;
     private HelpWindow helpWindow;
 
@@ -45,6 +49,9 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private StackPane studentRosterPanelPlaceholder;
+
+    @FXML
+    private StackPane studentProfilePanelPlaceholder;
 
     @FXML
     private StackPane resultDisplayPlaceholder;
@@ -117,6 +124,9 @@ public class MainWindow extends UiPart<Stage> {
         studentRosterPanel = new StudentRosterPanel(logic.getStudentRoster());
         studentRosterPanelPlaceholder.getChildren().add(studentRosterPanel.getRoot());
 
+        studentProfilePanel = new StudentProfilePanel();
+        studentProfilePanelPlaceholder.getChildren().add(studentProfilePanel.getRoot());
+
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
 
@@ -171,6 +181,10 @@ public class MainWindow extends UiPart<Stage> {
         return studentRosterPanel;
     }
 
+    StudentProfilePanel getStudentProfilePanel() {
+        return studentProfilePanel;
+    }
+
     /**
      * Executes the command and returns the result.
      *
@@ -180,6 +194,9 @@ public class MainWindow extends UiPart<Stage> {
         try {
             CommandResult commandResult = logic.execute(commandText);
             studentRosterPanel.setRoster(logic.getStudentRoster());
+            commandResult.getProfileStudentId()
+                    .ifPresent(studentId -> displayedProfileStudentId = Optional.of(studentId));
+            refreshDisplayedProfile();
             logger.info("Result: " + commandResult.getFeedbackToUser());
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
@@ -197,5 +214,13 @@ public class MainWindow extends UiPart<Stage> {
             resultDisplay.setFeedbackToUser(e.getMessage());
             throw e;
         }
+    }
+
+    private void refreshDisplayedProfile() {
+        displayedProfileStudentId.ifPresent(studentId -> logic.getStudentProfile(studentId)
+                .ifPresentOrElse(studentProfilePanel::setProfile, () -> {
+                    studentProfilePanel.clearProfile();
+                    displayedProfileStudentId = Optional.empty();
+                }));
     }
 }
