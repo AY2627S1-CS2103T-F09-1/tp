@@ -1,0 +1,423 @@
+/* TutorTrack's light visual system. */
+.root {
+    -app-background: #f5f8f7;
+    -app-surface: #ffffff;
+    -app-surface-muted: #edf4f2;
+    -app-border: #d4e2df;
+    -app-border-strong: #b7cfca;
+    -app-text: #17332f;
+    -app-text-muted: #58736e;
+    -app-accent: #0f766e;
+    -app-accent-dark: #0b5d57;
+    -app-accent-soft: #dff3ef;
+    -app-danger: #b42318;
+    -fx-base: -app-surface;
+    -fx-background: -app-background;
+    -fx-control-inner-background: -app-surface;
+    -fx-focus-color: -app-accent;
+    -fx-faint-focus-color: rgba(15, 118, 110, 0.18);
+    -fx-font-family: "System";
+}
+
+.background,
+.stack-pane,
+.student-profile-panel {
+    -fx-background-color: -app-background;
+}
+
+.label {
+    -fx-font-family: "System";
+    -fx-font-size: 13px;
+    -fx-text-fill: -app-text;
+}
+
+.label-bright {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.label-header {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.text-field,
+.text-area {
+    -fx-font-family: "System";
+    -fx-font-size: 14px;
+    -fx-text-fill: -app-text;
+}
+
+.text-field {
+    -fx-background-color: -app-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 9px 12px;
+}
+
+.text-field:focused,
+.text-area:focused {
+    -fx-border-color: -app-accent;
+    -fx-effect: dropshadow(gaussian, rgba(15, 118, 110, 0.18), 8, 0.2, 0, 1);
+}
+
+.tab-pane {
+    -fx-padding: 0;
+}
+
+.table-view {
+    -fx-background-color: -app-surface;
+    -fx-control-inner-background: -app-surface;
+    -fx-padding: 5px;
+}
+
+.split-pane {
+    -fx-background-color: -app-background;
+    -fx-border-color: -app-border;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.split-pane:horizontal .split-pane-divider {
+    -fx-background-color: -app-border;
+    -fx-border-color: transparent;
+    -fx-padding: 0 1px;
+}
+
+.list-view {
+    -fx-background-color: -app-surface;
+    -fx-background-insets: 0;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+}
+
+.list-cell {
+    -fx-background-color: -app-surface;
+    -fx-label-padding: 0;
+    -fx-padding: 0;
+}
+
+.list-cell:filled:even {
+    -fx-background-color: -app-surface;
+}
+
+.list-cell:filled:odd {
+    -fx-background-color: -app-surface-muted;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: #e7f2f0;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: -app-accent-soft;
+    -fx-text-fill: -app-text;
+}
+
+.list-cell:filled:selected #cardPane {
+    -fx-border-color: -app-accent;
+    -fx-border-width: 0 0 0 3px;
+}
+
+.list-cell .label {
+    -fx-text-fill: -app-text;
+}
+
+.list-cell:empty {
+    -fx-background-color: -app-surface;
+}
+
+.cell_big_label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.cell_small_label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -app-text-muted;
+}
+
+.empty-roster-message {
+    -fx-font-size: 14px;
+    -fx-padding: 24px;
+    -fx-text-fill: -app-text-muted;
+}
+
+.profile-empty-state {
+    -fx-padding: 24px;
+}
+
+.profile-empty-state .label {
+    -fx-text-alignment: center;
+    -fx-text-fill: -app-text-muted;
+}
+
+.profile-empty-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.profile-name {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.profile-field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text-muted;
+}
+
+.profile-field-value {
+    -fx-text-fill: -app-text;
+}
+
+.profile-section-heading {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.session-note-list {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.session-note-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 8px 0;
+}
+
+.session-note-card {
+    -fx-background-color: -app-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+}
+
+.session-note-timestamp {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text-muted;
+}
+
+.session-note-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: -app-text;
+}
+
+.empty-notes-message {
+    -fx-padding: 18px;
+    -fx-text-fill: -app-text-muted;
+}
+
+.pane-with-border {
+    -fx-background-color: -app-surface;
+    -fx-border-color: -app-border;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.status-bar {
+    -fx-background-color: -app-surface-muted;
+    -fx-border-color: -app-border;
+    -fx-border-width: 1px 0 0 0;
+}
+
+.status-bar .label {
+    -fx-font-size: 12px;
+    -fx-padding: 7px 12px;
+    -fx-text-fill: -app-text-muted;
+}
+
+.status-bar-with-border {
+    -fx-background-color: -app-surface-muted;
+    -fx-border-color: -app-border;
+    -fx-border-width: 1px;
+}
+
+.status-bar-with-border .label {
+    -fx-text-fill: -app-text-muted;
+}
+
+.result-display {
+    -fx-background-color: -app-surface;
+    -fx-font-size: 13px;
+    -fx-text-fill: -app-text;
+}
+
+.result-display .content {
+    -fx-background-color: -app-surface;
+    -fx-background-radius: 8px;
+}
+
+.context-menu {
+    -fx-background-color: -app-surface;
+    -fx-border-color: -app-border;
+}
+
+.context-menu .label {
+    -fx-text-fill: -app-text;
+}
+
+.menu-bar {
+    -fx-background-color: -app-surface;
+    -fx-border-color: -app-border;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 0 8px;
+}
+
+.menu-bar .label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.menu:hover,
+.menu:showing,
+.menu-item:focused {
+    -fx-background-color: -app-accent-soft;
+}
+
+.menu .left-container {
+    -fx-background-color: -app-accent-soft;
+}
+
+.button {
+    -fx-background-color: -app-accent;
+    -fx-background-radius: 7px;
+    -fx-border-color: transparent;
+    -fx-border-radius: 7px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 14px;
+    -fx-text-fill: white;
+}
+
+.button:hover {
+    -fx-background-color: -app-accent-dark;
+}
+
+.button:pressed {
+    -fx-background-color: #084c47;
+}
+
+.button:focused,
+.text-field:focused,
+.text-area:focused {
+    -fx-border-color: -app-accent;
+    -fx-border-width: 2px;
+}
+
+.button:disabled {
+    -fx-background-color: -app-border-strong;
+    -fx-opacity: 0.7;
+}
+
+.button:default {
+    -fx-background-color: -app-accent;
+}
+
+.dialog-pane {
+    -fx-background-color: -app-surface;
+}
+
+.dialog-pane > *.button-bar > *.container {
+    -fx-background-color: -app-surface-muted;
+}
+
+.dialog-pane > *.label.content {
+    -fx-font-size: 14px;
+    -fx-text-fill: -app-text;
+}
+
+.dialog-pane:header *.header-panel {
+    -fx-background-color: -app-surface-muted;
+}
+
+.dialog-pane:header *.header-panel *.label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.scroll-bar {
+    -fx-background-color: -app-surface-muted;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: -app-border-strong;
+    -fx-background-insets: 3px;
+    -fx-background-radius: 6px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: -app-accent;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+}
+
+#cardPane {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+#commandTypeLabel {
+    -fx-font-size: 11px;
+    -fx-text-fill: -app-danger;
+}
+
+#commandTextField {
+    -fx-background-color: -app-surface;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-font-size: 14px;
+    -fx-padding: 9px 12px;
+}
+
+#tags {
+    -fx-hgap: 7px;
+    -fx-vgap: 3px;
+}
+
+#tags .label {
+    -fx-background-color: -app-accent-soft;
+    -fx-background-radius: 4px;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 5px;
+    -fx-text-fill: -app-accent-dark;
+}
+
+.error {
+    -fx-border-color: -app-danger !important;
+    -fx-text-fill: -app-danger !important;
+}
+
+.tag-selector {
+    -fx-background-color: -app-surface;
+    -fx-background-radius: 4px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 4px;
+}
+
+.tooltip-text {
+    -fx-text-fill: -app-text;
+}
