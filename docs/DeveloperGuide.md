@@ -77,6 +77,8 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
+`CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
+
 The `UI` component,
 
 * executes user commands using the `Logic` component.
@@ -715,6 +717,21 @@ testers are expected to do more *exploratory* testing.
    Expected: Each command reports an invalid command format and leaves the roster, notes, open profile, and data file unchanged.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid and makes no changes.
+
+### Navigating command history
+
+1. Restart TutorTrack, type `unfinished command` without pressing `Enter`, and press `Up`.
+   Expected: The draft remains unchanged because the new session has no command history.
+1. Submit `list`, `invalid`, and `list` in that order, then type `unfinished command` without submitting it.
+   Expected: The first and third submissions succeed, the second fails, and the draft remains in the command box.
+1. Press `Up` repeatedly.
+   Expected: The command box shows `list`, then `invalid`, then the older `list`; another `Up` leaves the oldest `list` displayed.
+1. Press `Down` repeatedly.
+   Expected: The command box moves through `invalid` and the newer `list`, then restores `unfinished command`; another `Down` leaves the draft displayed.
+1. Press `Up`, change the recalled `list` to `help`, submit it, and press `Up` again.
+   Expected: `help` opens the help window and is recalled as the newest history entry.
+1. Close and relaunch TutorTrack, then press `Up` in an empty command box.
+   Expected: No command is recalled because history is kept only for the app session.
 
 ### Saving data
 
