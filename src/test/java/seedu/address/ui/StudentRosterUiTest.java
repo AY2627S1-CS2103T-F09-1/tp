@@ -8,6 +8,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -20,9 +21,13 @@ import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -299,6 +304,125 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
+        List<String> executedCommands = new ArrayList<>();
+        CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
+            executedCommands.add(commandText);
+            if (commandText.equals("invalid")) {
+                throw new CommandException("Invalid command.");
+            }
+            return new CommandResult("Command executed.");
+        }));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            submitCommand(commandTextField, "list");
+            submitCommand(commandTextField, "invalid");
+            commandTextField.setText("draft");
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("invalid", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("list", commandTextField.getText());
+            return null;
+        });
+
+        assertEquals(List.of("list", "invalid"), executedCommands);
+    }
+
+    @Test
+    public void commandHistory_duplicatesAndEditedRecall_areNewEntries() throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed.")));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            submitCommand(commandTextField, "list");
+            submitCommand(commandTextField, "view 1");
+            submitCommand(commandTextField, "view 1");
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("view 1", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("view 1", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("list", commandTextField.getText());
+
+            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            commandTextField.setText("view 2");
+            submitCommand(commandTextField, "view 2");
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("view 2", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("view 1", commandTextField.getText());
+            return null;
+        });
+    }
+
+    @Test
+    public void commandHistory_navigationBoundaries_restoreDraft() throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed.")));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            submitCommand(commandTextField, "list");
+            submitCommand(commandTextField, "view 1");
+            commandTextField.setText("unfinished command");
+
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("view 1", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("list", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("list", commandTextField.getText());
+
+            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            assertEquals("view 1", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            assertEquals("unfinished command", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            assertEquals("unfinished command", commandTextField.getText());
+            return null;
+        });
+    }
+
+    @Test
+    public void commandHistory_blankAndOverCapacity_keepsLatestHundredNonBlankCommands() throws Exception {
+        List<String> executedCommands = new ArrayList<>();
+        CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
+            executedCommands.add(commandText);
+            return new CommandResult("Command executed.");
+        }));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            submitCommand(commandTextField, "");
+            submitCommand(commandTextField, "   ");
+            commandTextField.setText("draft");
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("draft", commandTextField.getText());
+
+            for (int i = 0; i <= 100; i++) {
+                submitCommand(commandTextField, "command " + i);
+            }
+            commandTextField.setText("new draft");
+            for (int i = 0; i < 100; i++) {
+                pressHistoryKey(commandTextField, KeyCode.UP);
+            }
+            assertEquals("command 1", commandTextField.getText());
+            pressHistoryKey(commandTextField, KeyCode.UP);
+            assertEquals("command 1", commandTextField.getText());
+            for (int i = 0; i < 100; i++) {
+                pressHistoryKey(commandTextField, KeyCode.DOWN);
+            }
+            assertEquals("new draft", commandTextField.getText());
+            return null;
+        });
+
+        assertEquals(102, executedCommands.size());
+        assertEquals("   ", executedCommands.get(0));
+    }
+
+    @Test
     public void executeCommand_successfulCommand_refreshesRoster() throws Exception {
         StudentRoster initialRoster = new StudentRoster(List.of());
         StudentRoster refreshedRoster = new StudentRoster(List.of(student("Alex Tan")));
@@ -418,6 +542,20 @@ public class StudentRosterUiTest {
     private Label getEmptyMessage(StudentRosterPanel panel) {
         StackPane root = (StackPane) panel.getRoot();
         return (Label) root.getChildren().get(1);
+    }
+
+    private TextField getCommandTextField(CommandBox commandBox) {
+        return (TextField) ((StackPane) commandBox.getRoot()).getChildren().get(0);
+    }
+
+    private void submitCommand(TextField commandTextField, String commandText) {
+        commandTextField.setText(commandText);
+        commandTextField.fireEvent(new ActionEvent());
+    }
+
+    private void pressHistoryKey(TextField commandTextField, KeyCode keyCode) {
+        commandTextField.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode,
+                false, false, false, false));
     }
 
     private Student student(String name) {
