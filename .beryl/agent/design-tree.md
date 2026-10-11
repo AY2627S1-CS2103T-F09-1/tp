@@ -25,6 +25,7 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Student profile projection | `Model#getStudentProfile(StudentId)` returns an optional immutable `StudentProfile` snapshot; an absent ID returns an empty optional so UI state can recover safely after deletion. | 2026-10-06 | n/a |
 | Displayed profile identity | `MainWindow` retains the selected student's stable ID, refreshes that profile after successful commands, leaves it unchanged after failed commands, and clears it if the student no longer exists. | 2026-10-06 | n/a |
 | Atomic student deletion | `Model#deleteStudent(StudentId)` validates the stable ID before removing the student and session history together, and returns the number of removed notes for command feedback. | 2026-10-07 | n/a |
+| Atomic data-file replacement | `FileUtil#writeToFile` writes content to a temporary file beside the target and atomically replaces the target, so a failed save preserves the previous data file. | 2026-10-11 | n/a |
 
 ## Pressure Points
 
