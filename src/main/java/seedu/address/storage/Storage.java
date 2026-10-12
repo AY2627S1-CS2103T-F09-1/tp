@@ -48,7 +48,7 @@ public interface Storage {
     Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException;
 
     /**
-     * Preserves the address-book data file as a backup.
+     * Preserves the address-book data file in a uniquely named backup.
      *
      * @return the backup file path.
      * @throws IOException if the data file cannot be copied.
