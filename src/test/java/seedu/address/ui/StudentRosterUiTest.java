@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -20,13 +21,18 @@ import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
@@ -67,6 +73,31 @@ public class StudentRosterUiTest {
         assertTrue(getListView(panel).getItems().isEmpty());
         assertTrue(getEmptyMessage(panel).isVisible());
         assertTrue(getEmptyMessage(panel).isManaged());
+    }
+
+    @Test
+    public void helpWindow_loadsTutorTrackThemeAndAppliesFocusStyle() throws Exception {
+        onFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow();
+            Scene scene = helpWindow.getRoot().getScene();
+
+            assertTrue(scene.getStylesheets().stream()
+                    .anyMatch(stylesheet -> stylesheet.endsWith("/TutorTrackTheme.css")));
+            assertTrue(scene.getStylesheets().stream()
+                    .anyMatch(stylesheet -> stylesheet.endsWith("/HelpWindow.css")));
+
+            scene.getRoot().applyCss();
+            Button copyButton = (Button) scene.lookup("#copyButton");
+            assertNotNull(copyButton);
+
+            copyButton.pseudoClassStateChanged(PseudoClass.getPseudoClass("focused"), true);
+            scene.getRoot().applyCss();
+            Border border = copyButton.getBorder();
+
+            assertNotNull(border);
+            assertEquals(Color.web("#17332f"), border.getStrokes().get(0).getTopStroke());
+            return null;
+        });
     }
 
     @Test
