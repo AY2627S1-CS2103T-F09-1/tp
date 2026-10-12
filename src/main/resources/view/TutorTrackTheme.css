@@ -10,6 +10,7 @@
     -app-accent: #0f766e;
     -app-accent-dark: #0b5d57;
     -app-accent-soft: #dff3ef;
+    -app-focus-ring: #17332f;
     -app-danger: #b42318;
     -fx-base: -app-surface;
     -fx-background: -app-background;
@@ -310,11 +311,17 @@
     -fx-background-color: #084c47;
 }
 
-.button:focused,
+.button:focused {
+    -fx-border-color: -app-focus-ring;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(23, 51, 47, 0.45), 4, 0.6, 0, 0);
+}
+
 .text-field:focused,
 .text-area:focused {
-    -fx-border-color: -app-accent;
+    -fx-border-color: -app-accent-dark;
     -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(15, 118, 110, 0.18), 8, 0.2, 0, 1);
 }
 
 .button:disabled {

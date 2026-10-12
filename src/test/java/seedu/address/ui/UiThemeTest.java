@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,6 +20,7 @@ public class UiThemeTest {
 
         assertTrue(theme.contains("-app-accent: #0f766e"));
         assertTrue(theme.contains("-app-surface: #ffffff"));
+        assertTrue(theme.contains("-app-focus-ring: #17332f"));
         assertTrue(theme.contains(".button:focused"));
         assertTrue(theme.contains(".error"));
     }
@@ -33,6 +35,7 @@ public class UiThemeTest {
         assertTrue(helpWindow.contains("title=\"TutorTrack Help\""));
         assertTrue(helpWindow.contains("@TutorTrackTheme.css"));
         assertFalse(mainWindow.contains("DarkTheme.css"));
+        assertEquals("https://nus-cs2103-ay2627-s1.github.io/tp/UserGuide.html", HelpWindow.USERGUIDE_URL);
     }
 
     private String readResource(String resourcePath) throws IOException {
