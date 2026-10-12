@@ -78,6 +78,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
+`TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
 
 The `UI` component,
 
@@ -257,7 +258,7 @@ The copy is made after parsing, so input that fails to parse never copies anythi
   * Pros: Copies nothing for commands that do not change data.
   * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
 
-Restoring the model does not protect the data file from a write that fails partway through, which could leave the file incomplete.
+Restoring the model does not by itself protect the data file from a write that fails partway through. `FileUtil#writeToFile` writes the serialized content to a temporary file in the data file's parent directory, then atomically replaces the target. A failed temporary write or replacement leaves the previous data file intact, and the temporary file is removed.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -665,6 +666,14 @@ testers are expected to do more *exploratory* testing.
    2. Relaunch the app by double-clicking the JAR file.
       Expected: The most recent window size and location are retained.
 3. _{ more test cases … }_
+
+### UI theme and scaling
+
+1. Launch TutorTrack and confirm that the window title is `TutorTrack`, the main surface is light, and teal accents are used for controls and selected roster entries.
+2. Focus the command box, open the Help window with `F1`, and open an error dialog with an invalid command.
+   Expected: Focus, hover, error, Help window, and dialog states remain readable and use the same light and teal visual system.
+3. Repeat the launch and the checks above at 100%, 125%, and 150% display scaling.
+   Expected: The command box, result display, roster, profile, status bar, Help window, and standard controls remain visible without clipped text or controls.
 
 ### Adding a student
 

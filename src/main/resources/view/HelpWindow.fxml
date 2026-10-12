@@ -9,19 +9,21 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.stage.Stage?>
 
-<fx:root resizable="false" title="Help" type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root resizable="true" title="TutorTrack Help" minWidth="520" minHeight="110"
+         type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <icons>
     <Image url="@/images/help_icon.png" />
   </icons>
   <scene>
-    <Scene>
+    <Scene width="760" height="130">
       <stylesheets>
+        <URL value="@TutorTrackTheme.css" />
         <URL value="@HelpWindow.css" />
       </stylesheets>
 
       <HBox alignment="CENTER" fx:id="helpMessageContainer">
         <children>
-          <Label fx:id="helpMessage" text="Label">
+          <Label fx:id="helpMessage" maxWidth="Infinity" text="Label" wrapText="true" HBox.hgrow="ALWAYS">
             <HBox.margin>
               <Insets right="5.0" />
             </HBox.margin>
