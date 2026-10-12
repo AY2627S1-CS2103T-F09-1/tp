@@ -5,6 +5,7 @@
 ## Canonical Context
 
 * `agent-rules.md`: concise navigation and operating defaults.
+* `constraints.md`: mandatory course constraints and relevant recommendations.
 * `project-brief.md`: product goal, users, workflows, and scope.
 * `design-tree.md`, `architecture.md`, `ubiquitous-language.md`, and `adr/`: durable product and architecture knowledge.
 * `testing-policy.md`: available checks and test-change rules.
