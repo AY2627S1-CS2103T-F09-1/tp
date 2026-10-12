@@ -25,7 +25,7 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Student profile projection | `Model#getStudentProfile(StudentId)` returns an optional immutable `StudentProfile` snapshot; an absent ID returns an empty optional so UI state can recover safely after deletion. | 2026-10-06 | n/a |
 | Displayed profile identity | `MainWindow` retains the selected student's stable ID, refreshes that profile after successful commands, leaves it unchanged after failed commands, and clears it if the student no longer exists. | 2026-10-06 | n/a |
 | Atomic student deletion | `Model#deleteStudent(StudentId)` validates the stable ID before removing the student and session history together, and returns the number of removed notes for command feedback. | 2026-10-07 | n/a |
-| Shared TutorTrack visual system | JavaFX shell surfaces use one light neutral and teal stylesheet with system fonts and explicit hover, focus, selection, and error states; the theme does not own command or model behavior. | 2026-10-11 | n/a |
+| Unreadable data recovery | Storage preserves each unreadable data file in a distinct sibling backup before a command can replace it, so no earlier recovery copy can hide later invalid content. | 2026-10-12 | n/a |
 
 ## Pressure Points
 

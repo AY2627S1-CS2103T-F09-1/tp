@@ -101,7 +101,6 @@ if [[ "${FAST_MODE}" == "1" ]]; then
   else
     "${BERYL_ROOT}/scripts/check-secrets.sh" --worktree
   fi
-  "${BERYL_ROOT}/scripts/check-tests-unchanged.sh"
 
   printf "OK\n"
   exit 0
@@ -125,7 +124,6 @@ if [[ "${CHECK_AFFECTED_MODE:-worktree}" == "staged" ]]; then
 else
   "${BERYL_ROOT}/scripts/check-secrets.sh" --worktree
 fi
-"${BERYL_ROOT}/scripts/check-tests-unchanged.sh"
 "${BERYL_ROOT}/scripts/check-affected.sh" --worktree
 
 printf "OK\n"

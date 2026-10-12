@@ -730,5 +730,9 @@ testers are expected to do more *exploratory* testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+   1. Replace the contents of `data/addressbook.json` with invalid JSON, such as `invalid`.
+   1. Start TutorTrack.
+      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/addressbook.json.backup-<unique>.bak`.
+   1. Close TutorTrack without entering a command, replace the original data file with different invalid content, and start TutorTrack again.
+      Expected: TutorTrack preserves the new content in a second uniquely named backup and leaves the first backup unchanged.
 2. _{ more test cases … }_
