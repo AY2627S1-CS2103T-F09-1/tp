@@ -404,6 +404,7 @@ check_agent_core() {
     "${BERYL_ROOT}/agent/architecture.md"
     "${BERYL_ROOT}/agent/testing-policy.md"
     "${BERYL_ROOT}/agent/coding-policy.md"
+    "${BERYL_ROOT}/agent/constraints.md"
     "${BERYL_ROOT}/agent/agent-rules.md"
     "${BERYL_ROOT}/agent/tool-instruction-template.md"
     "${BERYL_ROOT}/agent/mcp.json"
@@ -469,27 +470,15 @@ check_checks_component() {
     "${BERYL_ROOT}/scripts/check.sh"
     "${BERYL_ROOT}/scripts/check-md.sh"
     "${BERYL_ROOT}/scripts/check-affected.sh"
-    "${BERYL_ROOT}/scripts/check-tests-unchanged.sh"
     "${BERYL_ROOT}/scripts/check-secrets.sh"
-    "${BERYL_ROOT}/scripts/update-test-manifest.sh"
     "${BERYL_ROOT}/scripts/paths.sh"
   )
   local file
   for file in "${required_exec[@]}"; do
     check_exec "${file}"
   done
-  check_file "${BERYL_ROOT}/agent/test-manifest.conf"
   check_file "${BERYL_ROOT}/agent/affected-tests.conf"
-  check_file "${BERYL_ROOT}/scripts/test-manifest-lib.sh"
-  # test-manifest-lib.sh sources safe-conf.sh when tm_load_manifest_config
-  # runs. Validate both the code and the two loaded configurations before
-  # sourcing any managed file.
   check_file "${BERYL_ROOT}/scripts/safe-conf.sh"
-
-  # shellcheck source=../../scripts/test-manifest-lib.sh
-  source "${BERYL_ROOT}/scripts/test-manifest-lib.sh"
-  tm_load_manifest_config "${REPO_ROOT}" "${BERYL_ROOT}"
-  check_file "${TM_MANIFEST_ABS}"
 }
 
 check_githooks_component() {
