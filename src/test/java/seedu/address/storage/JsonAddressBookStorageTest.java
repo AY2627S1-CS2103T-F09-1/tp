@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -61,6 +63,45 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void backupAddressBookFile_existingFile_createsUniqueBackup() throws Exception {
+        Path dataFile = testFolder.resolve("addressbook.json");
+        String data = "invalid data";
+        Files.writeString(dataFile, data);
+
+        Path backupFile = new JsonAddressBookStorage(dataFile).backupAddressBookFile();
+
+        assertEquals(dataFile.getParent(), backupFile.getParent());
+        assertTrue(backupFile.getFileName().toString().startsWith("addressbook.json.backup-"));
+        assertTrue(backupFile.getFileName().toString().endsWith(".bak"));
+        assertEquals(data, Files.readString(backupFile));
+    }
+
+    @Test
+    public void backupAddressBookFile_existingBackup_createsAnotherBackup() throws Exception {
+        Path dataFile = testFolder.resolve("addressbook.json");
+        Files.writeString(dataFile, "first invalid data");
+        Path firstBackupFile = new JsonAddressBookStorage(dataFile).backupAddressBookFile();
+
+        Files.writeString(dataFile, "second invalid data");
+        Path secondBackupFile = new JsonAddressBookStorage(dataFile).backupAddressBookFile();
+
+        assertNotEquals(firstBackupFile, secondBackupFile);
+        assertEquals("first invalid data", Files.readString(firstBackupFile));
+        assertEquals("second invalid data", Files.readString(secondBackupFile));
+    }
+
+    @Test
+    public void backupAddressBookFile_missingFile_throwsIoExceptionWithoutLeavingBackup() throws Exception {
+        Path missingDataFile = testFolder.resolve("missing-addressbook.json");
+
+        assertThrows(IOException.class, () -> new JsonAddressBookStorage(missingDataFile).backupAddressBookFile());
+
+        try (Stream<Path> files = Files.list(testFolder)) {
+            assertTrue(files.findAny().isEmpty());
+        }
     }
 
     @Test
