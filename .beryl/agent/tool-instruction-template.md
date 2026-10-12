@@ -2,7 +2,7 @@
 
 This is a generated tool shim. Do not edit it directly; update `.beryl/agent/tool-instruction-template.md` and run `.beryl/agent/scripts/sync-agent-env.sh`.
 
-Repository files are the source of truth. Before changing code, tests, documentation, configuration, or Git history, read `.beryl/agent/coding-policy.md` first. Then load only the smallest relevant project-context files from `.beryl/agent/`.
+Repository files are the source of truth. Before changing code, tests, documentation, configuration, or Git history, read `.beryl/agent/coding-policy.md` and `.beryl/agent/constraints.md` first. Then load only the smallest relevant project-context files from `.beryl/agent/`.
 
 ## Workflow Selection
 
