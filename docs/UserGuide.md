@@ -193,7 +193,7 @@ Format: `exit`
 
 AddressBook automatically saves data after every command. You do not need to save manually.
 
-If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster and session notes stay as they were before the command.
+If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command.
 
 ### Editing the data file
 

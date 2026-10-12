@@ -257,7 +257,7 @@ The copy is made after parsing, so input that fails to parse never copies anythi
   * Pros: Copies nothing for commands that do not change data.
   * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
 
-Restoring the model does not protect the data file from a write that fails partway through, which could leave the file incomplete.
+Restoring the model does not by itself protect the data file from a write that fails partway through. `FileUtil#writeToFile` writes the serialized content to a temporary file in the data file's parent directory, then atomically replaces the target. A failed temporary write or replacement leaves the previous data file intact, and the temporary file is removed.
 
 ### \[Proposed\] Undo/redo feature
 
