@@ -145,7 +145,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     /**
      * Adds {@code note} to the session history of the student with {@code studentId}.
      *
-     * @throws IllegalArgumentException if no student in the roster has {@code studentId}.
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
      */
     public void addSessionNote(StudentId studentId, SessionNote note) {
         requireAllNonNull(studentId, note);
