@@ -2,14 +2,12 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
-import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
-import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
-import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
-import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
+import static seedu.address.testutil.TypicalSessionNotes.BEA;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -73,6 +71,38 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_EMPTY_ROSTER, model);
+    }
+
+    @Test
+    public void execute_addStudent_success() throws Exception {
+        String addCommand = "add n/Bea Lim p/9876 5432 sub/English l/JC 1";
+        Model expectedModel = new ModelManager();
+        expectedModel.addStudent(BEA);
+
+        assertCommandSuccess(addCommand,
+                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, BEA.getName()), expectedModel);
+    }
+
+    @Test
+    public void execute_legacyPersonAdd_throwsParseException() {
+        String legacyAddCommand =
+                "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
+
+        assertParseException(legacyAddCommand,
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void execute_removedLegacyCommands_throwParseException() {
+        model.addStudent(ALEX);
+        List<String> legacyCommands = List.of("edit 1 n/Alicia Lim", "find Alicia", "clear");
+
+        for (String legacyCommand : legacyCommands) {
+            assertParseException(legacyCommand, MESSAGE_UNKNOWN_COMMAND);
+        }
+
+        assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
     }
 
     @Test
@@ -240,10 +270,9 @@ public class LogicManagerTest {
 
         logic = new LogicManager(model, storage);
 
-        // Triggers the saveAddressBook method by executing an add command.
-        // Saving fails, so the person added by the command is removed again.
-        String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
-                + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+        // Triggers the saveAddressBook method by executing a student add command.
+        // Saving fails, so the student added by the command is removed again.
+        String addCommand = "add n/Bea Lim p/9876 5432 sub/English l/JC 1";
         ModelManager expectedModel = new ModelManager();
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
     }
