@@ -162,7 +162,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### TutorTrack command routing
 
-`AddressBookParser` registers the TutorTrack domain commands `add`, `list`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, and `clear` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
+`AddressBookParser` registers the TutorTrack domain commands `add`, `list`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, and `clear` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
 ### Student identity
 
