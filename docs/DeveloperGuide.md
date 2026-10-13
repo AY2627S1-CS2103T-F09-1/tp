@@ -160,6 +160,10 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### TutorTrack command routing
+
+`AddressBookParser` registers the TutorTrack domain commands `add`, `list`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, and `clear` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
+
 ### Student identity
 
 TutorTrack's first student-domain slice introduces immutable `Student`, `StudentName`, `ParentGuardianContact`, `Subject`, and `CurrentLevel` value types. The `StudentIdentity` value object is the single source of truth for duplicate detection. It compares a student's name after trimming, collapsing internal whitespace, and converting it to lower case with the parent or guardian phone number after removing spaces and hyphens. Subject, current level, and parent email do not affect identity, so siblings may share a parent phone number.
@@ -320,7 +324,7 @@ Step 5. The user then decides to execute the command `list`. Commands that do no
 
 ![UndoRedoState4](images/UndoRedoState4.png)
 
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …​` command. This is the behavior that most modern desktop applications follow.
+Step 6. The user executes `note 1 nt/Reviewed algebra.`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the earlier `add` command. This is the behavior that most modern desktop applications follow.
 
 ![UndoRedoState5](images/UndoRedoState5.png)
 
@@ -682,6 +686,16 @@ testers are expected to do more *exploratory* testing.
    Expected: TutorTrack rejects it as a duplicate student and preserves the existing record.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
+
+### Rejecting inherited AB3 person commands
+
+1. Add one student, add a session note for that student, and enter `list`.
+1. Enter each of `edit 1 n/Changed Name`, `find Changed`, and `clear`.
+   Expected: Each input reports `Unknown command.` The student, session note, roster display, and saved data remain unchanged.
+1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
+   Expected: TutorTrack reports the current student-add command format. It does not create a hidden person or change the roster, session notes, or saved data.
+1. Enter `add n/Bea Lim p/9876 5432 sub/English l/JC 1`.
+   Expected: The valid student form still adds Bea Lim normally.
 
 ### Listing the student roster
 
