@@ -67,6 +67,17 @@ Any warnings or errors will be printed out to the console.
 
 * Check scripts must exit with a non-zero exit code if any errors occur.
 
+### Git hooks
+
+The repository provides Git hooks in `.beryl/githooks` that run the project's checks (`./.beryl/scripts/check.sh`) before a commit or a push. Git does not enable them when the repository is cloned. To enable them, execute the following in the repository root directory:
+
+```bash
+git config core.hooksPath .beryl/githooks
+```
+
+* The pre-commit hook runs the fast checks (Markdown and secrets) on staged changes.
+* The pre-push hook runs the full checks, including tests, only when the push targets the remote's default branch (`master` in this repository). Pushes to other branches, such as PR branches, skip them.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Making a release
