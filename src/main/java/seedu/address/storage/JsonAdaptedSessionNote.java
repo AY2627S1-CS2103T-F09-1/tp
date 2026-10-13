@@ -17,9 +17,12 @@ class JsonAdaptedSessionNote {
 
     static final String MISSING_FIELD_MESSAGE_FORMAT = "Session note's %s field is missing!";
     static final String INVALID_RECORDED_AT_MESSAGE =
-            "Session note timestamps must include a date, time, and offset, such as 2026-09-18T18:35:00+08:00.";
+            "Session note timestamps must include a date, time, and offset, "
+            + "such as 2026-09-18T18:35:00+08:00.";
 
-    /** Always writes seconds, unlike {@link OffsetDateTime#toString()}, which omits them when they are zero. */
+    /**
+     * Always writes seconds, unlike {@link OffsetDateTime#toString()}, which omits them when they are zero.
+     */
     private static final DateTimeFormatter RECORDED_AT_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private final String recordedAt;
@@ -45,15 +48,20 @@ class JsonAdaptedSessionNote {
     /**
      * Returns the validated domain session note represented by this JSON object.
      *
-     * @throws IllegalValueException if a persisted field is missing or invalid.
+     * @throws IllegalValueException If a persisted field is missing or invalid.
      */
     SessionNote toModelType() throws IllegalValueException {
         return new SessionNote(requireValidText(), requireValidRecordedAt());
     }
 
+    /**
+     * Returns the recorded date-time parsed from {@code recordedAt}.
+     *
+     * @throws IllegalValueException If {@code recordedAt} is missing or not an offset date-time.
+     */
     private OffsetDateTime requireValidRecordedAt() throws IllegalValueException {
         if (recordedAt == null) {
-            throw missingField("recordedAt");
+            throw createMissingFieldException("recordedAt");
         }
         try {
             return OffsetDateTime.parse(recordedAt, RECORDED_AT_FORMAT);
@@ -62,9 +70,14 @@ class JsonAdaptedSessionNote {
         }
     }
 
+    /**
+     * Returns {@code text} after checking that it is present and valid.
+     *
+     * @throws IllegalValueException If {@code text} is missing or invalid.
+     */
     private String requireValidText() throws IllegalValueException {
         if (text == null) {
-            throw missingField("text");
+            throw createMissingFieldException("text");
         }
         if (!SessionNote.isValidText(text)) {
             throw new IllegalValueException(SessionNote.MESSAGE_CONSTRAINTS);
@@ -72,7 +85,7 @@ class JsonAdaptedSessionNote {
         return text;
     }
 
-    private IllegalValueException missingField(String fieldName) {
+    private IllegalValueException createMissingFieldException(String fieldName) {
         return new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, fieldName));
     }
 }

@@ -107,7 +107,7 @@ class JsonAdaptedStudent {
     /**
      * Returns the validated session history represented by this JSON object's session notes.
      *
-     * @throws IllegalValueException if a session note is empty or invalid.
+     * @throws IllegalValueException If a session note is empty or invalid.
      */
     SessionHistory toModelSessionHistory() throws IllegalValueException {
         SessionHistory history = SessionHistory.empty();

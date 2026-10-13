@@ -107,6 +107,7 @@ Format: `note INDEX nt/NOTE`
 * You can add the same note text more than once, because each note records a separate lesson.
 
 Examples:
+
 * `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.`
 * `note 3 nt/Completed past-year paper 2 (scored 34/40).`
 
