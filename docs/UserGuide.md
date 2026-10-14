@@ -97,7 +97,7 @@ Examples:
 
 Lists all students in normalized alphabetical order and reports how many students are in the roster. When the roster is empty, TutorTrack reports that there are no students and suggests using the `add` command.
 
-Each student card shows the roster index, student name, subject, current academic level, and number of session notes. The roster can be scrolled when it contains more students than fit in the window.
+Each student card shows the roster index, student name, subject, current academic level, and number of session notes. Long names, subjects, and levels wrap within their cards, and the roster can be scrolled when it contains more students than fit in the window.
 
 Format: `list`
 
@@ -125,7 +125,9 @@ If the index is missing, not a positive whole number, or larger than the number 
 
 Displays one student's profile beside the roster. The profile shows the student's name, parent or guardian phone and email, subject, current academic level, and session notes. If no email was recorded, TutorTrack displays `Not provided`.
 
-Session notes are shown newest first with the saved date, time, and UTC offset. Long notes wrap within the panel, and the history can be scrolled. A student without notes displays `No session notes recorded.` The open profile refreshes after each successful command and closes if that student is deleted; a failed command leaves it unchanged.
+Session notes are shown newest first with the saved date, time, and UTC offset. Long profile fields and notes wrap within the panel, and the history can be scrolled. A student without notes displays `No session notes yet` and the command for recording the first note.
+
+The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hover and keyboard focus are shown separately and do not open another profile. The open profile refreshes after each successful command and closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
 
 Format: `view INDEX`
 
@@ -178,7 +180,7 @@ Format: `delete INDEX`
 * `INDEX` is the student's number in the sorted roster shown by `list`.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
 * TutorTrack reports the deleted student's name and the number of session notes removed.
-* The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes.
+* The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes and its roster highlight is cleared.
 
 Example:
 
