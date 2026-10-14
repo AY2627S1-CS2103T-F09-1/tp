@@ -64,7 +64,7 @@ Commit-time checks are deliberately limited to fast, deterministic validation. F
 * Manual `./.beryl/scripts/check.sh` uses worktree mode by default and selects from all changes relative to `HEAD`.
 * `.beryl/scripts/check-affected.sh` reads `.beryl/agent/affected-tests.conf`.
 * Changes to broad configuration, dependency, hook, or test-strategy files force `FULL_TEST_CMD` when configured.
-* Source and test changes run `RELATED_TEST_CMD` with changed files appended when configured.
+* Source and test changes run `RELATED_TEST_CMD` with changed files appended when configured, and `FULL_TEST_CMD` otherwise.
 * If no project test runner is configured yet, the gate reports that no project tests are available and exits successfully.
 
 Recommended project configurations:
@@ -77,6 +77,10 @@ FULL_TEST_CMD=(npm test)
 # pytest with testmon
 RELATED_TEST_CMD=(pytest --testmon)
 FULL_TEST_CMD=(pytest)
+
+# Gradle, which cannot select tests from file paths
+RELATED_TEST_CMD=()
+FULL_TEST_CMD=(./gradlew test)
 ```
 
 ## Test Modification Rule
