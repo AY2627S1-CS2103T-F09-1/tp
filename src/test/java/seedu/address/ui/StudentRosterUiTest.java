@@ -33,8 +33,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Border;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -267,6 +269,15 @@ public class StudentRosterUiTest {
         assertEquals("alex.parent@example.com", ((Label) details.getChildren().get(3)).getText());
         assertEquals("Mathematics", ((Label) details.getChildren().get(5)).getText());
         assertEquals("Secondary 3", ((Label) details.getChildren().get(7)).getText());
+        assertTrue(((Label) profileContent.getChildren().get(0)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(1)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(3)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(5)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(7)).isWrapText());
+        List<ColumnConstraints> columns = details.getColumnConstraints();
+        assertEquals(2, columns.size());
+        assertEquals(Priority.ALWAYS, columns.get(1).getHgrow());
+        assertEquals(0, columns.get(1).getMinWidth());
         assertTrue(profileContent.isVisible());
         assertFalse(((VBox) ((StackPane) panel.getRoot()).getChildren().get(0)).isVisible());
     }
@@ -324,8 +335,8 @@ public class StudentRosterUiTest {
 
         ListView<SessionNote> listView = getSessionNoteListView(panel);
         assertEquals(List.of(newestNote, olderNote), listView.getItems());
-        assertFalse(getEmptyNotesMessage(panel).isVisible());
-        assertFalse(getEmptyNotesMessage(panel).isManaged());
+        assertFalse(getEmptyNotesState(panel).isVisible());
+        assertFalse(getEmptyNotesState(panel).isManaged());
     }
 
     @Test
@@ -338,9 +349,13 @@ public class StudentRosterUiTest {
         });
 
         assertTrue(getSessionNoteListView(panel).getItems().isEmpty());
-        assertEquals("No session notes recorded.", getEmptyNotesMessage(panel).getText());
-        assertTrue(getEmptyNotesMessage(panel).isVisible());
-        assertTrue(getEmptyNotesMessage(panel).isManaged());
+        VBox emptyNotesState = getEmptyNotesState(panel);
+        assertEquals("No session notes yet", ((Label) emptyNotesState.getChildren().get(0)).getText());
+        Label guidance = (Label) emptyNotesState.getChildren().get(1);
+        assertEquals("Use note INDEX nt/NOTE to record the first lesson update.",
+                guidance.getText());
+        assertTrue(emptyNotesState.isVisible());
+        assertTrue(emptyNotesState.isManaged());
     }
 
     @Test
@@ -352,6 +367,7 @@ public class StudentRosterUiTest {
 
         assertEquals("18 Sep 2026, 6:35 PM (UTC+08:00)", ((Label) card.getChildren().get(0)).getText());
         assertEquals(note.getText(), ((Label) card.getChildren().get(1)).getText());
+        assertTrue(((Label) card.getChildren().get(0)).isWrapText());
         assertTrue(((Label) card.getChildren().get(1)).isWrapText());
         assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
                 OffsetDateTime.parse("2026-09-18T10:35:00Z")));
@@ -619,9 +635,9 @@ public class StudentRosterUiTest {
         return (ListView<SessionNote>) notesContainer.getChildren().get(0);
     }
 
-    private Label getEmptyNotesMessage(StudentProfilePanel panel) {
+    private VBox getEmptyNotesState(StudentProfilePanel panel) {
         StackPane notesContainer = (StackPane) getProfileContent(panel).getChildren().get(3);
-        return (Label) notesContainer.getChildren().get(1);
+        return (VBox) notesContainer.getChildren().get(1);
     }
 
     @SuppressWarnings("unchecked")

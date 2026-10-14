@@ -191,21 +191,23 @@
     -fx-padding: 24px;
 }
 
-.profile-empty-state .label {
-    -fx-text-alignment: center;
-    -fx-text-fill: -app-text-muted;
-}
-
-.profile-empty-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: -app-text;
+.profile-content {
+    -fx-background-color: -app-background;
 }
 
 .profile-name {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
     -fx-text-fill: -app-text;
+}
+
+.profile-details {
+    -fx-background-color: -app-surface;
+    -fx-background-radius: 10px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-padding: 14px;
 }
 
 .profile-field-label {
@@ -215,6 +217,7 @@
 }
 
 .profile-field-value {
+    -fx-font-size: 14px;
     -fx-text-fill: -app-text;
 }
 
@@ -234,6 +237,12 @@
     -fx-padding: 0 0 8px 0;
 }
 
+.session-note-list .list-cell:filled:hover,
+.session-note-list .list-cell:filled:selected,
+.session-note-list .list-cell:filled:focused {
+    -fx-background-color: transparent;
+}
+
 .session-note-card {
     -fx-background-color: -app-surface;
     -fx-background-radius: 8px;
@@ -250,11 +259,26 @@
 
 .session-note-text {
     -fx-font-size: 14px;
+    -fx-line-spacing: 2px;
     -fx-text-fill: -app-text;
 }
 
-.empty-notes-message {
+.empty-notes-state {
+    -fx-background-color: -app-surface-muted;
+    -fx-background-radius: 10px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
     -fx-padding: 18px;
+}
+
+.empty-notes-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.empty-notes-state .empty-state-guidance {
     -fx-text-fill: -app-text-muted;
 }
 
