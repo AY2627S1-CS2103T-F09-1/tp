@@ -43,9 +43,10 @@ public class UiThemeTest {
         String theme = readResource("/view/TutorTrackTheme.css");
 
         assertTrue(theme.contains(".student-roster-list .list-cell:filled:hover #cardPane"));
-        assertTrue(theme.contains(".student-roster-list .list-cell:filled:selected #cardPane"));
+        assertTrue(theme.contains(".student-roster-list .list-cell:filled:profile-selected #cardPane"));
         assertTrue(theme.contains(".student-roster-list:focused .list-cell:filled:focused #cardPane"));
-        assertTrue(theme.contains(".student-roster-list:focused .list-cell:filled:selected:focused #cardPane"));
+        assertTrue(theme.contains(
+                ".student-roster-list:focused .list-cell:filled:profile-selected:focused #cardPane"));
         assertFalse(theme.contains("\n.list-cell:filled:hover"));
         assertFalse(theme.contains("\n.list-cell:filled:selected"));
     }

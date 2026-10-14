@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -19,8 +20,10 @@ import seedu.address.model.student.StudentRosterEntry;
 public class StudentRosterPanel extends UiPart<Region> {
 
     private static final String FXML = "StudentRosterPanel.fxml";
+    private static final PseudoClass PROFILE_SELECTED = PseudoClass.getPseudoClass("profile-selected");
 
     private final ObservableList<StudentRosterEntry> rosterEntries = FXCollections.observableArrayList();
+    private StudentId selectedProfileStudentId;
 
     @FXML
     private ListView<StudentRosterEntry> studentRosterListView;
@@ -46,10 +49,10 @@ public class StudentRosterPanel extends UiPart<Region> {
      */
     public void setRoster(StudentRoster roster) {
         requireNonNull(roster);
-        StudentRosterEntry selectedEntry = studentRosterListView.getSelectionModel().getSelectedItem();
+        StudentId studentIdToReselect = selectedProfileStudentId;
         rosterEntries.setAll(roster.getEntries());
-        if (selectedEntry != null) {
-            selectStudent(selectedEntry.getStudentId());
+        if (studentIdToReselect != null) {
+            selectStudent(studentIdToReselect);
         }
         boolean isEmpty = rosterEntries.isEmpty();
         emptyRosterState.setVisible(isEmpty);
@@ -67,23 +70,32 @@ public class StudentRosterPanel extends UiPart<Region> {
         rosterEntries.stream()
                 .filter(entry -> entry.getStudentId().equals(studentId))
                 .findFirst()
-                .ifPresentOrElse(studentRosterListView.getSelectionModel()::select, this::clearSelection);
+                .ifPresentOrElse(entry -> {
+                    selectedProfileStudentId = studentId;
+                    studentRosterListView.getSelectionModel().select(entry);
+                    studentRosterListView.refresh();
+                }, this::clearSelection);
     }
 
     /**
      * Clears the selected roster entry.
      */
     public void clearSelection() {
+        selectedProfileStudentId = null;
         studentRosterListView.getSelectionModel().clearSelection();
+        studentRosterListView.refresh();
     }
 
     /**
      * Displays one roster entry as a student card.
      */
-    static class StudentRosterListViewCell extends ListCell<StudentRosterEntry> {
+    class StudentRosterListViewCell extends ListCell<StudentRosterEntry> {
         @Override
         protected void updateItem(StudentRosterEntry entry, boolean empty) {
             super.updateItem(entry, empty);
+            boolean isDisplayedProfile = !empty && entry != null
+                    && entry.getStudentId().equals(selectedProfileStudentId);
+            pseudoClassStateChanged(PROFILE_SELECTED, isDisplayedProfile);
 
             if (empty || entry == null) {
                 setGraphic(null);

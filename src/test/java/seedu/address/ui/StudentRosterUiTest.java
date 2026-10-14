@@ -167,16 +167,56 @@ public class StudentRosterUiTest {
     @Test
     public void setRoster_selectedStudentMoves_preservesSelectionByStableId() throws Exception {
         Student alex = student("Alex Tan", ALEX_ID);
+        Student aaron = student("Aaron Koh", BLAIR_ID);
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of(alex))));
 
         onFxThread(() -> {
             panel.selectStudent(ALEX_ID);
-            panel.setRoster(new StudentRoster(List.of(alex, student("Aaron Koh", BLAIR_ID))));
+            panel.setRoster(new StudentRoster(List.of(alex, aaron)));
             return null;
         });
 
         assertEquals(1, getListView(panel).getSelectionModel().getSelectedIndex());
         assertEquals(ALEX_ID, getListView(panel).getSelectionModel().getSelectedItem().getStudentId());
+    }
+
+    @Test
+    public void setRoster_nativeSelectionMoves_reselectsDisplayedProfile() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Lim", BLAIR_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(
+                new StudentRoster(List.of(alex, blair))));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            getListView(panel).getSelectionModel().select(1);
+            panel.setRoster(new StudentRoster(List.of(alex, blair)));
+            return null;
+        });
+
+        assertEquals(ALEX_ID, getListView(panel).getSelectionModel().getSelectedItem().getStudentId());
+    }
+
+    @Test
+    public void listCell_displayedProfile_appliesDedicatedSelectionState() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(
+                student("Alex Tan", ALEX_ID), student("Blair Lim", BLAIR_ID)));
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(roster));
+        ListView<StudentRosterEntry> listView = getListView(panel);
+        ListCell<StudentRosterEntry> cell = onFxThread(() -> listView.getCellFactory().call(listView));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            updateCell(cell, roster.getEntries().get(0), false);
+            return null;
+        });
+        assertTrue(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("profile-selected")));
+
+        onFxThread(() -> {
+            updateCell(cell, roster.getEntries().get(1), false);
+            return null;
+        });
+        assertFalse(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("profile-selected")));
     }
 
     @Test

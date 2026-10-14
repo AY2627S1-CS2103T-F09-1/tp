@@ -116,7 +116,7 @@
     -fx-border-color: -app-border-strong;
 }
 
-.student-roster-list .list-cell:filled:selected #cardPane {
+.student-roster-list .list-cell:filled:profile-selected #cardPane {
     -fx-background-color: -app-accent-soft;
     -fx-border-color: -app-accent;
     -fx-border-width: 1px 1px 1px 4px;
@@ -128,7 +128,7 @@
     -fx-effect: dropshadow(gaussian, rgba(23, 51, 47, 0.22), 5, 0.35, 0, 0);
 }
 
-.student-roster-list:focused .list-cell:filled:selected:focused #cardPane {
+.student-roster-list:focused .list-cell:filled:profile-selected:focused #cardPane {
     -fx-border-color: -app-focus-ring -app-focus-ring -app-focus-ring -app-accent;
     -fx-border-width: 2px 2px 2px 4px;
 }
