@@ -24,6 +24,8 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -40,6 +42,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
@@ -67,6 +70,7 @@ public class StudentRosterUiTest {
         CountDownLatch startupLatch = new CountDownLatch(1);
         Platform.startup(startupLatch::countDown);
         assertTrue(startupLatch.await(10, TimeUnit.SECONDS));
+        Platform.setImplicitExit(false);
     }
 
     @AfterAll
@@ -538,6 +542,56 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void mainWindow_largeSavedSize_clampsToTargetScreenAndKeepsResponsiveMinimums() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+            logic.setInitialGuiSettings(new GuiSettings(visualBounds.getWidth() + 500,
+                    visualBounds.getHeight() + 500, (int) visualBounds.getMinX(), (int) visualBounds.getMinY()));
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+
+            assertEquals(visualBounds.getWidth(), stage.getWidth());
+            assertEquals(visualBounds.getHeight(), stage.getHeight());
+            assertEquals(700, stage.getMinWidth());
+            assertEquals(420, stage.getMinHeight());
+            StackPane resultDisplay = (StackPane) stage.getScene().lookup("#resultDisplayPlaceholder");
+            assertNotNull(resultDisplay);
+            assertEquals(64, resultDisplay.getMinHeight());
+            assertEquals(82, resultDisplay.getPrefHeight());
+            assertEquals(100, resultDisplay.getMaxHeight());
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_minimumSize_keepsPrimaryWorkspaceAreasVisible() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            stage.setWidth(700);
+            stage.setHeight(420);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                assertNodeWithinScene(stage, "#commandBoxPlaceholder");
+                assertNodeWithinScene(stage, "#resultDisplayPlaceholder");
+                assertNodeWithinScene(stage, "#workspaceSplitPane");
+                assertNodeWithinScene(stage, "#statusbarPlaceholder");
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_viewResult_displaysRequestedProfile() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
         StudentProfile profile = profile("alex.parent@example.com");
@@ -665,6 +719,18 @@ public class StudentRosterUiTest {
                 false, false, false, false));
     }
 
+    private void assertNodeWithinScene(Stage stage, String selector) {
+        Node node = stage.getScene().lookup(selector);
+        assertNotNull(node);
+        javafx.geometry.Bounds sceneBounds = node.localToScene(node.getBoundsInLocal());
+        assertTrue(sceneBounds.getWidth() > 0);
+        assertTrue(sceneBounds.getHeight() > 0);
+        assertTrue(sceneBounds.getMinX() >= 0);
+        assertTrue(sceneBounds.getMinY() >= 0);
+        assertTrue(sceneBounds.getMaxX() <= stage.getScene().getWidth() + 1);
+        assertTrue(sceneBounds.getMaxY() <= stage.getScene().getHeight() + 1);
+    }
+
     private Student student(String name) {
         return student(name, ALEX_ID);
     }
@@ -712,6 +778,7 @@ public class StudentRosterUiTest {
         private Optional<StudentProfile> profile;
         private CommandException commandFailure;
         private StudentRoster roster;
+        private GuiSettings initialGuiSettings = new GuiSettings();
 
         TestLogic(StudentRoster initialRoster, StudentRoster rosterAfterCommand) {
             this(initialRoster, rosterAfterCommand, new CommandResult("Command executed."), Optional.empty());
@@ -746,6 +813,10 @@ public class StudentRosterUiTest {
             this.commandFailure = commandFailure;
         }
 
+        void setInitialGuiSettings(GuiSettings guiSettings) {
+            initialGuiSettings = guiSettings;
+        }
+
         @Override
         public ObservableList<Person> getFilteredPersonList() {
             throw new AssertionError("This method should not be called.");
@@ -763,7 +834,7 @@ public class StudentRosterUiTest {
 
         @Override
         public GuiSettings getGuiSettings() {
-            return new GuiSettings();
+            return initialGuiSettings;
         }
 
         @Override
