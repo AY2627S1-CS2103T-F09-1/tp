@@ -77,8 +77,12 @@ public class StudentRosterUiTest {
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of())));
 
         assertTrue(getListView(panel).getItems().isEmpty());
-        assertTrue(getEmptyMessage(panel).isVisible());
-        assertTrue(getEmptyMessage(panel).isManaged());
+        assertTrue(getEmptyRosterState(panel).isVisible());
+        assertTrue(getEmptyRosterState(panel).isManaged());
+        assertEquals("No students yet", ((Label) getEmptyRosterState(panel).getChildren().get(0)).getText());
+        Label guidance = (Label) getEmptyRosterState(panel).getChildren().get(1);
+        assertEquals("Use the add command to create your first student profile.",
+                guidance.getText());
     }
 
     @Test
@@ -113,8 +117,8 @@ public class StudentRosterUiTest {
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(roster));
 
         assertEquals(roster.getEntries(), getListView(panel).getItems());
-        assertFalse(getEmptyMessage(panel).isVisible());
-        assertFalse(getEmptyMessage(panel).isManaged());
+        assertFalse(getEmptyRosterState(panel).isVisible());
+        assertFalse(getEmptyRosterState(panel).isManaged());
     }
 
     @Test
@@ -128,8 +132,8 @@ public class StudentRosterUiTest {
         });
 
         assertEquals(roster.getEntries(), getListView(panel).getItems());
-        assertFalse(getEmptyMessage(panel).isVisible());
-        assertFalse(getEmptyMessage(panel).isManaged());
+        assertFalse(getEmptyRosterState(panel).isVisible());
+        assertFalse(getEmptyRosterState(panel).isManaged());
     }
 
     @Test
@@ -198,6 +202,10 @@ public class StudentRosterUiTest {
         assertEquals("Subject: Mathematics", ((Label) details.getChildren().get(1)).getText());
         assertEquals("Level: Secondary 3", ((Label) details.getChildren().get(2)).getText());
         assertEquals("Session notes: 3", ((Label) details.getChildren().get(3)).getText());
+        assertTrue(((Label) heading.getChildren().get(1)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(1)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(2)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(3)).isWrapText());
     }
 
     @Test
@@ -622,9 +630,9 @@ public class StudentRosterUiTest {
         return (ListView<StudentRosterEntry>) root.getChildren().get(0);
     }
 
-    private Label getEmptyMessage(StudentRosterPanel panel) {
+    private VBox getEmptyRosterState(StudentRosterPanel panel) {
         StackPane root = (StackPane) panel.getRoot();
-        return (Label) root.getChildren().get(1);
+        return (VBox) root.getChildren().get(1);
     }
 
     private TextField getCommandTextField(CommandBox commandBox) {

@@ -5,10 +5,10 @@ import static java.util.Objects.requireNonNull;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import seedu.address.model.student.StudentId;
 import seedu.address.model.student.StudentRoster;
 import seedu.address.model.student.StudentRosterEntry;
@@ -25,7 +25,7 @@ public class StudentRosterPanel extends UiPart<Region> {
     @FXML
     private ListView<StudentRosterEntry> studentRosterListView;
     @FXML
-    private Label emptyRosterMessage;
+    private VBox emptyRosterState;
 
     /**
      * Creates a student roster panel with the supplied snapshot.
@@ -52,8 +52,8 @@ public class StudentRosterPanel extends UiPart<Region> {
             selectStudent(selectedEntry.getStudentId());
         }
         boolean isEmpty = rosterEntries.isEmpty();
-        emptyRosterMessage.setVisible(isEmpty);
-        emptyRosterMessage.setManaged(isEmpty);
+        emptyRosterState.setVisible(isEmpty);
+        emptyRosterState.setManaged(isEmpty);
     }
 
     /**
