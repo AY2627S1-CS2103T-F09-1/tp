@@ -220,8 +220,12 @@ public class MainWindow extends UiPart<Stage> {
 
     private void refreshDisplayedProfile() {
         displayedProfileStudentId.ifPresent(studentId -> logic.getStudentProfile(studentId)
-                .ifPresentOrElse(studentProfilePanel::setProfile, () -> {
+                .ifPresentOrElse(studentProfile -> {
+                    studentProfilePanel.setProfile(studentProfile);
+                    studentRosterPanel.selectStudent(studentId);
+                }, () -> {
                     studentProfilePanel.clearProfile();
+                    studentRosterPanel.clearSelection();
                     displayedProfileStudentId = Optional.empty();
                 }));
     }

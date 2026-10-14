@@ -58,6 +58,7 @@ import seedu.address.model.student.Subject;
 public class StudentRosterUiTest {
 
     private static final StudentId ALEX_ID = StudentId.fromString("123e4567-e89b-12d3-a456-426614174000");
+    private static final StudentId BLAIR_ID = StudentId.fromString("123e4567-e89b-12d3-a456-426614174001");
 
     @BeforeAll
     public static void initializeJavaFx() throws InterruptedException {
@@ -136,6 +137,50 @@ public class StudentRosterUiTest {
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of())));
 
         assertThrows(NullPointerException.class, () -> panel.setRoster(null));
+    }
+
+    @Test
+    public void selectStudent_existingStudent_selectsEntryByStableId() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Lim", BLAIR_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(
+                new StudentRoster(List.of(alex, blair))));
+
+        onFxThread(() -> {
+            panel.selectStudent(BLAIR_ID);
+            return null;
+        });
+
+        assertEquals(BLAIR_ID, getListView(panel).getSelectionModel().getSelectedItem().getStudentId());
+    }
+
+    @Test
+    public void setRoster_selectedStudentMoves_preservesSelectionByStableId() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of(alex))));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            panel.setRoster(new StudentRoster(List.of(alex, student("Aaron Koh", BLAIR_ID))));
+            return null;
+        });
+
+        assertEquals(1, getListView(panel).getSelectionModel().getSelectedIndex());
+        assertEquals(ALEX_ID, getListView(panel).getSelectionModel().getSelectedItem().getStudentId());
+    }
+
+    @Test
+    public void selectStudent_missingStudent_clearsSelection() throws Exception {
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(
+                new StudentRoster(List.of(student("Alex Tan")))));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            panel.selectStudent(BLAIR_ID);
+            return null;
+        });
+
+        assertTrue(getListView(panel).getSelectionModel().isEmpty());
     }
 
     @Test
@@ -481,6 +526,8 @@ public class StudentRosterUiTest {
             mainWindow.executeCommand("view 1");
             assertEquals("Alex Tan", ((Label) getProfileContent(mainWindow.getStudentProfilePanel())
                     .getChildren().get(0)).getText());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
             return null;
         });
     }
@@ -501,6 +548,8 @@ public class StudentRosterUiTest {
             logic.setProfile(Optional.of(profile(null, List.of(addedNote))));
             mainWindow.executeCommand("note 1 nt/Reviewed indices.");
             assertEquals(List.of(addedNote), getSessionNoteListView(mainWindow.getStudentProfilePanel()).getItems());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
             return null;
         });
     }
@@ -522,6 +571,8 @@ public class StudentRosterUiTest {
             assertThrows(CommandException.class, () ->
                     mainWindow.executeCommand("note 1 nt/Must not be displayed."));
             assertTrue(getSessionNoteListView(mainWindow.getStudentProfilePanel()).getItems().isEmpty());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
             return null;
         });
     }
@@ -545,6 +596,7 @@ public class StudentRosterUiTest {
             assertTrue(root.getChildren().get(0).isVisible());
             assertFalse(root.getChildren().get(1).isVisible());
             assertTrue(getListView(mainWindow.getStudentRosterPanel()).getItems().isEmpty());
+            assertTrue(getListView(mainWindow.getStudentRosterPanel()).getSelectionModel().isEmpty());
             return null;
         });
     }
@@ -590,8 +642,12 @@ public class StudentRosterUiTest {
     }
 
     private Student student(String name) {
+        return student(name, ALEX_ID);
+    }
+
+    private Student student(String name, StudentId studentId) {
         return new Student(new StudentName(name), new ParentGuardianContact("9123 4567", Optional.empty()),
-                new Subject("Mathematics"), new CurrentLevel("Secondary 3"), ALEX_ID);
+                new Subject("Mathematics"), new CurrentLevel("Secondary 3"), studentId);
     }
 
     private StudentProfile profile(String email) {
