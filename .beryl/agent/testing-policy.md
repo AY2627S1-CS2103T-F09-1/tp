@@ -57,10 +57,11 @@ If generated output is unavailable, explain why and run the closest deterministi
 
 ## Affected Test Gate
 
-Commit-time checks are deliberately limited to fast, deterministic validation. Full deterministic checks run only when a push targets the `main` branch.
+Commit-time checks are deliberately limited to fast, deterministic validation. Full deterministic checks run only when a push targets the remote's default branch.
 
+* The hooks run only after `git config core.hooksPath .beryl/githooks`; Git does not enable them when the repository is cloned.
 * The pre-commit hook sets `CHECK_AFFECTED_MODE=staged` and runs `./.beryl/scripts/check.sh --fast`. This runs Markdown and staged-secret checks without resolving the agent workspace or running project tests.
-* The pre-push hook runs `./.beryl/scripts/check.sh` only when the remote ref is `refs/heads/main`; pushes to other branches skip slow checks.
+* The pre-push hook runs `./.beryl/scripts/check.sh` only when the remote ref is the remote's default branch (`master` in this repository), or `main` or `master` when Git does not know the remote's default branch; pushes to other branches skip slow checks.
 * Manual `./.beryl/scripts/check.sh` uses worktree mode by default and selects from all changes relative to `HEAD`.
 * `.beryl/scripts/check-affected.sh` reads `.beryl/agent/affected-tests.conf`.
 * Changes to broad configuration, dependency, hook, or test-strategy files force `FULL_TEST_CMD` when configured.
