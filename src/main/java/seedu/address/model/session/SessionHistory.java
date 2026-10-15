@@ -11,16 +11,17 @@ import java.util.List;
  */
 public final class SessionHistory {
 
-    private static final SessionHistory EMPTY_HISTORY = new SessionHistory(List.of());
-
     /** Orders notes by the instant they were recorded, latest first, regardless of time-zone offset. */
     private static final Comparator<SessionNote> NEWEST_FIRST = Comparator
             .comparing((SessionNote note) -> note.getRecordedAt().toInstant())
             .reversed();
 
+    private static final SessionHistory EMPTY_HISTORY = new SessionHistory(List.of());
+
     private final List<SessionNote> notes;
 
     private SessionHistory(List<SessionNote> notes) {
+        assert isNewestFirst(notes) : "Session notes must be ordered newest first";
         this.notes = notes;
     }
 
@@ -75,6 +76,18 @@ public final class SessionHistory {
             }
         }
         return notes.size();
+    }
+
+    /**
+     * Returns whether {@code notes} are ordered newest first, as every history must be.
+     */
+    private static boolean isNewestFirst(List<SessionNote> notes) {
+        for (int i = 1; i < notes.size(); i++) {
+            if (NEWEST_FIRST.compare(notes.get(i - 1), notes.get(i)) > 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

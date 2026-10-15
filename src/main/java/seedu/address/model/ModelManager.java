@@ -129,6 +129,8 @@ public class ModelManager implements Model {
         OffsetDateTime recordedAt = OffsetDateTime.now(clock).truncatedTo(ChronoUnit.SECONDS);
         SessionNote note = new SessionNote(text, recordedAt);
         addressBook.addSessionNote(studentId, note);
+        assert addressBook.getSessionHistory(studentId).getNotes().contains(note)
+                : "An added session note must appear in the student's history";
         return note;
     }
 
