@@ -304,7 +304,7 @@ Before feature branches begin, the team should confirm:
 * The JSON field names and timestamp format
 * The validation limits and normalization rules
 * The no-partial-update storage guarantee
-* The policy for inherited `edit`, `find`, `clear`, and `help` commands
+* The inherited command policy: remove person-form `add`, `edit`, `find`, and `clear`; retain `help` and `exit`
 * The migration behavior for existing AddressBook data
 
 After ratification, this document becomes the reference for branch

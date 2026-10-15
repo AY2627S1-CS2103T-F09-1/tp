@@ -130,11 +130,4 @@ To reduce merge conflicts:
 
 ## Base-app features outside the MVP
 
-The default app also has `edit`, `find`, `clear`, and `help`. The MVP
-specification defers or excludes these. `exit` should remain as application
-lifecycle behavior.
-
-The team should explicitly decide whether deferred commands are temporarily
-retained for compatibility or removed from command routing before the MVP
-release. For a clean MVP acceptance test, only `add`, `list`, `view`, `note`,
-and `delete` should be treated as TutorTrack domain commands.
+The default app also has `edit`, `find`, `clear`, and `help`. TutorTrack removes the inherited person-form `add`, `edit`, `find`, and `clear` routes. `help` and `exit` remain as application-level behavior. Only student-form `add`, `list`, `view`, `note`, and student `delete` are TutorTrack domain commands.
