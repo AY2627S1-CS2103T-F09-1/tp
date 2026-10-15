@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="TutorTrack" minWidth="450" minHeight="600" onCloseRequest="#handleExit">
+         title="TutorTrack" minWidth="700" minHeight="420" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>
@@ -40,20 +40,20 @@
         </StackPane>
 
         <StackPane VBox.vgrow="NEVER" fx:id="resultDisplayPlaceholder" styleClass="pane-with-border"
-                   minHeight="100" prefHeight="100" maxHeight="100">
+                   minHeight="64" prefHeight="82" maxHeight="100">
           <padding>
             <Insets top="5" right="10" bottom="5" left="10" />
           </padding>
         </StackPane>
 
-        <SplitPane dividerPositions="0.45" VBox.vgrow="ALWAYS">
-          <VBox fx:id="studentRoster" styleClass="pane-with-border" minWidth="300" prefWidth="340">
+        <SplitPane fx:id="workspaceSplitPane" dividerPositions="0.42" VBox.vgrow="ALWAYS">
+          <VBox fx:id="studentRoster" styleClass="pane-with-border" minWidth="230" prefWidth="300">
             <padding>
               <Insets top="10" right="10" bottom="10" left="10" />
             </padding>
             <StackPane fx:id="studentRosterPanelPlaceholder" VBox.vgrow="ALWAYS"/>
           </VBox>
-          <StackPane fx:id="studentProfilePanelPlaceholder" styleClass="pane-with-border" minWidth="320" />
+          <StackPane fx:id="studentProfilePanelPlaceholder" styleClass="pane-with-border" minWidth="280" />
         </SplitPane>
 
         <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" />

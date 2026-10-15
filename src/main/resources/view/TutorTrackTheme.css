@@ -97,56 +97,93 @@
     -fx-padding: 0;
 }
 
-.list-cell {
+.student-roster-list .list-cell {
     -fx-background-color: -app-surface;
     -fx-label-padding: 0;
-    -fx-padding: 0;
+    -fx-padding: 5px;
 }
 
-.list-cell:filled:even {
+.student-roster-list .list-cell:filled:even {
     -fx-background-color: -app-surface;
 }
 
-.list-cell:filled:odd {
-    -fx-background-color: -app-surface-muted;
+.student-roster-list .list-cell:filled:odd {
+    -fx-background-color: -app-surface;
 }
 
-.list-cell:filled:hover {
+.student-roster-list .list-cell:filled:hover #cardPane {
     -fx-background-color: #e7f2f0;
+    -fx-border-color: -app-border-strong;
 }
 
-.list-cell:filled:selected {
+.student-roster-list .list-cell:filled:profile-selected #cardPane {
     -fx-background-color: -app-accent-soft;
-    -fx-text-fill: -app-text;
-}
-
-.list-cell:filled:selected #cardPane {
     -fx-border-color: -app-accent;
-    -fx-border-width: 0 0 0 3px;
+    -fx-border-width: 1px 1px 1px 4px;
 }
 
-.list-cell .label {
+.student-roster-list:focused .list-cell:filled:focused #cardPane {
+    -fx-border-color: -app-focus-ring;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(23, 51, 47, 0.22), 5, 0.35, 0, 0);
+}
+
+.student-roster-list:focused .list-cell:filled:profile-selected:focused #cardPane {
+    -fx-border-color: -app-focus-ring -app-focus-ring -app-focus-ring -app-accent;
+    -fx-border-width: 2px 2px 2px 4px;
+}
+
+.student-roster-list .list-cell .label {
     -fx-text-fill: -app-text;
 }
 
-.list-cell:empty {
+.student-roster-list .list-cell:empty {
     -fx-background-color: -app-surface;
 }
 
-.cell_big_label {
+.roster-name {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: -app-text;
 }
 
-.cell_small_label {
+.roster-index-badge {
+    -fx-background-color: -app-surface-muted;
+    -fx-background-radius: 12px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 12px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 7px;
+    -fx-text-fill: -app-text-muted;
+}
+
+.roster-context {
     -fx-font-size: 13px;
     -fx-text-fill: -app-text-muted;
 }
 
-.empty-roster-message {
-    -fx-font-size: 14px;
+.roster-note-count {
+    -fx-background-color: -app-accent-soft;
+    -fx-background-radius: 10px;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 3px 8px;
+    -fx-text-fill: -app-accent-dark;
+}
+
+.empty-roster-state {
     -fx-padding: 24px;
+}
+
+.empty-state-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.empty-state-guidance {
+    -fx-font-size: 13px;
     -fx-text-fill: -app-text-muted;
 }
 
@@ -154,21 +191,23 @@
     -fx-padding: 24px;
 }
 
-.profile-empty-state .label {
-    -fx-text-alignment: center;
-    -fx-text-fill: -app-text-muted;
-}
-
-.profile-empty-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: -app-text;
+.profile-content {
+    -fx-background-color: -app-background;
 }
 
 .profile-name {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
     -fx-text-fill: -app-text;
+}
+
+.profile-details {
+    -fx-background-color: -app-surface;
+    -fx-background-radius: 10px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-padding: 14px;
 }
 
 .profile-field-label {
@@ -178,6 +217,7 @@
 }
 
 .profile-field-value {
+    -fx-font-size: 14px;
     -fx-text-fill: -app-text;
 }
 
@@ -197,6 +237,12 @@
     -fx-padding: 0 0 8px 0;
 }
 
+.session-note-list .list-cell:filled:hover,
+.session-note-list .list-cell:filled:selected,
+.session-note-list .list-cell:filled:focused {
+    -fx-background-color: transparent;
+}
+
 .session-note-card {
     -fx-background-color: -app-surface;
     -fx-background-radius: 8px;
@@ -213,11 +259,26 @@
 
 .session-note-text {
     -fx-font-size: 14px;
+    -fx-line-spacing: 2px;
     -fx-text-fill: -app-text;
 }
 
-.empty-notes-message {
+.empty-notes-state {
+    -fx-background-color: -app-surface-muted;
+    -fx-background-radius: 10px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
     -fx-padding: 18px;
+}
+
+.empty-notes-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-text;
+}
+
+.empty-notes-state .empty-state-guidance {
     -fx-text-fill: -app-text-muted;
 }
 
@@ -382,8 +443,11 @@
 }
 
 #cardPane {
-    -fx-background-color: transparent;
-    -fx-border-width: 0;
+    -fx-background-color: -app-surface;
+    -fx-background-radius: 10px;
+    -fx-border-color: -app-border;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
 }
 
 #commandTypeLabel {
