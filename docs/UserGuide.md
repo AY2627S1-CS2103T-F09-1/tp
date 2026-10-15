@@ -17,9 +17,9 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
 1. Download the latest `.jar` file from the [TutorTrack releases page](https://github.com/AY2627S1-CS2103T-F09-1/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for TutorTrack.
+1. Copy the file to the folder you want to use as the _home folder_ for TutorTrack. This folder will contain the data file that stores your student roster and session notes. Rename the downloaded file to `tutortrack.jar` if it has a different name.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutortrack.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. On a first launch, the student roster is empty.<br>
    ![Ui](images/Ui.png)
 
@@ -28,9 +28,11 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `list` : Lists all students in the roster.
 
-   * `add n/John Doe p/98765432 sub/Mathematics l/Secondary 3` : Adds a student named `John Doe` to TutorTrack.
+   * `add n/John p/98765432 sub/Math l/Sec 3` : Adds a student named `John` to TutorTrack.
 
-   * `delete 3` : Deletes the 3rd student shown in the current roster and all of that student's session notes.
+   * `note 1 nt/Review trigo next session.` : Adds a session note to the first student shown in the current roster.
+
+   * `delete 1` : Deletes the first student shown in the current roster and all of that student's session notes.
 
    * `exit` : Exits the app.
 
