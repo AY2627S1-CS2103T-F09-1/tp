@@ -42,20 +42,14 @@ public class ModelTest {
 
     @Test
     public void defaultGetStudentRoster_withSessionNotes_reportsNoteCounts() {
-        AddressBook addressBook = new AddressBook();
-        addressBook.addStudent(ALEX);
-        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
-        Model model = new ModelStub(addressBook);
+        Model model = createModelWithAlexNote();
 
         assertEquals(1, model.getStudentRoster().getEntries().get(0).getNoteCount());
     }
 
     @Test
     public void defaultGetSessionHistory_returnsHistoryFromAddressBook() {
-        AddressBook addressBook = new AddressBook();
-        addressBook.addStudent(ALEX);
-        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
-        Model model = new ModelStub(addressBook);
+        Model model = createModelWithAlexNote();
 
         assertEquals(List.of(INDICES_NOTE), model.getSessionHistory(ALEX.getId()).getNotes());
     }
@@ -68,6 +62,16 @@ public class ModelTest {
                 "Reviewed indices."));
         assertThrows(UnsupportedOperationException.class, () -> model.removeSessionHistory(ALEX.getId()));
         assertThrows(UnsupportedOperationException.class, () -> model.deleteStudent(ALEX.getId()));
+    }
+
+    /**
+     * Returns a model stub whose address book holds {@code ALEX} with {@code INDICES_NOTE}.
+     */
+    private static Model createModelWithAlexNote() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        return new ModelStub(addressBook);
     }
 
     private static class ModelStub implements Model {
