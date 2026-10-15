@@ -75,6 +75,9 @@ public class LogicManager implements Logic {
         }
     }
 
+    /**
+     * Restores {@code dataBeforeCommand} into the model after a failed save, and logs the rollback.
+     */
     private void restore(AddressBook dataBeforeCommand) {
         logger.warning("Could not save data; restoring the data from before the command.");
         model.setAddressBook(dataBeforeCommand);
