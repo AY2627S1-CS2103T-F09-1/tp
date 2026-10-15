@@ -27,7 +27,6 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Atomic student deletion | `Model#deleteStudent(StudentId)` validates the stable ID before removing the student and session history together, and returns the number of removed notes for command feedback. | 2026-10-07 | n/a |
 | Atomic data-file replacement | `FileUtil#writeToFile` writes content to a temporary file beside the target and atomically replaces the target, so a failed save preserves the previous data file. | 2026-10-11 | n/a |
 | Unreadable data recovery | Storage preserves each unreadable data file in a distinct sibling backup before a command can replace it, so no earlier recovery copy can hide later invalid content. | 2026-10-12 | n/a |
-| TutorTrack command surface | `add` accepts only student fields; `list`, `view`, `note`, and student `delete` remain domain commands; `help` and `exit` remain application commands; inherited person-form `add`, `edit`, `find`, and `clear` are removed from command routing. | 2026-10-13 | n/a |
 
 ## Pressure Points
 
