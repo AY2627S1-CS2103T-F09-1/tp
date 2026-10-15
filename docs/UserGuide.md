@@ -15,12 +15,12 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-F09-1/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the _home folder_ for TutorTrack. This folder will contain the data file that stores your student roster and session notes. Rename the downloaded file to `tutortrack.jar` if it has a different name.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutortrack.jar`.<br>
+   A GUI similar to the one below should appear in a few seconds.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
@@ -28,9 +28,11 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `list` : Lists all students in the roster.
 
-   * `add n/John Doe p/98765432 sub/Mathematics l/Secondary 3` : Adds a student named `John Doe` to TutorTrack.
+   * `add n/John p/98765432 sub/Math l/Sec 3` : Adds a student named `John` to TutorTrack.
 
-   * `delete 3` : Deletes the 3rd student shown in the current roster and all of that student's session notes.
+   * `note 1 nt/Review trigo next session.` : Adds a session note to the first student shown in the current roster.
+
+   * `delete 1` : Deletes the first student shown in the current roster and all of that student's session notes.
 
    * `exit` : Exits the app.
 
@@ -162,11 +164,11 @@ If TutorTrack cannot save the data, for example because the data file is read-on
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Student records include an internal `studentId` that should be preserved when manually editing the data file and must be unique for every student. Each student's session notes are stored in that student's `sessionNotes` list, and each note has a `recordedAt` date and time with a time-zone offset, such as `2026-09-18T18:35:00+08:00`, and its `text`. A `recordedAt` without the offset (for example `2026-09-18T18:35:00`) makes the data file invalid. Advanced users are welcome to update data directly by editing that data file.
+TutorTrack data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Student records include an internal `studentId` that should be preserved when manually editing the data file and must be unique for every student. Each student's session notes are stored in that student's `sessionNotes` list, and each note has a `recordedAt` date and time with a time-zone offset, such as `2026-09-18T18:35:00+08:00`, and its `text`. A `recordedAt` without the offset (for example `2026-09-18T18:35:00`) makes the data file invalid. Advanced users are welcome to update data directly by editing that data file.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If your changes make the data file invalid, TutorTrack starts with an empty address book at the next run and shows an error. Before a command can replace the invalid file, TutorTrack keeps a uniquely named copy such as `[JAR file location]/data/addressbook.json.backup-<unique>.bak`. Correct the original file and restart TutorTrack before running a command that saves data. Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file invalid, TutorTrack starts with an empty student roster at the next run and shows an error. Before a command can replace the invalid file, TutorTrack keeps a uniquely named copy such as `[JAR file location]/data/addressbook.json.backup-<unique>.bak`. Correct the original file and restart TutorTrack before running a command that saves data. Still, we recommend backing up the file before editing it.<br>
+Furthermore, certain edits can cause TutorTrack to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </div>
 
 ### Archiving data files `[coming in v2.0]`
@@ -178,7 +180,7 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorTrack home folder.
 
 --------------------------------------------------------------------------------------------------------------------
 
