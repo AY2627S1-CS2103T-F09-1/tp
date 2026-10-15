@@ -198,7 +198,7 @@ public class MainWindow extends UiPart<Stage> {
             commandResult.getProfileStudentId()
                     .ifPresent(studentId -> displayedProfileStudentId = Optional.of(studentId));
             refreshDisplayedProfile();
-            logger.info("Result: " + commandResult.getFeedbackToUser());
+            logger.info("Command executed successfully: " + AddressBookParser.getLoggableCommandWord(commandText));
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
             if (commandResult.isShowHelp()) {

@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -54,6 +55,7 @@ import seedu.address.model.student.StudentName;
 import seedu.address.model.student.StudentRoster;
 import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.model.student.Subject;
+import seedu.address.testutil.LogRecorder;
 
 public class StudentRosterUiTest {
 
@@ -466,6 +468,23 @@ public class StudentRosterUiTest {
             assertEquals(refreshedRoster.getEntries(), getListView(mainWindow.getStudentRosterPanel()).getItems());
             return null;
         });
+    }
+
+    @Test
+    public void executeCommand_resultWithStudentName_logsCommandWordOnly() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of());
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for StudentAlpha."), Optional.empty());
+
+        List<String> logMessages = onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            return LogRecorder.captureMessages(MainWindow.class, () ->
+                    assertDoesNotThrow(() -> mainWindow.executeCommand("view 1")));
+        });
+
+        assertTrue(logMessages.contains("Command executed successfully: view"));
+        assertTrue(logMessages.stream().noneMatch(message -> message.contains("StudentAlpha")));
     }
 
     @Test
