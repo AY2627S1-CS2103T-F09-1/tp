@@ -26,13 +26,11 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists all students in the roster.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   * `add n/John Doe p/98765432 sub/Mathematics l/Secondary 3` : Adds a student named `John Doe` to TutorTrack.
 
    * `delete 3` : Deletes the 3rd student shown in the current roster and all of that student's session notes.
-
-   * `clear` : Deletes all contacts.
 
    * `exit` : Exits the app.
 
@@ -50,15 +48,12 @@ TutorTrack is a **desktop application for private tutors managing a student rost
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
 * Items in square brackets are optional.<br>
-  For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
-
-* Items followed by `…`​ can appear zero or more times.<br>
-  For example, `[t/TAG]…​` may be omitted, or written as `t/friend` or `t/friend t/family`.
+  For example, `[e/PARENT_EMAIL]` means the parent email can be included or omitted when adding a student.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for commands that take no parameters, such as `help` and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`. The `list` command rejects extra input because it only accepts the exact format shown below.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -136,39 +131,6 @@ Example: `view 2`
 
 If the index is missing, invalid, or larger than the number of students in the roster, TutorTrack shows an error and keeps the current display unchanged.
 
-### Editing a person: `edit`
-
-Edits an existing person in the address book.
-
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`
-
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
-
-Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
-
-### Locating persons by name: `find`
-
-Finds persons whose names contain any of the given keywords.
-
-Format: `find KEYWORD [MORE_KEYWORDS]`
-
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
-
-Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
-
 ### Deleting a student: `delete`
 
 Deletes the specified student and all session notes belonging to that student.
@@ -186,12 +148,6 @@ Example:
 
 If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save the deletion, it restores the student and session notes.
 
-### Clearing all entries: `clear`
-
-Clears all entries from the address book.
-
-Format: `clear`
-
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -200,7 +156,7 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+TutorTrack automatically saves data after every command. You do not need to save manually.
 
 If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command.
 
@@ -237,12 +193,10 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
-**Clear** | `clear`
+**Add** | `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`<br> e.g., `add n/James Ho p/91234567 sub/Mathematics l/Secondary 3`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
 **Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`
 **View** | `view INDEX`<br> e.g., `view 2`
 **Help** | `help`
+**Exit** | `exit`
