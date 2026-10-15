@@ -1,16 +1,19 @@
 package seedu.address.ui;
 
+import java.awt.Point;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -142,12 +145,30 @@ public class MainWindow extends UiPart<Stage> {
      * Sets the default size based on {@code guiSettings}.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        primaryStage.setHeight(guiSettings.getWindowHeight());
-        primaryStage.setWidth(guiSettings.getWindowWidth());
-        if (guiSettings.getWindowCoordinates() != null) {
-            primaryStage.setX(guiSettings.getWindowCoordinates().getX());
-            primaryStage.setY(guiSettings.getWindowCoordinates().getY());
+        Rectangle2D visualBounds = getTargetScreenVisualBounds(guiSettings);
+        primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), visualBounds.getHeight()));
+        primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), visualBounds.getWidth()));
+        Point windowCoordinates = guiSettings.getWindowCoordinates();
+        if (windowCoordinates != null) {
+            primaryStage.setX(windowCoordinates.getX());
+            primaryStage.setY(windowCoordinates.getY());
         }
+    }
+
+    /**
+     * Returns the usable bounds of the screen containing the saved window origin.
+     * Falls back to the primary screen when no saved origin is available there.
+     */
+    private Rectangle2D getTargetScreenVisualBounds(GuiSettings guiSettings) {
+        Point windowCoordinates = guiSettings.getWindowCoordinates();
+        if (windowCoordinates == null) {
+            return Screen.getPrimary().getVisualBounds();
+        }
+        return Screen.getScreensForRectangle(windowCoordinates.getX(), windowCoordinates.getY(), 1, 1)
+                .stream()
+                .findFirst()
+                .orElse(Screen.getPrimary())
+                .getVisualBounds();
     }
 
     /**
@@ -220,8 +241,12 @@ public class MainWindow extends UiPart<Stage> {
 
     private void refreshDisplayedProfile() {
         displayedProfileStudentId.ifPresent(studentId -> logic.getStudentProfile(studentId)
-                .ifPresentOrElse(studentProfilePanel::setProfile, () -> {
+                .ifPresentOrElse(studentProfile -> {
+                    studentProfilePanel.setProfile(studentProfile);
+                    studentRosterPanel.selectStudent(studentId);
+                }, () -> {
                     studentProfilePanel.clearProfile();
+                    studentRosterPanel.clearSelection();
                     displayedProfileStudentId = Optional.empty();
                 }));
     }

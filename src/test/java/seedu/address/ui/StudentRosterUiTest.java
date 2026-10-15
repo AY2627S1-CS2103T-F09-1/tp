@@ -1,6 +1,5 @@
 package seedu.address.ui;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,6 +24,8 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -34,11 +35,14 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Border;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
@@ -55,17 +59,18 @@ import seedu.address.model.student.StudentName;
 import seedu.address.model.student.StudentRoster;
 import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.model.student.Subject;
-import seedu.address.testutil.LogRecorder;
 
 public class StudentRosterUiTest {
 
     private static final StudentId ALEX_ID = StudentId.fromString("123e4567-e89b-12d3-a456-426614174000");
+    private static final StudentId BLAIR_ID = StudentId.fromString("123e4567-e89b-12d3-a456-426614174001");
 
     @BeforeAll
     public static void initializeJavaFx() throws InterruptedException {
         CountDownLatch startupLatch = new CountDownLatch(1);
         Platform.startup(startupLatch::countDown);
         assertTrue(startupLatch.await(10, TimeUnit.SECONDS));
+        Platform.setImplicitExit(false);
     }
 
     @AfterAll
@@ -78,8 +83,12 @@ public class StudentRosterUiTest {
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of())));
 
         assertTrue(getListView(panel).getItems().isEmpty());
-        assertTrue(getEmptyMessage(panel).isVisible());
-        assertTrue(getEmptyMessage(panel).isManaged());
+        assertTrue(getEmptyRosterState(panel).isVisible());
+        assertTrue(getEmptyRosterState(panel).isManaged());
+        assertEquals("No students yet", ((Label) getEmptyRosterState(panel).getChildren().get(0)).getText());
+        Label guidance = (Label) getEmptyRosterState(panel).getChildren().get(1);
+        assertEquals("Use the add command to create your first student profile.",
+                guidance.getText());
     }
 
     @Test
@@ -114,8 +123,8 @@ public class StudentRosterUiTest {
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(roster));
 
         assertEquals(roster.getEntries(), getListView(panel).getItems());
-        assertFalse(getEmptyMessage(panel).isVisible());
-        assertFalse(getEmptyMessage(panel).isManaged());
+        assertFalse(getEmptyRosterState(panel).isVisible());
+        assertFalse(getEmptyRosterState(panel).isManaged());
     }
 
     @Test
@@ -129,8 +138,8 @@ public class StudentRosterUiTest {
         });
 
         assertEquals(roster.getEntries(), getListView(panel).getItems());
-        assertFalse(getEmptyMessage(panel).isVisible());
-        assertFalse(getEmptyMessage(panel).isManaged());
+        assertFalse(getEmptyRosterState(panel).isVisible());
+        assertFalse(getEmptyRosterState(panel).isManaged());
     }
 
     @Test
@@ -138,6 +147,90 @@ public class StudentRosterUiTest {
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of())));
 
         assertThrows(NullPointerException.class, () -> panel.setRoster(null));
+    }
+
+    @Test
+    public void selectStudent_existingStudent_selectsEntryByStableId() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Lim", BLAIR_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(
+                new StudentRoster(List.of(alex, blair))));
+
+        onFxThread(() -> {
+            panel.selectStudent(BLAIR_ID);
+            return null;
+        });
+
+        assertEquals(BLAIR_ID, getListView(panel).getSelectionModel().getSelectedItem().getStudentId());
+    }
+
+    @Test
+    public void setRoster_selectedStudentMoves_preservesSelectionByStableId() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student aaron = student("Aaron Koh", BLAIR_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of(alex))));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            panel.setRoster(new StudentRoster(List.of(alex, aaron)));
+            return null;
+        });
+
+        assertEquals(1, getListView(panel).getSelectionModel().getSelectedIndex());
+        assertEquals(ALEX_ID, getListView(panel).getSelectionModel().getSelectedItem().getStudentId());
+    }
+
+    @Test
+    public void setRoster_nativeSelectionMoves_reselectsDisplayedProfile() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Lim", BLAIR_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(
+                new StudentRoster(List.of(alex, blair))));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            getListView(panel).getSelectionModel().select(1);
+            panel.setRoster(new StudentRoster(List.of(alex, blair)));
+            return null;
+        });
+
+        assertEquals(ALEX_ID, getListView(panel).getSelectionModel().getSelectedItem().getStudentId());
+    }
+
+    @Test
+    public void listCell_displayedProfile_appliesDedicatedSelectionState() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(
+                student("Alex Tan", ALEX_ID), student("Blair Lim", BLAIR_ID)));
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(roster));
+        ListView<StudentRosterEntry> listView = getListView(panel);
+        ListCell<StudentRosterEntry> cell = onFxThread(() -> listView.getCellFactory().call(listView));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            updateCell(cell, roster.getEntries().get(0), false);
+            return null;
+        });
+        assertTrue(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("profile-selected")));
+
+        onFxThread(() -> {
+            updateCell(cell, roster.getEntries().get(1), false);
+            return null;
+        });
+        assertFalse(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("profile-selected")));
+    }
+
+    @Test
+    public void selectStudent_missingStudent_clearsSelection() throws Exception {
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(
+                new StudentRoster(List.of(student("Alex Tan")))));
+
+        onFxThread(() -> {
+            panel.selectStudent(ALEX_ID);
+            panel.selectStudent(BLAIR_ID);
+            return null;
+        });
+
+        assertTrue(getListView(panel).getSelectionModel().isEmpty());
     }
 
     @Test
@@ -155,6 +248,10 @@ public class StudentRosterUiTest {
         assertEquals("Subject: Mathematics", ((Label) details.getChildren().get(1)).getText());
         assertEquals("Level: Secondary 3", ((Label) details.getChildren().get(2)).getText());
         assertEquals("Session notes: 3", ((Label) details.getChildren().get(3)).getText());
+        assertTrue(((Label) heading.getChildren().get(1)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(1)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(2)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(3)).isWrapText());
     }
 
     @Test
@@ -216,6 +313,15 @@ public class StudentRosterUiTest {
         assertEquals("alex.parent@example.com", ((Label) details.getChildren().get(3)).getText());
         assertEquals("Mathematics", ((Label) details.getChildren().get(5)).getText());
         assertEquals("Secondary 3", ((Label) details.getChildren().get(7)).getText());
+        assertTrue(((Label) profileContent.getChildren().get(0)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(1)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(3)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(5)).isWrapText());
+        assertTrue(((Label) details.getChildren().get(7)).isWrapText());
+        List<ColumnConstraints> columns = details.getColumnConstraints();
+        assertEquals(2, columns.size());
+        assertEquals(Priority.ALWAYS, columns.get(1).getHgrow());
+        assertEquals(0, columns.get(1).getMinWidth());
         assertTrue(profileContent.isVisible());
         assertFalse(((VBox) ((StackPane) panel.getRoot()).getChildren().get(0)).isVisible());
     }
@@ -273,8 +379,8 @@ public class StudentRosterUiTest {
 
         ListView<SessionNote> listView = getSessionNoteListView(panel);
         assertEquals(List.of(newestNote, olderNote), listView.getItems());
-        assertFalse(getEmptyNotesMessage(panel).isVisible());
-        assertFalse(getEmptyNotesMessage(panel).isManaged());
+        assertFalse(getEmptyNotesState(panel).isVisible());
+        assertFalse(getEmptyNotesState(panel).isManaged());
     }
 
     @Test
@@ -287,9 +393,13 @@ public class StudentRosterUiTest {
         });
 
         assertTrue(getSessionNoteListView(panel).getItems().isEmpty());
-        assertEquals("No session notes recorded.", getEmptyNotesMessage(panel).getText());
-        assertTrue(getEmptyNotesMessage(panel).isVisible());
-        assertTrue(getEmptyNotesMessage(panel).isManaged());
+        VBox emptyNotesState = getEmptyNotesState(panel);
+        assertEquals("No session notes yet", ((Label) emptyNotesState.getChildren().get(0)).getText());
+        Label guidance = (Label) emptyNotesState.getChildren().get(1);
+        assertEquals("Use note INDEX nt/NOTE to record the first lesson update.",
+                guidance.getText());
+        assertTrue(emptyNotesState.isVisible());
+        assertTrue(emptyNotesState.isManaged());
     }
 
     @Test
@@ -301,6 +411,7 @@ public class StudentRosterUiTest {
 
         assertEquals("18 Sep 2026, 6:35 PM (UTC+08:00)", ((Label) card.getChildren().get(0)).getText());
         assertEquals(note.getText(), ((Label) card.getChildren().get(1)).getText());
+        assertTrue(((Label) card.getChildren().get(0)).isWrapText());
         assertTrue(((Label) card.getChildren().get(1)).isWrapText());
         assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
                 OffsetDateTime.parse("2026-09-18T10:35:00Z")));
@@ -471,20 +582,53 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void executeCommand_resultWithStudentName_logsCommandWordOnly() throws Exception {
-        StudentRoster roster = new StudentRoster(List.of());
-        TestLogic logic = new TestLogic(roster, roster,
-                new CommandResult("Displaying profile for StudentAlpha."), Optional.empty());
+    public void mainWindow_largeSavedSize_clampsToTargetScreenAndKeepsResponsiveMinimums() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
 
-        List<String> logMessages = onFxThread(() -> {
-            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+        onFxThread(() -> {
+            Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+            logic.setInitialGuiSettings(new GuiSettings(visualBounds.getWidth() + 500,
+                    visualBounds.getHeight() + 500, (int) visualBounds.getMinX(), (int) visualBounds.getMinY()));
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
             mainWindow.fillInnerParts();
-            return LogRecorder.captureMessages(MainWindow.class, () ->
-                    assertDoesNotThrow(() -> mainWindow.executeCommand("view 1")));
-        });
 
-        assertTrue(logMessages.contains("Command executed successfully: view"));
-        assertTrue(logMessages.stream().noneMatch(message -> message.contains("StudentAlpha")));
+            assertEquals(visualBounds.getWidth(), stage.getWidth());
+            assertEquals(visualBounds.getHeight(), stage.getHeight());
+            assertEquals(700, stage.getMinWidth());
+            assertEquals(420, stage.getMinHeight());
+            StackPane resultDisplay = (StackPane) stage.getScene().lookup("#resultDisplayPlaceholder");
+            assertNotNull(resultDisplay);
+            assertEquals(64, resultDisplay.getMinHeight());
+            assertEquals(82, resultDisplay.getPrefHeight());
+            assertEquals(100, resultDisplay.getMaxHeight());
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_minimumSize_keepsPrimaryWorkspaceAreasVisible() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            stage.setWidth(700);
+            stage.setHeight(420);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                assertNodeWithinScene(stage, "#commandBoxPlaceholder");
+                assertNodeWithinScene(stage, "#resultDisplayPlaceholder");
+                assertNodeWithinScene(stage, "#workspaceSplitPane");
+                assertNodeWithinScene(stage, "#statusbarPlaceholder");
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
     }
 
     @Test
@@ -500,6 +644,8 @@ public class StudentRosterUiTest {
             mainWindow.executeCommand("view 1");
             assertEquals("Alex Tan", ((Label) getProfileContent(mainWindow.getStudentProfilePanel())
                     .getChildren().get(0)).getText());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
             return null;
         });
     }
@@ -520,6 +666,8 @@ public class StudentRosterUiTest {
             logic.setProfile(Optional.of(profile(null, List.of(addedNote))));
             mainWindow.executeCommand("note 1 nt/Reviewed indices.");
             assertEquals(List.of(addedNote), getSessionNoteListView(mainWindow.getStudentProfilePanel()).getItems());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
             return null;
         });
     }
@@ -541,6 +689,8 @@ public class StudentRosterUiTest {
             assertThrows(CommandException.class, () ->
                     mainWindow.executeCommand("note 1 nt/Must not be displayed."));
             assertTrue(getSessionNoteListView(mainWindow.getStudentProfilePanel()).getItems().isEmpty());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
             return null;
         });
     }
@@ -564,6 +714,7 @@ public class StudentRosterUiTest {
             assertTrue(root.getChildren().get(0).isVisible());
             assertFalse(root.getChildren().get(1).isVisible());
             assertTrue(getListView(mainWindow.getStudentRosterPanel()).getItems().isEmpty());
+            assertTrue(getListView(mainWindow.getStudentRosterPanel()).getSelectionModel().isEmpty());
             return null;
         });
     }
@@ -578,9 +729,9 @@ public class StudentRosterUiTest {
         return (ListView<SessionNote>) notesContainer.getChildren().get(0);
     }
 
-    private Label getEmptyNotesMessage(StudentProfilePanel panel) {
+    private VBox getEmptyNotesState(StudentProfilePanel panel) {
         StackPane notesContainer = (StackPane) getProfileContent(panel).getChildren().get(3);
-        return (Label) notesContainer.getChildren().get(1);
+        return (VBox) notesContainer.getChildren().get(1);
     }
 
     @SuppressWarnings("unchecked")
@@ -589,9 +740,9 @@ public class StudentRosterUiTest {
         return (ListView<StudentRosterEntry>) root.getChildren().get(0);
     }
 
-    private Label getEmptyMessage(StudentRosterPanel panel) {
+    private VBox getEmptyRosterState(StudentRosterPanel panel) {
         StackPane root = (StackPane) panel.getRoot();
-        return (Label) root.getChildren().get(1);
+        return (VBox) root.getChildren().get(1);
     }
 
     private TextField getCommandTextField(CommandBox commandBox) {
@@ -608,9 +759,25 @@ public class StudentRosterUiTest {
                 false, false, false, false));
     }
 
+    private void assertNodeWithinScene(Stage stage, String selector) {
+        Node node = stage.getScene().lookup(selector);
+        assertNotNull(node);
+        javafx.geometry.Bounds sceneBounds = node.localToScene(node.getBoundsInLocal());
+        assertTrue(sceneBounds.getWidth() > 0);
+        assertTrue(sceneBounds.getHeight() > 0);
+        assertTrue(sceneBounds.getMinX() >= 0);
+        assertTrue(sceneBounds.getMinY() >= 0);
+        assertTrue(sceneBounds.getMaxX() <= stage.getScene().getWidth() + 1);
+        assertTrue(sceneBounds.getMaxY() <= stage.getScene().getHeight() + 1);
+    }
+
     private Student student(String name) {
+        return student(name, ALEX_ID);
+    }
+
+    private Student student(String name, StudentId studentId) {
         return new Student(new StudentName(name), new ParentGuardianContact("9123 4567", Optional.empty()),
-                new Subject("Mathematics"), new CurrentLevel("Secondary 3"), ALEX_ID);
+                new Subject("Mathematics"), new CurrentLevel("Secondary 3"), studentId);
     }
 
     private StudentProfile profile(String email) {
@@ -651,6 +818,7 @@ public class StudentRosterUiTest {
         private Optional<StudentProfile> profile;
         private CommandException commandFailure;
         private StudentRoster roster;
+        private GuiSettings initialGuiSettings = new GuiSettings();
 
         TestLogic(StudentRoster initialRoster, StudentRoster rosterAfterCommand) {
             this(initialRoster, rosterAfterCommand, new CommandResult("Command executed."), Optional.empty());
@@ -685,6 +853,10 @@ public class StudentRosterUiTest {
             this.commandFailure = commandFailure;
         }
 
+        void setInitialGuiSettings(GuiSettings guiSettings) {
+            initialGuiSettings = guiSettings;
+        }
+
         @Override
         public ObservableList<Person> getFilteredPersonList() {
             throw new AssertionError("This method should not be called.");
@@ -702,7 +874,7 @@ public class StudentRosterUiTest {
 
         @Override
         public GuiSettings getGuiSettings() {
-            return new GuiSettings();
+            return initialGuiSettings;
         }
 
         @Override

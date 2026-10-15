@@ -38,6 +38,19 @@ public class UiThemeTest {
         assertEquals("https://nus-cs2103-ay2627-s1.github.io/tp/UserGuide.html", HelpWindow.USERGUIDE_URL);
     }
 
+    @Test
+    public void rosterTheme_interactionStatesAreScopedToRosterList() throws IOException {
+        String theme = readResource("/view/TutorTrackTheme.css");
+
+        assertTrue(theme.contains(".student-roster-list .list-cell:filled:hover #cardPane"));
+        assertTrue(theme.contains(".student-roster-list .list-cell:filled:profile-selected #cardPane"));
+        assertTrue(theme.contains(".student-roster-list:focused .list-cell:filled:focused #cardPane"));
+        assertTrue(theme.contains(
+                ".student-roster-list:focused .list-cell:filled:profile-selected:focused #cardPane"));
+        assertFalse(theme.contains("\n.list-cell:filled:hover"));
+        assertFalse(theme.contains("\n.list-cell:filled:selected"));
+    }
+
     private String readResource(String resourcePath) throws IOException {
         URL resource = getClass().getResource(resourcePath);
         assertNotNull(resource, resourcePath + " does not exist.");

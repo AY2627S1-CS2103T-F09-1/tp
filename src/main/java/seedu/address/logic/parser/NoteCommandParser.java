@@ -42,11 +42,16 @@ public class NoteCommandParser implements Parser<NoteCommand> {
         return new NoteCommand(index, noteText.get());
     }
 
+    /**
+     * Returns the index given in {@code preamble}.
+     *
+     * @throws ParseException If the preamble is not a single positive index.
+     */
     private Index parseIndex(String preamble) throws ParseException {
         try {
             return ParserUtil.parseIndex(preamble);
-        } catch (ParseException pe) {
-            throw new ParseException(MESSAGE_INVALID_FORMAT, pe);
+        } catch (ParseException exception) {
+            throw new ParseException(MESSAGE_INVALID_FORMAT, exception);
         }
     }
 }

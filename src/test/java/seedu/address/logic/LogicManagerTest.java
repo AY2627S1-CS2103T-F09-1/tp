@@ -120,8 +120,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_noteWithStorageFailure_restoresSessionHistory() {
-        Model studentModel = new ModelManager();
-        studentModel.addStudent(ALEX);
+        Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
         assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic
                 .execute(NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices."));
@@ -132,8 +131,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addStudentWithStorageFailure_restoresRoster() {
-        Model studentModel = new ModelManager();
-        studentModel.addStudent(ALEX);
+        Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
         assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic
                 .execute("add n/Bea Lim p/9876 5432 sub/English l/JC 1"));
@@ -144,8 +142,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_deleteWithStorageFailure_restoresStudentAndSessionHistory() throws Exception {
-        Model studentModel = new ModelManager();
-        studentModel.addStudent(ALEX);
+        Model studentModel = createModelWithAlex();
         studentModel.addSessionNote(ALEX.getId(), "Reviewed indices.");
         Path savedFile = temporaryFolder.resolve("addressBook.json");
         new JsonAddressBookStorage(savedFile).saveAddressBook(studentModel.getAddressBook());
@@ -163,8 +160,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_successAfterStorageFailure_savesOnlyLaterChange() throws Exception {
-        Model studentModel = new ModelManager();
-        studentModel.addStudent(ALEX);
+        Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
         assertThrows(CommandException.class, () -> failingLogic.execute(NoteCommand.COMMAND_WORD
                 + " 1 nt/Reviewed indices."));
@@ -299,6 +295,15 @@ public class LogicManagerTest {
         String addCommand = "add n/Bea Lim p/9876 5432 sub/English l/JC 1";
         ModelManager expectedModel = new ModelManager();
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+    }
+
+    /**
+     * Returns a model whose address book holds only {@code ALEX}.
+     */
+    private Model createModelWithAlex() {
+        Model studentModel = new ModelManager();
+        studentModel.addStudent(ALEX);
+        return studentModel;
     }
 
     /**

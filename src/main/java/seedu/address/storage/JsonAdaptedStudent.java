@@ -117,6 +117,7 @@ class JsonAdaptedStudent {
             }
             history = history.withNote(sessionNote.toModelType());
         }
+        assert history.size() == sessionNotes.size() : "Every persisted session note must be in the history";
         return history;
     }
 

@@ -40,7 +40,7 @@ public class StudentProfilePanel extends UiPart<Region> {
     @FXML
     private ListView<SessionNote> sessionNoteListView;
     @FXML
-    private Label emptyNotesMessage;
+    private VBox emptyNotesState;
 
     /**
      * Creates an empty panel that prompts the user to select a profile.
@@ -78,8 +78,8 @@ public class StudentProfilePanel extends UiPart<Region> {
 
     private void updateNotesEmptyState() {
         boolean isEmpty = sessionNotes.isEmpty();
-        emptyNotesMessage.setVisible(isEmpty);
-        emptyNotesMessage.setManaged(isEmpty);
+        emptyNotesState.setVisible(isEmpty);
+        emptyNotesState.setManaged(isEmpty);
     }
 
     private void setProfileVisible(boolean isVisible) {
