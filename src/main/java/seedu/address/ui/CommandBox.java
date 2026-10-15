@@ -1,8 +1,13 @@
 package seedu.address.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -15,8 +20,13 @@ public class CommandBox extends UiPart<Region> {
 
     public static final String ERROR_STYLE_CLASS = "error";
     private static final String FXML = "CommandBox.fxml";
+    private static final int MAX_HISTORY_SIZE = 100;
 
     private final CommandExecutor commandExecutor;
+    private final List<String> commandHistory = new ArrayList<>();
+
+    private int historyIndex;
+    private String draftText = "";
 
     @FXML
     private TextField commandTextField;
@@ -29,6 +39,7 @@ public class CommandBox extends UiPart<Region> {
         this.commandExecutor = commandExecutor;
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
+        commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryNavigation);
     }
 
     /**
@@ -41,12 +52,68 @@ public class CommandBox extends UiPart<Region> {
             return;
         }
 
+        if (!commandText.isBlank()) {
+            addToHistory(commandText);
+        }
+        resetHistoryNavigation();
+
         try {
             commandExecutor.execute(commandText);
             commandTextField.setText("");
         } catch (CommandException | ParseException e) {
             setStyleToIndicateCommandFailure();
         }
+    }
+
+    private void handleHistoryNavigation(KeyEvent event) {
+        if (event.getCode() == KeyCode.UP) {
+            showPreviousCommand();
+            event.consume();
+        } else if (event.getCode() == KeyCode.DOWN) {
+            showNextCommand();
+            event.consume();
+        }
+    }
+
+    private void addToHistory(String commandText) {
+        if (commandHistory.size() == MAX_HISTORY_SIZE) {
+            commandHistory.remove(0);
+        }
+        commandHistory.add(commandText);
+    }
+
+    private void resetHistoryNavigation() {
+        historyIndex = commandHistory.size();
+        draftText = "";
+    }
+
+    private void showPreviousCommand() {
+        if (historyIndex == 0) {
+            return;
+        }
+        if (historyIndex == commandHistory.size()) {
+            draftText = commandTextField.getText();
+        }
+
+        historyIndex--;
+        setCommandText(commandHistory.get(historyIndex));
+    }
+
+    private void showNextCommand() {
+        if (historyIndex == commandHistory.size()) {
+            return;
+        }
+
+        historyIndex++;
+        String commandText = historyIndex == commandHistory.size()
+                ? draftText
+                : commandHistory.get(historyIndex);
+        setCommandText(commandText);
+    }
+
+    private void setCommandText(String commandText) {
+        commandTextField.setText(commandText);
+        commandTextField.positionCaret(commandText.length());
     }
 
     /**

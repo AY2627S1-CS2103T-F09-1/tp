@@ -19,10 +19,10 @@ public class TypicalSessionNotes {
 
     public static final Student ALEX = new Student(new StudentName("Alex Tan"),
             new ParentGuardianContact("9123 4567", Optional.empty()), new Subject("Mathematics"),
-            new CurrentLevel("Secondary 3"), studentId("123e4567-e89b-12d3-a456-426614174000"));
+            new CurrentLevel("Secondary 3"), createStudentId("123e4567-e89b-12d3-a456-426614174000"));
     public static final Student BEA = new Student(new StudentName("Bea Lim"),
             new ParentGuardianContact("9876 5432", Optional.empty()), new Subject("English"),
-            new CurrentLevel("JC 1"), studentId("123e4567-e89b-12d3-a456-426614174001"));
+            new CurrentLevel("JC 1"), createStudentId("123e4567-e89b-12d3-a456-426614174001"));
 
     public static final SessionNote INDICES_NOTE = new SessionNote("Reviewed indices.",
             OffsetDateTime.parse("2026-09-11T18:35:00+08:00"));
@@ -31,7 +31,7 @@ public class TypicalSessionNotes {
 
     private TypicalSessionNotes() {} // prevents instantiation
 
-    private static StudentId studentId(String uuid) {
+    private static StudentId createStudentId(String uuid) {
         return new StudentId(UUID.fromString(uuid));
     }
 }

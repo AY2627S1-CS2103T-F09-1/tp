@@ -33,6 +33,7 @@ import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.LogRecorder;
 
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
@@ -192,6 +193,29 @@ public class LogicManagerTest {
         model.addStudent(ALEX);
 
         assertEquals(model.getStudentProfile(ALEX.getId()), logic.getStudentProfile(ALEX.getId()));
+    }
+
+    @Test
+    public void execute_commandWithArguments_logsCommandWordOnly() {
+        String commandText = NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices.";
+
+        List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
+                assertThrows(CommandException.class, () -> logic.execute(commandText)));
+
+        assertTrue(logMessages.contains("----------------[USER COMMAND][note]"));
+        assertTrue(logMessages.stream().noneMatch(message -> message.contains("Reviewed indices")));
+    }
+
+    @Test
+    public void execute_unknownCommandWord_logsUnknown() {
+        String commandText = "Alex 9123 4567";
+
+        List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
+                assertThrows(ParseException.class, () -> logic.execute(commandText)));
+
+        assertTrue(logMessages.contains("----------------[USER COMMAND][unknown]"));
+        assertTrue(logMessages.stream()
+                .noneMatch(message -> message.contains("Alex") || message.contains("9123")));
     }
 
     /**

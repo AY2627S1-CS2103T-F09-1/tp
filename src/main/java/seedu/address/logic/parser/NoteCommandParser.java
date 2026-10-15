@@ -23,7 +23,7 @@ public class NoteCommandParser implements Parser<NoteCommand> {
      * and returns a NoteCommand object for execution.
      * Only {@code nt/} is recognized, so other prefixes in the note are kept as part of its text.
      *
-     * @throws ParseException if the user input does not conform to the expected format, or the note text is
+     * @throws ParseException If the user input does not conform to the expected format, or the note text is
      *         invalid.
      */
     @Override

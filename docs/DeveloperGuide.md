@@ -77,6 +77,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
+`CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
 `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
 
 The `UI` component,
@@ -104,11 +105,11 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-2. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-3. The command can communicate with the `Model` when it is executed (e.g. to resolve the sorted roster and delete a student by stable ID).
+1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
+1. The command can communicate with the `Model` when it is executed (e.g. to resolve the sorted roster and delete a student by stable ID).
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-4. `LogicManager` saves the address book. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
-5. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+1. `LogicManager` saves the address book. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
+1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -739,6 +740,21 @@ testers are expected to do more *exploratory* testing.
    Expected: Each command reports an invalid command format and leaves the roster, notes, open profile, and data file unchanged.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid and makes no changes.
+
+### Navigating command history
+
+1. Restart TutorTrack, type `unfinished command` without pressing `Enter`, and press `Up`.
+   Expected: The draft remains unchanged because the new session has no command history.
+1. Submit `list`, `invalid`, and `list` in that order, then type `unfinished command` without submitting it.
+   Expected: The first and third submissions succeed, the second fails, and the draft remains in the command box.
+1. Press `Up` repeatedly.
+   Expected: The command box shows `list`, then `invalid`, then the older `list`; another `Up` leaves the oldest `list` displayed.
+1. Press `Down` repeatedly.
+   Expected: The command box moves through `invalid` and the newer `list`, then restores `unfinished command`; another `Down` leaves the draft displayed.
+1. Press `Up`, change the recalled `list` to `help`, submit it, and press `Up` again.
+   Expected: `help` opens the help window and is recalled as the newest history entry.
+1. Close and relaunch TutorTrack, then press `Up` in an empty command box.
+   Expected: No command is recalled because history is kept only for the app session.
 
 ### Saving data
 

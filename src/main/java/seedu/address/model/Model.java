@@ -128,7 +128,7 @@ public interface Model {
      * @param studentId The identifier of a student in the roster.
      * @param text Valid note text, as checked by {@link SessionNote#isValidText(String)}.
      * @return The session note that was added.
-     * @throws IllegalArgumentException if the text is invalid or no student in the roster has
+     * @throws IllegalArgumentException If the text is invalid or no student in the roster has
      *         {@code studentId}.
      */
     default SessionNote addSessionNote(StudentId studentId, String text) {

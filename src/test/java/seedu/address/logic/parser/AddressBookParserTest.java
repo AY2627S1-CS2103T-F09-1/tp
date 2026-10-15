@@ -25,6 +25,7 @@ import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
 import seedu.address.model.student.StudentName;
 import seedu.address.model.student.Subject;
+import seedu.address.testutil.LogRecorder;
 
 public class AddressBookParserTest {
 
@@ -105,5 +106,62 @@ public class AddressBookParserTest {
         for (String legacyCommand : legacyCommands) {
             assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(legacyCommand));
         }
+    }
+
+    @Test
+    public void parseCommand_commandWithArguments_logsCommandWordOnly() {
+        List<String> logMessages = LogRecorder.captureMessages(AddressBookParser.class, () ->
+                assertThrows(ParseException.class, () -> parser.parseCommand("note x nt/Reviewed indices.")));
+
+        assertTrue(logMessages.contains("Command word: note"));
+        assertTrue(logMessages.stream().noneMatch(message -> message.contains("Reviewed indices")));
+    }
+
+    @Test
+    public void parseCommand_unknownCommandWord_logsNoUserInput() {
+        List<String> logMessages = LogRecorder.captureMessages(AddressBookParser.class, () ->
+                assertThrows(ParseException.class, () -> parser.parseCommand("Alex 9123 4567")));
+
+        assertTrue(logMessages.contains("Command word: unknown"));
+        assertTrue(logMessages.stream()
+                .noneMatch(message -> message.contains("Alex") || message.contains("9123")));
+    }
+
+    @Test
+    public void getLoggableCommandWord_knownCommandWithArguments_returnsCommandWordOnly() {
+        assertEquals(NoteCommand.COMMAND_WORD,
+                AddressBookParser.getLoggableCommandWord("  note 1 nt/Reviewed indices."));
+    }
+
+    @Test
+    public void getLoggableCommandWord_everyCommandWord_returnsCommandWord() {
+        List<String> commandWords = List.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
+                ListCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
+                ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD);
+
+        for (String commandWord : commandWords) {
+            assertEquals(commandWord, AddressBookParser.getLoggableCommandWord(commandWord + " extra text"));
+        }
+    }
+
+    @Test
+    public void getLoggableCommandWord_removedLegacyCommandWords_returnsUnknown() {
+        List<String> removedCommandWords = List.of("edit", "find", "clear");
+
+        for (String commandWord : removedCommandWords) {
+            assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD,
+                    AddressBookParser.getLoggableCommandWord(commandWord + " extra text"));
+        }
+    }
+
+    @Test
+    public void getLoggableCommandWord_unknownCommandWord_returnsUnknown() {
+        assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD,
+                AddressBookParser.getLoggableCommandWord("Alex 9123 4567"));
+    }
+
+    @Test
+    public void getLoggableCommandWord_blankInput_returnsUnknown() {
+        assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD, AddressBookParser.getLoggableCommandWord("   "));
     }
 }

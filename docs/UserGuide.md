@@ -59,6 +59,14 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
 
+### Recalling earlier commands
+
+TutorTrack keeps the latest 100 non-blank commands from the current app session, including unsuccessful commands and duplicates. This history is kept in memory only and is cleared when the app closes.
+
+* Press `Up` in the command box to recall older commands. Navigation stops at the oldest retained command.
+* Press `Down` to move toward newer commands. Moving past the newest command restores any draft that was in the command box before history navigation started.
+* Edit a recalled command and press `Enter` to run it and add the edited command as a new history entry.
+
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
@@ -102,6 +110,7 @@ Format: `note INDEX nt/NOTE`
 * You can add the same note text more than once, because each note records a separate lesson.
 
 Examples:
+
 * `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.`
 * `note 3 nt/Completed past-year paper 2 (scored 34/40).`
 

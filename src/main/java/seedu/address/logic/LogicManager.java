@@ -47,7 +47,8 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
-        logger.info("----------------[USER COMMAND][" + commandText + "]");
+        String commandWord = AddressBookParser.getLoggableCommandWord(commandText);
+        logger.info("----------------[USER COMMAND][" + commandWord + "]");
 
         Command command = addressBookParser.parseCommand(commandText);
         AddressBook dataBeforeCommand = new AddressBook(model.getAddressBook());
@@ -60,7 +61,7 @@ public class LogicManager implements Logic {
      * Saves the model's address book, restoring {@code dataBeforeCommand} into the model if saving fails,
      * so that a command whose changes cannot be saved leaves the model unchanged.
      *
-     * @throws CommandException if the address book cannot be saved.
+     * @throws CommandException If the address book cannot be saved.
      */
     private void saveOrRestore(AddressBook dataBeforeCommand) throws CommandException {
         try {
