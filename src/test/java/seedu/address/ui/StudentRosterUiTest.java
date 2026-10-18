@@ -448,6 +448,39 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void sessionNoteListCell_longNote_wrapsWithinListViewWidth() throws Exception {
+        String longNoteText = "Reviewed algebra concepts and planned revision exercises for the next lesson. "
+                .repeat(6);
+        SessionNote note = new SessionNote(longNoteText,
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                panel.setProfile(profile(null, List.of(note)));
+                stage.setScene(new Scene(panel.getRoot(), 360, 480));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListView<SessionNote> listView = getSessionNoteListView(panel);
+                ListCell<?> cell = (ListCell<?>) listView.lookup(".list-cell");
+                assertNotNull(cell);
+                VBox card = (VBox) cell.getGraphic();
+                assertNotNull(card);
+                Label noteText = (Label) card.getChildren().get(1);
+
+                assertTrue(card.getWidth() <= listView.getWidth());
+                assertTrue(noteText.getHeight() > noteText.getFont().getSize() * 2);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
         List<String> executedCommands = new ArrayList<>();
         CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {

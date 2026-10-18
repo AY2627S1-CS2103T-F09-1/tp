@@ -93,16 +93,29 @@ public class StudentProfilePanel extends UiPart<Region> {
      * Displays one session note as a timestamped card.
      */
     static class SessionNoteListViewCell extends ListCell<SessionNote> {
+        private Region sessionNoteCard;
+
         @Override
         protected void updateItem(SessionNote sessionNote, boolean empty) {
             super.updateItem(sessionNote, empty);
+            clearSessionNoteCard();
 
             if (empty || sessionNote == null) {
                 setGraphic(null);
                 setText(null);
             } else {
-                setGraphic(new SessionNoteCard(sessionNote).getRoot());
+                sessionNoteCard = new SessionNoteCard(sessionNote).getRoot();
+                sessionNoteCard.maxWidthProperty().bind(widthProperty());
+                setGraphic(sessionNoteCard);
             }
+        }
+
+        private void clearSessionNoteCard() {
+            if (sessionNoteCard == null) {
+                return;
+            }
+            sessionNoteCard.maxWidthProperty().unbind();
+            sessionNoteCard = null;
         }
     }
 }
