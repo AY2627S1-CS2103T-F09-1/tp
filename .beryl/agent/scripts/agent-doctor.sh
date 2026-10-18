@@ -413,6 +413,7 @@ check_agent_core() {
     "${BERYL_ROOT}/agent/skills/adding-features/SKILL.md"
     "${BERYL_ROOT}/agent/skills/debugging/SKILL.md"
     "${BERYL_ROOT}/agent/skills/explaining-codebase/SKILL.md"
+    "${BERYL_ROOT}/agent/skills/reviewing-prs/SKILL.md"
     "${BERYL_ROOT}/agent/skills/grill-me/SKILL.md"
   )
   local file

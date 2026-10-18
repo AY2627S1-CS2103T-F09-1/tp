@@ -323,6 +323,49 @@ The agent must not commit or push unless the user explicitly authorizes it. When
 * Keep each increment buildable and testable. Do not hide a broken intermediate state inside a large final commit.
 * Before committing, verify that staged files, the commit boundary, and the message all agree. Run the available Gitlint check when Gitlint is installed.
 
+### Commit Message Conventions
+
+Every commit MUST have a well-written subject line. Aim for 50 characters and never exceed 72 characters, because some tools display only a limited part of the message. Write it in the imperative mood, capitalize its first letter, and do not end it with a period.
+
+* Good: `Add README.md`
+* Bad: `Added README.md`
+* Bad: `Adding README.md`
+
+* Good: `Move index.html file to root`
+* Bad: `move index.html file to root`
+
+* Good: `Update sample data`
+* Bad: `Update sample data.`
+
+An optional `<scope>:` or `<category>:` prefix is allowed when it improves clarity, for example `Person class: Remove static imports`, `Main.java: Remove blank lines`, `bug fix: Add space after name`, or `chore: Update release date`. Conventional Commits is also allowed when its added structure is useful.
+
+Non-trivial commits MUST include a body separated from the subject by one blank line. Wrap body lines at 72 characters and separate paragraphs with blank lines. Explain what changed and why, rather than narrating how the diff works; readers can inspect the diff for mechanics. Do not repeat information already captured by code comments. If the description is too long, split the commit into smaller logical commits.
+
+Structure the body in this order when applicable:
+
+1. Describe the current situation in present tense, without redundant terms such as “currently” or “originally”.
+1. Explain why it needs to change.
+1. State the change in imperative mood; “Let's” may introduce this section.
+1. Explain why this approach is preferable.
+1. Include any other relevant information.
+
+Use bullet points when they make related changes easier to scan. For example:
+
+```text
+Find command: Make matching case-insensitive
+
+Find command is case-sensitive.
+
+A case-insensitive find is more user-friendly because users cannot be
+expected to remember the exact case of the keywords.
+
+Let's,
+* update the search algorithm to use case-insensitive matching
+* add a script to migrate stress tests to the new format
+```
+
+SourceTree users SHOULD enable its 72-character commit-message column guide and spell checking under Tools > Options > General > Commit settings. The guide requires fixed-width commit-message fonts.
+
 The agent MUST NOT fabricate milestones, releases, reviews, peer-testing results, task assignments, or individual-contribution evidence. It may prepare the artifacts and report the human follow-up required.
 
 ## Change Handoff Checklist
