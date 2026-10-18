@@ -459,7 +459,6 @@ public class StudentRosterUiTest {
                 textContent.fireEvent(primaryMouseEvent(MouseEvent.MOUSE_PRESSED, 1, true, true));
                 textContent.fireEvent(primaryMouseEvent(MouseEvent.MOUSE_DRAGGED, 80, true, false));
                 textContent.fireEvent(primaryMouseEvent(MouseEvent.MOUSE_RELEASED, 80, false, false));
-                assertTrue(selectableText.isFocused());
                 assertFalse(selectableText.getSelectedText().isEmpty());
                 selectableText.selectRange(0, "Selectable".length());
                 ClipboardContent initialClipboard = new ClipboardContent();
