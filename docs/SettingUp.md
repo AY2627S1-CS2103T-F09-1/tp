@@ -43,6 +43,10 @@ If you plan to use IntelliJ IDEA (highly recommended):
 
    This project includes GitHub Actions configuration files in `.github/workflows`. GitHub runs CI automatically for every push and pull request. No setup is required.
 
+1. **Set up local Markdownlint checks**
+
+   Install the repository's local Markdownlint dependency with `npm install`. Before committing Markdown changes, run `npx --no-install markdownlint-cli2 --no-globs` followed only by the Markdown files you changed, for example `npx --no-install markdownlint-cli2 --no-globs docs/UserGuide.md`. Markdownlint is a local sanity check; CI and Git hooks do not run it.
+
 1. **Learn the design**
 
    When you are ready to start coding, we recommend that you get some sense of the overall design by reading about [AddressBook’s architecture](DeveloperGuide.md#architecture).
