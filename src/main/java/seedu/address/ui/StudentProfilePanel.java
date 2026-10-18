@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
@@ -28,15 +27,15 @@ public class StudentProfilePanel extends UiPart<Region> {
     @FXML
     private VBox profileContent;
     @FXML
-    private Label studentName;
+    private SelectableText studentName;
     @FXML
-    private Label parentGuardianPhone;
+    private SelectableText parentGuardianPhone;
     @FXML
-    private Label parentGuardianEmail;
+    private SelectableText parentGuardianEmail;
     @FXML
-    private Label subject;
+    private SelectableText subject;
     @FXML
-    private Label currentLevel;
+    private SelectableText currentLevel;
     @FXML
     private ListView<SessionNote> sessionNoteListView;
     @FXML

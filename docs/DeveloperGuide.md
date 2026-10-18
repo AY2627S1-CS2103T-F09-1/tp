@@ -691,6 +691,8 @@ testers are expected to do more *exploratory* testing.
    Expected: Both roster cards remain within the left pane. Long values wrap vertically instead of being clipped or creating a horizontal scrollbar.
 1. Enter `view 1`.
    Expected: Alicia's roster card has the teal profile-selection treatment. Her name, phone, email, subject, and level appear in the profile and wrap within the value column where needed.
+1. Drag across text in Alicia's profile, press `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS, and paste into a temporary plain-text document. Repeat with a wrapped session note after completing the note step below.
+   Expected: Short and multi-line text can be selected and copied exactly. Typing while the profile text is selected does not edit the displayed content, and scrolling the session history still works normally.
 1. Move the pointer over Blair's card, then use `Tab` until the roster has keyboard focus and use an arrow key.
    Expected: Hover and keyboard focus are visually distinct from Alicia's persistent profile selection. Blair's profile does not open because profile navigation remains command-driven.
 1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
