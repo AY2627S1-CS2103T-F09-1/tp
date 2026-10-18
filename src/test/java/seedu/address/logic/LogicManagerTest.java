@@ -2,7 +2,6 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -81,7 +80,8 @@ public class LogicManagerTest {
         expectedModel.addStudent(BEA);
 
         assertCommandSuccess(addCommand,
-                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, BEA.getName()), expectedModel);
+                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, BEA.getName(), BEA.getSubject(),
+                        BEA.getCurrentLevel()), expectedModel);
     }
 
     @Test
@@ -90,7 +90,7 @@ public class LogicManagerTest {
                 "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
         assertParseException(legacyAddCommand,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                "Unknown parameter: a/. Supported parameters: n/ p/ sub/ l/ e/.\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test

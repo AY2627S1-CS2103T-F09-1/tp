@@ -9,7 +9,10 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -24,6 +27,10 @@ import seedu.address.model.student.Subject;
  */
 public class AddCommandParser implements Parser<AddCommand> {
 
+    private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
+            PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
+    private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)([A-Za-z][A-Za-z0-9_-]*)/");
+
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
@@ -33,15 +40,27 @@ public class AddCommandParser implements Parser<AddCommand> {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                 PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_ADDRESS, PREFIX_TAG);
 
-        boolean hasLegacyPersonPrefix = !argMultimap.getAllValues(PREFIX_ADDRESS).isEmpty()
-                || !argMultimap.getAllValues(PREFIX_TAG).isEmpty();
-        if (hasLegacyPersonPrefix
-                || !arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL)
-                || !argMultimap.getPreamble().isEmpty()) {
+        Optional<String> unknownPrefix = findUnknownPrefix(args);
+        if (unknownPrefix.isPresent()) {
+            throw new ParseException(getUnknownPrefixMessage(unknownPrefix.get()));
+        }
+
+        Optional<Prefix> missingPrefix = findMissingRequiredPrefix(argMultimap);
+        if (missingPrefix.isPresent()) {
+            throw new ParseException(getMissingValueMessage(missingPrefix.get()));
+        }
+
+        if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL);
+        try {
+            argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT,
+                    PREFIX_LEVEL);
+        } catch (ParseException exception) {
+            throw new ParseException(withUsage(exception.getMessage()), exception);
+        }
+
         try {
             Student student = new Student(new StudentName(argMultimap.getValue(PREFIX_NAME).get()),
                     new ParentGuardianContact(argMultimap.getValue(PREFIX_PHONE).get(),
@@ -50,16 +69,51 @@ public class AddCommandParser implements Parser<AddCommand> {
                     new CurrentLevel(argMultimap.getValue(PREFIX_LEVEL).get()));
             return new AddCommand(student);
         } catch (IllegalArgumentException exception) {
-            throw new ParseException(exception.getMessage(), exception);
+            throw new ParseException(withUsage(exception.getMessage()), exception);
         }
     }
 
     /**
-     * Returns true if none of the prefixes contains empty {@code Optional} values in the given
-     * {@code ArgumentMultimap}.
+     * Returns the first unsupported prefix in {@code args}, if present.
      */
-    private static boolean arePrefixesPresent(ArgumentMultimap argumentMultimap, Prefix... prefixes) {
-        return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
+    private static Optional<String> findUnknownPrefix(String args) {
+        Matcher matcher = PREFIX_PATTERN.matcher(args);
+        while (matcher.find()) {
+            String prefix = matcher.group(1) + "/";
+            if (SUPPORTED_PREFIXES.stream().noneMatch(supportedPrefix -> supportedPrefix.toString().equals(prefix))) {
+                return Optional.of(prefix);
+            }
+        }
+        return Optional.empty();
     }
 
+    /**
+     * Returns the first required prefix that has no value, if present.
+     */
+    private static Optional<Prefix> findMissingRequiredPrefix(ArgumentMultimap argumentMultimap) {
+        return List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL).stream()
+                .filter(prefix -> argumentMultimap.getValue(prefix).filter(value -> !value.isEmpty()).isEmpty())
+                .findFirst();
+    }
+
+    /**
+     * Returns an error message for an unsupported prefix.
+     */
+    private static String getUnknownPrefixMessage(String prefix) {
+        return withUsage("Unknown parameter: " + prefix + ". Supported parameters: n/ p/ sub/ l/ e/.");
+    }
+
+    /**
+     * Returns an error message for a required prefix without a value.
+     */
+    private static String getMissingValueMessage(Prefix prefix) {
+        return withUsage("Value missing for parameter: " + prefix);
+    }
+
+    /**
+     * Appends the add-command usage to an error message.
+     */
+    private static String withUsage(String message) {
+        return message + "\n" + AddCommand.MESSAGE_USAGE;
+    }
 }

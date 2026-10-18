@@ -165,4 +165,15 @@ public class JsonAddressBookStorageTest {
     public void saveAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(new AddressBook(), null));
     }
+
+    @Test
+    public void saveAddressBook_parentIsFile_failureLeavesDataFileAbsent() throws Exception {
+        Path parentFile = testFolder.resolve("not-a-directory");
+        Path dataFile = parentFile.resolve("addressbook.json");
+        Files.writeString(parentFile, "not a directory");
+
+        assertThrows(IOException.class, () -> new JsonAddressBookStorage(dataFile).saveAddressBook(new AddressBook()));
+
+        assertFalse(Files.exists(dataFile));
+    }
 }

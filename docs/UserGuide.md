@@ -84,7 +84,7 @@ Adds a student with the responsible parent or guardian's contact details, subjec
 
 Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 
-The name, parent phone, subject, and current level are required. Parent email is optional. TutorTrack preserves each student's identity when the data file is saved and reloaded. A duplicate is a student whose normalized name and parent phone both match an existing student; spaces and hyphens in a parent phone do not make a distinct student.
+The name, parent phone, subject, and current level are required. Parent email is optional. TutorTrack preserves each student's identity when the data file is saved and reloaded. A duplicate is a student whose normalized name and parent phone both match an existing student; spaces and hyphens in a parent phone do not make a distinct student. A successful addition reports the student's name, subject, and level. Duplicate students, missing values, invalid values, and unknown parameters explain the problem and then show this command's format. The only supported parameters are `n/`, `p/`, `sub/`, `l/`, and optional `e/`.
 
 Examples:
 * `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`

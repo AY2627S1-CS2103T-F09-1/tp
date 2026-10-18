@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -45,13 +44,19 @@ public class AddCommandParserTest {
     @Test
     public void parse_missingLevel_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                "Value missing for parameter: l/\n" + AddCommand.MESSAGE_USAGE);
+    }
+
+    @Test
+    public void parse_emptyRequiredValue_failure() {
+        assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics l/",
+                "Value missing for parameter: l/\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test
     public void parse_repeatedName_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " n/Bea Lim",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME));
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME) + "\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test
@@ -60,12 +65,18 @@ public class AddCommandParserTest {
                 " n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
         assertParseFailure(parser, legacyPersonArguments,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                "Unknown parameter: a/. Supported parameters: n/ p/ sub/ l/ e/.\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test
     public void parse_studentArgumentsWithLegacyPersonPrefix_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " a/Block 312, Amy Street 1 t/friend",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                "Unknown parameter: a/. Supported parameters: n/ p/ sub/ l/ e/.\n" + AddCommand.MESSAGE_USAGE);
+    }
+
+    @Test
+    public void parse_unknownPrefix_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " x/value",
+                "Unknown parameter: x/. Supported parameters: n/ p/ sub/ l/ e/.\n" + AddCommand.MESSAGE_USAGE);
     }
 }
