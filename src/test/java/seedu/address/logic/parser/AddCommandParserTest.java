@@ -54,6 +54,12 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_nonEmptyPreamble_failure() {
+        assertParseFailure(parser, " unexpected" + VALID_REQUIRED_ARGUMENTS,
+                String.format("Invalid command format!\n%s", AddCommand.MESSAGE_USAGE));
+    }
+
+    @Test
     public void parse_repeatedName_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " n/Bea Lim",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME) + "\n" + AddCommand.MESSAGE_USAGE);
