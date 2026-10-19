@@ -30,7 +30,8 @@ public class AddCommandTest {
         expectedModel.addStudent(ALEX);
 
         assertCommandSuccess(new AddCommand(ALEX), model,
-                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, ALEX.getName()), expectedModel);
+                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, ALEX.getName(), ALEX.getSubject(),
+                        ALEX.getCurrentLevel()), expectedModel);
     }
 
     @Test
@@ -38,7 +39,9 @@ public class AddCommandTest {
         Model model = new ModelManager();
         model.addStudent(ALEX);
 
-        assertCommandFailure(new AddCommand(ALEX), model, AddCommand.MESSAGE_DUPLICATE_STUDENT);
+        assertCommandFailure(new AddCommand(ALEX), model,
+                String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT, ALEX.getName())
+                        + "\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test

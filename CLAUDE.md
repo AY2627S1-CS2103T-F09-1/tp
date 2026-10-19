@@ -12,6 +12,7 @@ Choose one matching workflow from `.beryl/agent/skills/`:
 * `adding-features` for approved implementation.
 * `debugging` for failures and regressions.
 * `explaining-codebase` for read-only explanations.
+* `reviewing-prs` for pull-request and change reviews.
 * `grill-me` for risky, ambiguous, cross-context, or security-sensitive design work.
 
 The coding policy is the primary contract. Follow the selected workflow only where it does not conflict with that policy.
