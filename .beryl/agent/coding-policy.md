@@ -257,13 +257,13 @@ Additional rules:
 Before handoff, run the smallest relevant check, then the broader checks. A coding change must not be considered style-checked merely because one command passed:
 
 1. Run the configured formatter, if one exists. This repository currently has no separate formatter command configured.
-2. Run `./.beryl/scripts/check-md.sh` for Markdown sanity on every change that touches Markdown.
-3. Run `npx --no-install markdownlint-cli2` on changed Markdown files when the local Markdownlint dependency is available.
-4. Run `./gradlew checkstyleMain checkstyleTest` for every Java production or test change.
-5. Run `./.beryl/scripts/check-affected.sh --worktree` and the narrowest relevant Gradle test task for behavior changes.
-6. Run `./gradlew test` for behavior changes unless a documented environment limitation prevents it.
-7. Run `./.beryl/scripts/check.sh` for the aggregate deterministic gate.
-8. When a commit is explicitly authorized and Gitlint is installed, run `gitlint --config .gitlint --commits HEAD^..HEAD` after staging the commit.
+1. Run `./.beryl/scripts/check-md.sh` for Markdown sanity on every change that touches Markdown.
+1. Run `npx --no-install markdownlint-cli2 --no-globs` on changed Markdown files when the local Markdownlint dependency is available.
+1. Run `./gradlew checkstyleMain checkstyleTest` for every Java production or test change.
+1. Run `./.beryl/scripts/check-affected.sh --worktree` and the narrowest relevant Gradle test task for behavior changes.
+1. Run `./gradlew test` for behavior changes unless a documented environment limitation prevents it.
+1. Run `./.beryl/scripts/check.sh` for the aggregate deterministic gate.
+1. When a commit is explicitly authorized and Gitlint is installed, run `gitlint --config .gitlint --commits HEAD^..HEAD` after staging the commit.
 
 If a check is not applicable, say why. If it is applicable but unavailable or blocked by the environment, report the exact command and failure instead of silently omitting it.
 
