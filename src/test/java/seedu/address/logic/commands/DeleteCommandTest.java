@@ -10,17 +10,13 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 import static seedu.address.testutil.TypicalSessionNotes.BEA;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
-import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.student.StudentRosterEntry;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for
@@ -31,26 +27,25 @@ public class DeleteCommandTest {
     private Model model = createStudentModel();
 
     @Test
-    public void execute_validIndex_deletesStudentFromSortedRoster() {
+    public void execute_validIndex_returnsConfirmationWithoutDeletingStudent() {
         DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
 
-        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName(), 0);
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_CONFIRM_DELETE,
+                ALEX.getName(), 0, "session notes", INDEX_FIRST_PERSON.getOneBased());
 
         ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
-        expectedModel.deleteStudent(ALEX.getId());
 
         assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
     }
 
     @Test
-    public void execute_studentWithNotes_reportsNameAndRemovedNoteCount() {
+    public void execute_studentWithOneNote_usesSingularNoteLabel() {
         model.addSessionNote(ALEX.getId(), "Reviewed indices.");
-        model.addSessionNote(ALEX.getId(), "Reviewed factorisation.");
         DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
 
-        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName(), 2);
+        String expectedMessage = String.format(DeleteCommand.MESSAGE_CONFIRM_DELETE,
+                ALEX.getName(), 1, "session note", INDEX_FIRST_PERSON.getOneBased());
         ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
-        expectedModel.deleteStudent(ALEX.getId());
 
         assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
     }
@@ -64,20 +59,17 @@ public class DeleteCommandTest {
     }
 
     @Test
-    public void execute_deleteFirstStudent_reindexesRemainingRoster() throws CommandException {
-        new DeleteCommand(INDEX_FIRST_PERSON).execute(model);
+    public void execute_confirmedRequestWithoutLogicManager_throwsCommandException() {
+        DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON, true);
 
-        List<StudentRosterEntry> remainingEntries = model.getStudentRoster().getEntries();
-        assertEquals(List.of(BEA.getId()), remainingEntries.stream()
-                .map(StudentRosterEntry::getStudentId).toList());
-        assertEquals(List.of(1), remainingEntries.stream()
-                .map(StudentRosterEntry::getRosterIndex).toList());
+        assertCommandFailure(deleteCommand, model, DeleteCommand.MESSAGE_NO_PENDING_DELETION);
     }
 
     @Test
     public void equals() {
         DeleteCommand deleteFirstCommand = new DeleteCommand(INDEX_FIRST_PERSON);
         DeleteCommand deleteSecondCommand = new DeleteCommand(INDEX_SECOND_PERSON);
+        DeleteCommand confirmedDeleteFirstCommand = new DeleteCommand(INDEX_FIRST_PERSON, true);
 
         // same object -> returns true
         assertTrue(deleteFirstCommand.equals(deleteFirstCommand));
@@ -94,13 +86,17 @@ public class DeleteCommandTest {
 
         // different student -> returns false
         assertFalse(deleteFirstCommand.equals(deleteSecondCommand));
+
+        // different confirmation state -> returns false
+        assertFalse(deleteFirstCommand.equals(confirmedDeleteFirstCommand));
     }
 
     @Test
     public void toStringMethod() {
         Index targetIndex = Index.fromOneBased(1);
-        DeleteCommand deleteCommand = new DeleteCommand(targetIndex);
-        String expected = DeleteCommand.class.getCanonicalName() + "{targetIndex=" + targetIndex + "}";
+        DeleteCommand deleteCommand = new DeleteCommand(targetIndex, true);
+        String expected = DeleteCommand.class.getCanonicalName()
+                + "{targetIndex=" + targetIndex + ", isConfirmed=true}";
         assertEquals(expected, deleteCommand.toString());
     }
 

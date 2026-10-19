@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddCommandParser;
@@ -45,11 +47,12 @@ public class LogicManagerTest {
 
     private Model model = new ModelManager();
     private Logic logic;
+    private Path addressBookFile;
 
     @BeforeEach
     public void setUp() {
-        JsonAddressBookStorage addressBookStorage =
-                new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        addressBookFile = temporaryFolder.resolve("addressBook.json");
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(addressBookFile);
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
         StorageManager storage = new StorageManager(addressBookStorage, userPrefsStorage);
         logic = new LogicManager(model, storage);
@@ -70,6 +73,127 @@ public class LogicManagerTest {
     @Test
     public void execute_removedListCommand_throwsParseException() {
         assertParseException("list", MESSAGE_UNKNOWN_COMMAND);
+    }
+
+    @Test
+    public void execute_deletePreview_returnsInstructionsWithoutDeletingOrSaving() throws Exception {
+        model.addStudent(ALEX);
+        model.addSessionNote(ALEX.getId(), "Reviewed indices.");
+
+        CommandResult result = logic.execute("delete 1");
+
+        assertEquals("Are you sure you want to delete " + ALEX.getName() + " and 1 session note?\n"
+                + "If yes, type: delete 1 /confirm\n"
+                + "To cancel, enter any other command.", result.getFeedbackToUser());
+        assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+        assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
+        assertFalse(Files.exists(addressBookFile));
+    }
+
+    @Test
+    public void execute_matchingDeleteConfirmation_deletesStudentAndSaves() throws Exception {
+        model.addStudent(ALEX);
+        model.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        logic.execute("delete 1");
+
+        CommandResult result = logic.execute("delete 1 /confirm");
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName()),
+                result.getFeedbackToUser());
+        assertEquals(0, logic.getStudentRoster().size());
+        assertTrue(model.getSessionHistory(ALEX.getId()).isEmpty());
+        ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
+                .readAddressBook().orElseThrow();
+        assertTrue(savedData.getStudentList().isEmpty());
+    }
+
+    @Test
+    public void execute_deleteConfirmationWithoutPreview_throwsCommandException() {
+        model.addStudent(ALEX);
+
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
+    }
+
+    @Test
+    public void execute_mismatchedDeleteConfirmation_cancelsPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        model.addStudent(BEA);
+        logic.execute("delete 1");
+
+        assertCommandException("delete 2 /confirm", DeleteCommand.MESSAGE_CONFIRMATION_MISMATCH);
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
+        assertEquals(List.of(ALEX.getId(), BEA.getId()), logic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_targetRemovedBetweenPreviewAndConfirmation_rejectsConfirmation() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+        model.deleteStudent(ALEX.getId());
+
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_CONFIRMATION_MISMATCH);
+    }
+
+    @Test
+    public void execute_studentAtIndexChangesBetweenPreviewAndConfirmation_rejectsConfirmation() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+        model.deleteStudent(ALEX.getId());
+        model.addStudent(BEA);
+
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_CONFIRMATION_MISMATCH);
+        assertEquals(List.of(BEA.getId()), logic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_otherCommandAfterDeletePreview_cancelsPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+
+        logic.execute("help");
+
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
+        assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_malformedCommandAfterDeletePreview_cancelsPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+
+        assertThrows(ParseException.class, () -> logic.execute("delete 1 /Confirm"));
+
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
+        assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_newDeletePreview_replacesPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        model.addStudent(BEA);
+        logic.execute("delete 1");
+
+        logic.execute("delete 2");
+        CommandResult result = logic.execute("delete 2 /confirm");
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, BEA.getName()),
+                result.getFeedbackToUser());
+        assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_repeatedDeleteConfirmation_throwsCommandException() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+        logic.execute("delete 1 /confirm");
+
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
     }
 
     @Test
@@ -150,13 +274,17 @@ public class LogicManagerTest {
         String savedData = Files.readString(savedFile);
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
 
-        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic.execute("delete 1"));
+        failingLogic.execute("delete 1");
+        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () ->
+                failingLogic.execute("delete 1 /confirm"));
 
         StudentRosterEntry restoredEntry = failingLogic.getStudentRoster().getEntries().get(0);
         assertEquals(ALEX.getId(), restoredEntry.getStudentId());
         assertEquals(1, restoredEntry.getNoteCount());
         assertEquals(1, studentModel.getSessionHistory(ALEX.getId()).size());
         assertEquals(savedData, Files.readString(savedFile));
+        assertThrows(CommandException.class, DeleteCommand.MESSAGE_NO_PENDING_DELETION, () ->
+                failingLogic.execute("delete 1 /confirm"));
     }
 
     @Test

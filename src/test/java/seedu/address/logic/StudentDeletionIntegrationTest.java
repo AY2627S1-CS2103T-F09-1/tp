@@ -52,9 +52,15 @@ public class StudentDeletionIntegrationTest {
         logic.execute("note 1 nt/Reviewed indices.");
         logic.execute("note 1 nt/Reviewed factorisation.");
 
-        CommandResult deleteResult = logic.execute("delete 1");
+        CommandResult previewResult = logic.execute("delete 1");
+        assertEquals("Are you sure you want to delete Ari Tan and 2 session notes?\n"
+                + "If yes, type: delete 1 /confirm\n"
+                + "To cancel, enter any other command.", previewResult.getFeedbackToUser());
+        assertTrue(model.getStudentProfile(deletedStudentId).isPresent());
 
-        assertEquals("Deleted student: Ari Tan. Session notes removed: 2.", deleteResult.getFeedbackToUser());
+        CommandResult deleteResult = logic.execute("delete 1 /confirm");
+
+        assertEquals("Successfully deleted Ari Tan.", deleteResult.getFeedbackToUser());
         assertTrue(model.getStudentProfile(deletedStudentId).isEmpty());
         assertRemainingStudentIsReindexed(model.getStudentRoster().getEntries());
 

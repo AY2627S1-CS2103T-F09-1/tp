@@ -26,9 +26,15 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_validConfirmation_returnsConfirmedDeleteCommand() {
+        assertParseSuccess(parser, "1 /confirm", new DeleteCommand(INDEX_FIRST_PERSON, true));
+    }
+
+    @Test
     public void parse_invalidArgs_throwsParseException() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
-        String[] invalidArguments = {"", "0", "-1", "1.5", "a", "1 2", "1-2", "2147483648"};
+        String[] invalidArguments = {"", "0", "-1", "1.5", "a", "1 2", "1-2", "2147483648",
+            "1/confirm", "/confirm 1", "1 /confirm extra", "1 /confirm /confirm", "1 /Confirm"};
 
         for (String invalidArgument : invalidArguments) {
             assertParseFailure(parser, invalidArgument, expectedMessage);
