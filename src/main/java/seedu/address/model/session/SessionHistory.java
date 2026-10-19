@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import seedu.address.commons.core.index.Index;
+
 /**
  * Represents the immutable, newest-first collection of one student's session notes.
  */
@@ -45,6 +47,29 @@ public final class SessionHistory {
     }
 
     /**
+     * Returns the note with the given chronological {@code noteNumber}, where one identifies the oldest note.
+     *
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds this history's size.
+     */
+    public SessionNote getNote(Index noteNumber) {
+        requireNonNull(noteNumber);
+        return notes.get(toNewestFirstIndex(noteNumber));
+    }
+
+    /**
+     * Returns a new history without the note with the given chronological {@code noteNumber}, where one identifies
+     * the oldest note.
+     *
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds this history's size.
+     */
+    public SessionHistory withoutNote(Index noteNumber) {
+        requireNonNull(noteNumber);
+        List<SessionNote> updatedNotes = new ArrayList<>(notes);
+        updatedNotes.remove(toNewestFirstIndex(noteNumber));
+        return updatedNotes.isEmpty() ? empty() : new SessionHistory(List.copyOf(updatedNotes));
+    }
+
+    /**
      * Returns an unmodifiable list of the notes, newest first.
      */
     public List<SessionNote> getNotes() {
@@ -63,6 +88,14 @@ public final class SessionHistory {
      */
     public boolean isEmpty() {
         return notes.isEmpty();
+    }
+
+    private int toNewestFirstIndex(Index noteNumber) {
+        int newestFirstIndex = notes.size() - noteNumber.getOneBased();
+        if (newestFirstIndex < 0 || newestFirstIndex >= notes.size()) {
+            throw new IndexOutOfBoundsException("Session note number exceeds history size");
+        }
+        return newestFirstIndex;
     }
 
     /**
