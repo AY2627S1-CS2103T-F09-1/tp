@@ -9,7 +9,7 @@
 * `project-brief.md`: product goal, users, workflows, and scope.
 * `design-tree.md`, `architecture.md`, `ubiquitous-language.md`, and `adr/`: durable product and architecture knowledge.
 * `testing-policy.md`: available checks and test-change rules.
-* `skills/`: focused workflows for planning, approved implementation, debugging, explanation, and design critique.
+* `skills/`: focused workflows for planning, approved implementation, debugging, explanation, pull-request review, and design critique.
 
 Tool-specific instruction files are generated shims. Change `tool-instruction-template.md`, then run:
 

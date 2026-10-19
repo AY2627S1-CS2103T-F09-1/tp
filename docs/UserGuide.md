@@ -26,8 +26,6 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all students in the roster.
-
    * `add n/John p/98765432 sub/Math l/Sec 3` : Adds a student named `John` to TutorTrack.
 
    * `note 1 nt/Review trigo next session.` : Adds a session note to the first student shown in the current roster.
@@ -56,7 +54,7 @@ TutorTrack is a **desktop application for private tutors managing a student rost
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
 * Extraneous parameters for commands that take no parameters, such as `help` and `exit`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list` command rejects extra input because it only accepts the exact format shown below.
+  For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
@@ -84,19 +82,17 @@ Adds a student with the responsible parent or guardian's contact details, subjec
 
 Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 
-The name, parent phone, subject, and current level are required. Parent email is optional. TutorTrack preserves each student's identity when the data file is saved and reloaded. A duplicate is a student whose normalized name and parent phone both match an existing student; spaces and hyphens in a parent phone do not make a distinct student.
+The name, parent phone, subject, and current level are required. Parent email is optional. TutorTrack preserves each student's identity when the data file is saved and reloaded. A duplicate is a student whose normalized name and parent phone both match an existing student; spaces and hyphens in a parent phone do not make a distinct student. A successful addition reports the student's name, subject, and level. Duplicate students, missing values, invalid values, and unknown parameters explain the problem and then show this command's format. The only supported parameters are `n/`, `p/`, `sub/`, `l/`, and optional `e/`.
 
 Examples:
 * `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`
 * `add sub/English Literature l/JC 1 n/Dev Patel p/91234567`
 
-### Listing the student roster: `list`
+### Viewing the student roster
 
-Lists all students in normalized alphabetical order and reports how many students are in the roster. When the roster is empty, TutorTrack reports that there are no students and suggests using the `add` command.
+TutorTrack displays all students in normalized alphabetical order when the application launches and after each successful command. When the roster is empty, TutorTrack shows that there are no students and suggests using the `add` command.
 
 Each student card shows the roster index, student name, subject, current academic level, and number of session notes. Long names, subjects, and levels wrap within their cards, and the roster can be scrolled when it contains more students than fit in the window.
-
-Format: `list`
 
 ### Adding a session note: `note`
 
@@ -106,7 +102,7 @@ If that student's profile is open, the new note appears there immediately after 
 
 Format: `note INDEX nt/NOTE`
 
-* `INDEX` is the student's number in the roster shown by `list`. It must be a positive whole number, such as 1, 2, or 3.
+* `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number, such as 1, 2, or 3.
 * `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed.
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
 * You can add the same note text more than once, because each note records a separate lesson.
@@ -124,11 +120,11 @@ Displays one student's profile beside the roster. The profile shows the student'
 
 Session notes are shown newest first with the saved date, time, and UTC offset. Long profile fields and notes wrap within the panel, and the history can be scrolled. A student without notes displays `No session notes yet` and the command for recording the first note.
 
-The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hover and keyboard focus are shown separately and do not open another profile. The open profile refreshes after each successful command and closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
+The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command and closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
 
 Format: `view INDEX`
 
-* `INDEX` is the student's number in the roster shown by `list`.
+* `INDEX` is the student's number in the currently displayed roster.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
 
 Example: `view 2`
@@ -141,14 +137,12 @@ Deletes the specified student and all session notes belonging to that student.
 
 Format: `delete INDEX`
 
-* `INDEX` is the student's number in the sorted roster shown by `list`.
+* `INDEX` is the student's number in the currently displayed sorted roster.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
 * TutorTrack reports the deleted student's name and the number of session notes removed.
 * The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes and its roster highlight is cleared.
 
-Example:
-
-* `list` followed by `delete 2` deletes the 2nd student in the roster.
+Example: `delete 2` deletes the second student in the currently displayed roster.
 
 If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save the deletion, it restores the student and session notes.
 
@@ -199,7 +193,6 @@ Action | Format, Examples
 --------|------------------
 **Add** | `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`<br> e.g., `add n/James Ho p/91234567 sub/Mathematics l/Secondary 3`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**List** | `list`
 **Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`
 **View** | `view INDEX`<br> e.g., `view 2`
 **Help** | `help`

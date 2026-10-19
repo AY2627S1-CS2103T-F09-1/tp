@@ -2,7 +2,6 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -21,9 +20,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
-import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.AddCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -69,9 +68,8 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_validCommand_success() throws Exception {
-        String listCommand = ListCommand.COMMAND_WORD;
-        assertCommandSuccess(listCommand, ListCommand.MESSAGE_EMPTY_ROSTER, model);
+    public void execute_removedListCommand_throwsParseException() {
+        assertParseException("list", MESSAGE_UNKNOWN_COMMAND);
     }
 
     @Test
@@ -81,7 +79,8 @@ public class LogicManagerTest {
         expectedModel.addStudent(BEA);
 
         assertCommandSuccess(addCommand,
-                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, BEA.getName()), expectedModel);
+                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, BEA.getName(), BEA.getSubject(),
+                        BEA.getCurrentLevel()), expectedModel);
     }
 
     @Test
@@ -90,7 +89,9 @@ public class LogicManagerTest {
                 "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
         assertParseException(legacyAddCommand,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "a/",
+                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
+                        + "\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test

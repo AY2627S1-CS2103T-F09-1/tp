@@ -4,7 +4,7 @@
 
 **Audience:** TutorTrack team members and reviewers. This is a product-behavior specification, not a user guide or API design document.
 
-**Scope note:** This document records the behavior currently implemented in the repository. It leaves the existing [MVP specification PDF](google%20docs%20MVP%20specification.pdf) and [TutorTrack API Contract](TutorTrackAPIContract.md) unchanged.
+**Scope note:** This document records the behavior currently implemented in the repository. It leaves the existing [MVP specification PDF](google%20docs%20MVP%20specification.pdf) unchanged and follows the [TutorTrack API Contract](TutorTrackAPIContract.md).
 
 ## Product concept
 
@@ -13,7 +13,7 @@ TutorTrack is a local JavaFX desktop application for a private tutor managing a 
 The complete tutoring loop is:
 
 1. Add a student with a parent or guardian contact, subject, and current level.
-1. List the roster and identify a student by the displayed index.
+1. View the automatically displayed roster and identify a student by the displayed index.
 1. View that student's preparation context and previous session notes.
 1. Record a new session note after a lesson.
 1. Delete a student and all of that student's notes when the record is no longer needed.
@@ -25,7 +25,7 @@ The application targets a small active roster, but the implementation does not e
 ### Must-have TutorTrack features
 
 * Add student
-* List student roster
+* Display student roster automatically
 * View student profile
 * Add session note
 * Delete student
@@ -92,7 +92,7 @@ Surrounding whitespace is removed from student value objects. Names, subjects, a
 
 **Priority:** Must-have.
 
-**Purpose:** Creates a student record with name, responsible-adult contact, subject, and current level so the tutor can list, view, and annotate the student.
+**Purpose:** Creates a student record with name, responsible-adult contact, subject, and current level so the tutor can view and annotate the automatically displayed roster.
 
 ### Command format
 
@@ -152,32 +152,17 @@ A student with a different phone may share a name, and a student with a differen
 +------------------------------------------------------------------+
 ~~~
 
-## Feature 2 — List student roster
+## Feature 2 — Automatic student roster display
 
 **Priority:** Must-have.
 
-**Purpose:** Shows every stored student and establishes the indices used by view, note, and delete.
+**Purpose:** Shows every stored student on launch and after successful commands, establishing the indices used by view, note, and delete.
 
-### Command format and examples
+### Display behavior and possible errors
 
-~~~text
-list
-~~~
+The roster is displayed automatically when the application starts and after every successful command. Every student card shows its index, name, subject, current level, and session-note count. The roster refreshes while preserving any open profile by stable student ID.
 
-list accepts no arguments. Any non-whitespace argument produces:
-
-~~~text
-Invalid command format!
-Usage: list
-~~~
-
-### Parameters, outputs, duplicates, and possible errors
-
-This feature has no parameters. On success, every student card shows its index, name, subject, current level, and session-note count. The exact result is Listed <count> students. and the roster refreshes while preserving any open profile by stable student ID.
-
-With no students, the exact result is No students are in the roster. Add a student with the add command. The roster pane also shows No students yet and Use the add command to create your first student profile.
-
-List creates no records. Extra arguments leave the roster and profile unchanged. Invalid stored data invokes the shared startup recovery behavior. The roster remains scrollable and has no enforced student-count cap.
+With no students, the roster pane shows `No students yet` and `Use the add command to create your first student profile.` Invalid stored data invokes the shared startup recovery behavior. The roster remains scrollable and has no enforced student-count cap.
 
 ### Relevant UI mock-up
 
@@ -215,11 +200,8 @@ view INDEX
 ~~~
 
 ~~~text
-list
 view 1
 ~~~
-
-Running list first is optional when the roster already contains students.
 
 ### Parameters
 
@@ -388,12 +370,10 @@ exit now
 ~~~text
 add n/Ari Tan p/9123 4567 sub/Mathematics l/Secondary 3
 add n/Bea Lim p/9876 5432 e/guardian@example.com sub/English l/JC 1
-list
 view 1
 note 1 nt/Reviewed factorisation; revisit negative coefficients next lesson.
 view 1
 delete 2
-list
 ~~~
 
 Expected outcomes:
@@ -403,7 +383,7 @@ Expected outcomes:
 * note 1 adds a timestamped note and changes Ari Tan's count from 0 to 1.
 * view 1 shows the new note.
 * delete 2 removes Bea Lim and reports the number of removed notes.
-* The final list shows only Ari Tan with index 1.
+* The final automatically refreshed roster shows only Ari Tan with index 1.
 * Reloading preserves the remaining student, studentId, and session-note history.
 
 ## Implementation references

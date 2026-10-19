@@ -7,7 +7,7 @@ config:
   MD022: true
   MD027: true
   MD029:
-    style: one_or_ordered
+    style: one
   MD031: true
   MD032: true
   MD004:
