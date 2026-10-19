@@ -16,7 +16,7 @@ TutorTrack supports one local tutor managing a roster of students. The MVP
 includes:
 
 * Adding a student
-* Listing the student roster
+* Displaying the student roster automatically on launch and after roster mutations
 * Viewing a student profile
 * Adding a session note
 * Deleting a student and the student's session notes
@@ -34,7 +34,7 @@ TutorTrack domain feature.
 | Student identity | Each student has an internal `StudentId`. The ID is not entered by the tutor or displayed as the roster selector. |
 | Duplicate student | Two students are duplicates when their normalized names and normalized parent phone numbers both match. |
 | Parent contact | Parent or guardian phone is required; parent or guardian email is optional. |
-| Roster selection | User-facing selection uses a positive, one-based index in the current sorted roster. Domain APIs use `StudentId`. |
+| Roster selection | User-facing selection uses a positive, one-based index in the current sorted roster displayed on launch and after roster mutations. Domain APIs use `StudentId`. |
 | Roster order | Students are sorted by normalized name, case-insensitively. Equal names retain creation order. |
 | Session timestamp | A session note receives the current local date and time when it is added. |
 | Note order | Profiles display notes newest first. Equal timestamps retain insertion order. |
@@ -137,7 +137,6 @@ The parser accepts these commands:
 
 ```text
 add n/NAME p/PHONE sub/SUBJECT l/LEVEL [e/EMAIL]
-list
 view INDEX
 note INDEX nt/NOTE
 delete INDEX
@@ -158,14 +157,16 @@ command recognizes only `nt/` as its note-text prefix.
 Required fields are name, parent phone, subject, and current level. Email is
 optional.
 
-### List roster
+### Display roster
 
 1. Display every valid student in sorted order.
 1. Show each student's index, name, subject, current level, and note count.
 1. Establish the displayed indices as the current selection context.
 1. Report an empty-roster message when there are no students.
 
-`list` accepts no arguments and does not mutate stored data.
+The complete roster is displayed automatically when the application launches and
+after every successful roster mutation. Displaying the roster does not mutate
+stored data.
 
 ### View profile
 
@@ -285,7 +286,7 @@ the category and no-partial-update behavior consistent.
 | --- | --- |
 | Student value types and `StudentRoster` | Add Student member |
 | `SessionNote`, `SessionHistory`, and profile/session service | Session Note member |
-| Roster display and index context | List member |
+| Roster display and index context | Roster member |
 | Profile presentation | Student Profile member |
 | Command registration and top-level UI wiring | Delete/Integration member |
 | End-to-end acceptance tests | Delete/Integration member |
