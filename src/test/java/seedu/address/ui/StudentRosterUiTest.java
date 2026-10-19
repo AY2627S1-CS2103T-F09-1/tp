@@ -469,7 +469,7 @@ public class StudentRosterUiTest {
                 assertNotNull(cell);
                 VBox card = (VBox) cell.getGraphic();
                 assertNotNull(card);
-                Label noteText = (Label) card.getChildren().get(1);
+                SelectableText noteText = (SelectableText) card.getChildren().get(1);
 
                 assertTrue(card.getWidth() <= listView.getWidth());
                 assertTrue(noteText.getHeight() > noteText.getFont().getSize() * 2);
