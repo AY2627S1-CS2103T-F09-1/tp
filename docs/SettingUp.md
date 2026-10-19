@@ -19,6 +19,7 @@ Follow the steps below precisely. The setup may fail if you skip or change a ste
 First, **fork** this repo, and **clone** the fork into your computer.
 
 If you plan to use IntelliJ IDEA (highly recommended):
+
 1. **Configure the JDK**: Follow the guide [_[se-edu/guides] IDEA: Configuring the JDK_](https://se-education.org/guides/tutorials/intellijJdk.html) to ensure IntelliJ is configured to use **JDK 25**.
 1. **Import the project as a Gradle project**: Follow the guide [_[se-edu/guides] IDEA: Importing a Gradle project_](https://se-education.org/guides/tutorials/intellijImportGradleProject.html) to import the project into IDEA.<br>
   :exclamation: Note: Importing a Gradle project is slightly different from importing a normal Java project.
@@ -42,6 +43,10 @@ If you plan to use IntelliJ IDEA (highly recommended):
 1. **Set up CI**
 
    This project includes GitHub Actions configuration files in `.github/workflows`. GitHub runs CI automatically for every push and pull request. No setup is required.
+
+1. **Set up local Markdownlint checks**
+
+   Install the repository's local Markdownlint dependency with `npm install`. Before committing Markdown changes, run `npx --no-install markdownlint-cli2 --no-globs` followed only by the Markdown files you changed, for example `npx --no-install markdownlint-cli2 --no-globs docs/UserGuide.md`. Markdownlint is a local sanity check; CI and Git hooks do not run it.
 
 1. **Learn the design**
 

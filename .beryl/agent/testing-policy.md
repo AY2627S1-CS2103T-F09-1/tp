@@ -8,7 +8,7 @@
 | Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Selects related tests from changed files and uses full-test fallback for broad changes |
 | Aggregate deterministic gate | `./.beryl/scripts/check.sh` | available | Runs all deterministic checks |
 | Java style | `./gradlew checkstyleMain checkstyleTest` | available | Checkstyle with the SE-EDU configuration |
-| Markdown style | `npx --no-install markdownlint-cli2` | available when dependencies are installed | Enforces the documented Markdown rules |
+| Markdown style | `npx --no-install markdownlint-cli2 --no-globs` | available when dependencies are installed | Enforces the documented Markdown rules |
 | Git commit style | `gitlint --config .gitlint --commits HEAD^..HEAD` | available when gitlint is installed | Enforces mechanically checkable commit-message rules |
 | Typecheck | `not available yet` | unavailable | Add the project typecheck command when configured |
 | Unit tests | `./gradlew test` | available | JUnit 5 tests through Gradle |
@@ -22,12 +22,12 @@ Use Java 25 for application and build tasks. Gradle 9.1 is supplied through the 
 ## Default Loop
 
 1. Identify or add the failing behavior.
-2. Select the smallest useful test level.
-3. State success checks before implementation: expected artifact, narrow command, broader command, generated output or browser evidence when applicable, and one user-visible behavior.
-4. Implement one internal feature slice.
-5. Run narrow checks first, then broader checks.
-6. Repair from actual tool output.
-7. For web UI or HTML/CSS work, include a Playwright MCP browser verification step.
+1. Select the smallest useful test level.
+1. State success checks before implementation: expected artifact, narrow command, broader command, generated output or browser evidence when applicable, and one user-visible behavior.
+1. Implement one internal feature slice.
+1. Run narrow checks first, then broader checks.
+1. Repair from actual tool output.
+1. For web UI or HTML/CSS work, include a Playwright MCP browser verification step.
 
 ## Input Resilience Coverage
 
