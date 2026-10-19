@@ -33,8 +33,8 @@ public class AddCommand extends Command {
             + PREFIX_SUBJECT + "Mathematics "
             + PREFIX_LEVEL + "Secondary 3";
 
-    public static final String MESSAGE_STUDENT_SUCCESS = "New student added: %1$s";
-    public static final String MESSAGE_DUPLICATE_STUDENT = "A student with this name and parent phone already exists.";
+    public static final String MESSAGE_STUDENT_SUCCESS = "Added student: %1$s (%2$s, %3$s).";
+    public static final String MESSAGE_DUPLICATE_STUDENT = "Duplicate student: %1$s already has this parent phone.";
 
     private final Student toAdd;
 
@@ -51,11 +51,13 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasStudent(toAdd)) {
-            throw new CommandException(MESSAGE_DUPLICATE_STUDENT);
+            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT, toAdd.getName())
+                    + "\n" + MESSAGE_USAGE);
         }
 
         model.addStudent(toAdd);
-        return new CommandResult(String.format(MESSAGE_STUDENT_SUCCESS, toAdd.getName()));
+        return new CommandResult(String.format(MESSAGE_STUDENT_SUCCESS, toAdd.getName(), toAdd.getSubject(),
+                toAdd.getCurrentLevel()));
     }
 
     @Override

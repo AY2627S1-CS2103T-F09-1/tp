@@ -703,11 +703,13 @@ testers are expected to do more *exploratory* testing.
 ### Adding a student
 
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
-   Expected: TutorTrack confirms that Alicia Lim was added.
+   Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
 2. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
-   Expected: TutorTrack rejects it as a duplicate student and preserves the existing record.
+   Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone.` and preserves the existing record.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
+4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
+   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and neither changes the roster or data file.
 
 ### Rejecting inherited AB3 person commands
 
@@ -715,7 +717,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter each of `edit 1 n/Changed Name`, `find Changed`, and `clear`.
    Expected: Each input reports `Unknown command.` The student, session note, roster display, and saved data remain unchanged.
 1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
-   Expected: TutorTrack reports the current student-add command format. It does not create a hidden person or change the roster, session notes, or saved data.
+   Expected: TutorTrack reports `a/` as an unknown parameter, lists the supported add parameters, and shows the add format. It does not create a hidden person or change the roster, session notes, or saved data.
 1. Enter `add n/Bea Lim p/9876 5432 sub/English l/JC 1`.
    Expected: The valid student form still adds Bea Lim normally.
 
