@@ -16,7 +16,7 @@ The complete tutoring loop is:
 1. View the automatically displayed roster and identify a student by the displayed index.
 1. View that student's preparation context and previous session notes.
 1. Record a new session note after a lesson.
-1. Delete a student and all of that student's notes when the record is no longer needed.
+1. Delete one incorrect session note, or delete a student and all of that student's notes when the record is no longer needed.
 
 The application targets a small active roster, but the implementation does not enforce a maximum student count.
 
@@ -28,7 +28,7 @@ The application targets a small active roster, but the implementation does not e
 * Display student roster automatically
 * View student profile
 * Add session note
-* Delete student
+* Delete a student or one session note
 
 Student data and session notes are saved automatically to a local JSON file. These five features form one repeatable tutoring workflow.
 
@@ -63,6 +63,8 @@ INDEX is a positive, non-zero unsigned decimal integer that fits in a Java int. 
 
 Indices are one-based and refer to the current sorted roster. The UI refreshes the roster after every successful command, so view, note, and delete use the latest displayed order.
 
+Session-note numbers are also positive and one-based, but refer to the numbered cards in one student's currently displayed history. The oldest note is 1 and the newest note has the largest number.
+
 ### Shared validation
 
 Surrounding whitespace is removed from student value objects. Names, subjects, and current levels also collapse each run of internal whitespace to one space.
@@ -85,7 +87,7 @@ Surrounding whitespace is removed from student value objects. Names, subjects, a
 * The JSON root contains persons and students. A student contains studentId, name, parentPhone, optional parentEmail, subject, currentLevel, and optional sessionNotes. A note contains recordedAt with a date, time, and UTC offset, and text.
 * A missing file starts as an empty address book. A later successful command creates it.
 * An unreadable or invalid file starts as an empty address book, shows a recovery alert, and is copied to a uniquely named sibling backup when that backup can be created, before a later saving command can replace it.
-* Every successful command is saved automatically. Before execution, the logic layer copies the current address-book state. If saving fails, it restores that copy and reports the save error.
+* Every successful data-changing command is saved automatically. A deletion preview does not save. Before a command on the persistence path executes, the logic layer copies the current address-book state. If saving fails, it restores that copy and reports the save error.
 * Existing files are replaced through a temporary file and atomic move. Failed parses and failed commands leave the current model, roster, profile, and existing file unchanged.
 
 ## Feature 1 — Add student
@@ -219,7 +221,7 @@ Example: view 1
 
 ### Outputs, duplicates, and possible errors
 
-On success, the exact result is Displaying profile for <Name>. The profile shows name, parent/guardian phone, parent/guardian email, subject, current level, and session notes. Missing email displays Not provided. Notes are newest first by recorded instant, with insertion order retained for equal timestamps. Each timestamp is displayed as d MMM uuuu, h:mm a (UTC+HH:MM), with UTC displayed as UTC+00:00. The selected roster card is highlighted.
+On success, the exact result is Displaying profile for <Name>. The profile shows name, parent/guardian phone, parent/guardian email, subject, current level, and session notes. Missing email displays Not provided. Notes are newest first by recorded instant, with insertion order retained for equal timestamps. The oldest note is numbered 1 and the newest note receives the history size, so the visible numbers descend from top to bottom. Each timestamp is displayed as d MMM uuuu, h:mm a (UTC+HH:MM), with UTC displayed as UTC+00:00. The selected roster card is highlighted.
 
 With no notes, the profile shows No session notes yet and Use note INDEX nt/NOTE to record the first lesson update. On failure, the result display shows the error and the current roster, selection, and profile remain unchanged.
 
@@ -235,9 +237,9 @@ View creates or merges nothing. If a selected student is deleted, the profile pa
 | Session notes: 2            | Subject                Mathematics  |
 |                             | Current level          Secondary 3   |
 |                             | Session notes                        |
-|                             | 14 Oct 2026, 6:35 PM (UTC+08:00)    |
+|                             | [2] 14 Oct 2026, 6:35 PM (UTC+08:00)|
 |                             | Practised completing the square.    |
-|                             | 7 Oct 2026, 6:30 PM (UTC+08:00)     |
+|                             | [1] 7 Oct 2026, 6:30 PM (UTC+08:00) |
 |                             | Reviewed factorisation.              |
 +-----------------------------+--------------------------------------+
 ~~~
@@ -281,69 +283,97 @@ Example: note 1 nt/Reviewed factorisation; revise negative coefficients next les
 
 On success, the note receives the current system date-time in the default time zone, truncated to whole seconds, and is inserted newest first. The exact result is Added session note for <Name>. The roster count increases, an open profile refreshes, roster order does not change, the data is saved, and the command box is cleared.
 
-Identical note text is allowed repeatedly; each note is a separate lesson event. A second nt/ produces Multiple values specified for the following single-valued field(s): nt/. Control characters, line separators, empty text, overlong text, and invalid indices are rejected without a partial update. If saving fails, the new note is removed from memory and the save error is shown. There is no per-note edit or delete command; add a follow-up note to correct a previous note.
+Identical note text is allowed repeatedly; each note is a separate lesson event. A second nt/ produces Multiple values specified for the following single-valued field(s): nt/. Control characters, line separators, empty text, overlong text, and invalid indices are rejected without a partial update. If saving fails, the new note is removed from memory and the save error is shown. There is no per-note edit command; use the deletion workflow below to remove an incorrect note.
 
 ### Relevant UI mock-up
 
 ~~~text
 | 1. Ari Tan                  | Session notes                        |
-| Session notes: 3            | 14 Oct 2026, 6:35 PM (UTC+08:00)    |
+| Session notes: 3            | [3] 14 Oct 2026, 6:35 PM (UTC+08:00)|
 |                             | Practised completing the square.    |
-|                             | 7 Oct 2026, 6:30 PM (UTC+08:00)     |
+|                             | [2] 7 Oct 2026, 6:30 PM (UTC+08:00) |
 |                             | Reviewed factorisation.              |
-|                             | 30 Sep 2026, 6:20 PM (UTC+08:00)    |
+|                             | [1] 30 Sep 2026, 6:20 PM (UTC+08:00)|
 |                             | Added note text appears here.       |
 ~~~
 
-## Feature 5 — Delete student
+## Feature 5 — Delete a student or session note
 
 **Priority:** Must-have.
 
-**Purpose:** Removes one student and that student's complete session-note history. It is also the current MVP's way to correct a bad record.
+**Purpose:** Removes either one incorrect session note or one student and that student's complete session-note history. Both destructive operations require an immediately following matching confirmation.
 
 ### Command format and examples
 
 ~~~text
-delete INDEX
+delete STUDENT_INDEX
+delete STUDENT_INDEX /confirm
+
+delete note STUDENT_INDEX NOTE_NUMBER
+delete note STUDENT_INDEX NOTE_NUMBER /confirm
 ~~~
 
 ~~~text
-view 2
 delete 2
+delete 2 /confirm
+
+view 1
+delete note 1 3
+delete note 1 3 /confirm
 ~~~
 
-The recommended workflow is to view a student first, then delete the confirmed index. Deletion accepts one index only; ranges and multiple indices are invalid.
+The first command previews the target without changing or saving data. The exact command shown in the preview must be the next submitted command to perform the deletion. Any other command cancels the pending deletion before that command is processed, and a new valid deletion preview replaces the earlier preview.
 
 ### Parameters
 
 | Parameter | Acceptable values | Error when invalid | Rationale |
 | --- | --- | --- | --- |
-| INDEX | Exactly one positive index in the current sorted roster. | Missing, malformed, multiple, range-like, or out-of-range input produces the delete parse or index error. | Prevents accidental batch deletion and matches view and note. |
+| STUDENT_INDEX | One positive index in the current sorted roster. | A malformed value produces the applicable delete usage; an out-of-range value produces The student index provided is invalid. | Resolves the visible student to a stable internal ID before confirmation. |
+| NOTE_NUMBER | One positive number currently displayed beside a session note. | Missing, malformed, or extra values produce a specific session-note deletion parse error. No notes or a number above the current history size produces a specific command error. | Selects one note without adding persistent note IDs. |
+| /confirm | Optional, exact, case-sensitive token appearing at most once at the end. | Direct, duplicated, misplaced, differently cased, repeated, stale, or mismatched confirmations are rejected without deletion. | Fits TutorTrack's command structure while requiring explicit confirmation. |
 
-Delete usage is:
+Student deletion usage is:
 
 ~~~text
-delete: Deletes the student identified by the index number used in the student roster.
-Parameters: INDEX (must be a positive integer)
-Example: delete 1
+delete: Previews or confirms deletion of the student identified by the index number used in the student roster.
+Parameters: INDEX (must be a positive integer) [/confirm]
+Preview: delete 1
+Confirm: delete 1 /confirm
 ~~~
 
-### Outputs, duplicates, and possible errors
+Session-note deletion usage is:
 
-On success, the student and all of its session notes are removed. The exact result is Deleted student: <Name>. Session notes removed: <count>. The roster refreshes with new consecutive indices, the deleted profile closes and its highlight is cleared, and another open profile remains selected by stable ID. The data is saved and the command box is cleared.
+~~~text
+delete note: Previews or confirms deletion of one session note identified by its student roster index and displayed note number.
+Parameters: STUDENT_INDEX NOTE_NUMBER (both must be positive integers) [/confirm]
+Preview: delete note 1 3
+Confirm: delete note 1 3 /confirm
+~~~
 
-Delete creates or merges nothing. If two non-duplicate students have the same name, deleting one leaves the other and its notes intact. Out-of-range indices produce The student index provided is invalid. Inputs such as delete 1 2, delete 1-2, or delete 1 n/Ari produce invalid command format followed by delete usage. There is no confirmation prompt or undo command. A save failure restores the student and notes.
+### Outputs, numbering, and possible errors
+
+A student preview identifies the student and note count, prints the exact `delete STUDENT_INDEX /confirm` command, and states that any other command cancels. A matching confirmation removes the student and all notes and reports `Successfully deleted <Name>.` The roster receives consecutive indices, and the deleted student's open profile and highlight are cleared.
+
+A note preview identifies the student and visible note number, prints the exact `delete note STUDENT_INDEX NOTE_NUMBER /confirm` command, and gives the same cancellation instruction. A matching confirmation removes only that occurrence and reports `Successfully deleted session note [<NOTE_NUMBER>] for <Name>.` The student and every other note remain. An open profile refreshes, and the remaining note numbers become consecutive.
+
+Session-note cards remain newest first. With `n` notes, the card at newest-first list position `i` has visible number `n - i`; equivalently, a visible `NOTE_NUMBER` maps to internal list position `history size - NOTE_NUMBER`. These numbers are display selectors, not persisted identifiers. Adding a note creates the next largest number, and deletion renumbers the remaining notes.
+
+Logic holds at most one pending deletion. A student preview binds its index to the resolved stable student ID. A note preview additionally binds the note number to the exact immutable history snapshot. This prevents a roster or history change from redirecting a later confirmation. Pending state is consumed before the next command is parsed and is never persisted.
+
+Delete creates or merges nothing. Invalid previews and confirmations leave the model and file unchanged. A save failure restores the student or complete history and clears the pending deletion. There is no undo command.
 
 ### Relevant UI mock-up
 
 ~~~text
 +-----------------------------+--------------------------------------+
-| 1. Ari Tan                  | No student selected                  |
-| Subject: Mathematics        | Use view INDEX to open a student    |
-| Level: Secondary 3          | profile.                             |
-| Session notes: 2            |                                      |
+| 1. Ari Tan                  | Ari Tan                              |
+| Subject: Mathematics        | Session notes                        |
+| Session notes: 2            | [2] 14 Oct 2026, 6:35 PM (UTC+08:00)|
+|                             | Practised completing the square.    |
+|                             | [1] 30 Sep 2026, 6:20 PM (UTC+08:00)|
+|                             | Reviewed factorisation.              |
 +-----------------------------+--------------------------------------+
-| Result: Deleted student: Bea Lim. Session notes removed: 0.       |
+| Result: Successfully deleted session note [2] for Ari Tan.       |
 +-------------------------------------------------------------------+
 ~~~
 
@@ -372,21 +402,25 @@ add n/Ari Tan p/9123 4567 sub/Mathematics l/Secondary 3
 add n/Bea Lim p/9876 5432 e/guardian@example.com sub/English l/JC 1
 view 1
 note 1 nt/Reviewed factorisation; revisit negative coefficients next lesson.
+note 1 nt/Completed a timed practice paper.
 view 1
+delete note 1 1
+delete note 1 1 /confirm
 delete 2
+delete 2 /confirm
 ~~~
 
 Expected outcomes:
 
 * The roster contains two sorted students with correct indices and note counts.
 * view 1 opens Ari Tan's profile.
-* note 1 adds a timestamped note and changes Ari Tan's count from 0 to 1.
-* view 1 shows the new note.
-* delete 2 removes Bea Lim and reports the number of removed notes.
+* The two note commands add timestamped notes and change Ari Tan's count from 0 to 2.
+* view 1 shows the notes newest first as `[2]` and `[1]`.
+* The matching note confirmation removes only note `[1]`, leaving Ari Tan and note `[2]`.
+* The matching student confirmation removes Bea Lim and all notes belonging to that student.
 * The final automatically refreshed roster shows only Ari Tan with index 1.
 * Reloading preserves the remaining student, studentId, and session-note history.
 
 ## Implementation references
 
-The behavior described here is implemented and tested in [AddressBookParser](../src/main/java/seedu/address/logic/parser/AddressBookParser.java), [Student](../src/main/java/seedu/address/model/student/Student.java), [StudentRoster](../src/main/java/seedu/address/model/student/StudentRoster.java), [SessionNote](../src/main/java/seedu/address/model/session/SessionNote.java), [SessionHistory](../src/main/java/seedu/address/model/session/SessionHistory.java), [JsonAdaptedStudent](../src/main/java/seedu/address/storage/JsonAdaptedStudent.java), [JsonAddressBookStorage](../src/main/java/seedu/address/storage/JsonAddressBookStorage.java), [MainApp](../src/main/java/seedu/address/MainApp.java), [MainWindow](../src/main/java/seedu/address/ui/MainWindow.java), [StudentRosterPanel](../src/main/java/seedu/address/ui/StudentRosterPanel.java), and [StudentProfilePanel](../src/main/java/seedu/address/ui/StudentProfilePanel.java).
-
+The behavior described here is implemented and tested in [AddressBookParser](../src/main/java/seedu/address/logic/parser/AddressBookParser.java), [LogicManager](../src/main/java/seedu/address/logic/LogicManager.java), [DeleteSessionNoteCommand](../src/main/java/seedu/address/logic/commands/DeleteSessionNoteCommand.java), [Student](../src/main/java/seedu/address/model/student/Student.java), [StudentRoster](../src/main/java/seedu/address/model/student/StudentRoster.java), [SessionNote](../src/main/java/seedu/address/model/session/SessionNote.java), [SessionHistory](../src/main/java/seedu/address/model/session/SessionHistory.java), [JsonAdaptedStudent](../src/main/java/seedu/address/storage/JsonAdaptedStudent.java), [JsonAddressBookStorage](../src/main/java/seedu/address/storage/JsonAddressBookStorage.java), [MainApp](../src/main/java/seedu/address/MainApp.java), [MainWindow](../src/main/java/seedu/address/ui/MainWindow.java), [StudentRosterPanel](../src/main/java/seedu/address/ui/StudentRosterPanel.java), and [StudentProfilePanel](../src/main/java/seedu/address/ui/StudentProfilePanel.java).
