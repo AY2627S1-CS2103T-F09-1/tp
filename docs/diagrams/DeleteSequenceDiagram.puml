@@ -6,26 +6,33 @@ box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
 participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
 participant ":DeleteCommandParser" as DeleteCommandParser LOGIC_COLOR
-participant "preview:DeleteCommand" as PreviewCommand LOGIC_COLOR
-participant "confirmed:DeleteCommand" as ConfirmedCommand LOGIC_COLOR
-participant "preview:CommandResult" as PreviewResult LOGIC_COLOR
-participant "success:CommandResult" as SuccessResult LOGIC_COLOR
+participant "preview:Command" as PreviewCommand LOGIC_COLOR
+participant "confirmed:Command" as ConfirmedCommand LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
 participant "m:Model" as Model MODEL_COLOR
 end box
 
-[-> LogicManager : execute("delete 1")
+box Storage STORAGE_COLOR_T1
+participant "s:Storage" as Storage STORAGE_COLOR
+end box
+
+note over PreviewCommand, ConfirmedCommand
+Each command is a DeleteCommand or
+DeleteSessionNoteCommand.
+end note
+
+[-> LogicManager : execute("delete ...")
 activate LogicManager
 
-LogicManager -> AddressBookParser : parseCommand("delete 1")
+LogicManager -> AddressBookParser : parseCommand(commandText)
 activate AddressBookParser
-AddressBookParser -> DeleteCommandParser : parse("1")
+AddressBookParser -> DeleteCommandParser : parse(arguments)
 activate DeleteCommandParser
 create PreviewCommand
-DeleteCommandParser -> PreviewCommand : new DeleteCommand(index, false)
-PreviewCommand --> DeleteCommandParser
+DeleteCommandParser -> PreviewCommand : new unconfirmed deletion command
+PreviewCommand --> DeleteCommandParser : preview
 DeleteCommandParser --> AddressBookParser : preview
 deactivate DeleteCommandParser
 AddressBookParser --> LogicManager : preview
@@ -37,49 +44,102 @@ PreviewCommand -> Model : getStudentRoster()
 activate Model
 Model --> PreviewCommand : roster
 deactivate Model
-create PreviewResult
-PreviewCommand -> PreviewResult : new CommandResult(prompt)
-PreviewResult --> PreviewCommand
-PreviewCommand --> LogicManager : previewResult
+opt session-note target
+    PreviewCommand -> Model : getSessionHistory(studentId)
+    activate Model
+    Model --> PreviewCommand : history
+    deactivate Model
+end
+PreviewCommand --> LogicManager : preview result
 deactivate PreviewCommand
+
 LogicManager -> Model : getStudentRoster()
 activate Model
 Model --> LogicManager : roster
 deactivate Model
-LogicManager -> LogicManager : store pending(index, studentId)
+alt student target
+    LogicManager -> LogicManager : store pending(index, studentId)
+else session-note target
+    LogicManager -> Model : getSessionHistory(studentId)
+    activate Model
+    Model --> LogicManager : history
+    deactivate Model
+    LogicManager -> LogicManager : store pending(index, studentId,\nnoteNumber, history)
+end
 
-[<-- LogicManager : previewResult
+[<-- LogicManager : preview result
 deactivate LogicManager
 
-[-> LogicManager : execute("delete 1 /confirm")
+[-> LogicManager : execute("delete ... /confirm")
 activate LogicManager
 LogicManager -> LogicManager : consume and clear pending deletion
 
-LogicManager -> AddressBookParser : parseCommand("delete 1 /confirm")
+LogicManager -> AddressBookParser : parseCommand(commandText)
 activate AddressBookParser
-AddressBookParser -> DeleteCommandParser : parse("1 /confirm")
+AddressBookParser -> DeleteCommandParser : parse(arguments)
 activate DeleteCommandParser
 create ConfirmedCommand
-DeleteCommandParser -> ConfirmedCommand : new DeleteCommand(index, true)
-ConfirmedCommand --> DeleteCommandParser
+DeleteCommandParser -> ConfirmedCommand : new confirmed deletion command
+ConfirmedCommand --> DeleteCommandParser : confirmed
 DeleteCommandParser --> AddressBookParser : confirmed
 deactivate DeleteCommandParser
 AddressBookParser --> LogicManager : confirmed
 deactivate AddressBookParser
 
-LogicManager -> Model : getStudentRoster()
-activate Model
-Model --> LogicManager : roster
-deactivate Model
-LogicManager -> LogicManager : match index and stable studentId
-LogicManager -> Model : deleteStudent(studentId)
-activate Model
-Model --> LogicManager : removedNoteCount
-deactivate Model
-create SuccessResult
-LogicManager -> SuccessResult : new CommandResult(successMessage)
-SuccessResult --> LogicManager
+alt no pending deletion
+    [<-- LogicManager : no-pending error
+else pending deletion exists
+    LogicManager -> Model : getStudentRoster()
+    activate Model
+    Model --> LogicManager : roster
+    deactivate Model
+    opt session-note target
+        LogicManager -> Model : getSessionHistory(studentId)
+        activate Model
+        Model --> LogicManager : currentHistory
+        deactivate Model
+    end
 
-[<-- LogicManager : successResult
+    alt confirmation mismatches target
+        [<-- LogicManager : mismatch error
+    else confirmation matches target
+        LogicManager -> Model : getAddressBook()
+        activate Model
+        Model --> LogicManager : currentData
+        deactivate Model
+        LogicManager -> LogicManager : copy currentData as snapshot
+
+        alt student target
+            LogicManager -> Model : deleteStudent(studentId)
+            activate Model
+            Model --> LogicManager : removedNoteCount
+            deactivate Model
+        else session-note target
+            LogicManager -> Model : deleteSessionNote(studentId, noteNumber)
+            activate Model
+            Model --> LogicManager : removedNote
+            deactivate Model
+        end
+
+        LogicManager -> Model : getAddressBook()
+        activate Model
+        Model --> LogicManager : updatedData
+        deactivate Model
+        LogicManager -> Storage : saveAddressBook(updatedData)
+        activate Storage
+        alt save succeeds
+            Storage --> LogicManager
+            [<-- LogicManager : success result
+        else save fails
+            Storage --> LogicManager : IOException
+            LogicManager -> Model : setAddressBook(snapshot)
+            activate Model
+            Model --> LogicManager
+            deactivate Model
+            [<-- LogicManager : storage error
+        end
+        deactivate Storage
+    end
+end
 deactivate LogicManager
 @enduml

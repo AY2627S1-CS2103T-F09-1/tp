@@ -95,16 +95,16 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component for the two-command confirmed-deletion workflow.
+The sequence diagram below illustrates the interactions within the `Logic` component for the two-command confirmed-deletion workflow shared by student and session-note deletion.
 
-![Interactions Inside the Logic Component for Confirmed Student Deletion](images/DeleteSequenceDiagram.png)
+![Interactions Inside the Logic Component for Confirmed Deletion](images/DeleteSequenceDiagram.png)
 
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is coordinated by the `LogicManager`.
-1. An unconfirmed `DeleteCommand` resolves the sorted roster and returns a preview. `LogicManager` retains the chosen roster index and stable student ID in memory and returns without saving because no model data changed.
-1. A matching confirmed `DeleteCommand` causes `LogicManager` to verify both the index and stable ID before calling `Model#deleteStudent(StudentId)`.
+1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand` or `DeleteSessionNoteCommand`) which is coordinated by the `LogicManager`.
+1. An unconfirmed deletion command resolves its student or session-note target and returns a preview. `LogicManager` retains at most one pending deletion in memory and returns without saving because no model data changed.
+1. At the start of the next command, `LogicManager` consumes and clears the pending deletion. A matching confirmed command must still resolve to the same stable student and, for a session note, the same immutable history snapshot before the applicable model deletion operation can run.
 1. Commands that enter the persistence path are saved by `LogicManager`. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
@@ -192,7 +192,7 @@ Session notes live in the `seedu.address.model.session` package, separate from `
 
 `SessionNote` is an immutable value holding the note text and the `OffsetDateTime` at which it was recorded. Its text is stripped of surrounding whitespace, while internal spaces are kept exactly as typed. Valid text has 1 to 500 characters, counted as Unicode code points so that an emoji counts as one character, and contains no control characters (such as line breaks or tabs) or Unicode line and paragraph separators. Identical text may be recorded more than once because each note describes a separate lesson. `SessionNote` does not read the clock itself; the caller supplies `recordedAt`, which keeps the type deterministic to test and lets the model decide when a note is timestamped.
 
-`SessionHistory` is the immutable, newest-first collection of one student's notes. `SessionHistory#empty()` returns a history without notes, and `SessionHistory#withNote(SessionNote)` returns a new history with the note inserted, leaving the original unchanged. Notes are ordered by the instant they were recorded rather than by their local clock reading, so notes recorded with different time-zone offsets still appear in the correct order. Notes with equal instants keep the order in which they were added. `SessionHistory#getNotes()` returns an unmodifiable list, and `SessionHistory#size()` provides the note count shown in the roster.
+`SessionHistory` is the immutable, newest-first collection of one student's notes. `SessionHistory#empty()` returns a history without notes, and `SessionHistory#withNote(SessionNote)` returns a new history with the note inserted, leaving the original unchanged. Notes are ordered by the instant they were recorded rather than by their local clock reading, so notes recorded with different time-zone offsets still appear in the correct order. Notes with equal instants keep the order in which they were added. `SessionHistory#getNotes()` returns an unmodifiable list, and `SessionHistory#size()` provides the note count shown in the roster. `SessionHistory#getNote(Index)` and `SessionHistory#withoutNote(Index)` accept the chronological note number shown to the user, where one identifies the oldest note. They convert it to the newest-first list position with `history size - NOTE_NUMBER`; removing a note returns a new history and leaves the original snapshot unchanged.
 
 ### Session note model integration
 
@@ -200,10 +200,11 @@ Session notes live in the `seedu.address.model.session` package, separate from `
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
-The `Model` API offers three session-note operations:
+The `Model` API offers four session-note operations:
 
 * `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
+* `Model#deleteSessionNote(StudentId, Index)` removes and returns one note selected by its chronological note number while preserving the student and every other session note.
 * `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed.
 
 Student deletion crosses the roster and session-history contexts through one model boundary. `Model#deleteStudent(StudentId)` validates that the stable ID identifies a roster student, then removes the student and session history together and returns the removed-note count. Keeping this coordination inside the model prevents commands from leaving an orphaned student or history if validation fails.
@@ -214,7 +215,7 @@ Student deletion crosses the roster and session-history contexts through one mod
 
 The `view INDEX` command resolves the chosen roster entry to its stable `StudentId` and carries that ID in `CommandResult`. `MainWindow` retains that stable ID, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card; the command layer does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
-`StudentProfilePanel` preserves the model's newest-first note order. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
+`StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
 
 `MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
 
@@ -240,17 +241,35 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 `NoteCommand#toString` omits the note text, because notes may contain private lesson details.
 
-### Student deletion
+### Confirmed deletion
 
-`DeleteCommandParser` accepts a positive whole-number index by itself or followed by the exact, case-sensitive terminal token `/confirm`. Concatenated, duplicated, misplaced, differently cased, or value-bearing confirmation tokens are rejected. `DeleteCommand` records the parsed index and whether `/confirm` was supplied.
+`DeleteCommandParser` supports `delete STUDENT_INDEX [/confirm]` for a whole student and `delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` for one session note. `/confirm` is an exact, case-sensitive terminal token. Duplicated, misplaced, differently cased, concatenated, or value-bearing confirmation tokens are rejected during parsing, before the model can change. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
-For `delete INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. It returns the student's name, session-note count, exact `delete INDEX /confirm` command, and the instruction `To cancel, enter any other command.` without changing or saving the model. After a successful preview, `LogicManager` keeps one transient pending deletion containing the original index and stable `StudentId`; it does not persist private student fields or confirmation state.
+#### Preview and pending target
 
-At the start of the next `LogicManager#execute` call, the pending deletion is consumed and cleared before parsing. A matching `delete INDEX /confirm` must use the pending index and that index must still identify the pending stable `StudentId`. Direct, repeated, or mismatched confirmations are rejected without mutation. Any other submitted input cancels the pending deletion before that input is processed; a new valid `delete INDEX` preview creates a replacement pending deletion.
+For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. It returns the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter any other command.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`.
 
-After a match, `LogicManager` copies the address book, passes the stable `StudentId` to `Model#deleteStudent`, and saves the complete address book. The model removes the student and session history atomically. A save failure restores both records and leaves no confirmation pending, so the user must preview again. A successful result reports the deleted student's name.
+For `delete note STUDENT_INDEX NOTE_NUMBER`, `DeleteSessionNoteCommand#execute` resolves the same sorted roster and checks that the selected student has the displayed note number. After returning the preview and exact confirmation command, `LogicManager` retains a `PendingSessionNoteDeletion` containing the student index, stable `StudentId`, chronological note number, and exact immutable `SessionHistory` snapshot. The note number maps to the internal newest-first list position with `history size - NOTE_NUMBER`; because it is a display selector rather than a stored note ID, the remaining notes are numbered consecutively after deletion.
 
-After a successful confirmed deletion, `MainWindow` requests a fresh roster snapshot, so the remaining students receive consecutive one-based indices. It also refreshes the displayed profile by stable ID; if the deleted student was open, the absent profile causes the panel to close without UI code reaching into the model. A preview keeps the profile and roster unchanged.
+Both pending types occupy the same single `PendingDeletion` slot in `LogicManager`. Starting either valid preview after another preview consumes the earlier pending state and replaces it with the new target. Pending state contains no private student fields, is not part of the model or JSON schema, and is never persisted.
+
+#### Confirmation, cancellation, and mutation
+
+At the start of the next `LogicManager#execute` call, the pending deletion is copied locally and cleared before the new input is parsed. Any other submitted command, including malformed input, therefore cancels the pending deletion before that input is processed. A direct or repeated confirmation has no pending target and is rejected. A confirmation for the wrong deletion type or different selectors is a mismatch and is also rejected without mutation.
+
+A student confirmation must use the pending index, and that index must still resolve to the pending stable `StudentId`. A session-note confirmation must additionally use the pending note number and find the same immutable history object for that student. These checks prevent a roster reorder or session-history change from redirecting confirmation to a different target even when the displayed numbers are reused.
+
+After a match, `LogicManager` snapshots the address book and calls either `Model#deleteStudent(StudentId)` or `Model#deleteSessionNote(StudentId, Index)`. Student deletion removes the student and complete history atomically; session-note deletion removes only the selected note and preserves the student and every other note. `LogicManager` then saves the complete address book. A save failure restores the snapshot and leaves no confirmation pending, so the user must preview again. No storage-schema change is needed because the existing `sessionNotes` list stores the updated history, while note numbers and pending state remain transient.
+
+After a successful student deletion, `MainWindow` requests a fresh roster snapshot, assigns consecutive student indices, and closes the profile if it belonged to the deleted student. After a successful note deletion, it refreshes an open profile so the remaining newest-first notes and their reassigned numbers are visible. A preview or rejected confirmation leaves the roster and profile unchanged.
+
+**Design considerations:**
+
+* **Trailing `/confirm` flag (current choice):** The confirmation repeats the complete destructive command and target in the same `word /clause` style as other TutorTrack commands. It remains keyboard-first, requires no extra command vocabulary, and lets the parser reject malformed confirmation placement. The cost is that the user must retype or recall the command exactly.
+* **Standalone `confirm` and `cancel` commands:** Separate commands would require `ConfirmCommand`, `CancelCommand`, parser routes, help text, and another way to show which target `confirm` means. TutorTrack instead treats any other submitted command as cancellation and keeps the exact target visible in the confirmation command.
+* **JavaFX confirmation dialog:** A modal dialog would duplicate the command path, introduce mouse-oriented UI state, and make parser and end-to-end testing less representative of the fast-typing workflow.
+* **Persistent session-note IDs:** A stored ID would require a schema and migration change. Chronological display numbers are sufficient because the pending deletion also binds the immutable history snapshot, making a stale number fail safely.
+* **Separate student and note coordinators:** Both operations have the same preview, pending match, save, and rollback lifecycle. One pending-deletion slot prevents simultaneous ambiguous confirmations while the two model operations retain their distinct domain responsibilities.
 
 ### Save-failure rollback
 
@@ -578,29 +597,28 @@ history and saved locally. No other student record is changed.
 
     Use case ends.
 
-**Use case: Delete a student**
+**Use case: Delete a student or session note**
 
-**Preconditions:** The system is running and the current roster index context
-is available.
+**Preconditions:** The system is running and the current roster index context is available. Deleting a session note also requires a note number from the student's displayed history.
 
-**Guarantees:** A preview leaves the roster and local storage unchanged. A matching confirmation removes the selected student and all of the student's session notes from both.
+**Guarantees:** A preview or rejected confirmation leaves the roster and local storage unchanged. A matching confirmation removes exactly the previewed student and complete history, or exactly the previewed note while retaining its student and other notes.
 
 **MSS**
 
-1. Tutor requests deletion using a student's roster index.
-1. TutorTrack displays the selected student's name, session-note count, exact confirmation command, and instruction that any other command cancels the deletion.
-1. Tutor submits the matching `delete INDEX /confirm` command next.
-1. TutorTrack verifies that the index still identifies the same stable student ID.
-1. TutorTrack removes the student and all associated session notes and saves the updated roster.
-1. TutorTrack reports the deleted student's name, displays the updated roster, and establishes its displayed indices as the current selection context.
+1. Tutor requests deletion using a student's roster index and, for one session note, its displayed note number.
+1. TutorTrack displays the target, exact confirmation command, and instruction that any other command cancels the deletion.
+1. Tutor submits the matching confirmation command next.
+1. TutorTrack verifies that the index still identifies the same stable student ID and, for a note, that the displayed history is unchanged.
+1. TutorTrack removes the previewed student and complete history, or removes only the previewed note, and saves the updated data.
+1. TutorTrack reports the deleted target and refreshes the roster and any open profile.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. The index is missing, invalid, or outside the roster.
+* 1a. A required index or note number is missing, malformed, or outside its displayed range.
 
-  * 1a1. TutorTrack reports the index error and makes no changes.
+  * 1a1. TutorTrack reports the applicable validation error and makes no changes.
 
     Use case ends.
 * 3a. Tutor enters any other command.
@@ -613,9 +631,19 @@ is available.
   * 3b1. TutorTrack reports that the confirmation does not match or that no deletion is pending, and makes no deletion.
 
     Use case ends.
+* 3c. Tutor duplicates or misplaces `/confirm` or adds extra arguments.
+
+  * 3c1. TutorTrack reports the command-format error and makes no deletion.
+
+    Use case ends.
+* 4a. The roster or selected session history changes before confirmation.
+
+  * 4a1. TutorTrack rejects the stale confirmation and makes no deletion.
+
+    Use case ends.
 * 5a. TutorTrack cannot save the updated data.
 
-  * 5a1. TutorTrack reports the storage error, restores the student and session notes, and clears the pending deletion.
+  * 5a1. TutorTrack reports the storage error, restores the complete pre-command data, and clears the pending deletion.
 
     Use case ends.
 
