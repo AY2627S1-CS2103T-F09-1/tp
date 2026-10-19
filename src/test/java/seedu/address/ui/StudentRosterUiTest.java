@@ -685,6 +685,38 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void executeCommand_deleteSessionNoteAfterView_refreshesNotesAndNumbers() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        SessionNote newestNote = new SessionNote("Third session.",
+                OffsetDateTime.parse("2026-09-19T18:35:00+08:00"));
+        SessionNote middleNote = new SessionNote("Incorrect middle session.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        SessionNote oldestNote = new SessionNote("First session.",
+                OffsetDateTime.parse("2026-09-17T18:35:00+08:00"));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, List.of(newestNote, middleNote, oldestNote))));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Successfully deleted session note [2] for Alex Tan."));
+            logic.setProfile(Optional.of(profile(null, List.of(newestNote, oldestNote))));
+
+            mainWindow.executeCommand("delete note 1 2 /confirm");
+
+            assertEquals(List.of(
+                    new StudentProfilePanel.NumberedSessionNote(newestNote, 2),
+                    new StudentProfilePanel.NumberedSessionNote(oldestNote, 1)),
+                    getSessionNoteListView(mainWindow.getStudentProfilePanel()).getItems());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_failedAfterView_leavesOpenProfileUnchanged() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
         TestLogic logic = new TestLogic(roster, roster,
