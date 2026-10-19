@@ -36,6 +36,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -449,6 +450,11 @@ public class StudentRosterUiTest {
             SelectableText selectableText = new SelectableText();
             selectableText.setText("Selectable profile text");
             Stage stage = new Stage();
+            Clipboard systemClipboard = Clipboard.getSystemClipboard();
+            ClipboardContent originalClipboardContent = new ClipboardContent();
+            for (DataFormat dataFormat : systemClipboard.getContentTypes()) {
+                originalClipboardContent.put(dataFormat, systemClipboard.getContent(dataFormat));
+            }
             try {
                 stage.setScene(new Scene(new StackPane(selectableText), 280, 80));
                 stage.show();
@@ -463,18 +469,26 @@ public class StudentRosterUiTest {
                 selectableText.selectRange(0, "Selectable".length());
                 ClipboardContent initialClipboard = new ClipboardContent();
                 initialClipboard.putString("Initial clipboard text");
-                Clipboard.getSystemClipboard().setContent(initialClipboard);
+                systemClipboard.setContent(initialClipboard);
 
                 boolean isMac = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("mac");
                 selectableText.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "c", KeyCode.C,
                         false, !isMac, false, isMac));
 
-                assertEquals("Selectable", Clipboard.getSystemClipboard().getString());
+                assertEquals("Selectable", systemClipboard.getString());
                 selectableText.fireEvent(new KeyEvent(KeyEvent.KEY_TYPED, "x", "x", KeyCode.UNDEFINED,
                         false, false, false, false));
                 assertEquals("Selectable profile text", selectableText.getText());
             } finally {
-                stage.hide();
+                try {
+                    stage.hide();
+                } finally {
+                    if (originalClipboardContent.isEmpty()) {
+                        systemClipboard.clear();
+                    } else {
+                        systemClipboard.setContent(originalClipboardContent);
+                    }
+                }
             }
             return null;
         });
