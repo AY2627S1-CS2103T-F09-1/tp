@@ -42,13 +42,27 @@ public class UiThemeTest {
     public void rosterTheme_interactionStatesAreScopedToRosterList() throws IOException {
         String theme = readResource("/view/TutorTrackTheme.css");
 
-        assertTrue(theme.contains(".student-roster-list .list-cell:filled:hover #cardPane"));
+        assertFalse(theme.contains(".student-roster-list .list-cell:filled:hover #cardPane"));
         assertTrue(theme.contains(".student-roster-list .list-cell:filled:profile-selected #cardPane"));
-        assertTrue(theme.contains(".student-roster-list:focused .list-cell:filled:focused #cardPane"));
-        assertTrue(theme.contains(
+        assertTrue(theme.contains(".student-roster-list .list-cell:filled:hover"));
+        assertTrue(theme.contains(".student-roster-list .list-cell:filled:selected"));
+        assertTrue(theme.contains(".student-roster-list .list-cell:filled:focused"));
+        assertFalse(theme.contains("#cardPane" + ":focused"));
+        assertFalse(theme.contains(".student-roster-list:focused .list-cell:filled:focused #cardPane"));
+        assertFalse(theme.contains(
                 ".student-roster-list:focused .list-cell:filled:profile-selected:focused #cardPane"));
         assertFalse(theme.contains("\n.list-cell:filled:hover"));
         assertFalse(theme.contains("\n.list-cell:filled:selected"));
+    }
+
+    @Test
+    public void nonInteractiveResultDisplay_doesNotAdvertiseFocusState() throws IOException {
+        String theme = readResource("/view/TutorTrackTheme.css");
+        String resultDisplay = readResource("/view/ResultDisplay.fxml");
+
+        assertFalse(theme.contains(".text-area:focused"));
+        assertTrue(theme.contains(".result-display:focused"));
+        assertTrue(resultDisplay.contains("focusTraversable=\"false\""));
     }
 
     private String readResource(String resourcePath) throws IOException {

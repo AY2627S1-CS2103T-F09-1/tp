@@ -683,8 +683,8 @@ testers are expected to do more *exploratory* testing.
    Expected: Both roster cards remain within the left pane. Long values wrap vertically instead of being clipped or creating a horizontal scrollbar.
 1. Enter `view 1`.
    Expected: Alicia's roster card has the teal profile-selection treatment. Her name, phone, email, subject, and level appear in the profile and wrap within the value column where needed.
-1. Move the pointer over Blair's card, then use `Tab` until the roster has keyboard focus and use an arrow key.
-   Expected: Hover and keyboard focus are visually distinct from Alicia's persistent profile selection. Blair's profile does not open because profile navigation remains command-driven.
+1. Move the pointer over Blair's card, click it, then click the result/error display.
+   Expected: Hovering or clicking Blair's card leaves it unchanged, and clicking the result/error display does not add a focus border. Neither region opens a profile or otherwise behaves like a clickable control.
 1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
    Expected: The timestamp and note wrap inside one session-note card, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
 1. Enter `delete 1`.

@@ -120,7 +120,7 @@ Displays one student's profile beside the roster. The profile shows the student'
 
 Session notes are shown newest first with the saved date, time, and UTC offset. Long profile fields and notes wrap within the panel, and the history can be scrolled. A student without notes displays `No session notes yet` and the command for recording the first note.
 
-The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hover and keyboard focus are shown separately and do not open another profile. The open profile refreshes after each successful command and closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
+The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command and closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
 
 Format: `view INDEX`
 

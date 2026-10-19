@@ -60,8 +60,7 @@
     -fx-padding: 9px 12px;
 }
 
-.text-field:focused,
-.text-area:focused {
+.text-field:focused {
     -fx-border-color: -app-accent;
     -fx-effect: dropshadow(gaussian, rgba(15, 118, 110, 0.18), 8, 0.2, 0, 1);
 }
@@ -111,26 +110,16 @@
     -fx-background-color: -app-surface;
 }
 
-.student-roster-list .list-cell:filled:hover #cardPane {
-    -fx-background-color: #e7f2f0;
-    -fx-border-color: -app-border-strong;
+.student-roster-list .list-cell:filled:hover,
+.student-roster-list .list-cell:filled:selected,
+.student-roster-list .list-cell:filled:focused {
+    -fx-background-color: -app-surface;
 }
 
 .student-roster-list .list-cell:filled:profile-selected #cardPane {
     -fx-background-color: -app-accent-soft;
     -fx-border-color: -app-accent;
     -fx-border-width: 1px 1px 1px 4px;
-}
-
-.student-roster-list:focused .list-cell:filled:focused #cardPane {
-    -fx-border-color: -app-focus-ring;
-    -fx-border-width: 2px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 51, 47, 0.22), 5, 0.35, 0, 0);
-}
-
-.student-roster-list:focused .list-cell:filled:profile-selected:focused #cardPane {
-    -fx-border-color: -app-focus-ring -app-focus-ring -app-focus-ring -app-accent;
-    -fx-border-width: 2px 2px 2px 4px;
 }
 
 .student-roster-list .list-cell .label {
@@ -314,6 +303,13 @@
     -fx-background-color: -app-surface;
     -fx-font-size: 13px;
     -fx-text-fill: -app-text;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.result-display:focused {
+    -fx-border-color: transparent;
+    -fx-effect: none;
 }
 
 .result-display .content {
@@ -378,8 +374,7 @@
     -fx-effect: dropshadow(gaussian, rgba(23, 51, 47, 0.45), 4, 0.6, 0, 0);
 }
 
-.text-field:focused,
-.text-area:focused {
+.text-field:focused {
     -fx-border-color: -app-accent-dark;
     -fx-border-width: 2px;
     -fx-effect: dropshadow(gaussian, rgba(15, 118, 110, 0.18), 8, 0.2, 0, 1);
