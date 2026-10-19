@@ -713,7 +713,7 @@ public class StudentRosterUiTest {
         onFxThread(() -> {
             MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
             mainWindow.fillInnerParts();
-            mainWindow.executeCommand("list");
+            mainWindow.executeCommand("help");
             assertEquals(refreshedRoster.getEntries(), getListView(mainWindow.getStudentRosterPanel()).getItems());
             return null;
         });

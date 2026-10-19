@@ -163,7 +163,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### TutorTrack command routing
 
-`AddressBookParser` registers the TutorTrack domain commands `add`, `list`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, and `clear` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
+`AddressBookParser` registers the TutorTrack domain commands `add`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
 ### Student identity
 
@@ -177,7 +177,7 @@ Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `s
 
 `Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, then normalized parent or guardian phone number, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Student ID is the final tie-breaker for students with equal names and normalized parent or guardian phone numbers. Note counts are supplied as projection data so the student-roster context does not own session-note storage; `Model#getStudentRoster()` takes each student's count from that student's session history.
 
-The `list` command parses only the exact command word and obtains a fresh roster snapshot through `Model#getStudentRoster()`. It reports the number of students for a populated roster and gives an actionable add-student message for an empty roster. JavaFX presentation consumes the same model-facing roster API in the subsequent UI slice.
+`Model#getStudentRoster()` obtains a fresh immutable roster snapshot for the JavaFX presentation. `MainWindow` creates the roster panel from this snapshot during launch, and refreshes it after every successful command, so no separate roster command is needed. The panel reports an actionable add-student message when the snapshot is empty.
 
 ### Student roster UI
 
@@ -187,7 +187,7 @@ The panel keeps the displayed-profile selection by stable `StudentId`, not by ro
 
 ### Roster listing integration
 
-`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the empty persisted-roster path and the roster projection's note-count input. Newly added students report zero notes; `ModelManagerTest` covers non-zero counts from recorded session notes, and `SessionNoteIntegrationTest` checks that notes added with `note` are saved, reloaded, and counted.
+`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the roster projection's note-count input. Newly added students report zero notes; `ModelManagerTest` covers non-zero counts from recorded session notes, and `SessionNoteIntegrationTest` checks that notes added with `note` are saved, reloaded, and counted.
 
 ### Session note types
 
@@ -239,13 +239,13 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 `note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing or invalid index is reported as an invalid command format, as `DeleteCommandParser` does, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
 
-`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that `list` and the roster panel show, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
+`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
 `NoteCommand#toString` omits the note text, because notes may contain private lesson details.
 
 ### Student deletion
 
-`delete INDEX` is parsed by `DeleteCommandParser`, which accepts exactly one positive whole-number index. `DeleteCommand#execute` resolves that index against `Model#getStudentRoster()`, the same sorted snapshot displayed by `list`, and reports the student-specific invalid-index error before mutation when the index is outside the roster.
+`delete INDEX` is parsed by `DeleteCommandParser`, which accepts exactly one positive whole-number index. `DeleteCommand#execute` resolves that index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel, and reports the student-specific invalid-index error before mutation when the index is outside the roster.
 
 The command passes the selected entry's stable `StudentId` to `Model#deleteStudent`, which removes the student and session history atomically and returns the number of notes removed. The command result reports the student's name and note count. `LogicManager` then saves the complete address book; its existing rollback restores both records if saving fails.
 
@@ -325,7 +325,7 @@ The `redo` command does the opposite — it calls `Model#redoAddressBook()`,
 
 </div>
 
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+Step 5. The user then decides to execute the command `help`. Commands that do not modify the address book, such as `help`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
 
 ![UndoRedoState4](images/UndoRedoState4.png)
 
@@ -481,7 +481,7 @@ student roster.
 
     Use case ends.
 
-**Use case: List the student roster**
+**Use case: Display the student roster**
 
 **Preconditions:** The system is running and the student roster is available.
 
@@ -490,11 +490,10 @@ be used to select a student in a subsequent use case. No data is changed.
 
 **MSS**
 
-1. Tutor requests to list the student roster.
-2. TutorTrack displays every student sorted by normalized name, together with
+1. TutorTrack displays every student sorted by normalized name, together with
    an index, subject, current level, and session-note count.
-3. TutorTrack reports the number of students shown and establishes the
-   displayed indices as the current selection context.
+2. TutorTrack establishes the displayed indices as the current selection
+   context.
 
    Use case ends.
 
@@ -506,13 +505,6 @@ be used to select a student in a subsequent use case. No data is changed.
     one.
 
     Use case ends.
-* 1a. The request contains an index, parameter, or other extra input.
-
-  * 1a1. TutorTrack reports the correct usage and leaves the displayed roster
-    and selection context unchanged.
-
-    Use case ends.
-
 **Use case: View a student profile**
 
 **Preconditions:** The system is running and the current roster index context
@@ -685,7 +677,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Roster and profile workspace
 
-1. Start with an empty data file and enter `list`.
+1. Start with an empty data file.
    Expected: The roster displays `No students yet` with an instruction to use `add`, while the profile displays `No student selected` with an instruction to use `view INDEX`.
 1. Enter `add n/Alicia Alexandra Lim Wei Xuan p/8000 0001 e/guardian.with.a.long.address@example.com sub/Additional Mathematics and Mathematical Modelling l/Secondary 4 Express`, followed by `add n/Blair Tan p/8000 0002 sub/English Literature l/JC 1`.
    Expected: Both roster cards remain within the left pane. Long values wrap vertically instead of being clipped or creating a horizontal scrollbar.
@@ -693,8 +685,8 @@ testers are expected to do more *exploratory* testing.
    Expected: Alicia's roster card has the teal profile-selection treatment. Her name, phone, email, subject, and level appear in the profile and wrap within the value column where needed.
 1. Drag across text in Alicia's profile, press `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS, and paste into a temporary plain-text document. Repeat with a wrapped session note after completing the note step below.
    Expected: Short and multi-line text can be selected and copied exactly. Typing while the profile text is selected does not edit the displayed content, and scrolling the session history still works normally.
-1. Move the pointer over Blair's card, then use `Tab` until the roster has keyboard focus and use an arrow key.
-   Expected: Hover and keyboard focus are visually distinct from Alicia's persistent profile selection. Blair's profile does not open because profile navigation remains command-driven.
+1. Move the pointer over Blair's card, click it, then click the result/error display.
+   Expected: Hovering or clicking Blair's card leaves it unchanged, and clicking the result/error display does not add a focus border. Neither region opens a profile or otherwise behaves like a clickable control.
 1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
    Expected: The timestamp and note wrap inside one session-note card, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
 1. Enter `delete 1`.
@@ -705,43 +697,47 @@ testers are expected to do more *exploratory* testing.
 ### Adding a student
 
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
-   Expected: TutorTrack confirms that Alicia Lim was added.
+   Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
 2. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
-   Expected: TutorTrack rejects it as a duplicate student and preserves the existing record.
+   Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone.` and preserves the existing record.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
+4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
+   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and neither changes the roster or data file.
 
 ### Rejecting inherited AB3 person commands
 
-1. Add one student, add a session note for that student, and enter `list`.
+1. Add one student and add a session note for that student.
+1. Enter `list`.
+   Expected: TutorTrack reports `Unknown command.` and leaves the roster, session note, and saved data unchanged.
 1. Enter each of `edit 1 n/Changed Name`, `find Changed`, and `clear`.
    Expected: Each input reports `Unknown command.` The student, session note, roster display, and saved data remain unchanged.
 1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
-   Expected: TutorTrack reports the current student-add command format. It does not create a hidden person or change the roster, session notes, or saved data.
+   Expected: TutorTrack reports `a/` as an unknown parameter, lists the supported add parameters, and shows the add format. It does not create a hidden person or change the roster, session notes, or saved data.
 1. Enter `add n/Bea Lim p/9876 5432 sub/English l/JC 1`.
    Expected: The valid student form still adds Bea Lim normally.
 
-### Listing the student roster
+### Displaying the student roster
 
 1. Empty roster
 
-   1. Start TutorTrack with no student records and enter `list`.
+   1. Start TutorTrack with no student records.
       Expected: The roster panel shows a clear message explaining that there are no students and how to use `add`.
 2. Populated roster
 
-   1. Add students with different names, subjects, and levels, then enter `list`.
+   1. Add students with different names, subjects, and levels.
       Expected: Cards appear in normalized alphabetical order and each card shows its index, name, subject, level, and session-note count.
    2. Resize the window or add enough students to exceed the panel height.
-      Expected: The roster remains usable through the list's vertical scrolling.
-   3. Add another student and enter `list` again.
+      Expected: The roster remains usable through its vertical scrolling.
+   3. Add another student.
       Expected: The displayed roster refreshes and indices match the new alphabetical order.
 
 ### Adding a session note
 
-1. Prerequisites: add at least two students and enter `list`.
+1. Prerequisites: add at least two students.
 1. Enter `note 1 nt/Reviewed factorisation.`
    Expected: TutorTrack reports `Added session note for <name of student 1>.` and that student's session-note count increases by one.
-1. Close and relaunch TutorTrack, then enter `list`.
+1. Close and relaunch TutorTrack.
    Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
 1. Enter `note 1 nt/Next: 3 sub/topics`.
    Expected: The note is added with `sub/topics` as part of its text.
@@ -754,10 +750,10 @@ testers are expected to do more *exploratory* testing.
 
 ### Deleting a student
 
-1. Add Ari Tan and Bea Tan, add two session notes to Ari, enter `list`, and open Ari's profile with `view 1`.
+1. Add Ari Tan and Bea Tan, add two session notes to Ari, and open Ari's profile with `view 1`.
 1. Enter `delete 1`.
    Expected: TutorTrack reports `Deleted student: Ari Tan. Session notes removed: 2.` Ari and the two notes are removed, Bea becomes roster index 1, and Ari's open profile closes.
-1. Close and relaunch TutorTrack, then enter `list`.
+1. Close and relaunch TutorTrack.
    Expected: Ari and the notes remain absent, while Bea remains at index 1.
 1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, and `delete 1-2`.
    Expected: Each command reports an invalid command format and leaves the roster, notes, open profile, and data file unchanged.
@@ -768,13 +764,13 @@ testers are expected to do more *exploratory* testing.
 
 1. Restart TutorTrack, type `unfinished command` without pressing `Enter`, and press `Up`.
    Expected: The draft remains unchanged because the new session has no command history.
-1. Submit `list`, `invalid`, and `list` in that order, then type `unfinished command` without submitting it.
+1. Submit `help`, `invalid`, and `help` in that order, then type `unfinished command` without submitting it.
    Expected: The first and third submissions succeed, the second fails, and the draft remains in the command box.
 1. Press `Up` repeatedly.
-   Expected: The command box shows `list`, then `invalid`, then the older `list`; another `Up` leaves the oldest `list` displayed.
+   Expected: The command box shows `help`, then `invalid`, then the older `help`; another `Up` leaves the oldest `help` displayed.
 1. Press `Down` repeatedly.
-   Expected: The command box moves through `invalid` and the newer `list`, then restores `unfinished command`; another `Down` leaves the draft displayed.
-1. Press `Up`, change the recalled `list` to `help`, submit it, and press `Up` again.
+   Expected: The command box moves through `invalid` and the newer `help`, then restores `unfinished command`; another `Down` leaves the draft displayed.
+1. Press `Up`, change the recalled `help` to `exit`, submit it, and press `Up` again.
    Expected: `help` opens the help window and is recalled as the newest history entry.
 1. Close and relaunch TutorTrack, then press `Up` in an empty command box.
    Expected: No command is recalled because history is kept only for the app session.

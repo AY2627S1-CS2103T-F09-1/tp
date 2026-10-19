@@ -46,8 +46,7 @@ public class StudentDeletionIntegrationTest {
     }
 
     @Test
-    public void addListViewNoteDeleteAndReload_removesStudentAndSessionHistory() throws Exception {
-        assertEquals("Listed 2 students.", logic.execute("list").getFeedbackToUser());
+    public void addViewNoteDeleteAndReload_removesStudentAndSessionHistory() throws Exception {
         CommandResult viewResult = logic.execute("view 1");
         StudentId deletedStudentId = viewResult.getProfileStudentId().orElseThrow();
         logic.execute("note 1 nt/Reviewed indices.");

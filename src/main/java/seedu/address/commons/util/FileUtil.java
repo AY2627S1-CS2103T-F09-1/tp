@@ -54,6 +54,7 @@ public class FileUtil {
      */
     public static void writeToFile(Path file, String content) throws IOException {
         Path parentDirectory = file.toAbsolutePath().getParent();
+        Files.createDirectories(parentDirectory);
         Path temporaryFile = Files.createTempFile(parentDirectory, file.getFileName().toString(), ".tmp");
 
         try {

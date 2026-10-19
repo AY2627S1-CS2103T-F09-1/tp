@@ -16,7 +16,6 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
-import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -69,11 +68,6 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_list() throws Exception {
-        assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
-    }
-
-    @Test
     public void parseCommand_view() throws Exception {
         ViewCommand command = (ViewCommand) parser.parseCommand(
                 ViewCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
@@ -81,11 +75,9 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_listWithArguments_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ListCommand.MESSAGE_USAGE);
-
-        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(
-                ListCommand.COMMAND_WORD + " 3"));
+    public void parseCommand_removedListCommand_throwsParseException() {
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("list"));
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("list 3"));
     }
 
     @Test
@@ -136,7 +128,7 @@ public class AddressBookParserTest {
     @Test
     public void getLoggableCommandWord_everyCommandWord_returnsCommandWord() {
         List<String> commandWords = List.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
-                ListCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
+                NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
                 ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD);
 
         for (String commandWord : commandWords) {
