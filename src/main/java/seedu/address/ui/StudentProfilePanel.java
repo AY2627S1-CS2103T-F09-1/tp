@@ -2,6 +2,9 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -21,7 +24,7 @@ public class StudentProfilePanel extends UiPart<Region> {
     private static final String FXML = "StudentProfilePanel.fxml";
     private static final String EMAIL_NOT_PROVIDED = "Not provided";
 
-    private final ObservableList<SessionNote> sessionNotes = FXCollections.observableArrayList();
+    private final ObservableList<NumberedSessionNote> sessionNotes = FXCollections.observableArrayList();
 
     @FXML
     private VBox emptyState;
@@ -38,7 +41,7 @@ public class StudentProfilePanel extends UiPart<Region> {
     @FXML
     private Label currentLevel;
     @FXML
-    private ListView<SessionNote> sessionNoteListView;
+    private ListView<NumberedSessionNote> sessionNoteListView;
     @FXML
     private VBox emptyNotesState;
 
@@ -62,7 +65,7 @@ public class StudentProfilePanel extends UiPart<Region> {
         parentGuardianEmail.setText(profile.getParentGuardianContact().getEmail().orElse(EMAIL_NOT_PROVIDED));
         subject.setText(profile.getSubject().toString());
         currentLevel.setText(profile.getCurrentLevel().toString());
-        sessionNotes.setAll(profile.getSessionNotes());
+        sessionNotes.setAll(numberSessionNotes(profile.getSessionNotes()));
         updateNotesEmptyState();
         setProfileVisible(true);
     }
@@ -89,20 +92,32 @@ public class StudentProfilePanel extends UiPart<Region> {
         emptyState.setManaged(!isVisible);
     }
 
+    private List<NumberedSessionNote> numberSessionNotes(List<SessionNote> notes) {
+        List<NumberedSessionNote> numberedNotes = new ArrayList<>();
+        for (int i = 0; i < notes.size(); i++) {
+            numberedNotes.add(new NumberedSessionNote(notes.get(i), notes.size() - i));
+        }
+        return numberedNotes;
+    }
+
     /**
      * Displays one session note as a timestamped card.
      */
-    static class SessionNoteListViewCell extends ListCell<SessionNote> {
+    static class SessionNoteListViewCell extends ListCell<NumberedSessionNote> {
         @Override
-        protected void updateItem(SessionNote sessionNote, boolean empty) {
-            super.updateItem(sessionNote, empty);
+        protected void updateItem(NumberedSessionNote numberedNote, boolean empty) {
+            super.updateItem(numberedNote, empty);
 
-            if (empty || sessionNote == null) {
+            if (empty || numberedNote == null) {
                 setGraphic(null);
                 setText(null);
             } else {
-                setGraphic(new SessionNoteCard(sessionNote).getRoot());
+                setGraphic(new SessionNoteCard(numberedNote.sessionNote(), numberedNote.noteNumber()).getRoot());
             }
         }
+    }
+
+    /** A session note paired with its chronological display number. */
+    static record NumberedSessionNote(SessionNote sessionNote, int noteNumber) {
     }
 }

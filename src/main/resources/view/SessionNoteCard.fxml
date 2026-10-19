@@ -2,12 +2,17 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox id="sessionNoteCard" maxWidth="Infinity" minWidth="0"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       spacing="7" styleClass="session-note-card">
-  <Label fx:id="timestamp" maxWidth="Infinity" styleClass="session-note-timestamp" wrapText="true" />
+  <HBox alignment="TOP_LEFT" maxWidth="Infinity" spacing="8">
+    <Label fx:id="noteNumber" styleClass="session-note-number" />
+    <Label fx:id="timestamp" maxWidth="Infinity" styleClass="session-note-timestamp"
+           wrapText="true" HBox.hgrow="ALWAYS" />
+  </HBox>
   <Label fx:id="noteText" maxWidth="Infinity" styleClass="session-note-text" wrapText="true" />
   <padding>
     <Insets top="12" right="14" bottom="12" left="14" />
