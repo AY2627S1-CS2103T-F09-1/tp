@@ -91,9 +91,8 @@ public interface StudentRoster {
 
 `RosterEntry` contains the user-visible index, `StudentId`, name, subject,
 current level, and session-note count. `StudentSnapshot` contains the student
-fields but not mutable domain collections. The deletion coordinator combines
-the removed student snapshot and the removed note count into a `DeletedStudent`
-result for the success message.
+fields but not mutable domain collections. The deletion coordinator uses the
+stable ID to keep a preview bound to the same student until confirmation.
 
 ### Profile and session API
 
@@ -139,12 +138,10 @@ The parser accepts these commands:
 add n/NAME p/PHONE sub/SUBJECT l/LEVEL [e/EMAIL]
 view INDEX
 note INDEX nt/NOTE
-delete INDEX
+delete INDEX [/confirm]
 ```
 
-Command words and prefixes are case-insensitive. Add prefixes may appear in
-any order, but each recognized prefix may appear at most once. The `note`
-command recognizes only `nt/` as its note-text prefix.
+Command words, prefixes, and `/confirm` use the exact lowercase forms shown. Add prefixes may appear in any order, but each recognized prefix may appear at most once. The `note` command recognizes only `nt/` as its note-text prefix.
 
 ### Add student
 
@@ -193,13 +190,13 @@ separate lesson event.
 ### Delete student
 
 1. Resolve `INDEX` using the current roster selection context.
-1. Remove the selected student and all of that student's session notes.
-1. Save the mutation before publishing the new active state.
-1. Report the student's name and the number of notes removed.
-1. Redraw the roster and establish its new indices.
+1. Preview the student's name and session-note count without changing or saving data.
+1. Display the exact `delete INDEX /confirm` command and state that any other command cancels the deletion.
+1. Keep the pending index and stable `StudentId` in memory for the next submitted command only.
+1. On a matching confirmation, verify that the index still identifies the same student, remove the student and all session notes, and save the mutation.
+1. Report `Successfully deleted <Name>.`, redraw the roster, and establish its new indices.
 
-If the deleted student's profile is open, the profile closes. Deletion accepts
-one index only; ranges and multiple indices are invalid.
+If the deleted student's profile is open, the profile closes after confirmation. Direct, repeated, and mismatched confirmations do not delete data. Any other submitted input consumes and cancels the pending deletion before that input is processed. `/confirm` is case-sensitive and must appear once, after the single index; ranges, multiple indices, and extra confirmation arguments are invalid.
 
 ## Validation rules
 

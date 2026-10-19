@@ -30,7 +30,7 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `note 1 nt/Review trigo next session.` : Adds a session note to the first student shown in the current roster.
 
-   * `delete 1` : Deletes the first student shown in the current roster and all of that student's session notes.
+   * `delete 1` : Shows a confirmation prompt for deleting the first student and all of that student's session notes. Enter `delete 1 /confirm` next to complete the deletion.
 
    * `exit` : Exits the app.
 
@@ -133,18 +133,27 @@ If the index is missing, invalid, or larger than the number of students in the r
 
 ### Deleting a student: `delete`
 
-Deletes the specified student and all session notes belonging to that student.
+Starts a confirmation workflow for deleting the specified student and all session notes belonging to that student.
 
-Format: `delete INDEX`
+Preview format: `delete INDEX`
+
+Confirmation format: `delete INDEX /confirm`
 
 * `INDEX` is the student's number in the currently displayed sorted roster.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
-* TutorTrack reports the deleted student's name and the number of session notes removed.
-* The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes and its roster highlight is cleared.
+* The preview identifies the student, shows how many session notes would be removed, and displays the exact confirmation command. It does not delete or save anything.
+* To complete the deletion, enter the displayed `delete INDEX /confirm` command immediately after the preview. `/confirm` is case-sensitive and must appear once, after the index.
+* To cancel, enter any other command. The pending deletion is cleared before that command is processed. Starting another `delete INDEX` preview replaces the earlier pending deletion.
+* A direct, repeated, or mismatched `/confirm` command is rejected without deleting data.
+* After a matching confirmation, TutorTrack reports `Successfully deleted STUDENT_NAME.` The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes and its roster highlight is cleared.
 
-Example: `delete 2` deletes the second student in the currently displayed roster.
+Example:
 
-If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save the deletion, it restores the student and session notes.
+1. Enter `delete 2`.
+1. Check the student name and session-note count in the prompt.
+1. Enter `delete 2 /confirm` as the next command to delete that student, or enter any other command to cancel.
+
+If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
 
 ### Exiting the program: `exit`
 
@@ -154,7 +163,7 @@ Format: `exit`
 
 ### Saving the data
 
-TutorTrack automatically saves data after every command. You do not need to save manually.
+TutorTrack automatically saves data-changing commands. You do not need to save manually. A deletion preview does not save because it does not change any data.
 
 If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command.
 
@@ -192,7 +201,7 @@ _Details coming soon ..._
 Action | Format, Examples
 --------|------------------
 **Add** | `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`<br> e.g., `add n/James Ho p/91234567 sub/Mathematics l/Secondary 3`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete** | Preview: `delete INDEX`<br>Confirm: `delete INDEX /confirm`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`
 **View** | `view INDEX`<br> e.g., `view 2`
 **Help** | `help`
