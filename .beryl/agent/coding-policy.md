@@ -317,11 +317,12 @@ The agent must not commit or push unless the user explicitly authorizes it. When
 
 * Create a complete, reviewable logical commit. Stage every change in the stated boundary and no unrelated change.
 * Use one purpose per commit. Separate feature behavior, tests, documentation, generated output, and unrelated cleanup when they are independently reviewable.
-* Write the commit message before committing. The subject MUST use imperative mood, begin with a capital letter, target a 50-character soft limit, never exceed 72 characters, and have no final period. An optional `scope:` or `category:` prefix is allowed.
-* For non-trivial commits, add a body after one blank line. Body lines MUST be at most 72 characters, use present tense for the current situation, explain why the change is needed, state what to do in imperative mood, and explain relevant rationale without narrating obvious implementation mechanics.
+* Write the commit message before committing. Follow the plain-subject and body requirements in [Commit Message Conventions](#commit-message-conventions).
 * Use meaningful kebab-case branch names. Issue branches begin with the issue number followed by keywords from the issue title.
 * Keep each increment buildable and testable. Do not hide a broken intermediate state inside a large final commit.
 * Before committing, verify that staged files, the commit boundary, and the message all agree. Run the available Gitlint check when Gitlint is installed.
+
+The agent MUST NOT fabricate milestones, releases, reviews, peer-testing results, task assignments, or individual-contribution evidence. It may prepare the artifacts and report the human follow-up required.
 
 ### Commit Message Conventions
 
@@ -336,8 +337,6 @@ Every commit MUST have a well-written subject line. Aim for 50 characters and ne
 
 * Good: `Update sample data`
 * Bad: `Update sample data.`
-
-An optional `<scope>:` or `<category>:` prefix is allowed when it improves clarity, for example `Person class: Remove static imports`, `Main.java: Remove blank lines`, `bug fix: Add space after name`, or `chore: Update release date`. Conventional Commits is also allowed when its added structure is useful.
 
 Non-trivial commits MUST include a body separated from the subject by one blank line. Wrap body lines at 72 characters and separate paragraphs with blank lines. Explain what changed and why, rather than narrating how the diff works; readers can inspect the diff for mechanics. Do not repeat information already captured by code comments. If the description is too long, split the commit into smaller logical commits.
 
@@ -365,8 +364,6 @@ Let's,
 ```
 
 SourceTree users SHOULD enable its 72-character commit-message column guide and spell checking under Tools > Options > General > Commit settings. The guide requires fixed-width commit-message fonts.
-
-The agent MUST NOT fabricate milestones, releases, reviews, peer-testing results, task assignments, or individual-contribution evidence. It may prepare the artifacts and report the human follow-up required.
 
 ## Change Handoff Checklist
 
