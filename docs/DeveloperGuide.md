@@ -800,6 +800,30 @@ testers are expected to do more *exploratory* testing.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid and makes no changes.
 
+### Deleting one session note
+
+1. Start with an empty roster. Enter `add n/Ari Tan p/9123 4567 sub/Mathematics l/Secondary 3` and `add n/Bea Tan p/9876 5432 sub/English l/Secondary 3`.
+1. Enter `note 1 nt/Oldest synthetic lesson note.`, `note 1 nt/Middle synthetic lesson note.`, and `note 1 nt/Newest synthetic lesson note.` in that order, pausing at least one second between submissions, and then enter `view 1`.
+   Expected: Ari's profile shows `[3] Newest synthetic lesson note.` at the top, followed by `[2] Middle synthetic lesson note.` and `[1] Oldest synthetic lesson note.` Bea remains at roster index 2 with no session notes.
+1. Enter `delete note 1 2`.
+   Expected: TutorTrack asks whether to delete session note `[2]` for Ari Tan, shows `If yes, type: delete note 1 2 /confirm`, and states `To cancel, enter any other command.` All three notes, the roster, the profile, and the data file remain unchanged.
+1. Enter `help`, followed by `delete note 1 2 /confirm`.
+   Expected: `help` cancels the pending deletion and opens the help window. The confirmation is then rejected because no matching session-note deletion is pending, and all three notes remain.
+1. Enter `delete note 1 2`, followed immediately by `delete 2 /confirm`.
+   Expected: TutorTrack rejects the student confirmation because it does not match the pending session-note deletion. Ari, Bea, and all three notes remain unchanged, and the pending deletion is cleared.
+1. Enter `delete note 1 2`, followed immediately by `delete note 1 1 /confirm`.
+   Expected: TutorTrack rejects the confirmation because the note number does not match the preview. All three notes remain, and the pending deletion is cleared.
+1. Enter `delete note 1 2`, followed immediately by `delete note 1 2 /confirm`.
+   Expected: TutorTrack reports `Successfully deleted session note [2] for Ari Tan.` Ari and Bea remain in the roster. Ari's profile refreshes with the former newest note renumbered to `[2]` at the top and the oldest note still numbered `[1]`; the deleted middle note is absent.
+1. Close and relaunch TutorTrack, and enter `view 1`.
+   Expected: Ari still has exactly the two remaining notes in newest-first order as `[2]` and `[1]`. Ari's `sessionNotes` entries in `data/addressbook.json` do not contain `noteNumber` fields.
+1. Enter `delete note 2 1`.
+   Expected: TutorTrack reports that Bea Tan has no session notes to delete and makes no changes.
+1. Enter `delete note 1 3`.
+   Expected: TutorTrack reports that session note `[3]` does not exist for Ari Tan and gives the current range from 1 to 2. No note is deleted.
+1. Enter each of `delete note`, `delete note 1`, `delete note 0 1`, `delete note 1 0`, `delete note x 1`, `delete note 1 x`, `delete note 1 1 /Confirm`, `delete note /confirm 1 1`, `delete note 1 1 /confirm /confirm`, and `delete note 1 1 /confirm extra`.
+   Expected: Each command reports the applicable session-note deletion format or validation error and leaves both students, both remaining notes, the open profile, and the data file unchanged.
+
 ### Navigating command history
 
 1. Restart TutorTrack, type `unfinished command` without pressing `Enter`, and press `Up`.
