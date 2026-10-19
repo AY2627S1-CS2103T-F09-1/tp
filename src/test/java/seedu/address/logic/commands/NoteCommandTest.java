@@ -92,7 +92,7 @@ public class NoteCommandTest {
         assertTrue(noteCommand.equals(noteCommand));
         assertTrue(noteCommand.equals(new NoteCommand(INDEX_FIRST_PERSON, NOTE_TEXT)));
         assertFalse(noteCommand.equals(null));
-        assertFalse(noteCommand.equals(new ListCommand()));
+        assertFalse(noteCommand.equals(new DeleteCommand(INDEX_FIRST_PERSON)));
         assertFalse(noteCommand.equals(new NoteCommand(INDEX_SECOND_PERSON, NOTE_TEXT)));
         assertFalse(noteCommand.equals(new NoteCommand(INDEX_FIRST_PERSON, "Reviewed indices.")));
     }

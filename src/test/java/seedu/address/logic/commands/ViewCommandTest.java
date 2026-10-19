@@ -71,7 +71,7 @@ public class ViewCommandTest {
         assertTrue(viewCommand.equals(viewCommand));
         assertTrue(viewCommand.equals(new ViewCommand(INDEX_FIRST_PERSON)));
         assertFalse(viewCommand.equals(null));
-        assertFalse(viewCommand.equals(new ListCommand()));
+        assertFalse(viewCommand.equals(new DeleteCommand(INDEX_FIRST_PERSON)));
         assertFalse(viewCommand.equals(new ViewCommand(INDEX_SECOND_PERSON)));
     }
 
