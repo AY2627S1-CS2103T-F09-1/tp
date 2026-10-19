@@ -23,6 +23,7 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.AddCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -90,7 +91,9 @@ public class LogicManagerTest {
                 "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
         assertParseException(legacyAddCommand,
-                "Unknown parameter: a/. Supported parameters: n/ p/ sub/ l/ e/.\n" + AddCommand.MESSAGE_USAGE);
+                String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "a/",
+                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
+                        + "\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test

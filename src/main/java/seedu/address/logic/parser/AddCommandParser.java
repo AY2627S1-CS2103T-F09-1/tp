@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -27,9 +28,14 @@ import seedu.address.model.student.Subject;
  */
 public class AddCommandParser implements Parser<AddCommand> {
 
+    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter: %1$s. Supported parameters: %2$s.";
+
     private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
             PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
-    private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)([A-Za-z][A-Za-z0-9_-]*)/");
+    private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)([a-z][a-z0-9_-]{0,2})/");
+    public static final String MESSAGE_SUPPORTED_PARAMETERS = SUPPORTED_PREFIXES.stream()
+            .map(Prefix::toString)
+            .collect(Collectors.joining(" "));
 
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
@@ -100,7 +106,7 @@ public class AddCommandParser implements Parser<AddCommand> {
      * Returns an error message for an unsupported prefix.
      */
     private static String getUnknownPrefixMessage(String prefix) {
-        return withUsage("Unknown parameter: " + prefix + ". Supported parameters: n/ p/ sub/ l/ e/.");
+        return withUsage(String.format(MESSAGE_UNKNOWN_PARAMETER, prefix, MESSAGE_SUPPORTED_PARAMETERS));
     }
 
     /**

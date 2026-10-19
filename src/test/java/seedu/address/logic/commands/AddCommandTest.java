@@ -40,7 +40,8 @@ public class AddCommandTest {
         model.addStudent(ALEX);
 
         assertCommandFailure(new AddCommand(ALEX), model,
-                String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT, ALEX.getName()));
+                String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT, ALEX.getName())
+                        + "\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test
