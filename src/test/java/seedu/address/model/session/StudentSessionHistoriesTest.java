@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.student.StudentId;
 
 public class StudentSessionHistoriesTest {
@@ -64,6 +65,35 @@ public class StudentSessionHistoriesTest {
     }
 
     @Test
+    public void removeNote_validNumber_removesSelectedNoteAndReturnsIt() {
+        histories.addNote(ALEX_ID, INDICES_NOTE);
+        histories.addNote(ALEX_ID, FACTORISATION_NOTE);
+        histories.addNote(BEA_ID, INDICES_NOTE);
+
+        assertEquals(INDICES_NOTE, histories.removeNote(ALEX_ID, Index.fromOneBased(1)));
+        assertEquals(List.of(FACTORISATION_NOTE), histories.getHistory(ALEX_ID).getNotes());
+        assertEquals(List.of(INDICES_NOTE), histories.getHistory(BEA_ID).getNotes());
+    }
+
+    @Test
+    public void removeNote_lastNote_removesStudentHistoryEntry() {
+        histories.addNote(ALEX_ID, INDICES_NOTE);
+
+        histories.removeNote(ALEX_ID, Index.fromOneBased(1));
+
+        assertEquals(new StudentSessionHistories(), histories);
+    }
+
+    @Test
+    public void removeNote_invalidNumber_throwsAndKeepsHistory() {
+        histories.addNote(ALEX_ID, INDICES_NOTE);
+
+        assertThrows(IndexOutOfBoundsException.class, () -> histories.removeNote(ALEX_ID,
+                Index.fromOneBased(2)));
+        assertEquals(List.of(INDICES_NOTE), histories.getHistory(ALEX_ID).getNotes());
+    }
+
+    @Test
     public void removeHistory_studentWithNotes_returnsRemovedCount() {
         histories.addNote(ALEX_ID, INDICES_NOTE);
         histories.addNote(ALEX_ID, FACTORISATION_NOTE);
@@ -92,6 +122,8 @@ public class StudentSessionHistoriesTest {
         assertThrows(NullPointerException.class, () -> histories.getHistory(null));
         assertThrows(NullPointerException.class, () -> histories.addNote(null, INDICES_NOTE));
         assertThrows(NullPointerException.class, () -> histories.addNote(ALEX_ID, null));
+        assertThrows(NullPointerException.class, () -> histories.removeNote(null, Index.fromOneBased(1)));
+        assertThrows(NullPointerException.class, () -> histories.removeNote(ALEX_ID, null));
         assertThrows(NullPointerException.class, () -> histories.setHistory(null, SessionHistory.empty()));
         assertThrows(NullPointerException.class, () -> histories.setHistory(ALEX_ID, null));
         assertThrows(NullPointerException.class, () -> histories.removeHistory(null));

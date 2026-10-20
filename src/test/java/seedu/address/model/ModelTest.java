@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.Person;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
@@ -60,6 +61,8 @@ public class ModelTest {
 
         assertThrows(UnsupportedOperationException.class, () -> model.addSessionNote(ALEX.getId(),
                 "Reviewed indices."));
+        assertThrows(UnsupportedOperationException.class, () -> model.deleteSessionNote(ALEX.getId(),
+                Index.fromOneBased(1)));
         assertThrows(UnsupportedOperationException.class, () -> model.removeSessionHistory(ALEX.getId()));
         assertThrows(UnsupportedOperationException.class, () -> model.deleteStudent(ALEX.getId()));
     }

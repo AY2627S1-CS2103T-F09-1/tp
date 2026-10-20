@@ -12,6 +12,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
+
 public class SessionHistoryTest {
 
     private static final OffsetDateTime EARLIER = OffsetDateTime.parse("2026-09-11T18:35:00+08:00");
@@ -100,6 +102,54 @@ public class SessionHistoryTest {
 
         assertEquals(List.of(EARLIER_NOTE), original.getNotes());
         assertTrue(SessionHistory.empty().isEmpty());
+    }
+
+    @Test
+    public void getNote_chronologicalNumber_returnsSelectedNote() {
+        SessionHistory history = SessionHistory.empty().withNote(EARLIER_NOTE).withNote(LATER_NOTE);
+
+        assertEquals(EARLIER_NOTE, history.getNote(Index.fromOneBased(1)));
+        assertEquals(LATER_NOTE, history.getNote(Index.fromOneBased(2)));
+    }
+
+    @Test
+    public void withoutNote_chronologicalNumber_removesOnlySelectedNote() {
+        SessionNote middleNote = new SessionNote("Practised completing the square.", EARLIER.plusDays(2));
+        SessionHistory history = SessionHistory.empty()
+                .withNote(EARLIER_NOTE)
+                .withNote(middleNote)
+                .withNote(LATER_NOTE);
+
+        SessionHistory updatedHistory = history.withoutNote(Index.fromOneBased(2));
+
+        assertEquals(List.of(LATER_NOTE, EARLIER_NOTE), updatedHistory.getNotes());
+        assertEquals(List.of(LATER_NOTE, middleNote, EARLIER_NOTE), history.getNotes());
+    }
+
+    @Test
+    public void withoutNote_lastNote_returnsSharedEmptyHistory() {
+        SessionHistory history = SessionHistory.empty().withNote(EARLIER_NOTE);
+
+        assertSame(SessionHistory.empty(), history.withoutNote(Index.fromOneBased(1)));
+    }
+
+    @Test
+    public void withoutNote_identicalNotes_removesOneOccurrence() {
+        SessionHistory history = SessionHistory.empty().withNote(LATER_NOTE).withNote(LATER_NOTE);
+
+        assertEquals(List.of(LATER_NOTE), history.withoutNote(Index.fromOneBased(1)).getNotes());
+    }
+
+    @Test
+    public void noteSelection_invalidArguments_throwsException() {
+        SessionHistory history = SessionHistory.empty().withNote(EARLIER_NOTE);
+
+        assertThrows(NullPointerException.class, () -> history.getNote(null));
+        assertThrows(NullPointerException.class, () -> history.withoutNote(null));
+        assertThrows(IndexOutOfBoundsException.class, () -> history.getNote(Index.fromOneBased(2)));
+        assertThrows(IndexOutOfBoundsException.class, () -> history.withoutNote(Index.fromOneBased(2)));
+        assertThrows(IndexOutOfBoundsException.class, () -> SessionHistory.empty()
+                .withoutNote(Index.fromOneBased(1)));
     }
 
     @Test

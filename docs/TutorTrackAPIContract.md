@@ -19,6 +19,7 @@ includes:
 * Displaying the student roster automatically on launch and after roster mutations
 * Viewing a student profile
 * Adding a session note
+* Deleting one session note
 * Deleting a student and the student's session notes
 * Saving and loading data from a local, human-editable JSON file
 
@@ -38,6 +39,7 @@ TutorTrack domain feature.
 | Roster order | Students are sorted by normalized name, case-insensitively. Equal names retain creation order. |
 | Session timestamp | A session note receives the current local date and time when it is added. |
 | Note order | Profiles display notes newest first. Equal timestamps retain insertion order. |
+| Note selection | Visible note numbers increase chronologically from one for the oldest note to the history size for the newest note. They are transient selectors, not persisted identifiers. |
 | Persistence | The data file is local, human-editable JSON. No database or network service is required. |
 | Failed mutation | Validation or storage failure leaves the in-memory model, UI, and file unchanged. |
 
@@ -91,9 +93,8 @@ public interface StudentRoster {
 
 `RosterEntry` contains the user-visible index, `StudentId`, name, subject,
 current level, and session-note count. `StudentSnapshot` contains the student
-fields but not mutable domain collections. The deletion coordinator combines
-the removed student snapshot and the removed note count into a `DeletedStudent`
-result for the success message.
+fields but not mutable domain collections. The deletion coordinator uses the
+stable ID to keep a preview bound to the same student until confirmation.
 
 ### Profile and session API
 
@@ -104,6 +105,9 @@ public interface StudentProfileService {
 
     /** Validates, timestamps, and appends one session note. */
     SessionNote addSessionNote(StudentId studentId, String noteText);
+
+    /** Deletes and returns one note selected by its chronological note number. */
+    SessionNote deleteSessionNote(StudentId studentId, Index noteNumber);
 
     /** Removes and returns the number of notes owned by one student. */
     int removeSessionHistory(StudentId studentId);
@@ -139,12 +143,11 @@ The parser accepts these commands:
 add n/NAME p/PHONE sub/SUBJECT l/LEVEL [e/EMAIL]
 view INDEX
 note INDEX nt/NOTE
-delete INDEX
+delete INDEX [/confirm]
+delete note STUDENT_INDEX NOTE_NUMBER [/confirm]
 ```
 
-Command words and prefixes are case-insensitive. Add prefixes may appear in
-any order, but each recognized prefix may appear at most once. The `note`
-command recognizes only `nt/` as its note-text prefix.
+Command words, prefixes, and `/confirm` use the exact lowercase forms shown. Add prefixes may appear in any order, but each recognized prefix may appear at most once. The `note` command recognizes only `nt/` as its note-text prefix.
 
 ### Add student
 
@@ -173,7 +176,7 @@ stored data.
 1. Resolve `INDEX` using the current roster selection context.
 1. Display the student's name, parent or guardian phone, optional email,
    subject, and current level.
-1. Display all session notes newest first, including timestamp and text.
+1. Display all session notes newest first, including chronological note number, timestamp, and text.
 1. Display `No session notes recorded.` when the history is empty.
 
 An invalid, missing, or out-of-range index leaves any existing profile
@@ -190,16 +193,30 @@ unchanged.
 Identical note text is allowed more than once because each note represents a
 separate lesson event.
 
+### Delete session note
+
+1. Resolve `STUDENT_INDEX` using the current roster selection context.
+1. Resolve `NOTE_NUMBER` against that student's history, where one is the oldest note and the history size is the newest.
+1. Preview the student and note number without changing or saving data.
+1. Display the exact `delete note STUDENT_INDEX NOTE_NUMBER /confirm` command and state that any other command cancels the deletion.
+1. Keep the student index, stable `StudentId`, note number, and immutable history snapshot in memory for the next submitted command only.
+1. On a matching confirmation, verify that the student and history are unchanged, remove only the selected note, and save the mutation.
+1. Report `Successfully deleted session note [<NOTE_NUMBER>] for <Name>.` and refresh any open profile.
+
+The visible note number maps to the newest-first list position using `history size - NOTE_NUMBER`. After deletion, remaining notes are numbered consecutively. Direct, repeated, stale, and mismatched confirmations do not delete data. A student with no notes and a note number above the current history size produce specific errors. Pending deletion state and note numbers are not persisted, so the storage schema does not change.
+
 ### Delete student
 
 1. Resolve `INDEX` using the current roster selection context.
-1. Remove the selected student and all of that student's session notes.
-1. Save the mutation before publishing the new active state.
-1. Report the student's name and the number of notes removed.
-1. Redraw the roster and establish its new indices.
+1. Preview the student's name and session-note count without changing or saving data.
+1. Display the exact `delete INDEX /confirm` command and state that any other command cancels the deletion.
+1. Keep the pending index and stable `StudentId` in memory for the next submitted command only.
+1. On a matching confirmation, verify that the index still identifies the same student, remove the student and all session notes, and save the mutation.
+1. Report `Successfully deleted <Name>.`, redraw the roster, and establish its new indices.
 
-If the deleted student's profile is open, the profile closes. Deletion accepts
-one index only; ranges and multiple indices are invalid.
+If the deleted student's profile is open, the profile closes after confirmation. Direct, repeated, and mismatched confirmations do not delete data. Any other submitted input consumes and cancels the pending deletion before that input is processed. `/confirm` is case-sensitive and must appear once, after the single index; ranges, multiple indices, and extra confirmation arguments are invalid.
+
+Student and session-note deletion share the same single pending-deletion slot. Starting either preview replaces the previous pending deletion, and a confirmation for the other deletion type is a mismatch.
 
 ## Validation rules
 
@@ -213,6 +230,7 @@ Validation runs after trimming leading and trailing whitespace.
 | Subject | 1–50 characters using Unicode letters, digits, spaces, `&`, hyphens, slashes, commas, or full stops. Internal spaces collapse to one. |
 | Current level | 1–50 characters using Unicode letters, digits, spaces, hyphens, parentheses, or full stops. Internal spaces collapse to one. |
 | Session note | 1–500 printable Unicode characters on one line. Internal spaces are preserved. |
+| Session-note number | Positive base-10 whole number not greater than the selected student's current history size. |
 | Roster index | Positive base-10 whole number matching a row in the current roster. |
 
 Invalid input, missing values, duplicate prefixes, unknown prefixes, extra

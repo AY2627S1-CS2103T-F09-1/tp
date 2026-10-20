@@ -6,6 +6,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.HashMap;
 import java.util.Map;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.student.StudentId;
 
 /**
@@ -31,6 +32,19 @@ public class StudentSessionHistories {
     public void addNote(StudentId studentId, SessionNote note) {
         requireAllNonNull(studentId, note);
         histories.put(studentId, getHistory(studentId).withNote(note));
+    }
+
+    /**
+     * Removes and returns the note with the given chronological {@code noteNumber} from the student's history.
+     *
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
+     */
+    public SessionNote removeNote(StudentId studentId, Index noteNumber) {
+        requireAllNonNull(studentId, noteNumber);
+        SessionHistory history = getHistory(studentId);
+        SessionNote removedNote = history.getNote(noteNumber);
+        setHistory(studentId, history.withoutNote(noteNumber));
+        return removedNote;
     }
 
     /**

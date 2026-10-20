@@ -8,8 +8,11 @@ import java.util.logging.Logger;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteSessionNoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -17,8 +20,10 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
+import seedu.address.model.session.SessionHistory;
 import seedu.address.model.student.StudentId;
 import seedu.address.model.student.StudentRoster;
+import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.storage.Storage;
 
 /**
@@ -35,6 +40,7 @@ public class LogicManager implements Logic {
     private final Model model;
     private final Storage storage;
     private final AddressBookParser addressBookParser;
+    private PendingDeletion pendingDeletion;
 
     /**
      * Constructs a {@code LogicManager} with the given {@code Model} and {@code Storage}.
@@ -50,11 +56,124 @@ public class LogicManager implements Logic {
         String commandWord = AddressBookParser.getLoggableCommandWord(commandText);
         logger.info("----------------[USER COMMAND][" + commandWord + "]");
 
+        PendingDeletion deletionAwaitingConfirmation = pendingDeletion;
+        pendingDeletion = null;
         Command command = addressBookParser.parseCommand(commandText);
+
+        if (command instanceof DeleteCommand deleteCommand) {
+            return executeDeleteStudentCommand(deleteCommand, deletionAwaitingConfirmation);
+        }
+        if (command instanceof DeleteSessionNoteCommand deleteSessionNoteCommand) {
+            return executeDeleteSessionNoteCommand(deleteSessionNoteCommand, deletionAwaitingConfirmation);
+        }
+
+        return executeAndSave(command);
+    }
+
+    /**
+     * Executes a non-delete command and persists its model changes.
+     */
+    private CommandResult executeAndSave(Command command) throws CommandException {
         AddressBook dataBeforeCommand = new AddressBook(model.getAddressBook());
         CommandResult commandResult = command.execute(model);
         saveOrRestore(dataBeforeCommand);
         return commandResult;
+    }
+
+    /**
+     * Returns a preview for an unconfirmed deletion, or completes a matching confirmed deletion.
+     */
+    private CommandResult executeDeleteStudentCommand(DeleteCommand command,
+            PendingDeletion deletionAwaitingConfirmation) throws CommandException {
+        if (command.isConfirmed()) {
+            return executeConfirmedStudentDelete(command, deletionAwaitingConfirmation);
+        }
+
+        CommandResult commandResult = command.execute(model);
+        StudentRosterEntry targetStudent = getRosterEntry(command.getTargetIndex()).orElseThrow();
+        pendingDeletion = new PendingStudentDeletion(command.getTargetIndex(), targetStudent.getStudentId());
+        return commandResult;
+    }
+
+    /**
+     * Completes a confirmed deletion when its index and stable student ID match the pending request.
+     */
+    private CommandResult executeConfirmedStudentDelete(DeleteCommand command,
+            PendingDeletion deletionAwaitingConfirmation) throws CommandException {
+        if (deletionAwaitingConfirmation == null) {
+            throw new CommandException(DeleteCommand.MESSAGE_NO_PENDING_DELETION);
+        }
+
+        Optional<StudentRosterEntry> targetStudent = getRosterEntry(command.getTargetIndex());
+        if (!(deletionAwaitingConfirmation instanceof PendingStudentDeletion pendingStudentDeletion)
+                || !pendingStudentDeletion.targetIndex().equals(command.getTargetIndex())
+                || targetStudent.isEmpty()
+                || !pendingStudentDeletion.studentId().equals(targetStudent.get().getStudentId())) {
+            throw new CommandException(DeleteCommand.MESSAGE_CONFIRMATION_MISMATCH);
+        }
+
+        AddressBook dataBeforeCommand = new AddressBook(model.getAddressBook());
+        model.deleteStudent(pendingStudentDeletion.studentId());
+        CommandResult commandResult = new CommandResult(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS,
+                targetStudent.get().getName()));
+        saveOrRestore(dataBeforeCommand);
+        return commandResult;
+    }
+
+    /**
+     * Returns a preview for an unconfirmed session-note deletion, or completes a matching confirmed deletion.
+     */
+    private CommandResult executeDeleteSessionNoteCommand(DeleteSessionNoteCommand command,
+            PendingDeletion deletionAwaitingConfirmation) throws CommandException {
+        if (command.isConfirmed()) {
+            return executeConfirmedSessionNoteDelete(command, deletionAwaitingConfirmation);
+        }
+
+        CommandResult commandResult = command.execute(model);
+        StudentRosterEntry targetStudent = getRosterEntry(command.getStudentIndex()).orElseThrow();
+        SessionHistory targetHistory = model.getSessionHistory(targetStudent.getStudentId());
+        pendingDeletion = new PendingSessionNoteDeletion(command.getStudentIndex(), targetStudent.getStudentId(),
+                command.getNoteNumber(), targetHistory);
+        return commandResult;
+    }
+
+    /**
+     * Completes a session-note deletion when its indices, stable student ID, and history match the pending request.
+     */
+    private CommandResult executeConfirmedSessionNoteDelete(DeleteSessionNoteCommand command,
+            PendingDeletion deletionAwaitingConfirmation) throws CommandException {
+        if (deletionAwaitingConfirmation == null) {
+            throw new CommandException(DeleteSessionNoteCommand.MESSAGE_NO_PENDING_DELETION);
+        }
+
+        Optional<StudentRosterEntry> targetStudent = getRosterEntry(command.getStudentIndex());
+        if (!(deletionAwaitingConfirmation instanceof PendingSessionNoteDeletion pendingSessionNoteDeletion)
+                || !pendingSessionNoteDeletion.studentIndex().equals(command.getStudentIndex())
+                || !pendingSessionNoteDeletion.noteNumber().equals(command.getNoteNumber())
+                || targetStudent.isEmpty()
+                || !pendingSessionNoteDeletion.studentId().equals(targetStudent.get().getStudentId())
+                || pendingSessionNoteDeletion.history() != model.getSessionHistory(pendingSessionNoteDeletion
+                        .studentId())) {
+            throw new CommandException(DeleteSessionNoteCommand.MESSAGE_CONFIRMATION_MISMATCH);
+        }
+
+        AddressBook dataBeforeCommand = new AddressBook(model.getAddressBook());
+        model.deleteSessionNote(pendingSessionNoteDeletion.studentId(), pendingSessionNoteDeletion.noteNumber());
+        CommandResult commandResult = new CommandResult(String.format(
+                DeleteSessionNoteCommand.MESSAGE_DELETE_SESSION_NOTE_SUCCESS,
+                command.getNoteNumber().getOneBased(), targetStudent.get().getName()));
+        saveOrRestore(dataBeforeCommand);
+        return commandResult;
+    }
+
+    /**
+     * Returns the roster entry at {@code targetIndex}, if one exists.
+     */
+    private Optional<StudentRosterEntry> getRosterEntry(Index targetIndex) {
+        if (targetIndex.getZeroBased() >= model.getStudentRoster().size()) {
+            return Optional.empty();
+        }
+        return Optional.of(model.getStudentRoster().getEntries().get(targetIndex.getZeroBased()));
     }
 
     /**
@@ -106,5 +225,15 @@ public class LogicManager implements Logic {
     @Override
     public void setGuiSettings(GuiSettings guiSettings) {
         model.setGuiSettings(guiSettings);
+    }
+
+    private interface PendingDeletion {
+    }
+
+    private record PendingStudentDeletion(Index targetIndex, StudentId studentId) implements PendingDeletion {
+    }
+
+    private record PendingSessionNoteDeletion(Index studentIndex, StudentId studentId, Index noteNumber,
+            SessionHistory history) implements PendingDeletion {
     }
 }
