@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
@@ -26,19 +27,27 @@ import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -308,16 +317,16 @@ public class StudentRosterUiTest {
 
         VBox profileContent = getProfileContent(panel);
         GridPane details = (GridPane) profileContent.getChildren().get(1);
-        assertEquals("Alex Tan", ((Label) profileContent.getChildren().get(0)).getText());
-        assertEquals("9123 4567", ((Label) details.getChildren().get(1)).getText());
-        assertEquals("alex.parent@example.com", ((Label) details.getChildren().get(3)).getText());
-        assertEquals("Mathematics", ((Label) details.getChildren().get(5)).getText());
-        assertEquals("Secondary 3", ((Label) details.getChildren().get(7)).getText());
-        assertTrue(((Label) profileContent.getChildren().get(0)).isWrapText());
-        assertTrue(((Label) details.getChildren().get(1)).isWrapText());
-        assertTrue(((Label) details.getChildren().get(3)).isWrapText());
-        assertTrue(((Label) details.getChildren().get(5)).isWrapText());
-        assertTrue(((Label) details.getChildren().get(7)).isWrapText());
+        assertEquals("Alex Tan", ((SelectableText) profileContent.getChildren().get(0)).getText());
+        assertEquals("9123 4567", ((SelectableText) details.getChildren().get(1)).getText());
+        assertEquals("alex.parent@example.com", ((SelectableText) details.getChildren().get(3)).getText());
+        assertEquals("Mathematics", ((SelectableText) details.getChildren().get(5)).getText());
+        assertEquals("Secondary 3", ((SelectableText) details.getChildren().get(7)).getText());
+        assertTrue(((SelectableText) profileContent.getChildren().get(0)).isWrapText());
+        assertTrue(((SelectableText) details.getChildren().get(1)).isWrapText());
+        assertTrue(((SelectableText) details.getChildren().get(3)).isWrapText());
+        assertTrue(((SelectableText) details.getChildren().get(5)).isWrapText());
+        assertTrue(((SelectableText) details.getChildren().get(7)).isWrapText());
         List<ColumnConstraints> columns = details.getColumnConstraints();
         assertEquals(2, columns.size());
         assertEquals(Priority.ALWAYS, columns.get(1).getHgrow());
@@ -336,7 +345,7 @@ public class StudentRosterUiTest {
         });
 
         GridPane details = (GridPane) getProfileContent(panel).getChildren().get(1);
-        assertEquals("Not provided", ((Label) details.getChildren().get(3)).getText());
+        assertEquals("Not provided", ((SelectableText) details.getChildren().get(3)).getText());
     }
 
     @Test
@@ -399,8 +408,8 @@ public class StudentRosterUiTest {
 
         assertTrue(getSessionNoteListView(panel).getItems().isEmpty());
         VBox emptyNotesState = getEmptyNotesState(panel);
-        assertEquals("No session notes yet", ((Label) emptyNotesState.getChildren().get(0)).getText());
-        Label guidance = (Label) emptyNotesState.getChildren().get(1);
+        assertEquals("No session notes yet", ((SelectableText) emptyNotesState.getChildren().get(0)).getText());
+        SelectableText guidance = (SelectableText) emptyNotesState.getChildren().get(1);
         assertEquals("Use note INDEX nt/NOTE to record the first lesson update.",
                 guidance.getText());
         assertTrue(emptyNotesState.isVisible());
@@ -415,15 +424,147 @@ public class StudentRosterUiTest {
         VBox card = (VBox) onFxThread(() -> new SessionNoteCard(note, 3).getRoot());
         HBox heading = (HBox) card.getChildren().get(0);
 
-        assertEquals("[3]", ((Label) heading.getChildren().get(0)).getText());
-        assertEquals("18 Sep 2026, 6:35 PM (UTC+08:00)", ((Label) heading.getChildren().get(1)).getText());
-        assertEquals(note.getText(), ((Label) card.getChildren().get(1)).getText());
-        assertTrue(((Label) heading.getChildren().get(1)).isWrapText());
-        assertTrue(((Label) card.getChildren().get(1)).isWrapText());
+        SelectableText noteNumber = (SelectableText) heading.getChildren().get(0);
+        SelectableText timestamp = (SelectableText) heading.getChildren().get(1);
+        SelectableText noteText = (SelectableText) card.getChildren().get(1);
+        assertEquals("[3]", noteNumber.getText());
+        assertEquals("18 Sep 2026, 6:35 PM (UTC+08:00)", timestamp.getText());
+        assertEquals(note.getText(), noteText.getText());
+        assertTrue(noteNumber.isWrapText());
+        assertTrue(timestamp.isWrapText());
+        assertTrue(noteText.isWrapText());
+        assertFalse(noteNumber.isEditable());
+        assertFalse(timestamp.isEditable());
+        assertFalse(noteText.isEditable());
+        assertEquals(2, noteText.getLineSpacing());
         assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
                 OffsetDateTime.parse("2026-09-18T10:35:00Z")));
         assertThrows(IllegalArgumentException.class, () -> new SessionNoteCard(note, 0));
         assertThrows(NullPointerException.class, () -> SessionNoteCard.formatRecordedAt(null));
+    }
+
+    @Test
+    public void profilePanel_allTextControls_areSelectableAndReadOnly() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        List<SelectableText> textControls = findDescendants(panel.getRoot(), SelectableText.class);
+
+        assertEquals(14, textControls.size());
+        assertTrue(textControls.stream().noneMatch(SelectableText::isEditable));
+        assertTrue(textControls.stream().allMatch(SelectableText::isWrapText));
+        assertTrue(textControls.stream().allMatch(text -> text.getStyleClass().contains("selectable-text")));
+    }
+
+    @Test
+    public void selectableText_copyShortcut_copiesSelectionAndDoesNotEdit() throws Exception {
+        onFxThread(() -> {
+            SelectableText selectableText = new SelectableText();
+            selectableText.setText("Selectable profile text");
+            Stage stage = new Stage();
+            Clipboard systemClipboard = Clipboard.getSystemClipboard();
+            ClipboardContent originalClipboardContent = new ClipboardContent();
+            for (DataFormat dataFormat : systemClipboard.getContentTypes()) {
+                originalClipboardContent.put(dataFormat, systemClipboard.getContent(dataFormat));
+            }
+            try {
+                stage.setScene(new Scene(new StackPane(selectableText), 280, 80));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                Node textContent = selectableText.lookup(".content");
+                assertNotNull(textContent);
+                textContent.fireEvent(primaryMouseEvent(MouseEvent.MOUSE_PRESSED, 1, true, true));
+                textContent.fireEvent(primaryMouseEvent(MouseEvent.MOUSE_DRAGGED, 80, true, false));
+                textContent.fireEvent(primaryMouseEvent(MouseEvent.MOUSE_RELEASED, 80, false, false));
+                assertFalse(selectableText.getSelectedText().isEmpty());
+                selectableText.selectRange(0, "Selectable".length());
+                ClipboardContent initialClipboard = new ClipboardContent();
+                initialClipboard.putString("Initial clipboard text");
+                systemClipboard.setContent(initialClipboard);
+
+                boolean isMac = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("mac");
+                selectableText.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "c", KeyCode.C,
+                        false, !isMac, false, isMac));
+
+                assertEquals("Selectable", systemClipboard.getString());
+                selectableText.fireEvent(new KeyEvent(KeyEvent.KEY_TYPED, "x", "x", KeyCode.UNDEFINED,
+                        false, false, false, false));
+                assertEquals("Selectable profile text", selectableText.getText());
+            } finally {
+                try {
+                    stage.hide();
+                } finally {
+                    if (originalClipboardContent.isEmpty()) {
+                        systemClipboard.clear();
+                    } else {
+                        assertTrue(systemClipboard.setContent(originalClipboardContent));
+                    }
+                }
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void selectableText_wrappedContent_growsVertically() throws Exception {
+        onFxThread(() -> {
+            SelectableText shortText = new SelectableText();
+            shortText.setText("Short text");
+            SelectableText longText = new SelectableText();
+            longText.setText("Selectable text remains readable when it wraps across several lines. ".repeat(4));
+            VBox content = new VBox(shortText, longText);
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(content, 240, 300));
+                stage.show();
+                content.applyCss();
+                content.layout();
+
+                assertTrue(longText.getHeight() > shortText.getHeight() * 2);
+                assertEquals(Region.USE_PREF_SIZE, longText.getMinHeight());
+                assertEquals(Region.USE_PREF_SIZE, longText.getMaxHeight());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void selectableText_scrollEvent_forwardsToSessionHistoryList() throws Exception {
+        SessionNote note = new SessionNote("Reviewed algebra concepts.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null, List.of(note)));
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 360, 480));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListView<StudentProfilePanel.NumberedSessionNote> listView = getSessionNoteListView(panel);
+                SelectableText noteText = (SelectableText) listView.lookup(".session-note-text");
+                assertNotNull(noteText);
+                int[] forwardedEvents = {0};
+                listView.addEventHandler(ScrollEvent.SCROLL, event -> forwardedEvents[0]++);
+                ScrollEvent scrollEvent = scrollEvent();
+
+                noteText.fireEvent(scrollEvent);
+
+                assertEquals(1, forwardedEvents[0]);
+            } finally {
+                stage.hide();
+            }
+
+            SelectableText standaloneText = new SelectableText();
+            ScrollEvent standaloneScrollEvent = scrollEvent();
+            standaloneText.fireEvent(standaloneScrollEvent);
+            assertFalse(standaloneScrollEvent.isConsumed());
+            return null;
+        });
     }
 
     @Test
@@ -653,7 +794,7 @@ public class StudentRosterUiTest {
             MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
             mainWindow.fillInnerParts();
             mainWindow.executeCommand("view 1");
-            assertEquals("Alex Tan", ((Label) getProfileContent(mainWindow.getStudentProfilePanel())
+            assertEquals("Alex Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
                     .getChildren().get(0)).getText());
             assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
                     .getSelectionModel().getSelectedItem().getStudentId());
@@ -777,6 +918,17 @@ public class StudentRosterUiTest {
         return (VBox) notesContainer.getChildren().get(1);
     }
 
+    private <T extends Node> List<T> findDescendants(Node node, Class<T> nodeType) {
+        List<T> matches = new ArrayList<>();
+        if (nodeType.isInstance(node)) {
+            matches.add(nodeType.cast(node));
+        }
+        if (node instanceof Parent parent) {
+            parent.getChildrenUnmodifiable().forEach(child -> matches.addAll(findDescendants(child, nodeType)));
+        }
+        return matches;
+    }
+
     @SuppressWarnings("unchecked")
     private ListView<StudentRosterEntry> getListView(StudentRosterPanel panel) {
         StackPane root = (StackPane) panel.getRoot();
@@ -800,6 +952,21 @@ public class StudentRosterUiTest {
     private void pressHistoryKey(TextField commandTextField, KeyCode keyCode) {
         commandTextField.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode,
                 false, false, false, false));
+    }
+
+    private ScrollEvent scrollEvent() {
+        return new ScrollEvent(ScrollEvent.SCROLL, 0, 0, 0, 0,
+                false, false, false, false, false, false,
+                0, -40, 0, -40,
+                ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
+                ScrollEvent.VerticalTextScrollUnits.NONE, 0, 0, null);
+    }
+
+    private MouseEvent primaryMouseEvent(javafx.event.EventType<MouseEvent> eventType, double x,
+            boolean isPrimaryButtonDown, boolean isStillSincePress) {
+        return new MouseEvent(eventType, x, 8, x, 8, MouseButton.PRIMARY, 1,
+                false, false, false, false, isPrimaryButtonDown, false, false,
+                false, false, isStillSincePress, null);
     }
 
     private void assertNodeWithinScene(Stage stage, String selector) {
