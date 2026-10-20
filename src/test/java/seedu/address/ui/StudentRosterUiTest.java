@@ -422,19 +422,14 @@ public class StudentRosterUiTest {
                 OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
 
         VBox card = (VBox) onFxThread(() -> new SessionNoteCard(note, 3).getRoot());
-        HBox heading = (HBox) card.getChildren().get(0);
 
-        SelectableText noteNumber = (SelectableText) heading.getChildren().get(0);
-        SelectableText timestamp = (SelectableText) heading.getChildren().get(1);
+        SelectableText header = (SelectableText) card.getChildren().get(0);
         SelectableText noteText = (SelectableText) card.getChildren().get(1);
-        assertEquals("[3]", noteNumber.getText());
-        assertEquals("18 Sep 2026, 6:35 PM (UTC+08:00)", timestamp.getText());
+        assertEquals("[3] 18 Sep 2026, 6:35 PM (UTC+08:00)", header.getText());
         assertEquals(note.getText(), noteText.getText());
-        assertTrue(noteNumber.isWrapText());
-        assertTrue(timestamp.isWrapText());
+        assertTrue(header.isWrapText());
         assertTrue(noteText.isWrapText());
-        assertFalse(noteNumber.isEditable());
-        assertFalse(timestamp.isEditable());
+        assertFalse(header.isEditable());
         assertFalse(noteText.isEditable());
         assertEquals(2, noteText.getLineSpacing());
         assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
@@ -444,15 +439,18 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void profilePanel_allTextControls_areSelectableAndReadOnly() throws Exception {
+    public void profilePanel_staticLabelsAreNotSelectableAndValuesAreReadOnly() throws Exception {
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
 
         List<SelectableText> textControls = findDescendants(panel.getRoot(), SelectableText.class);
+        List<Label> labels = findDescendants(panel.getRoot(), Label.class);
 
-        assertEquals(14, textControls.size());
+        assertEquals(9, textControls.size());
         assertTrue(textControls.stream().noneMatch(SelectableText::isEditable));
         assertTrue(textControls.stream().allMatch(SelectableText::isWrapText));
         assertTrue(textControls.stream().allMatch(text -> text.getStyleClass().contains("selectable-text")));
+        assertEquals(List.of("Parent/guardian phone", "Parent/guardian email", "Subject", "Current level",
+                "Session notes"), labels.stream().map(Label::getText).toList());
     }
 
     @Test
@@ -621,9 +619,11 @@ public class StudentRosterUiTest {
                 assertNotNull(cell);
                 VBox card = (VBox) cell.getGraphic();
                 assertNotNull(card);
+                SelectableText header = (SelectableText) card.getChildren().get(0);
                 SelectableText noteText = (SelectableText) card.getChildren().get(1);
 
                 assertTrue(card.getWidth() <= listView.getWidth());
+                assertEquals("[1] 18 Sep 2026, 6:35 PM (UTC+08:00)", header.getText());
                 assertTrue(noteText.getHeight() > noteText.getFont().getSize() * 2);
             } finally {
                 stage.hide();

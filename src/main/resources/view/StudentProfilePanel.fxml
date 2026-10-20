@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -24,24 +25,24 @@
         <ColumnConstraints minWidth="112" prefWidth="145" maxWidth="170" />
         <ColumnConstraints hgrow="ALWAYS" minWidth="0" />
       </columnConstraints>
-      <SelectableText text="Parent/guardian phone" styleClass="profile-field-label" GridPane.columnIndex="0"
-                      GridPane.rowIndex="0" />
+      <Label text="Parent/guardian phone" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+             GridPane.columnIndex="0" GridPane.rowIndex="0" />
       <SelectableText fx:id="parentGuardianPhone" maxWidth="Infinity" styleClass="profile-field-value"
                       GridPane.columnIndex="1" GridPane.rowIndex="0" />
-      <SelectableText text="Parent/guardian email" styleClass="profile-field-label" GridPane.columnIndex="0"
-                      GridPane.rowIndex="1" />
+      <Label text="Parent/guardian email" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+             GridPane.columnIndex="0" GridPane.rowIndex="1" />
       <SelectableText fx:id="parentGuardianEmail" maxWidth="Infinity" styleClass="profile-field-value"
                       GridPane.columnIndex="1" GridPane.rowIndex="1" />
-      <SelectableText text="Subject" styleClass="profile-field-label" GridPane.columnIndex="0"
-                      GridPane.rowIndex="2" />
+      <Label text="Subject" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+             GridPane.columnIndex="0" GridPane.rowIndex="2" />
       <SelectableText fx:id="subject" maxWidth="Infinity" styleClass="profile-field-value"
                       GridPane.columnIndex="1" GridPane.rowIndex="2" />
-      <SelectableText text="Current level" styleClass="profile-field-label" GridPane.columnIndex="0"
-                      GridPane.rowIndex="3" />
+      <Label text="Current level" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+             GridPane.columnIndex="0" GridPane.rowIndex="3" />
       <SelectableText fx:id="currentLevel" maxWidth="Infinity" styleClass="profile-field-value"
                       GridPane.columnIndex="1" GridPane.rowIndex="3" />
     </GridPane>
-    <SelectableText text="Session notes" styleClass="profile-section-heading" />
+    <Label text="Session notes" styleClass="profile-section-heading" />
     <StackPane minWidth="0" VBox.vgrow="ALWAYS">
       <ListView fx:id="sessionNoteListView" styleClass="session-note-list" />
       <VBox fx:id="emptyNotesState" alignment="CENTER" maxWidth="Infinity" spacing="5"

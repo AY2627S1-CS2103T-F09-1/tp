@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import seedu.address.ui.SelectableText?>
 
 <VBox id="sessionNoteCard" maxWidth="Infinity" minWidth="0"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       spacing="7" styleClass="session-note-card">
-  <HBox alignment="TOP_LEFT" maxWidth="Infinity" spacing="8">
-    <SelectableText fx:id="noteNumber" styleClass="session-note-number" />
-    <SelectableText fx:id="timestamp" maxWidth="Infinity" styleClass="session-note-timestamp"
-                    HBox.hgrow="ALWAYS" />
-  </HBox>
+  <SelectableText fx:id="header" maxWidth="Infinity" styleClass="session-note-header" />
   <SelectableText fx:id="noteText" lineSpacing="2" maxWidth="Infinity" styleClass="session-note-text" />
   <padding>
     <Insets top="12" right="14" bottom="12" left="14" />
