@@ -14,6 +14,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,10 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
+import seedu.address.logic.commands.ExitCommand;
+import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.NoteCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -42,8 +46,6 @@ import seedu.address.testutil.LogRecorder;
 
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
-    private static final String SAVE_FAILURE_MESSAGE =
-            String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
     private static final IOException DUMMY_AD_EXCEPTION = new AccessDeniedException("dummy access denied exception");
 
     @TempDir
@@ -377,20 +379,45 @@ public class LogicManagerTest {
     @Test
     public void execute_storageThrowsIoException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_IO_EXCEPTION, String.format(
-                LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()));
+                LogicManager.FILE_OPS_ERROR_FORMAT, getExceptionDataFile(), DUMMY_IO_EXCEPTION.getMessage()));
     }
 
     @Test
     public void execute_storageThrowsAdException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_AD_EXCEPTION, String.format(
-                LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, DUMMY_AD_EXCEPTION.getMessage()));
+                LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, getExceptionDataFile()));
+    }
+
+    @Test
+    public void execute_commandsWithoutDataChangesWhenSavesFail_succeed() throws Exception {
+        Model studentModel = createModelWithAlex();
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, Integer.MAX_VALUE);
+
+        CommandResult viewResult = failingLogic.execute(ViewCommand.COMMAND_WORD + " 1");
+        CommandResult helpResult = failingLogic.execute(HelpCommand.COMMAND_WORD);
+        CommandResult exitResult = failingLogic.execute(ExitCommand.COMMAND_WORD);
+
+        assertEquals(Optional.of(ALEX.getId()), viewResult.getProfileStudentId());
+        assertTrue(helpResult.isShowHelp());
+        assertTrue(exitResult.isExit());
+    }
+
+    @Test
+    public void execute_commandsWithoutDataChanges_leaveUnloadableDataFileUnchanged() throws Exception {
+        String unloadableData = "{ \"students\" : [ { \"name\" : \"\" } ] }";
+        Files.writeString(addressBookFile, unloadableData);
+
+        logic.execute(HelpCommand.COMMAND_WORD);
+        logic.execute(ExitCommand.COMMAND_WORD);
+
+        assertEquals(unloadableData, Files.readString(addressBookFile));
     }
 
     @Test
     public void execute_noteWithStorageFailure_restoresSessionHistory() {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
-        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic
+        assertThrows(CommandException.class, getSaveFailureMessage(), () -> failingLogic
                 .execute(NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices."));
 
         assertTrue(studentModel.getSessionHistory(ALEX.getId()).isEmpty());
@@ -401,7 +428,7 @@ public class LogicManagerTest {
     public void execute_addStudentWithStorageFailure_restoresRoster() {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
-        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () -> failingLogic
+        assertThrows(CommandException.class, getSaveFailureMessage(), () -> failingLogic
                 .execute("add n/Bea Lim p/9876 5432 sub/English l/JC 1"));
 
         assertEquals(List.of(ALEX.getId()), failingLogic.getStudentRoster().getEntries().stream()
@@ -418,7 +445,7 @@ public class LogicManagerTest {
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
 
         failingLogic.execute("delete 1");
-        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () ->
+        assertThrows(CommandException.class, getSaveFailureMessage(), () ->
                 failingLogic.execute("delete 1 /confirm"));
 
         StudentRosterEntry restoredEntry = failingLogic.getStudentRoster().getEntries().get(0);
@@ -442,7 +469,7 @@ public class LogicManagerTest {
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
 
         failingLogic.execute("delete note 1 1");
-        assertThrows(CommandException.class, SAVE_FAILURE_MESSAGE, () ->
+        assertThrows(CommandException.class, getSaveFailureMessage(), () ->
                 failingLogic.execute("delete note 1 1 /confirm"));
 
         assertEquals(originalHistory, studentModel.getSessionHistory(ALEX.getId()));
@@ -568,10 +595,8 @@ public class LogicManagerTest {
      * @param expectedMessage the message expected inside exception thrown by the Logic component
      */
     private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage) {
-        Path prefPath = temporaryFolder.resolve("ExceptionUserPrefs.json");
-
         // Inject LogicManager with a JsonAddressBookStorage that throws the IOException e when saving
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(prefPath) {
+        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(getExceptionDataFile()) {
             @Override
             public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
                 throw e;
@@ -598,6 +623,21 @@ public class LogicManagerTest {
         Model studentModel = new ModelManager();
         studentModel.addStudent(ALEX);
         return studentModel;
+    }
+
+    /**
+     * Returns the data file used by the storage in {@link #assertCommandFailureForExceptionFromStorage}.
+     */
+    private Path getExceptionDataFile() {
+        return temporaryFolder.resolve("ExceptionAddressBook.json");
+    }
+
+    /**
+     * Returns the error expected when saving to {@code addressBook.json} throws {@code DUMMY_IO_EXCEPTION}.
+     */
+    private String getSaveFailureMessage() {
+        return String.format(LogicManager.FILE_OPS_ERROR_FORMAT, addressBookFile,
+                DUMMY_IO_EXCEPTION.getMessage());
     }
 
     /**
