@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.exceptions.DuplicatePersonException;
 import seedu.address.model.session.SessionHistory;
@@ -115,9 +116,31 @@ public class AddressBookTest {
     }
 
     @Test
+    public void removeSessionNote_validNumber_removesAndReturnsSelectedNote() {
+        addressBook.addStudent(ALEX);
+        addressBook.addStudent(BEA);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        addressBook.addSessionNote(ALEX.getId(), FACTORISATION_NOTE);
+
+        assertEquals(INDICES_NOTE, addressBook.removeSessionNote(ALEX.getId(), Index.fromOneBased(1)));
+        assertEquals(List.of(FACTORISATION_NOTE), addressBook.getSessionHistory(ALEX.getId()).getNotes());
+        assertTrue(addressBook.getSessionHistory(BEA.getId()).isEmpty());
+    }
+
+    @Test
+    public void removeSessionNote_unknownStudent_throwsIllegalArgumentException() {
+        addressBook.addStudent(ALEX);
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_UNKNOWN_STUDENT, () -> addressBook
+                .removeSessionNote(BEA.getId(), Index.fromOneBased(1)));
+    }
+
+    @Test
     public void sessionNoteMethods_nullArguments_throwNullPointerException() {
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(null, INDICES_NOTE));
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(ALEX.getId(), null));
+        assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(null, Index.fromOneBased(1)));
+        assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(ALEX.getId(), null));
         assertThrows(NullPointerException.class, () -> addressBook.getSessionHistory(null));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionHistory(null));
     }

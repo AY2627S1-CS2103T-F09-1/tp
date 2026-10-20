@@ -52,7 +52,7 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The *Sequence Diagram* below shows how the components interact when the user previews deletion with `delete 1` and then completes it with `delete 1 /confirm`.
 
 <img src="images/ArchitectureSequenceDiagram.png" width="574" />
 
@@ -95,20 +95,17 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+The sequence diagram below illustrates the interactions within the `Logic` component for the two-command confirmed-deletion workflow.
 
-![Interactions Inside the Logic Component for the `delete 1` Command](images/DeleteSequenceDiagram.png)
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</div>
+![Interactions Inside the Logic Component for Confirmed Student Deletion](images/DeleteSequenceDiagram.png)
 
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to resolve the sorted roster and delete a student by stable ID).
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. `LogicManager` saves the address book. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
+1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is coordinated by the `LogicManager`.
+1. An unconfirmed `DeleteCommand` resolves the sorted roster and returns a preview. `LogicManager` retains the chosen roster index and stable student ID in memory and returns without saving because no model data changed.
+1. A matching confirmed `DeleteCommand` causes `LogicManager` to verify both the index and stable ID before calling `Model#deleteStudent(StudentId)`.
+1. Commands that enter the persistence path are saved by `LogicManager`. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
@@ -245,23 +242,27 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 ### Student deletion
 
-`delete INDEX` is parsed by `DeleteCommandParser`, which accepts exactly one positive whole-number index. `DeleteCommand#execute` resolves that index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel, and reports the student-specific invalid-index error before mutation when the index is outside the roster.
+`DeleteCommandParser` accepts a positive whole-number index by itself or followed by the exact, case-sensitive terminal token `/confirm`. Concatenated, duplicated, misplaced, differently cased, or value-bearing confirmation tokens are rejected. `DeleteCommand` records the parsed index and whether `/confirm` was supplied.
 
-The command passes the selected entry's stable `StudentId` to `Model#deleteStudent`, which removes the student and session history atomically and returns the number of notes removed. The command result reports the student's name and note count. `LogicManager` then saves the complete address book; its existing rollback restores both records if saving fails.
+For `delete INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. It returns the student's name, session-note count, exact `delete INDEX /confirm` command, and the instruction `To cancel, enter any other command.` without changing or saving the model. After a successful preview, `LogicManager` keeps one transient pending deletion containing the original index and stable `StudentId`; it does not persist private student fields or confirmation state.
 
-After a successful command, `MainWindow` requests a fresh roster snapshot, so the remaining students receive consecutive one-based indices. It also refreshes the displayed profile by stable ID; if the deleted student was open, the absent profile causes the panel to close without UI code reaching into the model.
+At the start of the next `LogicManager#execute` call, the pending deletion is consumed and cleared before parsing. A matching `delete INDEX /confirm` must use the pending index and that index must still identify the pending stable `StudentId`. Direct, repeated, or mismatched confirmations are rejected without mutation. Any other submitted input cancels the pending deletion before that input is processed; a new valid `delete INDEX` preview creates a replacement pending deletion.
+
+After a match, `LogicManager` copies the address book, passes the stable `StudentId` to `Model#deleteStudent`, and saves the complete address book. The model removes the student and session history atomically. A save failure restores both records and leaves no confirmation pending, so the user must preview again. A successful result reports the deleted student's name.
+
+After a successful confirmed deletion, `MainWindow` requests a fresh roster snapshot, so the remaining students receive consecutive one-based indices. It also refreshes the displayed profile by stable ID; if the deleted student was open, the absent profile causes the panel to close without UI code reaching into the model. A preview keeps the profile and roster unchanged.
 
 ### Save-failure rollback
 
-A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command, `LogicManager#execute` copies the address book with `new AddressBook(model.getAddressBook())`. If `Storage#saveAddressBook` then throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws the same `CommandException` as before.
+A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command on the persistence path, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. If `Storage#saveAddressBook` then throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws the same `CommandException` as before. A deletion preview bypasses this path because it does not mutate or save data.
 
 The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
 
 **Design considerations:**
 
-* **Alternative 1 (current choice):** `LogicManager` copies the address book before every command and restores it when saving fails.
-  * Pros: Covers every command, including future ones, in one place.
-  * Cons: Copies the address book even for commands that do not change it.
+* **Alternative 1 (current choice):** `LogicManager` copies the address book before commands on the persistence path and restores it when saving fails.
+  * Pros: Covers persisted commands, including future ones, in one place while allowing non-mutating multi-step previews to opt out.
+  * Cons: Copies the address book for some commands that do not change it.
 * **Alternative 2:** Each command undoes its own changes when saving fails.
   * Pros: Copies nothing for commands that do not change data.
   * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
@@ -404,7 +405,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | tutor                                               | see the date and time each session note was written                              | know when each lesson took place                                                           |
 | `* * *`  | tutor who has just completed a lesson               | add a short session note about a student's progress, difficulties, or next steps | preserve what happened while it is still fresh                                             |
 | `* * *`  | tutor                                               | delete a student from my roster                                                  | remove information I no longer need, or re-enter a student whose details I entered wrongly |
-| `* * *`  | tutor                                               | be told how many session notes were removed when I delete a student              | notice immediately if I deleted the wrong student                                          |
+| `* * *`  | tutor                                               | see the student and session-note count before confirming a deletion              | verify the impact before removing data                                                      |
+| `* * *`  | tutor                                               | confirm before a student is deleted                                              | avoid deleting the wrong student by accident                                               |
 | `* * *`  | tutor                                               | be told exactly what is wrong when a command fails                               | fix the mistake without guessing or retyping the whole command                             |
 | `* * *`  | tutor                                               | have my roster and session notes saved automatically after every change          | continue where I left off the next time I open TutorTrack                                  |
 | `* * *`  | tutor new to TutorTrack                             | see usage instructions                                                           | refer to instructions when I forget how to use TutorTrack                                  |
@@ -429,7 +431,6 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*`      | tutor teaching siblings                             | link siblings to one shared parent contact                                       | update the parent contact once for all of them                                             |
 | `*`      | tutor                                               | correct a mistake in a saved session note                                        | keep each student's history accurate                                                       |
 | `*`      | tutor                                               | delete several students in one command                                           | remove students who have stopped lessons quickly                                           |
-| `*`      | tutor                                               | confirm before a student is deleted                                              | avoid deleting the wrong student by accident                                               |
 | `*`      | tutor who works on more than one computer           | access my roster from any of my computers                                        | prepare for lessons wherever I am                                                          |
 
 ### Use cases
@@ -582,20 +583,16 @@ history and saved locally. No other student record is changed.
 **Preconditions:** The system is running and the current roster index context
 is available.
 
-**Guarantees:** The selected student and all of the student's session notes are
-removed from the roster and local storage.
+**Guarantees:** A preview leaves the roster and local storage unchanged. A matching confirmation removes the selected student and all of the student's session notes from both.
 
 **MSS**
 
-1. Tutor selects a student by the student's roster index.
-2. TutorTrack identifies the selected student and the number of session notes
-   associated with the student.
-3. TutorTrack removes the student and all associated session notes and saves the
-   updated roster.
-4. TutorTrack confirms the deletion, including the student's name and the
-   number of session notes removed.
-5. TutorTrack displays the updated roster and establishes its displayed indices
-   as the current selection context.
+1. Tutor requests deletion using a student's roster index.
+1. TutorTrack displays the selected student's name, session-note count, exact confirmation command, and instruction that any other command cancels the deletion.
+1. Tutor submits the matching `delete INDEX /confirm` command next.
+1. TutorTrack verifies that the index still identifies the same stable student ID.
+1. TutorTrack removes the student and all associated session notes and saves the updated roster.
+1. TutorTrack reports the deleted student's name, displays the updated roster, and establishes its displayed indices as the current selection context.
 
    Use case ends.
 
@@ -606,10 +603,19 @@ removed from the roster and local storage.
   * 1a1. TutorTrack reports the index error and makes no changes.
 
     Use case ends.
-* 3a. TutorTrack cannot save the updated data.
+* 3a. Tutor enters any other command.
 
-  * 3a1. TutorTrack reports the storage error and does not delete the student or
-    the session notes.
+  * 3a1. TutorTrack cancels the pending deletion and processes the new command normally.
+
+    Use case ends.
+* 3b. Tutor enters a direct, repeated, or mismatched confirmation.
+
+  * 3b1. TutorTrack reports that the confirmation does not match or that no deletion is pending, and makes no deletion.
+
+    Use case ends.
+* 5a. TutorTrack cannot save the updated data.
+
+  * 5a1. TutorTrack reports the storage error, restores the student and session notes, and clears the pending deletion.
 
     Use case ends.
 
@@ -683,11 +689,15 @@ testers are expected to do more *exploratory* testing.
    Expected: Both roster cards remain within the left pane. Long values wrap vertically instead of being clipped or creating a horizontal scrollbar.
 1. Enter `view 1`.
    Expected: Alicia's roster card has the teal profile-selection treatment. Her name, phone, email, subject, and level appear in the profile and wrap within the value column where needed.
+1. Drag across text in Alicia's profile, press `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS, and paste into a temporary plain-text document. Repeat with a wrapped session note after completing the note step below.
+   Expected: Short and multi-line text can be selected and copied exactly. Typing while the profile text is selected does not edit the displayed content, and scrolling the session history still works normally.
 1. Move the pointer over Blair's card, click it, then click the result/error display.
    Expected: Hovering or clicking Blair's card leaves it unchanged, and clicking the result/error display does not add a focus border. Neither region opens a profile or otherwise behaves like a clickable control.
 1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
    Expected: The timestamp and note wrap inside one session-note card, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
 1. Enter `delete 1`.
+   Expected: TutorTrack displays Alicia's name, note count, `delete 1 /confirm`, and `To cancel, enter any other command.` Alicia's profile and roster remain unchanged.
+1. Enter `delete 1 /confirm`.
    Expected: Alicia's profile and profile-selection treatment both clear. Blair is reindexed to 1 and remains usable.
 1. Repeat the populated-workspace checks at 1920x1080 with 100% and 125% scaling and at 1280x720 with 150% scaling.
    Expected: All fields, commands, feedback, scrollbars, and status information remain reachable. Content uses vertical wrapping or scrolling rather than clipping or horizontal expansion.
@@ -750,10 +760,16 @@ testers are expected to do more *exploratory* testing.
 
 1. Add Ari Tan and Bea Tan, add two session notes to Ari, and open Ari's profile with `view 1`.
 1. Enter `delete 1`.
-   Expected: TutorTrack reports `Deleted student: Ari Tan. Session notes removed: 2.` Ari and the two notes are removed, Bea becomes roster index 1, and Ari's open profile closes.
+   Expected: TutorTrack reports `Are you sure you want to delete Ari Tan and 2 session notes?`, shows `If yes, type: delete 1 /confirm`, and states `To cancel, enter any other command.` The roster, notes, profile, and data file remain unchanged.
+1. Enter `help`, followed by `delete 1 /confirm`.
+   Expected: `help` cancels the pending deletion and opens the help window. The confirmation is then rejected because no matching deletion is pending; Ari and the notes remain unchanged.
+1. Enter `delete 1`, followed immediately by `delete 1 /confirm`.
+   Expected: TutorTrack reports `Successfully deleted Ari Tan.` Ari and the two notes are removed, Bea becomes roster index 1, and Ari's open profile closes.
+1. Enter `delete 1 /confirm` again.
+   Expected: TutorTrack rejects the repeated confirmation because no matching deletion is pending, and Bea remains unchanged.
 1. Close and relaunch TutorTrack.
    Expected: Ari and the notes remain absent, while Bea remains at index 1.
-1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, and `delete 1-2`.
+1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /confirm /confirm`, and `delete 1 /confirm extra`.
    Expected: Each command reports an invalid command format and leaves the roster, notes, open profile, and data file unchanged.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid and makes no changes.

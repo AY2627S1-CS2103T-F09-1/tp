@@ -246,6 +246,12 @@
     -fx-text-fill: -app-text-muted;
 }
 
+.session-note-number {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-accent-dark;
+}
+
 .session-note-text {
     -fx-font-size: 14px;
     -fx-line-spacing: 2px;
@@ -486,4 +492,46 @@
 
 .tooltip-text {
     -fx-text-fill: -app-text;
+}
+
+.selectable-text,
+.selectable-text:focused {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-effect: null;
+    -fx-highlight-fill: -app-accent;
+    -fx-highlight-text-fill: white;
+    -fx-padding: 0;
+}
+
+.selectable-text > .scroll-pane,
+.selectable-text > .scroll-pane > .viewport,
+.selectable-text .content,
+.selectable-text:focused .content {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.selectable-text .scroll-bar {
+    -fx-max-height: 0;
+    -fx-max-width: 0;
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+}
+
+.selectable-text .caret {
+    -fx-stroke: transparent;
+}
+
+.profile-empty-state .selectable-text .text,
+.empty-notes-state .selectable-text .text {
+    -fx-text-alignment: center;
+}
+
+.session-note-text .text {
+    -fx-line-spacing: 2px;
 }
