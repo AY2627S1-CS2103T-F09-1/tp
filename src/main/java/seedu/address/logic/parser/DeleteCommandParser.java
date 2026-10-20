@@ -18,8 +18,16 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
      */
     public DeleteCommand parse(String args) throws ParseException {
         try {
-            Index index = ParserUtil.parseIndex(args);
-            return new DeleteCommand(index);
+            String[] arguments = args.trim().split("\\s+");
+            boolean isConfirmed = arguments.length == 2
+                    && DeleteCommand.CONFIRMATION_FLAG.equals(arguments[1]);
+
+            if (arguments.length > 2 || arguments.length == 2 && !isConfirmed) {
+                throw new ParseException("Unexpected delete command argument.");
+            }
+
+            Index index = ParserUtil.parseIndex(arguments[0]);
+            return new DeleteCommand(index, isConfirmed);
         } catch (ParseException pe) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE), pe);

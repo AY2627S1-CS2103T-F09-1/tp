@@ -696,7 +696,7 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void executeCommand_deleteDisplayedStudent_clearsOpenProfile() throws Exception {
+    public void executeCommand_confirmedDeleteDisplayedStudent_clearsOpenProfile() throws Exception {
         StudentRoster initialRoster = new StudentRoster(List.of(student("Alex Tan")));
         StudentRoster emptyRoster = new StudentRoster(List.of());
         TestLogic logic = new TestLogic(initialRoster, emptyRoster,
@@ -706,10 +706,9 @@ public class StudentRosterUiTest {
             MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
             mainWindow.fillInnerParts();
             mainWindow.executeCommand("view 1");
-            logic.setCommandResult(new CommandResult(
-                    "Deleted student: Alex Tan. Session notes removed: 0."));
+            logic.setCommandResult(new CommandResult("Successfully deleted Alex Tan."));
             logic.setProfile(Optional.empty());
-            mainWindow.executeCommand("delete 1");
+            mainWindow.executeCommand("delete 1 /confirm");
             StackPane root = (StackPane) mainWindow.getStudentProfilePanel().getRoot();
             assertTrue(root.getChildren().get(0).isVisible());
             assertFalse(root.getChildren().get(1).isVisible());

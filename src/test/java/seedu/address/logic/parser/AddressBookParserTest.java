@@ -48,6 +48,13 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_confirmedDelete() throws Exception {
+        DeleteCommand command = (DeleteCommand) parser.parseCommand(
+                DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased() + " /confirm");
+        assertEquals(new DeleteCommand(INDEX_FIRST_PERSON, true), command);
+    }
+
+    @Test
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);

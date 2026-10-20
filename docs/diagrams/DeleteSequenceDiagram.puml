@@ -6,8 +6,10 @@ box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
 participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
 participant ":DeleteCommandParser" as DeleteCommandParser LOGIC_COLOR
-participant "d:DeleteCommand" as DeleteCommand LOGIC_COLOR
-participant "r:CommandResult" as CommandResult LOGIC_COLOR
+participant "preview:DeleteCommand" as PreviewCommand LOGIC_COLOR
+participant "confirmed:DeleteCommand" as ConfirmedCommand LOGIC_COLOR
+participant "preview:CommandResult" as PreviewResult LOGIC_COLOR
+participant "success:CommandResult" as SuccessResult LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
@@ -19,58 +21,65 @@ activate LogicManager
 
 LogicManager -> AddressBookParser : parseCommand("delete 1")
 activate AddressBookParser
-
-create DeleteCommandParser
-AddressBookParser -> DeleteCommandParser
-activate DeleteCommandParser
-
-DeleteCommandParser --> AddressBookParser
-deactivate DeleteCommandParser
-
 AddressBookParser -> DeleteCommandParser : parse("1")
 activate DeleteCommandParser
-
-create DeleteCommand
-DeleteCommandParser -> DeleteCommand
-activate DeleteCommand
-
-DeleteCommand --> DeleteCommandParser :
-deactivate DeleteCommand
-
-DeleteCommandParser --> AddressBookParser : d
+create PreviewCommand
+DeleteCommandParser -> PreviewCommand : new DeleteCommand(index, false)
+PreviewCommand --> DeleteCommandParser
+DeleteCommandParser --> AddressBookParser : preview
 deactivate DeleteCommandParser
-'Hidden arrow to position the destroy marker below the end of the activation bar.
-DeleteCommandParser -[hidden]-> AddressBookParser
-destroy DeleteCommandParser
-
-AddressBookParser --> LogicManager : d
+AddressBookParser --> LogicManager : preview
 deactivate AddressBookParser
 
-LogicManager -> DeleteCommand : execute(m)
-activate DeleteCommand
-
-DeleteCommand -> Model : getStudentRoster()
+LogicManager -> PreviewCommand : execute(m)
+activate PreviewCommand
+PreviewCommand -> Model : getStudentRoster()
 activate Model
-
-Model --> DeleteCommand : roster
+Model --> PreviewCommand : roster
 deactivate Model
-
-DeleteCommand -> Model : deleteStudent(studentId)
+create PreviewResult
+PreviewCommand -> PreviewResult : new CommandResult(prompt)
+PreviewResult --> PreviewCommand
+PreviewCommand --> LogicManager : previewResult
+deactivate PreviewCommand
+LogicManager -> Model : getStudentRoster()
 activate Model
-
-Model --> DeleteCommand : removedNoteCount
+Model --> LogicManager : roster
 deactivate Model
+LogicManager -> LogicManager : store pending(index, studentId)
 
-create CommandResult
-DeleteCommand -> CommandResult
-activate CommandResult
+[<-- LogicManager : previewResult
+deactivate LogicManager
 
-CommandResult --> DeleteCommand
-deactivate CommandResult
+[-> LogicManager : execute("delete 1 /confirm")
+activate LogicManager
+LogicManager -> LogicManager : consume and clear pending deletion
 
-DeleteCommand --> LogicManager : r
-deactivate DeleteCommand
+LogicManager -> AddressBookParser : parseCommand("delete 1 /confirm")
+activate AddressBookParser
+AddressBookParser -> DeleteCommandParser : parse("1 /confirm")
+activate DeleteCommandParser
+create ConfirmedCommand
+DeleteCommandParser -> ConfirmedCommand : new DeleteCommand(index, true)
+ConfirmedCommand --> DeleteCommandParser
+DeleteCommandParser --> AddressBookParser : confirmed
+deactivate DeleteCommandParser
+AddressBookParser --> LogicManager : confirmed
+deactivate AddressBookParser
 
-[<--LogicManager
+LogicManager -> Model : getStudentRoster()
+activate Model
+Model --> LogicManager : roster
+deactivate Model
+LogicManager -> LogicManager : match index and stable studentId
+LogicManager -> Model : deleteStudent(studentId)
+activate Model
+Model --> LogicManager : removedNoteCount
+deactivate Model
+create SuccessResult
+LogicManager -> SuccessResult : new CommandResult(successMessage)
+SuccessResult --> LogicManager
+
+[<-- LogicManager : successResult
 deactivate LogicManager
 @enduml
