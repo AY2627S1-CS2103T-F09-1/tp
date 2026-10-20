@@ -12,8 +12,10 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteSessionNoteCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.NoteCommand;
@@ -52,6 +54,19 @@ public class AddressBookParserTest {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased() + " /confirm");
         assertEquals(new DeleteCommand(INDEX_FIRST_PERSON, true), command);
+    }
+
+    @Test
+    public void parseCommand_deleteSessionNote() throws Exception {
+        DeleteSessionNoteCommand command = (DeleteSessionNoteCommand) parser.parseCommand("delete note 1 2");
+        assertEquals(new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)), command);
+    }
+
+    @Test
+    public void parseCommand_confirmedDeleteSessionNote() throws Exception {
+        DeleteSessionNoteCommand command = (DeleteSessionNoteCommand) parser.parseCommand(
+                "delete note 1 2 /confirm");
+        assertEquals(new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), true), command);
     }
 
     @Test

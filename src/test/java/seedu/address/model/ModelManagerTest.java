@@ -9,6 +9,8 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 import static seedu.address.testutil.TypicalSessionNotes.BEA;
+import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
+import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -19,6 +21,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionNote;
@@ -155,6 +158,19 @@ public class ModelManagerTest {
                 .map(entry -> entry.getNoteCount()).toList();
 
         assertEquals(List.of(2, 0), noteCounts);
+    }
+
+    @Test
+    public void deleteSessionNote_validNumber_removesOnlySelectedNoteAndUpdatesCount() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        addressBook.addSessionNote(ALEX.getId(), FACTORISATION_NOTE);
+        modelManager = new ModelManager(addressBook, new UserPrefs());
+
+        assertEquals(INDICES_NOTE, modelManager.deleteSessionNote(ALEX.getId(), Index.fromOneBased(1)));
+        assertEquals(List.of(FACTORISATION_NOTE), modelManager.getSessionHistory(ALEX.getId()).getNotes());
+        assertEquals(1, modelManager.getStudentRoster().getEntries().get(0).getNoteCount());
     }
 
     @Test

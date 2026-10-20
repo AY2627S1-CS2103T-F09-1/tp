@@ -22,16 +22,22 @@ public class SessionNoteCard extends UiPart<Region> {
             DateTimeFormatter.ofPattern("d MMM uuuu, h:mm a", Locale.ENGLISH);
 
     @FXML
+    private Label noteNumber;
+    @FXML
     private Label timestamp;
     @FXML
     private Label noteText;
 
     /**
-     * Creates a card displaying {@code sessionNote}.
+     * Creates a card displaying {@code sessionNote} with its chronological {@code noteNumber}.
      */
-    public SessionNoteCard(SessionNote sessionNote) {
+    public SessionNoteCard(SessionNote sessionNote, int noteNumber) {
         super(FXML);
         requireNonNull(sessionNote);
+        if (noteNumber < 1) {
+            throw new IllegalArgumentException("Session note number must be positive");
+        }
+        this.noteNumber.setText("[" + noteNumber + "]");
         timestamp.setText(formatRecordedAt(sessionNote.getRecordedAt()));
         noteText.setText(sessionNote.getText());
     }

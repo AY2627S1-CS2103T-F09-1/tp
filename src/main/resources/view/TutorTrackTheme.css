@@ -246,6 +246,12 @@
     -fx-text-fill: -app-text-muted;
 }
 
+.session-note-number {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -app-accent-dark;
+}
+
 .session-note-text {
     -fx-font-size: 14px;
     -fx-line-spacing: 2px;

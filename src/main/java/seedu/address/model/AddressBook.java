@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javafx.collections.ObservableList;
+import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
@@ -151,6 +152,18 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireAllNonNull(studentId, note);
         checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
         sessionHistories.addNote(studentId, note);
+    }
+
+    /**
+     * Removes and returns the note with the given chronological {@code noteNumber} from the student's history.
+     *
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
+     */
+    public SessionNote removeSessionNote(StudentId studentId, Index noteNumber) {
+        requireAllNonNull(studentId, noteNumber);
+        checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
+        return sessionHistories.removeNote(studentId, noteNumber);
     }
 
     /**

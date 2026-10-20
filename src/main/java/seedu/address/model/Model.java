@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionHistory;
@@ -133,6 +134,13 @@ public interface Model {
      */
     default SessionNote addSessionNote(StudentId studentId, String text) {
         throw new UnsupportedOperationException("Session note additions are not supported by this model.");
+    }
+
+    /**
+     * Deletes and returns the note with the given chronological {@code noteNumber} from the student's history.
+     */
+    default SessionNote deleteSessionNote(StudentId studentId, Index noteNumber) {
+        throw new UnsupportedOperationException("Session note deletions are not supported by this model.");
     }
 
     /**
