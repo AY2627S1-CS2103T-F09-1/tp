@@ -235,7 +235,7 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 ### Session note command
 
-`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing or invalid index is reported as an invalid command format, as `DeleteCommandParser` does, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing index or several words before `nt/` are reported as an invalid command format. A single word that is not a positive integer, such as `0`, `x`, or a number too large for an index, is reported as an invalid `INDEX`, as `DeleteCommandParser` does for `delete note`, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
@@ -777,8 +777,10 @@ testers are expected to do more *exploratory* testing.
    Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
 1. Enter `note 1 nt/Next: 3 sub/topics`.
    Expected: The note is added with `sub/topics` as part of its text.
-1. Enter each of `note`, `note 1`, `note 0 nt/text`, `note x nt/text`, and `note 1 2 nt/text`.
+1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
    Expected: Each shows an invalid command format error, and no note count changes.
+1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
+   Expected: Each reports that `INDEX` must be a positive integer and shows the `note` format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
    Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
