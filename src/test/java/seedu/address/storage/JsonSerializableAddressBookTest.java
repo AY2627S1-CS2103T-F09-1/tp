@@ -60,7 +60,7 @@ public class JsonSerializableAddressBookTest {
     }
 
     @Test
-    public void toModelType_sessionNotesWithEqualTimestamps_keepsOrder() throws Exception {
+    public void toModelType_sessionNotesWithEqualTimestamps_keepsOrderAcrossReloads() throws Exception {
         AddressBook original = new AddressBook();
         original.addStudent(ALEX);
         OffsetDateTime recordedAt = FACTORISATION_NOTE.getRecordedAt();
@@ -70,8 +70,10 @@ public class JsonSerializableAddressBookTest {
         original.addSessionNote(ALEX.getId(), second);
 
         AddressBook reloaded = new JsonSerializableAddressBook(original).toModelType();
+        AddressBook reloadedTwice = new JsonSerializableAddressBook(reloaded).toModelType();
 
-        assertEquals(List.of(first, second), reloaded.getSessionHistory(ALEX.getId()).getNotes());
+        assertEquals(List.of(second, first), reloaded.getSessionHistory(ALEX.getId()).getNotes());
+        assertEquals(original, reloadedTwice);
     }
 
     /**

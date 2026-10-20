@@ -136,9 +136,32 @@ public class AddressBookTest {
     }
 
     @Test
+    public void setSessionHistory_studentInRoster_replacesHistory() {
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        SessionHistory history = SessionHistory.of(List.of(FACTORISATION_NOTE));
+
+        addressBook.setSessionHistory(ALEX.getId(), history);
+
+        assertEquals(history, addressBook.getSessionHistory(ALEX.getId()));
+    }
+
+    @Test
+    public void setSessionHistory_studentNotInRoster_throwsIllegalArgumentException() {
+        addressBook.addStudent(ALEX);
+        SessionHistory history = SessionHistory.of(List.of(INDICES_NOTE));
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_UNKNOWN_STUDENT, () -> addressBook
+                .setSessionHistory(BEA.getId(), history));
+        assertTrue(addressBook.getSessionHistory(BEA.getId()).isEmpty());
+    }
+
+    @Test
     public void sessionNoteMethods_nullArguments_throwNullPointerException() {
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(null, INDICES_NOTE));
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(ALEX.getId(), null));
+        assertThrows(NullPointerException.class, () -> addressBook.setSessionHistory(null, SessionHistory.empty()));
+        assertThrows(NullPointerException.class, () -> addressBook.setSessionHistory(ALEX.getId(), null));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(null, Index.fromOneBased(1)));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(ALEX.getId(), null));
         assertThrows(NullPointerException.class, () -> addressBook.getSessionHistory(null));

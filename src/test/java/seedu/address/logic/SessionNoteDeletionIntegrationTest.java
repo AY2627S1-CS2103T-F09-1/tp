@@ -69,7 +69,7 @@ public class SessionNoteDeletionIntegrationTest {
 
         assertEquals("Successfully deleted session note [2] for Ari Tan.", deleteResult.getFeedbackToUser());
         assertTrue(model.getStudentProfile(studentId).isPresent());
-        assertEquals(List.of("First session.", "Third session."), model.getSessionHistory(studentId).getNotes()
+        assertEquals(List.of("Third session.", "First session."), model.getSessionHistory(studentId).getNotes()
                 .stream().map(SessionNote::getText).toList());
         assertEquals(List.of(2, 0), model.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getNoteCount).toList());

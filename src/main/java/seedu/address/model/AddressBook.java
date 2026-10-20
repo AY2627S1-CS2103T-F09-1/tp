@@ -155,6 +155,17 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
+     * Replaces the session history of the student with {@code studentId} with {@code history}.
+     *
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
+     */
+    public void setSessionHistory(StudentId studentId, SessionHistory history) {
+        requireAllNonNull(studentId, history);
+        checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
+        sessionHistories.setHistory(studentId, history);
+    }
+
+    /**
      * Removes and returns the note with the given chronological {@code noteNumber} from the student's history.
      *
      * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
