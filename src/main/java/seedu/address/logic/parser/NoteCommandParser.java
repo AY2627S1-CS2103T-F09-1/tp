@@ -15,8 +15,12 @@ import seedu.address.model.session.SessionNote;
  */
 public class NoteCommandParser implements Parser<NoteCommand> {
 
+    static final String MESSAGE_INVALID_INDEX =
+            "INDEX must be a positive integer.\n" + NoteCommand.MESSAGE_USAGE;
+
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
+    private static final String WHITESPACE_PATTERN = "\\s+";
 
     /**
      * Parses the given {@code String} of arguments in the context of the NoteCommand
@@ -45,13 +49,19 @@ public class NoteCommandParser implements Parser<NoteCommand> {
     /**
      * Returns the index given in {@code preamble}.
      *
-     * @throws ParseException If the preamble is not a single positive index.
+     * @throws ParseException If the preamble is empty or has several words, or if its single word is not a
+     *         positive integer.
      */
     private Index parseIndex(String preamble) throws ParseException {
+        boolean isSingleWord = !preamble.isEmpty() && preamble.split(WHITESPACE_PATTERN).length == 1;
+        if (!isSingleWord) {
+            throw new ParseException(MESSAGE_INVALID_FORMAT);
+        }
+
         try {
             return ParserUtil.parseIndex(preamble);
         } catch (ParseException exception) {
-            throw new ParseException(MESSAGE_INVALID_FORMAT, exception);
+            throw new ParseException(MESSAGE_INVALID_INDEX, exception);
         }
     }
 }
