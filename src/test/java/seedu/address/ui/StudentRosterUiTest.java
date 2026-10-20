@@ -486,7 +486,7 @@ public class StudentRosterUiTest {
                     if (originalClipboardContent.isEmpty()) {
                         systemClipboard.clear();
                     } else {
-                        systemClipboard.setContent(originalClipboardContent);
+                        assertTrue(systemClipboard.setContent(originalClipboardContent));
                     }
                 }
             }
