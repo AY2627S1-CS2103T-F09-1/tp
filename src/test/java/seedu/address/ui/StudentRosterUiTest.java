@@ -504,6 +504,35 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void selectableText_focusMoves_oldSelectionIsCleared() throws Exception {
+        onFxThread(() -> {
+            SelectableText firstText = new SelectableText();
+            firstText.setText("First selectable text");
+            SelectableText secondText = new SelectableText();
+            secondText.setText("Second selectable text");
+            VBox content = new VBox(firstText, secondText);
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(content, 280, 100));
+                stage.show();
+
+                firstText.requestFocus();
+                firstText.selectRange(0, "First".length());
+                assertEquals("First", firstText.getSelectedText());
+
+                secondText.requestFocus();
+                secondText.selectRange(0, "Second".length());
+
+                assertEquals("", firstText.getSelectedText());
+                assertEquals("Second", secondText.getSelectedText());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void selectableText_wrappedContent_growsVertically() throws Exception {
         onFxThread(() -> {
             SelectableText shortText = new SelectableText();

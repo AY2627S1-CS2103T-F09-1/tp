@@ -34,6 +34,11 @@ public class SelectableText extends TextArea {
 
         textProperty().addListener(observable -> requestPreferredSizeLayout());
         fontProperty().addListener(observable -> requestPreferredSizeLayout());
+        focusedProperty().addListener((observable, wasFocused, isFocused) -> {
+            if (!isFocused) {
+                deselect();
+            }
+        });
         addEventFilter(ScrollEvent.SCROLL, this::forwardScrollToListView);
     }
 
