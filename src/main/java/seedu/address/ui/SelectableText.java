@@ -3,6 +3,7 @@ package seedu.address.ui;
 import javafx.geometry.Orientation;
 import javafx.scene.Parent;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.text.Text;
@@ -95,7 +96,25 @@ public class SelectableText extends TextArea {
             ancestor = ancestor.getParent();
         }
         if (ancestor instanceof ListView<?> listView) {
-            listView.fireEvent(event.copyFor(listView, listView));
+            Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
+            if (virtualFlow != null) {
+                virtualFlow.getChildrenUnmodifiable().stream()
+                        .filter(ScrollBar.class::isInstance)
+                        .map(ScrollBar.class::cast)
+                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                        .filter(ScrollBar::isVisible)
+                        .findFirst()
+                        .ifPresent(scrollBar -> scrollVertically(scrollBar, event));
+            }
+        }
+    }
+
+    private void scrollVertically(ScrollBar scrollBar, ScrollEvent event) {
+        if (event.getDeltaY() < 0) {
+            scrollBar.increment();
+            event.consume();
+        } else if (event.getDeltaY() > 0) {
+            scrollBar.decrement();
             event.consume();
         }
     }

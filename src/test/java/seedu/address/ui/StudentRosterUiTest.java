@@ -25,6 +25,7 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
+import javafx.geometry.Orientation;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -33,6 +34,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -558,13 +560,16 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void selectableText_scrollEvent_forwardsToSessionHistoryList() throws Exception {
-        SessionNote note = new SessionNote("Reviewed algebra concepts.",
-                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+    public void selectableText_scrollEvent_scrollsSessionHistoryList() throws Exception {
+        List<SessionNote> notes = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            notes.add(new SessionNote("Reviewed algebra concepts in lesson " + i + ".",
+                    OffsetDateTime.parse("2026-09-18T18:35:00+08:00").minusDays(i)));
+        }
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
 
         onFxThread(() -> {
-            panel.setProfile(profile(null, List.of(note)));
+            panel.setProfile(profile(null, notes));
             Stage stage = new Stage();
             try {
                 stage.setScene(new Scene(panel.getRoot(), 360, 480));
@@ -575,13 +580,29 @@ public class StudentRosterUiTest {
                 ListView<StudentProfilePanel.NumberedSessionNote> listView = getSessionNoteListView(panel);
                 SelectableText noteText = (SelectableText) listView.lookup(".session-note-text");
                 assertNotNull(noteText);
-                int[] forwardedEvents = {0};
-                listView.addEventHandler(ScrollEvent.SCROLL, event -> forwardedEvents[0]++);
-                ScrollEvent scrollEvent = scrollEvent();
+                Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
+                assertNotNull(virtualFlow);
+                ScrollBar verticalScrollBar = virtualFlow.getChildrenUnmodifiable().stream()
+                        .filter(ScrollBar.class::isInstance)
+                        .map(ScrollBar.class::cast)
+                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                        .findFirst()
+                        .orElseThrow();
+                assertTrue(verticalScrollBar.isVisible());
+                double initialScrollValue = verticalScrollBar.getValue();
+                ScrollEvent downwardScrollEvent = scrollEvent();
 
-                noteText.fireEvent(scrollEvent);
+                noteText.fireEvent(downwardScrollEvent);
 
-                assertEquals(1, forwardedEvents[0]);
+                assertTrue(verticalScrollBar.getValue() > initialScrollValue);
+                double scrolledValue = verticalScrollBar.getValue();
+                ScrollEvent upwardScrollEvent = scrollEvent(40);
+                noteText.fireEvent(upwardScrollEvent);
+                assertTrue(verticalScrollBar.getValue() < scrolledValue);
+                double restoredScrollValue = verticalScrollBar.getValue();
+                ScrollEvent horizontalScrollEvent = scrollEvent(0);
+                noteText.fireEvent(horizontalScrollEvent);
+                assertEquals(restoredScrollValue, verticalScrollBar.getValue());
             } finally {
                 stage.hide();
             }
@@ -1017,9 +1038,13 @@ public class StudentRosterUiTest {
     }
 
     private ScrollEvent scrollEvent() {
+        return scrollEvent(-40);
+    }
+
+    private ScrollEvent scrollEvent(double deltaY) {
         return new ScrollEvent(ScrollEvent.SCROLL, 0, 0, 0, 0,
                 false, false, false, false, false, false,
-                0, -40, 0, -40,
+                0, deltaY, 0, deltaY,
                 ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
                 ScrollEvent.VerticalTextScrollUnits.NONE, 0, 0, null);
     }
