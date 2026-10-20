@@ -456,6 +456,31 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void profilePanel_tallWindow_detailsGridStaysAtPreferredHeight() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile("alex.parent@example.com"));
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 700, 800));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                GridPane details = (GridPane) getProfileContent(panel).getChildren().get(1);
+                double preferredHeight = details.prefHeight(details.getWidth());
+
+                assertTrue(details.getHeight() <= preferredHeight + 1);
+                assertTrue(details.maxHeight(details.getWidth()) <= preferredHeight + 1);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void selectableText_copyShortcut_copiesSelectionAndDoesNotEdit() throws Exception {
         onFxThread(() -> {
             SelectableText selectableText = new SelectableText();
