@@ -240,16 +240,10 @@
     -fx-border-width: 1px;
 }
 
-.session-note-timestamp {
+.session-note-header {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-text-fill: -app-text-muted;
-}
-
-.session-note-number {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-text-fill: -app-accent-dark;
 }
 
 .session-note-text {

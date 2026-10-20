@@ -21,9 +21,7 @@ public class SessionNoteCard extends UiPart<Region> {
             DateTimeFormatter.ofPattern("d MMM uuuu, h:mm a", Locale.ENGLISH);
 
     @FXML
-    private SelectableText noteNumber;
-    @FXML
-    private SelectableText timestamp;
+    private SelectableText header;
     @FXML
     private SelectableText noteText;
 
@@ -36,8 +34,7 @@ public class SessionNoteCard extends UiPart<Region> {
         if (noteNumber < 1) {
             throw new IllegalArgumentException("Session note number must be positive");
         }
-        this.noteNumber.setText("[" + noteNumber + "]");
-        timestamp.setText(formatRecordedAt(sessionNote.getRecordedAt()));
+        header.setText("[" + noteNumber + "] " + formatRecordedAt(sessionNote.getRecordedAt()));
         noteText.setText(sessionNote.getText());
     }
 
