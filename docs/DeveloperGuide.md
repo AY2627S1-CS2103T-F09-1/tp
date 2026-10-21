@@ -105,7 +105,7 @@ How the `Logic` component works:
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand` or `DeleteSessionNoteCommand`) which is coordinated by the `LogicManager`.
 1. An unconfirmed deletion command resolves its student or session-note target and returns a preview. `LogicManager` retains at most one pending deletion in memory and returns without saving because no model data changed.
 1. At the start of the next command, `LogicManager` consumes and clears the pending deletion. A matching confirmed command must still resolve to the same stable student and, for a session note, the same immutable history snapshot before the applicable model deletion operation can run.
-1. Commands that enter the persistence path are saved by `LogicManager`. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
+1. Commands that enter the persistence path and change the address book are saved by `LogicManager`; commands that leave it unchanged, such as `view`, `help`, and `exit`, are not saved. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
@@ -273,7 +273,7 @@ After a successful student deletion, `MainWindow` requests a fresh roster snapsh
 
 ### Save-failure rollback
 
-A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command on the persistence path, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. If `Storage#saveAddressBook` then throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws the same `CommandException` as before. A deletion preview bypasses this path because it does not mutate or save data.
+A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command on the persistence path, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. After the command runs, `LogicManager` compares the copy with the model's address book and skips saving when they are equal, so commands that change no data, such as `view`, `help`, and `exit`, still work when the data file cannot be written, and never overwrite a data file that failed to load. Otherwise, if `Storage#saveAddressBook` throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws a `CommandException` that names the data file from `Storage#getAddressBookFilePath()`; the exception itself may name the temporary file used for the write. A deletion preview bypasses this path because it does not mutate or save data.
 
 The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
 
@@ -281,7 +281,7 @@ The copy is made after parsing, so input that fails to parse never copies anythi
 
 * **Alternative 1 (current choice):** `LogicManager` copies the address book before commands on the persistence path and restores it when saving fails.
   * Pros: Covers persisted commands, including future ones, in one place while allowing non-mutating multi-step previews to opt out.
-  * Cons: Copies the address book for some commands that do not change it.
+  * Cons: Copies and compares the address book for commands that do not change it.
 * **Alternative 2:** Each command undoes its own changes when saving fails.
   * Pros: Copies nothing for commands that do not change data.
   * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.

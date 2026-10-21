@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -30,7 +31,8 @@ import seedu.address.storage.Storage;
  * The main LogicManager of the app.
  */
 public class LogicManager implements Logic {
-    public static final String FILE_OPS_ERROR_FORMAT = "Could not save data due to the following error: %s";
+    public static final String FILE_OPS_ERROR_FORMAT =
+            "Could not save data to file %s due to the following error: %s";
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
@@ -72,10 +74,18 @@ public class LogicManager implements Logic {
 
     /**
      * Executes a non-delete command and persists its model changes.
+     * A command that leaves the data unchanged is not saved, so it still succeeds when saving would fail.
      */
     private CommandResult executeAndSave(Command command) throws CommandException {
         AddressBook dataBeforeCommand = new AddressBook(model.getAddressBook());
         CommandResult commandResult = command.execute(model);
+
+        boolean hasDataChanged = !dataBeforeCommand.equals(model.getAddressBook());
+        if (!hasDataChanged) {
+            logger.fine("Command left the data unchanged; skipping save.");
+            return commandResult;
+        }
+
         saveOrRestore(dataBeforeCommand);
         return commandResult;
     }
@@ -183,14 +193,16 @@ public class LogicManager implements Logic {
      * @throws CommandException If the address book cannot be saved.
      */
     private void saveOrRestore(AddressBook dataBeforeCommand) throws CommandException {
+        // The exception may name a temporary file, so error messages name the data file instead.
+        Path dataFile = storage.getAddressBookFilePath();
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
             restore(dataBeforeCommand);
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
+            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, dataFile), e);
         } catch (IOException ioe) {
             restore(dataBeforeCommand);
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, dataFile, ioe.getMessage()), ioe);
         }
     }
 
