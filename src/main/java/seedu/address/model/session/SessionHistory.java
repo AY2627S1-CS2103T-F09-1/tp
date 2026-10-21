@@ -35,8 +35,22 @@ public final class SessionHistory {
     }
 
     /**
+     * Returns a history containing {@code notes}, ordered newest first.
+     * Notes with equal timestamps keep their relative order in {@code notes}, so a history saved newest first
+     * is restored exactly.
+     */
+    public static SessionHistory of(List<SessionNote> notes) {
+        requireNonNull(notes);
+        List<SessionNote> sortedNotes = new ArrayList<>(notes);
+        // List#sort is stable, which keeps notes with equal timestamps in their given order.
+        sortedNotes.sort(NEWEST_FIRST);
+        return sortedNotes.isEmpty() ? empty() : new SessionHistory(List.copyOf(sortedNotes));
+    }
+
+    /**
      * Returns a new history containing this history's notes and {@code note}.
-     * Notes with equal timestamps keep the order in which they were added.
+     * Among notes with equal timestamps, {@code note} is treated as the newest, so notes are numbered in the
+     * order they were added.
      */
     public SessionHistory withNote(SessionNote note) {
         requireNonNull(note);
@@ -99,12 +113,12 @@ public final class SessionHistory {
     }
 
     /**
-     * Returns the index before the first note recorded earlier than {@code note},
-     * so that the new note follows any existing notes with an equal timestamp.
+     * Returns the index of the first note recorded no later than {@code note},
+     * so that the new note precedes any existing notes with an equal timestamp.
      */
     private int findInsertionIndex(SessionNote note) {
         for (int i = 0; i < notes.size(); i++) {
-            if (NEWEST_FIRST.compare(note, notes.get(i)) < 0) {
+            if (NEWEST_FIRST.compare(note, notes.get(i)) <= 0) {
                 return i;
             }
         }

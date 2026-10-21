@@ -24,6 +24,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.profile.StudentProfile;
+import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
@@ -123,6 +124,20 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void addSessionNote_sameSecond_numbersNotesInAddedOrder() {
+        Clock clock = Clock.fixed(Instant.parse("2026-09-18T10:35:00Z"), ZoneOffset.ofHours(8));
+        ModelManager model = new ModelManager(new AddressBook(), new UserPrefs(), clock);
+        model.addStudent(ALEX);
+
+        SessionNote firstNote = model.addSessionNote(ALEX.getId(), "Started algebra worksheet.");
+        SessionNote secondNote = model.addSessionNote(ALEX.getId(), "Finished algebra worksheet.");
+
+        SessionHistory history = model.getSessionHistory(ALEX.getId());
+        assertEquals(firstNote, history.getNote(Index.fromOneBased(1)));
+        assertEquals(secondNote, history.getNote(Index.fromOneBased(2)));
+    }
+
+    @Test
     public void addSessionNote_invalidText_throwsIllegalArgumentExceptionAndKeepsHistory() {
         modelManager.addStudent(ALEX);
 
@@ -188,7 +203,7 @@ public class ModelManagerTest {
         assertEquals(ALEX.getParentGuardianContact(), profile.getParentGuardianContact());
         assertEquals(ALEX.getSubject(), profile.getSubject());
         assertEquals(ALEX.getCurrentLevel(), profile.getCurrentLevel());
-        assertEquals(List.of(firstNote, secondNote), profile.getSessionNotes());
+        assertEquals(List.of(secondNote, firstNote), profile.getSessionNotes());
     }
 
     @Test

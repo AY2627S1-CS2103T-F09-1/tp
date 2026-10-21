@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.session.SessionHistory;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -106,17 +107,19 @@ class JsonAdaptedStudent {
 
     /**
      * Returns the validated session history represented by this JSON object's session notes.
+     * Notes with equal timestamps keep their saved order.
      *
      * @throws IllegalValueException If a session note is empty or invalid.
      */
     SessionHistory toModelSessionHistory() throws IllegalValueException {
-        SessionHistory history = SessionHistory.empty();
+        List<SessionNote> modelNotes = new ArrayList<>();
         for (JsonAdaptedSessionNote sessionNote : sessionNotes) {
             if (sessionNote == null) {
                 throw new IllegalValueException(MISSING_SESSION_NOTE_MESSAGE);
             }
-            history = history.withNote(sessionNote.toModelType());
+            modelNotes.add(sessionNote.toModelType());
         }
+        SessionHistory history = SessionHistory.of(modelNotes);
         assert history.size() == sessionNotes.size() : "Every persisted session note must be in the history";
         return history;
     }

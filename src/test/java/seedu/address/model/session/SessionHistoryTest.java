@@ -8,6 +8,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,42 @@ public class SessionHistoryTest {
 
     private static final SessionNote EARLIER_NOTE = new SessionNote("Reviewed indices.", EARLIER);
     private static final SessionNote LATER_NOTE = new SessionNote("Reviewed factorisation.", LATER);
+    private static final SessionNote FIRST_TIED_NOTE = new SessionNote("Started algebra worksheet.", LATER);
+    private static final SessionNote SECOND_TIED_NOTE = new SessionNote("Finished algebra worksheet.", LATER);
+
+    @Test
+    public void of_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> SessionHistory.of(null));
+    }
+
+    @Test
+    public void of_emptyList_returnsSharedEmptyHistory() {
+        assertSame(SessionHistory.empty(), SessionHistory.of(List.of()));
+    }
+
+    @Test
+    public void of_notesNewestFirst_keepsGivenOrder() {
+        List<SessionNote> notes = List.of(SECOND_TIED_NOTE, FIRST_TIED_NOTE, EARLIER_NOTE);
+
+        assertEquals(notes, SessionHistory.of(notes).getNotes());
+    }
+
+    @Test
+    public void of_notesOutOfOrder_sortsNewestFirstKeepingOrderOfEqualTimestamps() {
+        List<SessionNote> notes = List.of(EARLIER_NOTE, SECOND_TIED_NOTE, FIRST_TIED_NOTE);
+
+        assertEquals(List.of(SECOND_TIED_NOTE, FIRST_TIED_NOTE, EARLIER_NOTE), SessionHistory.of(notes).getNotes());
+    }
+
+    @Test
+    public void of_givenListModified_historyUnchanged() {
+        List<SessionNote> notes = new ArrayList<>(List.of(EARLIER_NOTE));
+        SessionHistory history = SessionHistory.of(notes);
+
+        notes.add(LATER_NOTE);
+
+        assertEquals(List.of(EARLIER_NOTE), history.getNotes());
+    }
 
     @Test
     public void empty_noNotes() {
@@ -53,27 +90,26 @@ public class SessionHistoryTest {
     }
 
     @Test
-    public void withNote_equalTimestamps_keepsInsertionOrder() {
-        SessionNote first = new SessionNote("Started algebra worksheet.", LATER);
-        SessionNote second = new SessionNote("Finished algebra worksheet.", LATER);
-
+    public void withNote_equalTimestamps_laterNoteNumberedAfterEarlierNote() {
         SessionHistory history = SessionHistory.empty()
                 .withNote(EARLIER_NOTE)
-                .withNote(first)
-                .withNote(second);
+                .withNote(FIRST_TIED_NOTE)
+                .withNote(SECOND_TIED_NOTE);
 
-        assertEquals(List.of(first, second, EARLIER_NOTE), history.getNotes());
+        assertEquals(List.of(SECOND_TIED_NOTE, FIRST_TIED_NOTE, EARLIER_NOTE), history.getNotes());
+        assertEquals(FIRST_TIED_NOTE, history.getNote(Index.fromOneBased(2)));
+        assertEquals(SECOND_TIED_NOTE, history.getNote(Index.fromOneBased(3)));
     }
 
     @Test
-    public void withNote_sameInstantDifferentOffsets_keepsInsertionOrder() {
+    public void withNote_sameInstantDifferentOffsets_laterNoteNumberedAfterEarlierNote() {
         SessionNote singapore = new SessionNote("Recorded in Singapore.", LATER);
         OffsetDateTime sameInstantInUtc = LATER.withOffsetSameInstant(ZoneOffset.UTC);
         SessionNote utc = new SessionNote("Recorded in UTC.", sameInstantInUtc);
 
         SessionHistory history = SessionHistory.empty().withNote(singapore).withNote(utc);
 
-        assertEquals(List.of(singapore, utc), history.getNotes());
+        assertEquals(List.of(utc, singapore), history.getNotes());
     }
 
     @Test

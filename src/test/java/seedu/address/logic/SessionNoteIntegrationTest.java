@@ -66,8 +66,8 @@ public class SessionNoteIntegrationTest {
         StudentId ariId = entries.get(0).getStudentId();
         List<String> reloadedTexts = reloadedModel.getSessionHistory(ariId).getNotes().stream()
                 .map(SessionNote::getText).toList();
-        // Both notes share the fixed clock's timestamp, so they keep the order in which they were added.
-        assertEquals(List.of("Reviewed indices.", "Reviewed factorisation."), reloadedTexts);
+        // Both notes share the fixed clock's timestamp, so the note added later is listed as the newer one.
+        assertEquals(List.of("Reviewed factorisation.", "Reviewed indices."), reloadedTexts);
         assertEquals(model.getSessionHistory(ariId), reloadedModel.getSessionHistory(ariId));
         assertTrue(Files.readString(dataFile).contains("\"recordedAt\" : \"2026-09-18T18:35:00+08:00\""));
     }
