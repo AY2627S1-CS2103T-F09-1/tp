@@ -165,6 +165,20 @@ public interface Model {
     }
 
     /**
+     * Replaces a session note's text while preserving its recorded date and time.
+     *
+     * @param studentId The identifier of a student in the roster.
+     * @param noteNumber The chronological number of the note to edit.
+     * @param text Valid replacement note text, as checked by {@link SessionNote#isValidText(String)}.
+     * @return The replacement note.
+     * @throws IllegalArgumentException If the text is invalid or no student in the roster has {@code studentId}.
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
+     */
+    default SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
+        throw new UnsupportedOperationException("Session note editing is not supported by this model.");
+    }
+
+    /**
      * Removes the session history of the student with {@code studentId}.
      *
      * @return The number of session notes removed, which is zero if the student had none.

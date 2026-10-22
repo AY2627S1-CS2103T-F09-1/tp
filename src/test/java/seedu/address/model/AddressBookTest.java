@@ -249,6 +249,26 @@ public class AddressBookTest {
     }
 
     @Test
+    public void editSessionNote_validNumber_replacesTextAndPreservesTimestamp() {
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+
+        SessionNote editedNote = addressBook.editSessionNote(ALEX.getId(), Index.fromOneBased(1), "Corrected summary.");
+
+        assertEquals("Corrected summary.", editedNote.getText());
+        assertEquals(INDICES_NOTE.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(List.of(editedNote), addressBook.getSessionHistory(ALEX.getId()).getNotes());
+    }
+
+    @Test
+    public void editSessionNote_unknownStudent_throwsIllegalArgumentException() {
+        addressBook.addStudent(ALEX);
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_UNKNOWN_STUDENT, () -> addressBook
+                .editSessionNote(BEA.getId(), Index.fromOneBased(1), "Corrected summary."));
+    }
+
+    @Test
     public void sessionNoteMethods_nullArguments_throwNullPointerException() {
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(null, INDICES_NOTE));
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(ALEX.getId(), null));
@@ -256,6 +276,11 @@ public class AddressBookTest {
         assertThrows(NullPointerException.class, () -> addressBook.setSessionHistory(ALEX.getId(), null));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(null, Index.fromOneBased(1)));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(ALEX.getId(), null));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(null,
+                Index.fromOneBased(1), "text"));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(), null, "text"));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(),
+                Index.fromOneBased(1), null));
         assertThrows(NullPointerException.class, () -> addressBook.getSessionHistory(null));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionHistory(null));
     }

@@ -18,6 +18,7 @@ import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditStudentDescriptor;
+import seedu.address.logic.commands.EditNoteCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.NoteCommand;
@@ -78,6 +79,12 @@ public class AddressBookParserTest {
         EditCommand command = (EditCommand) parser.parseCommand("edit 1 sub/Physics");
 
         assertEquals(new EditCommand(INDEX_FIRST_PERSON, descriptor), command);
+    }
+
+    @Test
+    public void parseCommand_editNote() throws Exception {
+        EditNoteCommand command = (EditNoteCommand) parser.parseCommand("edit note 1 2 nt/Corrected summary.");
+        assertEquals(new EditNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), "Corrected summary."), command);
     }
 
     @Test

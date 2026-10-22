@@ -147,6 +147,15 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
+        requireAllNonNull(studentId, noteNumber, text);
+        SessionNote editedNote = addressBook.editSessionNote(studentId, noteNumber, text);
+        assert addressBook.getSessionHistory(studentId).getNote(noteNumber).equals(editedNote)
+                : "The edited session note must appear in the student's history";
+        return editedNote;
+    }
+
+    @Override
     public int removeSessionHistory(StudentId studentId) {
         return addressBook.removeSessionHistory(studentId);
     }

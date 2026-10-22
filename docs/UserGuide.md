@@ -32,6 +32,8 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `note 1 nt/Review trigo next session.` : Adds a session note to the first student shown in the current roster.
 
+   * `edit note 1 1 nt/Corrected lesson summary.` : Replaces the first student's first session note without changing its timestamp.
+
    * `delete 1` : Shows a confirmation prompt for deleting the first student and all of that student's session notes. Enter `delete 1 /confirm` next to complete the deletion.
 
    * `delete note 1 2` : Shows a confirmation prompt for deleting session note `[2]` from the first student. Enter `delete note 1 2 /confirm` next to complete the deletion.
@@ -139,6 +141,21 @@ Examples:
 * `note 3 nt/Completed past-year paper 2 (scored 34/40).`
 
 If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note.
+
+### Editing a session note: `edit note`
+
+Replaces the text of one existing session note. The note's recorded date and time, chronological position, number, and the student's note count remain unchanged. If that student's profile is open, it refreshes after the command succeeds.
+
+Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
+
+* `STUDENT_INDEX` is the student's number in the currently displayed roster.
+* `NOTE_NUMBER` is the number shown beside the note in the student's profile. The oldest note is `[1]`.
+* `NEW_NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed.
+* Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside the replacement is saved as part of the note.
+
+Example: `edit note 1 2 nt/Corrected lesson summary.`
+
+If either selector is missing, invalid, or outside the current range, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. A failed save also restores the original note.
 
 ### Viewing a student profile: `view`
 
@@ -255,6 +272,7 @@ Action | Format, Examples
 **Delete student** | Preview: `delete INDEX`<br>Confirm: `delete INDEX /confirm`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Delete note** | Preview: `delete note STUDENT_INDEX NOTE_NUMBER`<br>Confirm: `delete note STUDENT_INDEX NOTE_NUMBER /confirm`<br> e.g., `delete note 1 3`, then `delete note 1 3 /confirm`
 **Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`
+**Edit note** | `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`<br> e.g., `edit note 1 2 nt/Corrected summary.`
 **View** | `view INDEX`<br> e.g., `view 2`
 **Help** | `help`
 **Exit** | `exit`

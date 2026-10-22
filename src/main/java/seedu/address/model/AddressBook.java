@@ -207,6 +207,19 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
+     * Replaces one session note's text while preserving its recorded date and time.
+     *
+     * @return The replacement note.
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
+     */
+    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
+        requireAllNonNull(studentId, noteNumber, text);
+        checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
+        return sessionHistories.editNote(studentId, noteNumber, text);
+    }
+
+    /**
      * Removes the session history of the student with {@code studentId}.
      *
      * @return The number of session notes removed, which is zero if the student had none.
