@@ -89,7 +89,12 @@ Adds a student with the responsible parent or guardian's contact details, subjec
 
 Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 
-The name, parent phone, subject, and current level are required. Parent email is optional. TutorTrack preserves each student's identity when the data file is saved and reloaded. A duplicate is a student whose normalized name and parent phone both match an existing student; spaces and hyphens in a parent phone do not make a distinct student. A successful addition reports the student's name, subject, and level. Duplicate students, missing values, invalid values, and unknown parameters explain the problem and then show this command's format. The only supported parameters are `n/`, `p/`, `sub/`, `l/`, and optional `e/`.
+* **Required details:** Name, parent or guardian phone number, subject, and current level must be provided.
+* **Optional detail:** Parent or guardian email may be included with `e/`.
+* **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
+* **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
+* **After a successful addition:** TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
+* **Invalid input:** Missing values, invalid values, duplicate students, and unknown parameters leave the roster unchanged, explain the problem, and show the command format again.
 
 Examples:
 
@@ -233,15 +238,6 @@ Format: `exit`
 TutorTrack automatically saves data-changing commands. You do not need to save manually. Student and session-note deletion previews do not save because they do not change any data.
 
 If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command.
-
-### Editing the data file
-
-TutorTrack data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Student records include an internal `studentId` that should be preserved when manually editing the data file and must be unique for every student. Each student's session notes are stored in that student's `sessionNotes` list, and each note has a `recordedAt` date and time with a time-zone offset, such as `2026-09-18T18:35:00+08:00`, and its `text`. Displayed note numbers and pending confirmations are not saved. A `recordedAt` without the offset (for example `2026-09-18T18:35:00`) makes the data file invalid. Advanced users are welcome to update data directly by editing that data file.
-
-<div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If your changes make the data file invalid, TutorTrack starts with an empty student roster at the next run and shows an error. Before a command can replace the invalid file, TutorTrack keeps a uniquely named copy such as `[JAR file location]/data/addressbook.json.backup-<unique>.bak`. Correct the original file and restart TutorTrack before running a command that saves data. Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause TutorTrack to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
-</div>
 
 ### Archiving data files `[coming in v2.0]`
 
