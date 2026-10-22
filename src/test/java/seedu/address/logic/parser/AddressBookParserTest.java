@@ -16,6 +16,8 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
+import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.address.logic.commands.EditNoteCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -68,6 +70,15 @@ public class AddressBookParserTest {
         DeleteSessionNoteCommand command = (DeleteSessionNoteCommand) parser.parseCommand(
                 "delete note 1 2 /confirm");
         assertEquals(new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), true), command);
+    }
+
+    @Test
+    public void parseCommand_edit() throws Exception {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Physics"));
+        EditCommand command = (EditCommand) parser.parseCommand("edit 1 sub/Physics");
+
+        assertEquals(new EditCommand(INDEX_FIRST_PERSON, descriptor), command);
     }
 
     @Test
@@ -157,7 +168,7 @@ public class AddressBookParserTest {
     @Test
     public void getLoggableCommandWord_everyCommandWord_returnsCommandWord() {
         List<String> commandWords = List.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
-                EditNoteCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
+                EditCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
                 ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD);
 
         for (String commandWord : commandWords) {

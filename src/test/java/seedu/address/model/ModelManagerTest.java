@@ -176,6 +176,23 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void setStudent_validReplacement_updatesProfileAndPreservesHistory() {
+        modelManager.addStudent(ALEX);
+        modelManager.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        Student editedAlex = new Student(new StudentName("Alexis Tan"),
+                ALEX.getParentGuardianContact(), new Subject("Physics"), new CurrentLevel("Secondary 4"),
+                ALEX.getId());
+
+        modelManager.setStudent(ALEX.getId(), editedAlex);
+
+        StudentProfile profile = modelManager.getStudentProfile(ALEX.getId()).orElseThrow();
+        assertEquals(editedAlex.getName(), profile.getName());
+        assertEquals(editedAlex.getSubject(), profile.getSubject());
+        assertEquals(editedAlex.getCurrentLevel(), profile.getCurrentLevel());
+        assertEquals(1, profile.getSessionNotes().size());
+    }
+
+    @Test
     public void deleteSessionNote_validNumber_removesOnlySelectedNoteAndUpdatesCount() {
         AddressBook addressBook = new AddressBook();
         addressBook.addStudent(ALEX);

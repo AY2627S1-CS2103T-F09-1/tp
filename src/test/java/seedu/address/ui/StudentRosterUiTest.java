@@ -934,6 +934,39 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void executeCommand_editAfterView_refreshesReorderedRosterAndOpenProfile() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Tan", BLAIR_ID);
+        Student editedAlex = new Student(new StudentName("Zane Tan"), alex.getParentGuardianContact(),
+                new Subject("Physics"), new CurrentLevel("Secondary 4"), ALEX_ID);
+        StudentRoster initialRoster = new StudentRoster(List.of(alex, blair));
+        StudentRoster editedRoster = new StudentRoster(List.of(editedAlex, blair));
+        TestLogic logic = new TestLogic(initialRoster, editedRoster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+        StudentProfile editedProfile = new StudentProfile(ALEX_ID, editedAlex.getName(),
+                editedAlex.getParentGuardianContact(), editedAlex.getSubject(), editedAlex.getCurrentLevel(),
+                List.of());
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Edited student: Zane Tan (Physics, Secondary 4)."));
+            logic.setProfile(Optional.of(editedProfile));
+
+            mainWindow.executeCommand("edit 1 n/Zane Tan sub/Physics l/Secondary 4");
+
+            ListView<StudentRosterEntry> rosterList = getListView(mainWindow.getStudentRosterPanel());
+            assertEquals(List.of(BLAIR_ID, ALEX_ID), rosterList.getItems().stream()
+                    .map(StudentRosterEntry::getStudentId).toList());
+            assertEquals(ALEX_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
+            assertEquals("Zane Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_deleteSessionNoteAfterView_refreshesNotesAndNumbers() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
         SessionNote newestNote = new SessionNote("Third session.",

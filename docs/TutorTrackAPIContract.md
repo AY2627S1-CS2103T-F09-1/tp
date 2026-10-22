@@ -16,6 +16,7 @@ TutorTrack supports one local tutor managing a roster of students. The MVP
 includes:
 
 * Adding a student
+* Editing a student's details without replacing the student's identity or session history
 * Displaying the student roster automatically on launch and after roster mutations
 * Viewing a student profile
 * Adding a session note
@@ -24,7 +25,7 @@ includes:
 * Deleting a student and the student's session notes
 * Saving and loading data from a local, human-editable JSON file
 
-The MVP does not include student editing, searching, undo, scheduling, attendance,
+The MVP does not include searching, undo, scheduling, attendance,
 messaging, billing, accounts, multi-user access, or cloud synchronisation.
 The `exit` command remains application lifecycle behavior rather than a
 TutorTrack domain feature.
@@ -36,17 +37,18 @@ TutorTrack domain feature.
 | Student identity | Each student has an internal `StudentId`. The ID is not entered by the tutor or displayed as the roster selector. |
 | Duplicate student | Two students are duplicates when their normalized names and normalized parent phone numbers both match. |
 | Parent contact | Parent or guardian phone is required; parent or guardian email is optional. |
+| Student edit | An edit resolves the current roster index to a `StudentId`, replaces only supplied fields, preserves that ID and its complete session history, and rejects a duplicate identity. An explicitly empty email removes the optional email. |
 | Roster selection | User-facing selection uses a positive, one-based index in the current sorted roster displayed on launch and after roster mutations. Domain APIs use `StudentId`. |
-| Roster order | Students are sorted by normalized name, case-insensitively. Equal names retain creation order. |
+| Roster order | Students are sorted by normalized name, normalized parent phone, and stable student ID. |
 | Session timestamp | A session note receives the current local date and time when it is added. |
 | Note order | Profiles display notes newest first. Equal timestamps retain insertion order. |
 | Note selection | Visible note numbers increase chronologically from one for the oldest note to the history size for the newest note. They are transient selectors, not persisted identifiers. |
 | Persistence | The data file is local, human-editable JSON. No database or network service is required. |
 | Failed mutation | Validation or storage failure leaves the in-memory model, UI, and file unchanged. |
 
-The internal `StudentId` is recommended even though the MVP selects students by
-roster index. It prevents profile, note, and delete operations from depending
-on a row number after the roster is redrawn.
+The internal `StudentId` is required even though the MVP selects students by
+roster index. It prevents edit, profile, note, and delete operations from
+depending on a row number after the roster is redrawn.
 
 ## Domain vocabulary
 
@@ -87,6 +89,9 @@ public interface StudentRoster {
     /** Adds a validated student and returns its internal identifier. */
     StudentId addStudent(NewStudent student);
 
+    /** Replaces editable details while preserving the student's internal identifier. */
+    StudentSnapshot replaceStudent(StudentId studentId, StudentUpdate update);
+
     /** Removes one student record from the roster. */
     StudentSnapshot removeStudent(StudentId studentId);
 }
@@ -94,8 +99,11 @@ public interface StudentRoster {
 
 `RosterEntry` contains the user-visible index, `StudentId`, name, subject,
 current level, and session-note count. `StudentSnapshot` contains the student
-fields but not mutable domain collections. The deletion coordinator uses the
-stable ID to keep a preview bound to the same student until confirmation.
+fields but not mutable domain collections. `StudentUpdate` distinguishes an
+omitted field from an explicitly removed optional email. Replacement rejects
+an unknown target, changed ID, invalid value, or identity matching another
+student. The deletion coordinator uses the stable ID to keep a preview bound
+to the same student until confirmation.
 
 ### Profile and session API
 
@@ -147,13 +155,14 @@ The parser accepts these commands:
 
 ```text
 add n/NAME p/PHONE sub/SUBJECT l/LEVEL [e/EMAIL]
+edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [sub/SUBJECT] [l/LEVEL]
 view INDEX
 note INDEX nt/NOTE
 delete INDEX [/confirm]
 delete note STUDENT_INDEX NOTE_NUMBER [/confirm]
 ```
 
-Command words, prefixes, and `/confirm` use the exact lowercase forms shown. Add prefixes may appear in any order, but each recognized prefix may appear at most once. The `note` command recognizes only `nt/` as its note-text prefix.
+Command words, prefixes, and `/confirm` use the exact lowercase forms shown. Add and edit prefixes may appear in any order, but each recognized prefix may appear at most once. The `note` command recognizes only `nt/` as its note-text prefix.
 
 ### Add student
 
@@ -165,6 +174,20 @@ Command words, prefixes, and `/confirm` use the exact lowercase forms shown. Add
 
 Required fields are name, parent phone, subject, and current level. Email is
 optional.
+
+### Edit student
+
+1. Resolve `INDEX` against the current sorted roster and retain its stable `StudentId`.
+1. Require at least one supplied field and validate every supplied value before changing the model.
+1. Retain omitted fields; treat an explicitly empty `e/` as removal of the optional email.
+1. Reject a replacement whose normalized name and phone duplicate another student.
+1. Replace the record while preserving its `StudentId` and complete session history.
+1. Save the mutation, redraw and re-index the roster, and refresh an open profile by stable ID.
+1. Report `Edited student: <Name> (<Subject>, <Level>).` on success.
+
+A missing or out-of-range index, unsupported or repeated prefix, invalid value,
+or save failure leaves the student, session history, profile, and stored data
+unchanged.
 
 ### Display roster
 
@@ -329,7 +352,7 @@ Before feature branches begin, the team should confirm:
 * The JSON field names and timestamp format
 * The validation limits and normalization rules
 * The no-partial-update storage guarantee
-* The inherited command policy: remove person-form `add` and `edit`, retain TutorTrack's `edit note`, and retain `help` and `exit`; remove `find` and `clear`
+* The inherited command policy: replace person-form `add` and `edit` with student commands, support `edit note`, remove `find` and `clear`, and retain `help` and `exit`
 * The migration behavior for existing AddressBook data
 
 After ratification, this document becomes the reference for branch

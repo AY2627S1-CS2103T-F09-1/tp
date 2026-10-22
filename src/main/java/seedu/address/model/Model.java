@@ -72,10 +72,31 @@ public interface Model {
     }
 
     /**
+     * Returns the immutable student with {@code studentId}, or an empty optional if that student is absent.
+     */
+    default Optional<Student> getStudent(StudentId studentId) {
+        return getAddressBook().getStudent(studentId);
+    }
+
+    /**
+     * Returns another student with the same identity as {@code editedStudent}, if one exists.
+     */
+    default Optional<Student> findConflictingStudent(StudentId targetStudentId, Student editedStudent) {
+        return getAddressBook().findConflictingStudent(targetStudentId, editedStudent);
+    }
+
+    /**
      * Adds a student to the model.
      */
     default void addStudent(Student student) {
         throw new UnsupportedOperationException("Student additions are not supported by this model.");
+    }
+
+    /**
+     * Replaces the student with {@code studentId} while preserving that student's session history.
+     */
+    default void setStudent(StudentId studentId, Student editedStudent) {
+        throw new UnsupportedOperationException("Student edits are not supported by this model.");
     }
 
     /**

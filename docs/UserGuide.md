@@ -28,6 +28,8 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `add n/John p/98765432 sub/Math l/Sec 3` : Adds a student named `John` to TutorTrack.
 
+   * `edit 1 l/Sec 4` : Updates the current level of the first student while keeping the rest of that student's record and session notes.
+
    * `note 1 nt/Review trigo next session.` : Adds a session note to the first student shown in the current roster.
 
    * `edit note 1 1 nt/Corrected lesson summary.` : Replaces the first student's first session note without changing its timestamp.
@@ -93,6 +95,26 @@ Examples:
 
 * `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`
 * `add sub/English Literature l/JC 1 n/Dev Patel p/91234567`
+
+### Editing a student: `edit`
+
+Edits one or more details for an existing student without deleting the student or their session notes.
+
+Format: `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]`
+
+* `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number that refers to an existing student.
+* Supply at least one field. Details you omit keep their existing values.
+* Use `e/` without a value to remove the parent or guardian email. Other supplied fields cannot be empty.
+* The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order.
+* Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts, preserves that student's internal identity and session notes, and keeps an open profile selected on that student.
+
+Examples:
+
+* `edit 2 p/9123 4567 l/Secondary 4`
+* `edit 1 e/`
+* `edit 3 n/Devika Patel sub/English Literature`
+
+A successful edit reports the student's updated name, subject, and current level, refreshes the roster and any open profile, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student. Invalid indices, missing edit fields, repeated or unknown parameters, and invalid values leave the student, session notes, open profile, and saved data unchanged. If saving fails, TutorTrack restores the complete original record.
 
 ### Viewing the student roster
 
@@ -246,6 +268,7 @@ _Details coming soon ..._
 Action | Format, Examples
 --------|------------------
 **Add** | `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`<br> e.g., `add n/James Ho p/91234567 sub/Mathematics l/Secondary 3`
+**Edit** | `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]`<br> e.g., `edit 2 p/9123 4567 l/Secondary 4`; use `edit 2 e/` to remove the email
 **Delete student** | Preview: `delete INDEX`<br>Confirm: `delete INDEX /confirm`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Delete note** | Preview: `delete note STUDENT_INDEX NOTE_NUMBER`<br>Confirm: `delete note STUDENT_INDEX NOTE_NUMBER /confirm`<br> e.g., `delete note 1 3`, then `delete note 1 3 /confirm`
 **Note** | `note INDEX nt/NOTE`<br> e.g., `note 1 nt/Reviewed factorisation.`

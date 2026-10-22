@@ -26,6 +26,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     static final String MESSAGE_UNKNOWN_STUDENT = "Session notes must belong to a student in the roster.";
     static final String MESSAGE_STUDENT_NOT_FOUND = "Student must exist in the roster.";
+    static final String MESSAGE_STUDENT_ID_MISMATCH = "Edited student must retain the target student's ID.";
+    static final String MESSAGE_DUPLICATE_STUDENT = "Student with the same identity already exists.";
 
     private final UniquePersonList persons = new UniquePersonList();
     private final List<Student> students = new java.util.ArrayList<>();
@@ -140,6 +142,21 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
+     * Replaces the student with {@code studentId} while preserving the student's stable identity and session history.
+     *
+     * @throws IllegalArgumentException If the target does not exist, the replacement has a different ID, or another
+     *         student has the replacement's duplicate-detection identity.
+     */
+    public void setStudent(StudentId studentId, Student editedStudent) {
+        requireAllNonNull(studentId, editedStudent);
+        int targetIndex = findStudentIndex(studentId);
+        checkArgument(editedStudent.getId().equals(studentId), MESSAGE_STUDENT_ID_MISMATCH);
+        checkArgument(findConflictingStudent(studentId, editedStudent).isEmpty(), MESSAGE_DUPLICATE_STUDENT);
+
+        students.set(targetIndex, editedStudent);
+    }
+
+    /**
      * Removes the student with {@code studentId} and that student's session history.
      *
      * @return The number of session notes removed with the student.
@@ -147,10 +164,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public int removeStudent(StudentId studentId) {
         requireNonNull(studentId);
-        Student studentToRemove = students.stream()
-                .filter(student -> student.getId().equals(studentId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_STUDENT_NOT_FOUND));
+        Student studentToRemove = students.get(findStudentIndex(studentId));
 
         students.remove(studentToRemove);
         return sessionHistories.removeHistory(studentId);
@@ -223,6 +237,20 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private boolean hasStudentWithId(StudentId studentId) {
         return students.stream().anyMatch(student -> student.getId().equals(studentId));
+    }
+
+    /**
+     * Returns the list index of the student with {@code studentId}.
+     *
+     * @throws IllegalArgumentException If no student has {@code studentId}.
+     */
+    private int findStudentIndex(StudentId studentId) {
+        for (int index = 0; index < students.size(); index++) {
+            if (students.get(index).getId().equals(studentId)) {
+                return index;
+            }
+        }
+        throw new IllegalArgumentException(MESSAGE_STUDENT_NOT_FOUND);
     }
 
     //// util methods
