@@ -20,7 +20,7 @@
   <VBox fx:id="profileContent" maxWidth="Infinity" minWidth="0" spacing="18"
         styleClass="profile-content" visible="false" managed="false">
     <SelectableText fx:id="studentName" maxWidth="Infinity" styleClass="profile-name" />
-    <GridPane hgap="14" maxHeight="-Infinity" maxWidth="Infinity" minWidth="0"
+    <GridPane hgap="14" maxWidth="Infinity" minWidth="0"
               styleClass="profile-details" vgap="12" VBox.vgrow="NEVER">
       <columnConstraints>
         <ColumnConstraints minWidth="112" prefWidth="145" maxWidth="170" />

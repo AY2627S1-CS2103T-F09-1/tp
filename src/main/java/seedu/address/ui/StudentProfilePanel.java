@@ -12,6 +12,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionNote;
 
@@ -49,9 +50,17 @@ public class StudentProfilePanel extends UiPart<Region> {
      */
     public StudentProfilePanel() {
         super(FXML);
+        clipContentToPanel();
         sessionNoteListView.setItems(sessionNotes);
         sessionNoteListView.setCellFactory(listView -> new SessionNoteListViewCell());
         clearProfile();
+    }
+
+    private void clipContentToPanel() {
+        Rectangle panelClip = new Rectangle();
+        panelClip.widthProperty().bind(getRoot().widthProperty());
+        panelClip.heightProperty().bind(getRoot().heightProperty());
+        getRoot().setClip(panelClip);
     }
 
     /**
