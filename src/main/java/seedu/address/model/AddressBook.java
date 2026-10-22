@@ -58,8 +58,23 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(newData);
 
         setPersons(newData.getPersonList());
-        students.clear();
-        students.addAll(newData.getStudentList());
+        setStudents(newData.getStudentList());
+        setSessionHistories(newData);
+    }
+
+    /**
+     * Replaces the contents of the student list with {@code students}.
+     */
+    private void setStudents(List<Student> students) {
+        this.students.clear();
+        this.students.addAll(students);
+    }
+
+    /**
+     * Replaces the session histories with those {@code newData} holds for the students in this address book.
+     * The student list must already be replaced, so that only histories of current students are copied.
+     */
+    private void setSessionHistories(ReadOnlyAddressBook newData) {
         sessionHistories.clear();
         for (Student student : students) {
             StudentId studentId = student.getId();
