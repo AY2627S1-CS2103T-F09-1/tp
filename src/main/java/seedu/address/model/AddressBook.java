@@ -151,10 +151,7 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireAllNonNull(studentId, editedStudent);
         int targetIndex = findStudentIndex(studentId);
         checkArgument(editedStudent.getId().equals(studentId), MESSAGE_STUDENT_ID_MISMATCH);
-        boolean duplicatesAnotherStudent = students.stream()
-                .filter(student -> !student.getId().equals(studentId))
-                .anyMatch(editedStudent::hasSameIdentity);
-        checkArgument(!duplicatesAnotherStudent, MESSAGE_DUPLICATE_STUDENT);
+        checkArgument(findConflictingStudent(studentId, editedStudent).isEmpty(), MESSAGE_DUPLICATE_STUDENT);
 
         students.set(targetIndex, editedStudent);
     }

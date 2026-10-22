@@ -95,6 +95,28 @@ public class AddressBookTest {
     }
 
     @Test
+    public void getStudent_knownAndUnknownIds_returnsMatchingOptional() {
+        addressBook.addStudent(ALEX);
+
+        assertEquals(Optional.of(ALEX), addressBook.getStudent(ALEX.getId()));
+        assertEquals(Optional.empty(), addressBook.getStudent(BEA.getId()));
+        assertThrows(NullPointerException.class, () -> addressBook.getStudent(null));
+    }
+
+    @Test
+    public void findConflictingStudent_excludesTargetAndReturnsOtherDuplicate() {
+        addressBook.addStudent(ALEX);
+        addressBook.addStudent(BEA);
+        Student duplicateBea = new Student(BEA.getName(), BEA.getParentGuardianContact(), ALEX.getSubject(),
+                ALEX.getCurrentLevel(), ALEX.getId());
+
+        assertEquals(Optional.of(BEA), addressBook.findConflictingStudent(ALEX.getId(), duplicateBea));
+        assertEquals(Optional.empty(), addressBook.findConflictingStudent(BEA.getId(), BEA));
+        assertThrows(NullPointerException.class, () -> addressBook.findConflictingStudent(null, duplicateBea));
+        assertThrows(NullPointerException.class, () -> addressBook.findConflictingStudent(ALEX.getId(), null));
+    }
+
+    @Test
     public void setStudent_validReplacement_preservesSessionHistory() {
         addressBook.addStudent(ALEX);
         addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);

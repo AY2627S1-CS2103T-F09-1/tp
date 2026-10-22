@@ -487,7 +487,7 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_editStudentWithUnchangedValueWhenSavesFail_succeeds() throws Exception {
+    public void execute_editStudentWithUnchangedValueWhenStorageWouldFail_skipsSaveAndSucceeds() throws Exception {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, Integer.MAX_VALUE);
 

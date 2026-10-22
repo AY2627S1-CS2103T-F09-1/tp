@@ -72,6 +72,20 @@ public interface Model {
     }
 
     /**
+     * Returns the immutable student with {@code studentId}, or an empty optional if that student is absent.
+     */
+    default Optional<Student> getStudent(StudentId studentId) {
+        return getAddressBook().getStudent(studentId);
+    }
+
+    /**
+     * Returns another student with the same identity as {@code editedStudent}, if one exists.
+     */
+    default Optional<Student> findConflictingStudent(StudentId targetStudentId, Student editedStudent) {
+        return getAddressBook().findConflictingStudent(targetStudentId, editedStudent);
+    }
+
+    /**
      * Adds a student to the model.
      */
     default void addStudent(Student student) {

@@ -138,7 +138,8 @@ public class EditCommandTest {
         assertTrue(descriptor.isAnyFieldEdited());
         assertEquals(Optional.of(new StudentName("Alexis Tan")), copy.getName());
         assertEquals(Optional.of("8000 0001"), copy.getParentPhone());
-        assertEquals(Optional.of(Optional.of("guardian@example.com")), copy.getParentEmail());
+        assertTrue(copy.isParentEmailEdited());
+        assertEquals(Optional.of("guardian@example.com"), copy.getParentEmail());
         assertEquals(Optional.of(new Subject("Physics")), copy.getSubject());
         assertEquals(Optional.of(new CurrentLevel("Secondary 4")), copy.getCurrentLevel());
         assertEquals(descriptor, copy);
@@ -146,6 +147,16 @@ public class EditCommandTest {
         assertEquals(descriptor, descriptor);
         assertFalse(descriptor.equals(null));
         assertFalse(descriptor.equals("not a descriptor"));
+
+        EditStudentDescriptor differentPhone = new EditStudentDescriptor(copy);
+        differentPhone.setParentPhone("8000 0002");
+        assertNotEquals(differentPhone, copy);
+        EditStudentDescriptor clearedEmail = new EditStudentDescriptor(copy);
+        clearedEmail.setParentEmail(Optional.empty());
+        assertNotEquals(clearedEmail, copy);
+        EditStudentDescriptor differentLevel = new EditStudentDescriptor(copy);
+        differentLevel.setCurrentLevel(new CurrentLevel("Secondary 5"));
+        assertNotEquals(differentLevel, copy);
 
         descriptor.setSubject(new Subject("Chemistry"));
         assertNotEquals(descriptor, copy);
@@ -155,6 +166,12 @@ public class EditCommandTest {
         assertThrows(NullPointerException.class, () -> descriptor.setSubject(null));
         assertThrows(NullPointerException.class, () -> descriptor.setCurrentLevel(null));
         assertFalse(new EditStudentDescriptor().isAnyFieldEdited());
+        assertFalse(new EditStudentDescriptor().isParentEmailEdited());
+
+        EditStudentDescriptor explicitEmailRemoval = new EditStudentDescriptor();
+        explicitEmailRemoval.setParentEmail(Optional.empty());
+        assertTrue(explicitEmailRemoval.isAnyFieldEdited());
+        assertNotEquals(explicitEmailRemoval, new EditStudentDescriptor());
     }
 
     @Test

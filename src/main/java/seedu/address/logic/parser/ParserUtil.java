@@ -1,6 +1,13 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,6 +49,15 @@ public class ParserUtil {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Returns student command arguments tokenized with supported and legacy person prefixes.
+     */
+    public static ArgumentMultimap tokenizeStudentFields(String args) {
+        requireNonNull(args);
+        return ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL,
+                PREFIX_ADDRESS, PREFIX_TAG);
     }
 
     /**

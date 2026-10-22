@@ -49,6 +49,18 @@ public class ModelTest {
     }
 
     @Test
+    public void defaultStudentLookups_returnStudentAndConflictingIdentity() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addStudent(ALEX);
+        Model model = new ModelStub(addressBook);
+        Student editedAlex = new Student(ALEX.getName(), ALEX.getParentGuardianContact(), new Subject("Physics"),
+                ALEX.getCurrentLevel(), ALEX.getId());
+
+        assertEquals(Optional.of(ALEX), model.getStudent(ALEX.getId()));
+        assertEquals(Optional.empty(), model.findConflictingStudent(ALEX.getId(), editedAlex));
+    }
+
+    @Test
     public void defaultGetSessionHistory_returnsHistoryFromAddressBook() {
         Model model = createModelWithAlexNote();
 

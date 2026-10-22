@@ -18,7 +18,6 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -76,14 +75,12 @@ public class EditCommand extends Command {
         }
 
         StudentRosterEntry targetEntry = rosterEntries.get(targetIndex.getZeroBased());
-        Optional<StudentProfile> targetProfile = model.getStudentProfile(targetEntry.getStudentId());
-        assert targetProfile.isPresent() : "A roster entry must have a matching student profile";
-        StudentProfile profile = targetProfile.orElseThrow();
-        Student originalStudent = createStudent(profile, new EditStudentDescriptor());
-        Student editedStudent = createStudent(profile, editStudentDescriptor);
+        Student originalStudent = model.getStudent(targetEntry.getStudentId()).orElseThrow();
+        Student editedStudent = createStudent(originalStudent, editStudentDescriptor);
 
-        if (!originalStudent.hasSameIdentity(editedStudent) && model.hasStudent(editedStudent)) {
-            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT, editedStudent.getName())
+        Optional<Student> conflictingStudent = model.findConflictingStudent(targetEntry.getStudentId(), editedStudent);
+        if (conflictingStudent.isPresent()) {
+            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT, conflictingStudent.get().getName())
                     + "\n" + MESSAGE_USAGE);
         }
 
@@ -93,18 +90,19 @@ public class EditCommand extends Command {
     }
 
     /**
-     * Returns a student containing the supplied edits and the profile's unchanged stable ID.
+     * Returns a student containing the supplied edits and the original student's unchanged stable ID.
      */
-    private static Student createStudent(StudentProfile profile, EditStudentDescriptor descriptor) {
-        StudentName name = descriptor.getName().orElse(profile.getName());
+    private static Student createStudent(Student originalStudent, EditStudentDescriptor descriptor) {
+        StudentName name = descriptor.getName().orElse(originalStudent.getName());
         String phone = descriptor.getParentPhone()
-                .orElse(profile.getParentGuardianContact().getPhone());
-        Optional<String> email = descriptor.getParentEmail()
-                .orElse(profile.getParentGuardianContact().getEmail());
-        Subject subject = descriptor.getSubject().orElse(profile.getSubject());
-        CurrentLevel currentLevel = descriptor.getCurrentLevel().orElse(profile.getCurrentLevel());
+                .orElse(originalStudent.getParentGuardianContact().getPhone());
+        Optional<String> email = descriptor.isParentEmailEdited()
+                ? descriptor.getParentEmail()
+                : originalStudent.getParentGuardianContact().getEmail();
+        Subject subject = descriptor.getSubject().orElse(originalStudent.getSubject());
+        CurrentLevel currentLevel = descriptor.getCurrentLevel().orElse(originalStudent.getCurrentLevel());
         ParentGuardianContact contact = new ParentGuardianContact(phone, email);
-        return new Student(name, contact, subject, currentLevel, profile.getStudentId());
+        return new Student(name, contact, subject, currentLevel, originalStudent.getId());
     }
 
     @Override
@@ -134,7 +132,8 @@ public class EditCommand extends Command {
     public static final class EditStudentDescriptor {
         private StudentName name;
         private String parentPhone;
-        private Optional<String> parentEmail;
+        private boolean isParentEmailEdited;
+        private Optional<String> parentEmail = Optional.empty();
         private Subject subject;
         private CurrentLevel currentLevel;
 
@@ -151,6 +150,7 @@ public class EditCommand extends Command {
             requireNonNull(toCopy);
             name = toCopy.name;
             parentPhone = toCopy.parentPhone;
+            isParentEmailEdited = toCopy.isParentEmailEdited;
             parentEmail = toCopy.parentEmail;
             subject = toCopy.subject;
             currentLevel = toCopy.currentLevel;
@@ -160,7 +160,7 @@ public class EditCommand extends Command {
          * Returns whether at least one student field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, parentPhone, parentEmail, subject, currentLevel);
+            return isParentEmailEdited || CollectionUtil.isAnyNonNull(name, parentPhone, subject, currentLevel);
         }
 
         public void setName(StudentName name) {
@@ -181,10 +181,15 @@ public class EditCommand extends Command {
 
         public void setParentEmail(Optional<String> parentEmail) {
             this.parentEmail = requireNonNull(parentEmail);
+            isParentEmailEdited = true;
         }
 
-        public Optional<Optional<String>> getParentEmail() {
-            return Optional.ofNullable(parentEmail);
+        public boolean isParentEmailEdited() {
+            return isParentEmailEdited;
+        }
+
+        public Optional<String> getParentEmail() {
+            return parentEmail;
         }
 
         public void setSubject(Subject subject) {
@@ -212,6 +217,7 @@ public class EditCommand extends Command {
             return other instanceof EditStudentDescriptor otherDescriptor
                     && Objects.equals(name, otherDescriptor.name)
                     && Objects.equals(parentPhone, otherDescriptor.parentPhone)
+                    && isParentEmailEdited == otherDescriptor.isParentEmailEdited
                     && Objects.equals(parentEmail, otherDescriptor.parentEmail)
                     && Objects.equals(subject, otherDescriptor.subject)
                     && Objects.equals(currentLevel, otherDescriptor.currentLevel);
@@ -219,7 +225,7 @@ public class EditCommand extends Command {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, parentPhone, parentEmail, subject, currentLevel);
+            return Objects.hash(name, parentPhone, isParentEmailEdited, parentEmail, subject, currentLevel);
         }
     }
 }

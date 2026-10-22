@@ -74,6 +74,26 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void tokenizeStudentFields_studentAndLegacyPrefixes_tokenizesEveryKnownField() {
+        ArgumentMultimap arguments = ParserUtil.tokenizeStudentFields(
+                "1 n/Alex p/9123 e/a@b.com sub/Math l/Sec 3 a/Legacy t/old");
+
+        assertEquals("1", arguments.getPreamble());
+        assertEquals(Optional.of("Alex"), arguments.getValue(CliSyntax.PREFIX_NAME));
+        assertEquals(Optional.of("9123"), arguments.getValue(CliSyntax.PREFIX_PHONE));
+        assertEquals(Optional.of("a@b.com"), arguments.getValue(CliSyntax.PREFIX_EMAIL));
+        assertEquals(Optional.of("Math"), arguments.getValue(CliSyntax.PREFIX_SUBJECT));
+        assertEquals(Optional.of("Sec 3"), arguments.getValue(CliSyntax.PREFIX_LEVEL));
+        assertEquals(Optional.of("Legacy"), arguments.getValue(CliSyntax.PREFIX_ADDRESS));
+        assertEquals(Optional.of("old"), arguments.getValue(CliSyntax.PREFIX_TAG));
+    }
+
+    @Test
+    public void tokenizeStudentFields_nullInput_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.tokenizeStudentFields(null));
+    }
+
+    @Test
     public void parseName_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParserUtil.parseName((String) null));
     }
