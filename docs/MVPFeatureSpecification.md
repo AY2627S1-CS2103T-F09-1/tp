@@ -15,6 +15,7 @@ The complete tutoring loop is:
 1. Add a student with a parent or guardian contact, subject, and current level.
 1. View the automatically displayed roster and identify a student by the displayed index.
 1. View that student's preparation context and previous session notes.
+1. Edit the student's details when their contact or learning context changes.
 1. Record a new session note after a lesson.
 1. Delete one incorrect session note, or delete a student and all of that student's notes when the record is no longer needed.
 
@@ -25,22 +26,23 @@ The application targets a small active roster, but the implementation does not e
 ### Must-have TutorTrack features
 
 * Add student
+* Edit student
 * Display student roster automatically
 * View student profile
 * Add session note
 * Delete a student or one session note
 
-Student data and session notes are saved automatically to a local JSON file. These five features form one repeatable tutoring workflow.
+Student data and session notes are saved automatically to a local JSON file. These six features form one repeatable tutoring workflow.
 
 ### Application-level behavior retained from AB3
 
 The application-level commands 'help' and 'exit' remain available. They are not TutorTrack student-roster features, but they are part of the current product.
 
-The storage model also retains the inherited 'persons' collection for compatibility. The current parser does not provide person-oriented 'add', 'edit', 'find', or 'clear' commands; those removed command words are rejected as unknown commands.
+The storage model also retains the inherited 'persons' collection for compatibility. The current parser does not provide person-oriented 'add', 'find', or 'clear' commands; those removed command words are rejected as unknown commands. The `edit` command operates only on TutorTrack student records.
 
 ### Not implemented in the current MVP
 
-The current command parser does not implement student editing, searching, undo, scheduling, attendance, messaging, billing, accounts, multi-user access, cloud synchronisation, archiving, or restoring. To correct a student record, the tutor must delete it and add it again; deleting the record also deletes its session-note history.
+The current command parser does not implement session-note editing, searching, undo, scheduling, attendance, messaging, billing, accounts, multi-user access, cloud synchronisation, archiving, or restoring.
 
 ## Shared command and UI behavior
 
@@ -52,16 +54,16 @@ The current command parser does not implement student editing, searching, undo, 
 * The command box does nothing for an empty string. Every non-blank command is added to the in-memory history before execution, including commands that later fail.
 * The history keeps the latest 100 non-blank commands for the current application session. Up recalls older commands, Down moves toward newer commands, and moving past the newest command restores the draft that existed before navigation started.
 * A successful command clears the command box. A failed command leaves the attempted text in the box and applies an error style.
-* Add prefixes may appear in any order, but each recognised single-valued prefix may appear only once.
+* Add and edit prefixes may appear in any order, but each recognised single-valued prefix may appear only once.
 * The note command recognises only 'nt/'. Text containing 'n/', 'p/', 'sub/', or 'l/' is ordinary note text. A second 'nt/' is a duplicate note prefix.
-* Legacy 'a/' and 't/' prefixes cause the add command to reject the input. Other unknown prefix-looking text is not independently diagnosed by the current tokenizer and may become part of the preceding recognised value.
+* Unknown prefix-looking text, including legacy 'a/' and 't/' prefixes, causes add and edit to reject the input before mutation.
 * Quotation marks have no special parsing meaning.
 
 ### Shared index rules
 
 INDEX is a positive, non-zero unsigned decimal integer that fits in a Java int. Zero, negative numbers, signed numbers such as +1, decimals, ranges, multiple indices, text, and values above 2147483647 are invalid. Leading zeroes such as 01 are accepted.
 
-Indices are one-based and refer to the current sorted roster. The UI refreshes the roster after every successful command, so view, note, and delete use the latest displayed order.
+Indices are one-based and refer to the current sorted roster. The UI refreshes the roster after every successful command, so edit, view, note, and delete use the latest displayed order.
 
 Session-note numbers are also positive and one-based, but refer to the numbered cards in one student's currently displayed history. The oldest note is 1 and the newest note has the largest number.
 
@@ -135,7 +137,7 @@ On success, the exact result is New student added: <Name>. The roster refreshes 
 
 A duplicate produces A student with this name and parent phone already exists. and no record is added. A repeated recognised prefix produces Multiple values specified for the following single-valued field(s): <prefix>. A legacy a/ or t/ prefix, missing required prefix, or non-empty preamble produces Invalid command format! followed by the add usage. A save failure reports the save error and restores the pre-command model.
 
-A student with a different phone may share a name, and a student with a different name may share a phone. A valid but semantically incorrect subject cannot be detected. A typo that passes validation can only be corrected by deleting and re-adding the record, which also deletes its session notes.
+A student with a different phone may share a name, and a student with a different name may share a phone. A valid but semantically incorrect field can be corrected with the edit command below.
 
 ### Relevant UI mock-up
 
@@ -154,11 +156,48 @@ A student with a different phone may share a name, and a student with a differen
 +------------------------------------------------------------------+
 ~~~
 
-## Feature 2 — Automatic student roster display
+## Feature 2 — Edit student
 
 **Priority:** Must-have.
 
-**Purpose:** Shows every stored student on launch and after successful commands, establishing the indices used by view, note, and delete.
+**Purpose:** Replaces one or more student details while preserving that student's stable identity and complete session-note history.
+
+### Command format and examples
+
+~~~text
+edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]
+~~~
+
+~~~text
+edit 2 p/9123 4567 l/Secondary 4
+edit 1 e/
+edit 3 n/Devika Patel sub/English Literature
+~~~
+
+### Parameters
+
+| Parameter | Acceptable values | Error when invalid or missing | Rationale |
+| --- | --- | --- | --- |
+| INDEX | One positive index in the current sorted roster. | Missing, malformed, or extra index text produces Invalid command format! followed by edit usage. An out-of-range parsed index produces The student index provided is invalid. | Resolves the visible student once to its stable internal ID. |
+| n/NAME | Optional value satisfying the shared student-name rule. | Empty or invalid input produces the shared name message followed by edit usage. | Corrects the roster and profile name. |
+| p/PARENT_PHONE | Optional value satisfying the shared phone rule. | Empty or invalid input produces the shared phone message followed by edit usage. | Updates the responsible adult's required phone. |
+| e/PARENT_EMAIL | Optional value satisfying the shared email rule; an empty value removes the email. | A non-empty invalid value produces the shared email message followed by edit usage. | Distinguishes omitting the field from deliberately removing the optional email. |
+| sub/SUBJECT | Optional non-blank, single-line value satisfying the shared subject rule. | Empty or invalid input produces the shared subject message followed by edit usage. | Updates the learning context. |
+| l/CURRENT_LEVEL | Optional non-blank, single-line value satisfying the shared level rule. | Empty or invalid input produces the shared level message followed by edit usage. | Updates the student's current stage. |
+
+At least one field prefix is required. Omitted fields retain their current values. Recognised prefixes can appear in any order, each at most once; unsupported prefixes are rejected.
+
+### Outputs, identity, and possible errors
+
+On success, the exact result is `Edited student: <Name> (<Subject>, <CurrentLevel>).` The replacement retains the original `studentId` and every session note. The roster is re-sorted and re-indexed, any open profile remains attached to the same stable ID and refreshes its details, the data is saved, and the command box is cleared.
+
+An edit is rejected if the replacement name and phone form the same normalized duplicate identity as another student. An out-of-range index, no supplied edit, repeated or unknown prefix, or invalid supplied value changes nothing. A save failure restores the entire pre-command model, including the student's previous roster position, profile details, and session history. Edit logging omits supplied student values.
+
+## Feature 3 — Automatic student roster display
+
+**Priority:** Must-have.
+
+**Purpose:** Shows every stored student on launch and after successful commands, establishing the indices used by edit, view, note, and delete.
 
 ### Display behavior and possible errors
 
@@ -189,7 +228,7 @@ The current populated screen is also shown in [docs/images/Ui.png](images/Ui.png
 +------------------------------------------------------------------+
 ~~~
 
-## Feature 3 — View student profile
+## Feature 4 — View student profile
 
 **Priority:** Must-have.
 
@@ -244,7 +283,7 @@ View creates or merges nothing. If a selected student is deleted, the profile pa
 +-----------------------------+--------------------------------------+
 ~~~
 
-## Feature 4 — Add session note
+## Feature 5 — Add session note
 
 **Priority:** Must-have.
 
@@ -297,7 +336,7 @@ Identical note text is allowed repeatedly; each note is a separate lesson event.
 |                             | Added note text appears here.       |
 ~~~
 
-## Feature 5 — Delete a student or session note
+## Feature 6 — Delete a student or session note
 
 **Priority:** Must-have.
 
@@ -403,6 +442,7 @@ add n/Bea Lim p/9876 5432 e/guardian@example.com sub/English l/JC 1
 view 1
 note 1 nt/Reviewed factorisation; revisit negative coefficients next lesson.
 note 1 nt/Completed a timed practice paper.
+edit 1 l/Secondary 4
 view 1
 delete note 1 1
 delete note 1 1 /confirm
@@ -413,14 +453,15 @@ delete 2 /confirm
 Expected outcomes:
 
 * The roster contains two sorted students with correct indices and note counts.
-* view 1 opens Ari Tan's profile.
+* The first view 1 opens Ari Tan's profile.
 * The two note commands add timestamped notes and change Ari Tan's count from 0 to 2.
-* view 1 shows the notes newest first as `[2]` and `[1]`.
+* The edit changes Ari Tan's level while preserving the student's stable ID, selected profile, and two notes.
+* The second view 1 shows Ari Tan's refreshed profile with notes newest first as `[2]` and `[1]`.
 * The matching note confirmation removes only note `[1]`, leaving Ari Tan and note `[2]`.
 * The matching student confirmation removes Bea Lim and all notes belonging to that student.
-* The final automatically refreshed roster shows only Ari Tan with index 1.
-* Reloading preserves the remaining student, studentId, and session-note history.
+* The final automatically refreshed roster shows only Ari Tan with index 1 and the edited level.
+* Reloading preserves the remaining student, stable studentId, edited level, and session-note history.
 
 ## Implementation references
 
-The behavior described here is implemented and tested in [AddressBookParser](../src/main/java/seedu/address/logic/parser/AddressBookParser.java), [LogicManager](../src/main/java/seedu/address/logic/LogicManager.java), [DeleteSessionNoteCommand](../src/main/java/seedu/address/logic/commands/DeleteSessionNoteCommand.java), [Student](../src/main/java/seedu/address/model/student/Student.java), [StudentRoster](../src/main/java/seedu/address/model/student/StudentRoster.java), [SessionNote](../src/main/java/seedu/address/model/session/SessionNote.java), [SessionHistory](../src/main/java/seedu/address/model/session/SessionHistory.java), [JsonAdaptedStudent](../src/main/java/seedu/address/storage/JsonAdaptedStudent.java), [JsonAddressBookStorage](../src/main/java/seedu/address/storage/JsonAddressBookStorage.java), [MainApp](../src/main/java/seedu/address/MainApp.java), [MainWindow](../src/main/java/seedu/address/ui/MainWindow.java), [StudentRosterPanel](../src/main/java/seedu/address/ui/StudentRosterPanel.java), and [StudentProfilePanel](../src/main/java/seedu/address/ui/StudentProfilePanel.java).
+The behavior described here is implemented and tested in [AddressBookParser](../src/main/java/seedu/address/logic/parser/AddressBookParser.java), [EditCommand](../src/main/java/seedu/address/logic/commands/EditCommand.java), [LogicManager](../src/main/java/seedu/address/logic/LogicManager.java), [DeleteSessionNoteCommand](../src/main/java/seedu/address/logic/commands/DeleteSessionNoteCommand.java), [Student](../src/main/java/seedu/address/model/student/Student.java), [StudentRoster](../src/main/java/seedu/address/model/student/StudentRoster.java), [SessionNote](../src/main/java/seedu/address/model/session/SessionNote.java), [SessionHistory](../src/main/java/seedu/address/model/session/SessionHistory.java), [JsonAdaptedStudent](../src/main/java/seedu/address/storage/JsonAdaptedStudent.java), [JsonAddressBookStorage](../src/main/java/seedu/address/storage/JsonAddressBookStorage.java), [MainApp](../src/main/java/seedu/address/MainApp.java), [MainWindow](../src/main/java/seedu/address/ui/MainWindow.java), [StudentRosterPanel](../src/main/java/seedu/address/ui/StudentRosterPanel.java), and [StudentProfilePanel](../src/main/java/seedu/address/ui/StudentProfilePanel.java).

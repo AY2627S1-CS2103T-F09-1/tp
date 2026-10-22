@@ -160,7 +160,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### TutorTrack command routing
 
-`AddressBookParser` registers the TutorTrack domain commands `add`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
+`AddressBookParser` registers the TutorTrack domain commands `add`, `edit`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. TutorTrack's `edit` route operates on student records rather than inherited person records. `AddCommandParser` and `EditCommandParser` accept only the student fields documented in the User Guide, so inherited person parameters such as `a/ADDRESS` and `t/TAG` are rejected before they can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
 ### Student identity
 
@@ -170,11 +170,19 @@ The command and storage layers will construct `Student` values and delegate dupl
 
 Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableStudentRoster` then checks each loaded Student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
 
+### Student editing
+
+`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated or unknown prefixes, and applies the same student value-object validation used by addition and storage. An empty `e/` has deliberate command semantics: it removes the optional email. Empty values for required fields remain invalid.
+
+`EditCommand#execute` resolves the displayed index once through `Model#getStudentRoster()` and then works with the selected student's stable `StudentId`. It composes a replacement immutable `Student`, retaining every omitted field and the original ID. `Model#setStudent(StudentId, Student)` checks that the target exists, the replacement retains that ID, and its normalized name-and-phone identity does not duplicate another student. `AddressBook` replaces only the roster entry, so the session history keyed by the same ID is untouched.
+
+Changing a name or phone may reorder the roster. `MainWindow` retains an open profile by stable ID, so the highlighted card and profile move to the edited student's new index and show the replacement details after the successful command. `LogicManager` uses its normal persistence snapshot and rollback path; a failed save restores the original student and session history. Edit command string representations and command-routing logs omit supplied field values because contact and lesson context can contain private information.
+
 ### Student roster contract
 
 `Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, then normalized parent or guardian phone number, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Student ID is the final tie-breaker for students with equal names and normalized parent or guardian phone numbers. Note counts are supplied as projection data so the student-roster context does not own session-note storage; `Model#getStudentRoster()` takes each student's count from that student's session history.
 
-`Model#getStudentRoster()` obtains a fresh immutable roster snapshot for the JavaFX presentation. `MainWindow` creates the roster panel from this snapshot during launch, and refreshes it after every successful command, so no separate roster command is needed. The panel reports an actionable add-student message when the snapshot is empty.
+`Model#getStudentRoster()` obtains a fresh immutable roster snapshot for the JavaFX presentation. `Model#setStudent(StudentId, Student)` replaces one record without changing its stable identity or session history. `MainWindow` creates the roster panel from a roster snapshot during launch, and refreshes it after every successful command, so no separate roster command is needed. The panel reports an actionable add-student message when the snapshot is empty.
 
 ### Student roster UI
 
@@ -423,7 +431,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | tutor preparing for a lesson                        | review a student's recent session notes                                          | continue from where the student previously left off                                        |
 | `* * *`  | tutor                                               | see the date and time each session note was written                              | know when each lesson took place                                                           |
 | `* * *`  | tutor who has just completed a lesson               | add a short session note about a student's progress, difficulties, or next steps | preserve what happened while it is still fresh                                             |
-| `* * *`  | tutor                                               | delete a student from my roster                                                  | remove information I no longer need, or re-enter a student whose details I entered wrongly |
+| `* * *`  | tutor                                               | delete a student from my roster                                                  | remove information I no longer need                                                        |
 | `* * *`  | tutor                                               | see the student and session-note count before confirming a deletion              | verify the impact before removing data                                                      |
 | `* * *`  | tutor                                               | confirm before a student is deleted                                              | avoid deleting the wrong student by accident                                               |
 | `* * *`  | tutor                                               | be told exactly what is wrong when a command fails                               | fix the mistake without guessing or retyping the whole command                             |
@@ -431,11 +439,11 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | tutor new to TutorTrack                             | see usage instructions                                                           | refer to instructions when I forget how to use TutorTrack                                  |
 | `* *`    | tutor trying TutorTrack for the first time          | see sample students and session notes                                            | understand how TutorTrack supports my tutoring work                                        |
 | `* *`    | tutor ready to use TutorTrack for real              | remove all sample data at once                                                   | start my roster with only my own students                                                  |
-| `* *`    | tutor                                               | update a student's parent contact without losing the student's session notes     | keep the parent contact reliable when a parent changes their phone number or email         |
-| `* *`    | tutor                                               | remove a parent email that is no longer valid                                    | avoid contacting an address that no longer works                                           |
-| `* *`    | tutor                                               | correct a misspelled student name without losing the student's session notes     | keep my roster accurate                                                                    |
-| `* *`    | tutor                                               | update a student's level without losing the student's session notes              | keep the student's details in line with their current stage of learning                    |
-| `* *`    | tutor                                               | update the subject I teach a student without losing the student's session notes  | keep the student's details relevant when their tuition changes                             |
+| `* * *`  | tutor                                               | update a student's parent contact without losing the student's session notes     | keep the parent contact reliable when a parent changes their phone number or email         |
+| `* * *`  | tutor                                               | remove a parent email that is no longer valid                                    | avoid contacting an address that no longer works                                           |
+| `* * *`  | tutor                                               | correct a misspelled student name without losing the student's session notes     | keep my roster accurate                                                                    |
+| `* * *`  | tutor                                               | update a student's level without losing the student's session notes              | keep the student's details in line with their current stage of learning                    |
+| `* * *`  | tutor                                               | update the subject I teach a student without losing the student's session notes  | keep the student's details relevant when their tuition changes                             |
 | `* *`    | tutor preparing for a lesson                        | find a student by name                                                           | retrieve their context without scanning my whole roster                                    |
 | `* *`    | tutor with students in different subjects or levels | narrow my roster to students of a particular subject or level                    | focus on the students I am working with                                                    |
 | `* *`    | tutor                                               | return to my full roster after a search                                          | select any student by their roster number again                                            |
@@ -498,6 +506,47 @@ student roster.
 * 5a. TutorTrack cannot save the updated data.
 
   * 5a1. TutorTrack reports the storage error and does not create the record.
+
+    Use case ends.
+
+**Use case: Edit a student**
+
+**Preconditions:** The system is running and the current roster index context is available.
+
+**Guarantees:** A successful edit saves the supplied replacement details while preserving the student's stable identity and complete session history. A rejected edit changes nothing.
+
+**MSS**
+
+1. Tutor selects a student by roster index and supplies one or more replacement details.
+1. TutorTrack validates the index and supplied details.
+1. TutorTrack replaces the student record while retaining the stable student ID and every session note.
+1. TutorTrack saves the record, refreshes the sorted roster and any open profile, and confirms the edit.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. Tutor supplies `e/` without a value.
+
+  * 1a1. TutorTrack removes the optional parent or guardian email and continues at step 2.
+* 1b. Tutor supplies no field to edit, repeats a field, or supplies an unsupported field.
+
+  * 1b1. TutorTrack reports the command error and makes no changes.
+
+    Use case ends.
+* 2a. The index or a supplied value is invalid.
+
+  * 2a1. TutorTrack reports the validation error and makes no changes.
+
+    Use case ends.
+* 2b. The replacement name and phone duplicate another student.
+
+  * 2b1. TutorTrack reports the duplicate and makes no changes.
+
+    Use case ends.
+* 4a. TutorTrack cannot save the updated data.
+
+  * 4a1. TutorTrack reports the storage error and restores the complete original record.
 
     Use case ends.
 
@@ -741,12 +790,26 @@ testers are expected to do more *exploratory* testing.
 4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
    Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and neither changes the roster or data file.
 
+### Editing a student
+
+1. Add Alicia and Bea, add two session notes to Alicia, and enter `view 1` to open Alicia's profile.
+1. Enter `edit 1 n/Zara Lim p/+65 8000 0000 sub/Physics l/Secondary 4`.
+   Expected: TutorTrack reports `Edited student: Zara Lim (Physics, Secondary 4).` Zara moves to her new sorted position, retains both session notes and the same selected profile, and the saved JSON retains her original `studentId`.
+1. Enter `edit 2 e/` for a student with an email.
+   Expected: The email is removed, every omitted field and session note is unchanged, and an open profile displays `Not provided`.
+1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
+   Expected: Each command reports the applicable error and edit usage without changing the roster, profile, notes, or data file.
+1. Try to edit one student so that both the normalized name and parent phone match the other student.
+   Expected: TutorTrack reports the duplicate and leaves both students unchanged.
+1. Make the data file unwritable and enter an otherwise valid edit, then restore write access.
+   Expected: TutorTrack reports the save error and restores the original student, roster position, profile, notes, and data file.
+
 ### Rejecting inherited AB3 person commands
 
 1. Add one student and add a session note for that student.
 1. Enter `list`.
    Expected: TutorTrack reports `Unknown command.` and leaves the roster, session note, and saved data unchanged.
-1. Enter each of `edit 1 n/Changed Name`, `find Changed`, and `clear`.
+1. Enter each of `find Changed` and `clear`.
    Expected: Each input reports `Unknown command.` The student, session note, roster display, and saved data remain unchanged.
 1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
    Expected: TutorTrack reports `a/` as an unknown parameter, lists the supported add parameters, and shows the add format. It does not create a hidden person or change the roster, session notes, or saved data.
