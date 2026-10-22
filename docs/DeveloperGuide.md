@@ -150,9 +150,9 @@ The `Storage` component,
 
 #### Data-file format and recovery
 
-TutorTrack stores application data in `data/addressbook.json` relative to the application's working directory. Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
+TutorTrack stores application data in `data/tutortrack.json` relative to the application's working directory. Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
 
-The storage adapter validates manually edited records by rebuilding the corresponding domain value types. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/addressbook.json.backup-<unique>.bak`.
+The storage adapter validates manually edited records by rebuilding the corresponding domain value types. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`.
 
 Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
 
@@ -957,7 +957,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter `delete note 1 2`, followed immediately by `delete note 1 2 /confirm`.
    Expected: TutorTrack reports `Successfully deleted session note [2] for Ari Tan.` Ari and Bea remain in the roster. Ari's profile refreshes with the former newest note renumbered to `[2]` at the top and the oldest note still numbered `[1]`; the deleted middle note is absent.
 1. Close and relaunch TutorTrack, and enter `view 1`.
-   Expected: Ari still has exactly the two remaining notes in newest-first order as `[2]` and `[1]`. Ari's `sessionNotes` entries in `data/addressbook.json` do not contain `noteNumber` fields.
+   Expected: Ari still has exactly the two remaining notes in newest-first order as `[2]` and `[1]`. Ari's `sessionNotes` entries in `data/tutortrack.json` do not contain `noteNumber` fields.
 1. Enter `delete note 2 1`.
    Expected: TutorTrack reports that Bea Tan has no session notes to delete and makes no changes.
 1. Enter `delete note 1 3`.
@@ -984,9 +984,9 @@ testers are expected to do more *exploratory* testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. Replace the contents of `data/addressbook.json` with invalid JSON, such as `invalid`.
+   1. Replace the contents of `data/tutortrack.json` with invalid JSON, such as `invalid`.
    1. Start TutorTrack.
-      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/addressbook.json.backup-<unique>.bak`.
+      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`.
    1. Close TutorTrack without entering a command, replace the original data file with different invalid content, and start TutorTrack again.
       Expected: TutorTrack preserves the new content in a second uniquely named backup and leaves the first backup unchanged.
 2. _{ more test cases … }_
