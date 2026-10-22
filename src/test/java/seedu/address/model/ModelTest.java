@@ -65,6 +65,7 @@ public class ModelTest {
                 Index.fromOneBased(1)));
         assertThrows(UnsupportedOperationException.class, () -> model.removeSessionHistory(ALEX.getId()));
         assertThrows(UnsupportedOperationException.class, () -> model.deleteStudent(ALEX.getId()));
+        assertThrows(UnsupportedOperationException.class, () -> model.setStudent(ALEX.getId(), ALEX));
     }
 
     /**

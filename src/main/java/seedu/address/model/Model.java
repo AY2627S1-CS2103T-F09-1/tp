@@ -79,6 +79,13 @@ public interface Model {
     }
 
     /**
+     * Replaces the student with {@code studentId} while preserving that student's session history.
+     */
+    default void setStudent(StudentId studentId, Student editedStudent) {
+        throw new UnsupportedOperationException("Student edits are not supported by this model.");
+    }
+
+    /**
      * Deletes the student with {@code studentId} and that student's session history.
      *
      * @return The number of session notes removed with the student.

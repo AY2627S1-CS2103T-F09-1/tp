@@ -15,6 +15,7 @@ import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,11 @@ import seedu.address.model.person.Person;
 import seedu.address.model.person.exceptions.DuplicatePersonException;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
+import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.ParentGuardianContact;
+import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentName;
+import seedu.address.model.student.Subject;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddressBookTest {
@@ -86,6 +92,70 @@ public class AddressBookTest {
     @Test
     public void getPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> addressBook.getPersonList().remove(0));
+    }
+
+    @Test
+    public void setStudent_validReplacement_preservesSessionHistory() {
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        Student editedAlex = editedAlex("Alexis Tan", "9876 0000", "Physics", "Secondary 4");
+
+        addressBook.setStudent(ALEX.getId(), editedAlex);
+
+        assertEquals(List.of(editedAlex), addressBook.getStudentList());
+        assertEquals(List.of(INDICES_NOTE), addressBook.getSessionHistory(ALEX.getId()).getNotes());
+    }
+
+    @Test
+    public void setStudent_sameIdentityWithUpdatedDetails_replacesStudent() {
+        addressBook.addStudent(ALEX);
+        Student editedAlex = editedAlex(ALEX.getName().getValue(),
+                ALEX.getParentGuardianContact().getPhone(), "Physics", "Secondary 4");
+
+        addressBook.setStudent(ALEX.getId(), editedAlex);
+
+        assertEquals(List.of(editedAlex), addressBook.getStudentList());
+    }
+
+    @Test
+    public void setStudent_unknownStudent_throwsAndLeavesDataUnchanged() {
+        addressBook.addStudent(ALEX);
+        AddressBook original = new AddressBook(addressBook);
+        Student editedBea = new Student(BEA.getName(), BEA.getParentGuardianContact(), BEA.getSubject(),
+                BEA.getCurrentLevel(), BEA.getId());
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_STUDENT_NOT_FOUND, () ->
+                addressBook.setStudent(BEA.getId(), editedBea));
+        assertEquals(original, addressBook);
+    }
+
+    @Test
+    public void setStudent_mismatchedStudentId_throwsAndLeavesDataUnchanged() {
+        addressBook.addStudent(ALEX);
+        AddressBook original = new AddressBook(addressBook);
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_STUDENT_ID_MISMATCH, () ->
+                addressBook.setStudent(ALEX.getId(), BEA));
+        assertEquals(original, addressBook);
+    }
+
+    @Test
+    public void setStudent_duplicateIdentity_throwsAndLeavesDataUnchanged() {
+        addressBook.addStudent(ALEX);
+        addressBook.addStudent(BEA);
+        AddressBook original = new AddressBook(addressBook);
+        Student duplicateBea = new Student(BEA.getName(), BEA.getParentGuardianContact(), ALEX.getSubject(),
+                ALEX.getCurrentLevel(), ALEX.getId());
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_DUPLICATE_STUDENT, () ->
+                addressBook.setStudent(ALEX.getId(), duplicateBea));
+        assertEquals(original, addressBook);
+    }
+
+    @Test
+    public void setStudent_nullArguments_throwNullPointerException() {
+        assertThrows(NullPointerException.class, () -> addressBook.setStudent(null, ALEX));
+        assertThrows(NullPointerException.class, () -> addressBook.setStudent(ALEX.getId(), null));
     }
 
     @Test
@@ -264,6 +334,11 @@ public class AddressBookTest {
     public void toStringMethod() {
         String expected = AddressBook.class.getCanonicalName() + "{persons=" + addressBook.getPersonList() + "}";
         assertEquals(expected, addressBook.toString());
+    }
+
+    private static Student editedAlex(String name, String phone, String subject, String currentLevel) {
+        return new Student(new StudentName(name), new ParentGuardianContact(phone, Optional.empty()),
+                new Subject(subject), new CurrentLevel(currentLevel), ALEX.getId());
     }
 
     /**
