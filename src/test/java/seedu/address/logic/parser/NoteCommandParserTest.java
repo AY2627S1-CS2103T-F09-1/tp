@@ -53,12 +53,19 @@ public class NoteCommandParserTest {
     }
 
     @Test
-    public void parse_invalidIndex_throwsParseException() {
-        assertParseFailure(parser, " abc nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 0 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " -1 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
+    public void parse_invalidIndexValue_throwsInvalidIndexMessage() {
+        String[] invalidIndices = {"abc", "0", "-1", "2147483648", "99999999999"};
+
+        for (String invalidIndex : invalidIndices) {
+            assertParseFailure(parser, " " + invalidIndex + " nt/Reviewed factorisation.",
+                    NoteCommandParser.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_severalPreambleWords_throwsInvalidFormat() {
         assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 99999999999 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
     }
 
     @Test

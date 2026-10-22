@@ -13,6 +13,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.Person;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.Student;
@@ -115,6 +116,12 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public void setStudent(StudentId studentId, Student editedStudent) {
+        requireAllNonNull(studentId, editedStudent);
+        addressBook.setStudent(studentId, editedStudent);
+    }
+
+    @Override
     public int deleteStudent(StudentId studentId) {
         return addressBook.removeStudent(studentId);
     }
@@ -132,6 +139,20 @@ public class ModelManager implements Model {
         assert addressBook.getSessionHistory(studentId).getNotes().contains(note)
                 : "An added session note must appear in the student's history";
         return note;
+    }
+
+    @Override
+    public SessionNote deleteSessionNote(StudentId studentId, Index noteNumber) {
+        return addressBook.removeSessionNote(studentId, noteNumber);
+    }
+
+    @Override
+    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
+        requireAllNonNull(studentId, noteNumber, text);
+        SessionNote editedNote = addressBook.editSessionNote(studentId, noteNumber, text);
+        assert addressBook.getSessionHistory(studentId).getNote(noteNumber).equals(editedNote)
+                : "The edited session note must appear in the student's history";
+        return editedNote;
     }
 
     @Override

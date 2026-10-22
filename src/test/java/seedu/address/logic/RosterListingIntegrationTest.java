@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import seedu.address.logic.commands.ListCommand;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
@@ -56,15 +55,6 @@ public class RosterListingIntegrationTest {
                 .map(StudentRosterEntry::getRosterIndex).toList());
         assertEquals(beforeReload.stream().map(StudentRosterEntry::getStudentId).toList(),
                 afterReload.stream().map(StudentRosterEntry::getStudentId).toList());
-        assertEquals("Listed 2 students.", logic.execute("list").getFeedbackToUser());
-    }
-
-    @Test
-    public void list_emptyPersistedRoster_reportsRecoveryMessage() throws Exception {
-        assertEquals(ListCommand.MESSAGE_EMPTY_ROSTER, logic.execute("list").getFeedbackToUser());
-
-        ReadOnlyAddressBook persistedData = storage.readAddressBook().orElseThrow();
-        assertEquals(0, new ModelManager(persistedData, new UserPrefs()).getStudentRoster().size());
     }
 
     @Test

@@ -15,15 +15,22 @@ import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.exceptions.DuplicatePersonException;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
+import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.ParentGuardianContact;
+import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentName;
+import seedu.address.model.student.Subject;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddressBookTest {
@@ -88,6 +95,92 @@ public class AddressBookTest {
     }
 
     @Test
+    public void getStudent_knownAndUnknownIds_returnsMatchingOptional() {
+        addressBook.addStudent(ALEX);
+
+        assertEquals(Optional.of(ALEX), addressBook.getStudent(ALEX.getId()));
+        assertEquals(Optional.empty(), addressBook.getStudent(BEA.getId()));
+        assertThrows(NullPointerException.class, () -> addressBook.getStudent(null));
+    }
+
+    @Test
+    public void findConflictingStudent_excludesTargetAndReturnsOtherDuplicate() {
+        addressBook.addStudent(ALEX);
+        addressBook.addStudent(BEA);
+        Student duplicateBea = new Student(BEA.getName(), BEA.getParentGuardianContact(), ALEX.getSubject(),
+                ALEX.getCurrentLevel(), ALEX.getId());
+
+        assertEquals(Optional.of(BEA), addressBook.findConflictingStudent(ALEX.getId(), duplicateBea));
+        assertEquals(Optional.empty(), addressBook.findConflictingStudent(BEA.getId(), BEA));
+        assertThrows(NullPointerException.class, () -> addressBook.findConflictingStudent(null, duplicateBea));
+        assertThrows(NullPointerException.class, () -> addressBook.findConflictingStudent(ALEX.getId(), null));
+    }
+
+    @Test
+    public void setStudent_validReplacement_preservesSessionHistory() {
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        Student editedAlex = editedAlex("Alexis Tan", "9876 0000", "Physics", "Secondary 4");
+
+        addressBook.setStudent(ALEX.getId(), editedAlex);
+
+        assertEquals(List.of(editedAlex), addressBook.getStudentList());
+        assertEquals(List.of(INDICES_NOTE), addressBook.getSessionHistory(ALEX.getId()).getNotes());
+    }
+
+    @Test
+    public void setStudent_sameIdentityWithUpdatedDetails_replacesStudent() {
+        addressBook.addStudent(ALEX);
+        Student editedAlex = editedAlex(ALEX.getName().getValue(),
+                ALEX.getParentGuardianContact().getPhone(), "Physics", "Secondary 4");
+
+        addressBook.setStudent(ALEX.getId(), editedAlex);
+
+        assertEquals(List.of(editedAlex), addressBook.getStudentList());
+    }
+
+    @Test
+    public void setStudent_unknownStudent_throwsAndLeavesDataUnchanged() {
+        addressBook.addStudent(ALEX);
+        AddressBook original = new AddressBook(addressBook);
+        Student editedBea = new Student(BEA.getName(), BEA.getParentGuardianContact(), BEA.getSubject(),
+                BEA.getCurrentLevel(), BEA.getId());
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_STUDENT_NOT_FOUND, () ->
+                addressBook.setStudent(BEA.getId(), editedBea));
+        assertEquals(original, addressBook);
+    }
+
+    @Test
+    public void setStudent_mismatchedStudentId_throwsAndLeavesDataUnchanged() {
+        addressBook.addStudent(ALEX);
+        AddressBook original = new AddressBook(addressBook);
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_STUDENT_ID_MISMATCH, () ->
+                addressBook.setStudent(ALEX.getId(), BEA));
+        assertEquals(original, addressBook);
+    }
+
+    @Test
+    public void setStudent_duplicateIdentity_throwsAndLeavesDataUnchanged() {
+        addressBook.addStudent(ALEX);
+        addressBook.addStudent(BEA);
+        AddressBook original = new AddressBook(addressBook);
+        Student duplicateBea = new Student(BEA.getName(), BEA.getParentGuardianContact(), ALEX.getSubject(),
+                ALEX.getCurrentLevel(), ALEX.getId());
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_DUPLICATE_STUDENT, () ->
+                addressBook.setStudent(ALEX.getId(), duplicateBea));
+        assertEquals(original, addressBook);
+    }
+
+    @Test
+    public void setStudent_nullArguments_throwNullPointerException() {
+        assertThrows(NullPointerException.class, () -> addressBook.setStudent(null, ALEX));
+        assertThrows(NullPointerException.class, () -> addressBook.setStudent(ALEX.getId(), null));
+    }
+
+    @Test
     public void getSessionHistory_studentWithoutNotes_returnsEmptyHistory() {
         addressBook.addStudent(ALEX);
 
@@ -115,9 +208,79 @@ public class AddressBookTest {
     }
 
     @Test
+    public void removeSessionNote_validNumber_removesAndReturnsSelectedNote() {
+        addressBook.addStudent(ALEX);
+        addressBook.addStudent(BEA);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        addressBook.addSessionNote(ALEX.getId(), FACTORISATION_NOTE);
+
+        assertEquals(INDICES_NOTE, addressBook.removeSessionNote(ALEX.getId(), Index.fromOneBased(1)));
+        assertEquals(List.of(FACTORISATION_NOTE), addressBook.getSessionHistory(ALEX.getId()).getNotes());
+        assertTrue(addressBook.getSessionHistory(BEA.getId()).isEmpty());
+    }
+
+    @Test
+    public void removeSessionNote_unknownStudent_throwsIllegalArgumentException() {
+        addressBook.addStudent(ALEX);
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_UNKNOWN_STUDENT, () -> addressBook
+                .removeSessionNote(BEA.getId(), Index.fromOneBased(1)));
+    }
+
+    @Test
+    public void setSessionHistory_studentInRoster_replacesHistory() {
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        SessionHistory history = SessionHistory.of(List.of(FACTORISATION_NOTE));
+
+        addressBook.setSessionHistory(ALEX.getId(), history);
+
+        assertEquals(history, addressBook.getSessionHistory(ALEX.getId()));
+    }
+
+    @Test
+    public void setSessionHistory_studentNotInRoster_throwsIllegalArgumentException() {
+        addressBook.addStudent(ALEX);
+        SessionHistory history = SessionHistory.of(List.of(INDICES_NOTE));
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_UNKNOWN_STUDENT, () -> addressBook
+                .setSessionHistory(BEA.getId(), history));
+        assertTrue(addressBook.getSessionHistory(BEA.getId()).isEmpty());
+    }
+
+    @Test
+    public void editSessionNote_validNumber_replacesTextAndPreservesTimestamp() {
+        addressBook.addStudent(ALEX);
+        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
+
+        SessionNote editedNote = addressBook.editSessionNote(ALEX.getId(), Index.fromOneBased(1), "Corrected summary.");
+
+        assertEquals("Corrected summary.", editedNote.getText());
+        assertEquals(INDICES_NOTE.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(List.of(editedNote), addressBook.getSessionHistory(ALEX.getId()).getNotes());
+    }
+
+    @Test
+    public void editSessionNote_unknownStudent_throwsIllegalArgumentException() {
+        addressBook.addStudent(ALEX);
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_UNKNOWN_STUDENT, () -> addressBook
+                .editSessionNote(BEA.getId(), Index.fromOneBased(1), "Corrected summary."));
+    }
+
+    @Test
     public void sessionNoteMethods_nullArguments_throwNullPointerException() {
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(null, INDICES_NOTE));
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(ALEX.getId(), null));
+        assertThrows(NullPointerException.class, () -> addressBook.setSessionHistory(null, SessionHistory.empty()));
+        assertThrows(NullPointerException.class, () -> addressBook.setSessionHistory(ALEX.getId(), null));
+        assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(null, Index.fromOneBased(1)));
+        assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(ALEX.getId(), null));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(null,
+                Index.fromOneBased(1), "text"));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(), null, "text"));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(),
+                Index.fromOneBased(1), null));
         assertThrows(NullPointerException.class, () -> addressBook.getSessionHistory(null));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionHistory(null));
     }
@@ -218,6 +381,11 @@ public class AddressBookTest {
     public void toStringMethod() {
         String expected = AddressBook.class.getCanonicalName() + "{persons=" + addressBook.getPersonList() + "}";
         assertEquals(expected, addressBook.toString());
+    }
+
+    private static Student editedAlex(String name, String phone, String subject, String currentLevel) {
+        return new Student(new StudentName(name), new ParentGuardianContact(phone, Optional.empty()),
+                new Subject(subject), new CurrentLevel(currentLevel), ALEX.getId());
     }
 
     /**

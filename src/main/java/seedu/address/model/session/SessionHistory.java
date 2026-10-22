@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import seedu.address.commons.core.index.Index;
+
 /**
  * Represents the immutable, newest-first collection of one student's session notes.
  */
@@ -33,14 +35,67 @@ public final class SessionHistory {
     }
 
     /**
+     * Returns a history containing {@code notes}, ordered newest first.
+     * Notes with equal timestamps keep their relative order in {@code notes}, so a history saved newest first
+     * is restored exactly.
+     */
+    public static SessionHistory of(List<SessionNote> notes) {
+        requireNonNull(notes);
+        List<SessionNote> sortedNotes = new ArrayList<>(notes);
+        // List#sort is stable, which keeps notes with equal timestamps in their given order.
+        sortedNotes.sort(NEWEST_FIRST);
+        return sortedNotes.isEmpty() ? empty() : new SessionHistory(List.copyOf(sortedNotes));
+    }
+
+    /**
      * Returns a new history containing this history's notes and {@code note}.
-     * Notes with equal timestamps keep the order in which they were added.
+     * Among notes with equal timestamps, {@code note} is treated as the newest, so notes are numbered in the
+     * order they were added.
      */
     public SessionHistory withNote(SessionNote note) {
         requireNonNull(note);
         List<SessionNote> updatedNotes = new ArrayList<>(notes);
         int insertionIndex = findInsertionIndex(note);
         updatedNotes.add(insertionIndex, note);
+        return new SessionHistory(List.copyOf(updatedNotes));
+    }
+
+    /**
+     * Returns the note with the given chronological {@code noteNumber}, where one identifies the oldest note.
+     *
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds this history's size.
+     */
+    public SessionNote getNote(Index noteNumber) {
+        requireNonNull(noteNumber);
+        return notes.get(toNewestFirstIndex(noteNumber));
+    }
+
+    /**
+     * Returns a new history without the note with the given chronological {@code noteNumber}, where one identifies
+     * the oldest note.
+     *
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds this history's size.
+     */
+    public SessionHistory withoutNote(Index noteNumber) {
+        requireNonNull(noteNumber);
+        List<SessionNote> updatedNotes = new ArrayList<>(notes);
+        updatedNotes.remove(toNewestFirstIndex(noteNumber));
+        return updatedNotes.isEmpty() ? empty() : new SessionHistory(List.copyOf(updatedNotes));
+    }
+
+    /**
+     * Returns a new history with the selected note's text replaced while preserving its recorded date and time.
+     *
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds this history's size.
+     * @throws IllegalArgumentException If {@code text} is invalid.
+     */
+    public SessionHistory withEditedNote(Index noteNumber, String text) {
+        requireNonNull(noteNumber);
+        requireNonNull(text);
+        int noteIndex = toNewestFirstIndex(noteNumber);
+        SessionNote editedNote = new SessionNote(text, notes.get(noteIndex).getRecordedAt());
+        List<SessionNote> updatedNotes = new ArrayList<>(notes);
+        updatedNotes.set(noteIndex, editedNote);
         return new SessionHistory(List.copyOf(updatedNotes));
     }
 
@@ -65,13 +120,21 @@ public final class SessionHistory {
         return notes.isEmpty();
     }
 
+    private int toNewestFirstIndex(Index noteNumber) {
+        int newestFirstIndex = notes.size() - noteNumber.getOneBased();
+        if (newestFirstIndex < 0 || newestFirstIndex >= notes.size()) {
+            throw new IndexOutOfBoundsException("Session note number exceeds history size");
+        }
+        return newestFirstIndex;
+    }
+
     /**
-     * Returns the index before the first note recorded earlier than {@code note},
-     * so that the new note follows any existing notes with an equal timestamp.
+     * Returns the index of the first note recorded no later than {@code note},
+     * so that the new note precedes any existing notes with an equal timestamp.
      */
     private int findInsertionIndex(SessionNote note) {
         for (int i = 0; i < notes.size(); i++) {
-            if (NEWEST_FIRST.compare(note, notes.get(i)) < 0) {
+            if (NEWEST_FIRST.compare(note, notes.get(i)) <= 0) {
                 return i;
             }
         }

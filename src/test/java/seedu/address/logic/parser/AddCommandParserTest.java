@@ -43,15 +43,37 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_subjectWithSlash_success() {
+        Student student = new Student(new StudentName("Alicia Lim"),
+                new ParentGuardianContact("+65 9123 4567", Optional.empty()),
+                new Subject("E Math/A Math"), new CurrentLevel("Secondary 3"));
+
+        assertParseSuccess(parser, " n/Alicia Lim p/+65 9123 4567 sub/E Math/A Math l/Secondary 3",
+                new AddCommand(student));
+    }
+
+    @Test
     public void parse_missingLevel_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics",
+                "Value missing for parameter: l/\n" + AddCommand.MESSAGE_USAGE);
+    }
+
+    @Test
+    public void parse_emptyRequiredValue_failure() {
+        assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics l/",
+                "Value missing for parameter: l/\n" + AddCommand.MESSAGE_USAGE);
+    }
+
+    @Test
+    public void parse_nonEmptyPreamble_failure() {
+        assertParseFailure(parser, " unexpected" + VALID_REQUIRED_ARGUMENTS,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
     }
 
     @Test
     public void parse_repeatedName_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " n/Bea Lim",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME));
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME) + "\n" + AddCommand.MESSAGE_USAGE);
     }
 
     @Test
@@ -60,12 +82,24 @@ public class AddCommandParserTest {
                 " n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
         assertParseFailure(parser, legacyPersonArguments,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                getUnknownParameterMessage("a/"));
     }
 
     @Test
     public void parse_studentArgumentsWithLegacyPersonPrefix_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " a/Block 312, Amy Street 1 t/friend",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                getUnknownParameterMessage("a/"));
+    }
+
+    @Test
+    public void parse_unknownPrefix_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " x/value",
+                getUnknownParameterMessage("x/"));
+    }
+
+    private static String getUnknownParameterMessage(String prefix) {
+        return String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, prefix,
+                AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
+                + "\n" + AddCommand.MESSAGE_USAGE;
     }
 }

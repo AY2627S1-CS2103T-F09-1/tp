@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javafx.collections.ObservableList;
+import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
@@ -25,6 +26,8 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     static final String MESSAGE_UNKNOWN_STUDENT = "Session notes must belong to a student in the roster.";
     static final String MESSAGE_STUDENT_NOT_FOUND = "Student must exist in the roster.";
+    static final String MESSAGE_STUDENT_ID_MISMATCH = "Edited student must retain the target student's ID.";
+    static final String MESSAGE_DUPLICATE_STUDENT = "Student with the same identity already exists.";
 
     private final UniquePersonList persons = new UniquePersonList();
     private final List<Student> students = new java.util.ArrayList<>();
@@ -57,8 +60,23 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(newData);
 
         setPersons(newData.getPersonList());
-        students.clear();
-        students.addAll(newData.getStudentList());
+        setStudents(newData.getStudentList());
+        setSessionHistories(newData);
+    }
+
+    /**
+     * Replaces the contents of the student list with {@code students}.
+     */
+    private void setStudents(List<Student> students) {
+        this.students.clear();
+        this.students.addAll(students);
+    }
+
+    /**
+     * Replaces the session histories with those {@code newData} holds for the students in this address book.
+     * The student list must already be replaced, so that only histories of current students are copied.
+     */
+    private void setSessionHistories(ReadOnlyAddressBook newData) {
         sessionHistories.clear();
         for (Student student : students) {
             StudentId studentId = student.getId();
@@ -124,6 +142,21 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     /**
+     * Replaces the student with {@code studentId} while preserving the student's stable identity and session history.
+     *
+     * @throws IllegalArgumentException If the target does not exist, the replacement has a different ID, or another
+     *         student has the replacement's duplicate-detection identity.
+     */
+    public void setStudent(StudentId studentId, Student editedStudent) {
+        requireAllNonNull(studentId, editedStudent);
+        int targetIndex = findStudentIndex(studentId);
+        checkArgument(editedStudent.getId().equals(studentId), MESSAGE_STUDENT_ID_MISMATCH);
+        checkArgument(findConflictingStudent(studentId, editedStudent).isEmpty(), MESSAGE_DUPLICATE_STUDENT);
+
+        students.set(targetIndex, editedStudent);
+    }
+
+    /**
      * Removes the student with {@code studentId} and that student's session history.
      *
      * @return The number of session notes removed with the student.
@@ -131,10 +164,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public int removeStudent(StudentId studentId) {
         requireNonNull(studentId);
-        Student studentToRemove = students.stream()
-                .filter(student -> student.getId().equals(studentId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_STUDENT_NOT_FOUND));
+        Student studentToRemove = students.get(findStudentIndex(studentId));
 
         students.remove(studentToRemove);
         return sessionHistories.removeHistory(studentId);
@@ -151,6 +181,42 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireAllNonNull(studentId, note);
         checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
         sessionHistories.addNote(studentId, note);
+    }
+
+    /**
+     * Replaces the session history of the student with {@code studentId} with {@code history}.
+     *
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
+     */
+    public void setSessionHistory(StudentId studentId, SessionHistory history) {
+        requireAllNonNull(studentId, history);
+        checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
+        sessionHistories.setHistory(studentId, history);
+    }
+
+    /**
+     * Removes and returns the note with the given chronological {@code noteNumber} from the student's history.
+     *
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
+     */
+    public SessionNote removeSessionNote(StudentId studentId, Index noteNumber) {
+        requireAllNonNull(studentId, noteNumber);
+        checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
+        return sessionHistories.removeNote(studentId, noteNumber);
+    }
+
+    /**
+     * Replaces one session note's text while preserving its recorded date and time.
+     *
+     * @return The replacement note.
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
+     */
+    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
+        requireAllNonNull(studentId, noteNumber, text);
+        checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
+        return sessionHistories.editNote(studentId, noteNumber, text);
     }
 
     /**
@@ -171,6 +237,20 @@ public class AddressBook implements ReadOnlyAddressBook {
 
     private boolean hasStudentWithId(StudentId studentId) {
         return students.stream().anyMatch(student -> student.getId().equals(studentId));
+    }
+
+    /**
+     * Returns the list index of the student with {@code studentId}.
+     *
+     * @throws IllegalArgumentException If no student has {@code studentId}.
+     */
+    private int findStudentIndex(StudentId studentId) {
+        for (int index = 0; index < students.size(); index++) {
+            if (students.get(index).getId().equals(studentId)) {
+                return index;
+            }
+        }
+        throw new IllegalArgumentException(MESSAGE_STUDENT_NOT_FOUND);
     }
 
     //// util methods

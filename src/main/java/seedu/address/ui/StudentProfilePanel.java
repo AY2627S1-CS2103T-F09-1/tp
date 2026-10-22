@@ -2,10 +2,12 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
@@ -21,24 +23,24 @@ public class StudentProfilePanel extends UiPart<Region> {
     private static final String FXML = "StudentProfilePanel.fxml";
     private static final String EMAIL_NOT_PROVIDED = "Not provided";
 
-    private final ObservableList<SessionNote> sessionNotes = FXCollections.observableArrayList();
+    private final ObservableList<NumberedSessionNote> sessionNotes = FXCollections.observableArrayList();
 
     @FXML
     private VBox emptyState;
     @FXML
     private VBox profileContent;
     @FXML
-    private Label studentName;
+    private SelectableText studentName;
     @FXML
-    private Label parentGuardianPhone;
+    private SelectableText parentGuardianPhone;
     @FXML
-    private Label parentGuardianEmail;
+    private SelectableText parentGuardianEmail;
     @FXML
-    private Label subject;
+    private SelectableText subject;
     @FXML
-    private Label currentLevel;
+    private SelectableText currentLevel;
     @FXML
-    private ListView<SessionNote> sessionNoteListView;
+    private ListView<NumberedSessionNote> sessionNoteListView;
     @FXML
     private VBox emptyNotesState;
 
@@ -62,7 +64,7 @@ public class StudentProfilePanel extends UiPart<Region> {
         parentGuardianEmail.setText(profile.getParentGuardianContact().getEmail().orElse(EMAIL_NOT_PROVIDED));
         subject.setText(profile.getSubject().toString());
         currentLevel.setText(profile.getCurrentLevel().toString());
-        sessionNotes.setAll(profile.getSessionNotes());
+        sessionNotes.setAll(numberSessionNotes(profile.getSessionNotes()));
         updateNotesEmptyState();
         setProfileVisible(true);
     }
@@ -89,20 +91,46 @@ public class StudentProfilePanel extends UiPart<Region> {
         emptyState.setManaged(!isVisible);
     }
 
+    private List<NumberedSessionNote> numberSessionNotes(List<SessionNote> notes) {
+        List<NumberedSessionNote> numberedNotes = new ArrayList<>();
+        for (int i = 0; i < notes.size(); i++) {
+            numberedNotes.add(new NumberedSessionNote(notes.get(i), notes.size() - i));
+        }
+        return numberedNotes;
+    }
+
     /**
      * Displays one session note as a timestamped card.
      */
-    static class SessionNoteListViewCell extends ListCell<SessionNote> {
-        @Override
-        protected void updateItem(SessionNote sessionNote, boolean empty) {
-            super.updateItem(sessionNote, empty);
+    static class SessionNoteListViewCell extends ListCell<NumberedSessionNote> {
+        private Region sessionNoteCard;
 
-            if (empty || sessionNote == null) {
+        @Override
+        protected void updateItem(NumberedSessionNote numberedNote, boolean empty) {
+            super.updateItem(numberedNote, empty);
+            clearSessionNoteCard();
+
+            if (empty || numberedNote == null) {
                 setGraphic(null);
                 setText(null);
             } else {
-                setGraphic(new SessionNoteCard(sessionNote).getRoot());
+                sessionNoteCard = new SessionNoteCard(
+                        numberedNote.sessionNote(), numberedNote.noteNumber()).getRoot();
+                sessionNoteCard.maxWidthProperty().bind(widthProperty());
+                setGraphic(sessionNoteCard);
             }
         }
+
+        private void clearSessionNoteCard() {
+            if (sessionNoteCard == null) {
+                return;
+            }
+            sessionNoteCard.maxWidthProperty().unbind();
+            sessionNoteCard = null;
+        }
+    }
+
+    /** A session note paired with its chronological display number. */
+    static record NumberedSessionNote(SessionNote sessionNote, int noteNumber) {
     }
 }

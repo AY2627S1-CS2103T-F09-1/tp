@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import seedu.address.model.session.SessionNote;
 
@@ -22,17 +21,20 @@ public class SessionNoteCard extends UiPart<Region> {
             DateTimeFormatter.ofPattern("d MMM uuuu, h:mm a", Locale.ENGLISH);
 
     @FXML
-    private Label timestamp;
+    private SelectableText header;
     @FXML
-    private Label noteText;
+    private SelectableText noteText;
 
     /**
-     * Creates a card displaying {@code sessionNote}.
+     * Creates a card displaying {@code sessionNote} with its chronological {@code noteNumber}.
      */
-    public SessionNoteCard(SessionNote sessionNote) {
+    public SessionNoteCard(SessionNote sessionNote, int noteNumber) {
         super(FXML);
         requireNonNull(sessionNote);
-        timestamp.setText(formatRecordedAt(sessionNote.getRecordedAt()));
+        if (noteNumber < 1) {
+            throw new IllegalArgumentException("Session note number must be positive");
+        }
+        header.setText("[" + noteNumber + "] " + formatRecordedAt(sessionNote.getRecordedAt()));
         noteText.setText(sessionNote.getText());
     }
 

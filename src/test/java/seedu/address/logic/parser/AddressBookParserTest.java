@@ -12,11 +12,15 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteSessionNoteCommand;
+import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.EditCommand.EditStudentDescriptor;
+import seedu.address.logic.commands.EditNoteCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
-import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -49,6 +53,41 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_confirmedDelete() throws Exception {
+        DeleteCommand command = (DeleteCommand) parser.parseCommand(
+                DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased() + " /confirm");
+        assertEquals(new DeleteCommand(INDEX_FIRST_PERSON, true), command);
+    }
+
+    @Test
+    public void parseCommand_deleteSessionNote() throws Exception {
+        DeleteSessionNoteCommand command = (DeleteSessionNoteCommand) parser.parseCommand("delete note 1 2");
+        assertEquals(new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)), command);
+    }
+
+    @Test
+    public void parseCommand_confirmedDeleteSessionNote() throws Exception {
+        DeleteSessionNoteCommand command = (DeleteSessionNoteCommand) parser.parseCommand(
+                "delete note 1 2 /confirm");
+        assertEquals(new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), true), command);
+    }
+
+    @Test
+    public void parseCommand_edit() throws Exception {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Physics"));
+        EditCommand command = (EditCommand) parser.parseCommand("edit 1 sub/Physics");
+
+        assertEquals(new EditCommand(INDEX_FIRST_PERSON, descriptor), command);
+    }
+
+    @Test
+    public void parseCommand_editNote() throws Exception {
+        EditNoteCommand command = (EditNoteCommand) parser.parseCommand("edit note 1 2 nt/Corrected summary.");
+        assertEquals(new EditNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), "Corrected summary."), command);
+    }
+
+    @Test
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
@@ -69,11 +108,6 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_list() throws Exception {
-        assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
-    }
-
-    @Test
     public void parseCommand_view() throws Exception {
         ViewCommand command = (ViewCommand) parser.parseCommand(
                 ViewCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
@@ -81,11 +115,9 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_listWithArguments_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ListCommand.MESSAGE_USAGE);
-
-        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(
-                ListCommand.COMMAND_WORD + " 3"));
+    public void parseCommand_removedListCommand_throwsParseException() {
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("list"));
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("list 3"));
     }
 
     @Test
@@ -101,7 +133,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_removedLegacyCommands_throwParseException() {
-        List<String> legacyCommands = List.of("edit 1 n/Alicia Lim", "find Alicia", "clear");
+        List<String> legacyCommands = List.of("find Alicia", "clear");
 
         for (String legacyCommand : legacyCommands) {
             assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(legacyCommand));
@@ -136,7 +168,7 @@ public class AddressBookParserTest {
     @Test
     public void getLoggableCommandWord_everyCommandWord_returnsCommandWord() {
         List<String> commandWords = List.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
-                ListCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
+                EditCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
                 ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD);
 
         for (String commandWord : commandWords) {
@@ -146,7 +178,7 @@ public class AddressBookParserTest {
 
     @Test
     public void getLoggableCommandWord_removedLegacyCommandWords_returnsUnknown() {
-        List<String> removedCommandWords = List.of("edit", "find", "clear");
+        List<String> removedCommandWords = List.of("find", "clear");
 
         for (String commandWord : removedCommandWords) {
             assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD,

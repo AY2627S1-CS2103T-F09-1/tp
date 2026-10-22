@@ -52,7 +52,7 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The *Sequence Diagram* below shows how the components interact when the user previews deletion with `delete 1` and then completes it with `delete 1 /confirm`.
 
 <img src="images/ArchitectureSequenceDiagram.png" width="574" />
 
@@ -95,20 +95,17 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
+The sequence diagram below illustrates the interactions within the `Logic` component for the two-command confirmed-deletion workflow shared by student and session-note deletion.
 
-![Interactions Inside the Logic Component for the `delete 1` Command](images/DeleteSequenceDiagram.png)
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</div>
+![Interactions Inside the Logic Component for Confirmed Deletion](images/DeleteSequenceDiagram.png)
 
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to resolve the sorted roster and delete a student by stable ID).
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. `LogicManager` saves the address book. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
+1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand` or `DeleteSessionNoteCommand`) which is coordinated by the `LogicManager`.
+1. An unconfirmed deletion command resolves its student or session-note target and returns a preview. `LogicManager` retains at most one pending deletion in memory and returns without saving because no model data changed.
+1. At the start of the next command, `LogicManager` consumes and clears the pending deletion. A matching confirmed command must still resolve to the same stable student and, for a session note, the same immutable history snapshot before the applicable model deletion operation can run.
+1. Commands that enter the persistence path and change the address book are saved by `LogicManager`; commands that leave it unchanged, such as `view`, `help`, and `exit`, are not saved. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
@@ -163,7 +160,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### TutorTrack command routing
 
-`AddressBookParser` registers the TutorTrack domain commands `add`, `list`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, and `clear` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
+`AddressBookParser` registers the TutorTrack domain commands `add`, `edit`, `edit note`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. TutorTrack's `edit` route dispatches `edit note` to `EditNoteCommandParser` and all other edit arguments to `EditCommandParser`, so it can update either a session note or a student record without exposing the inherited person edit behavior. The student add and edit parsers accept only the fields documented in the User Guide, so inherited person parameters such as `a/ADDRESS` and `t/TAG` are rejected before they can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
 ### Student identity
 
@@ -173,11 +170,19 @@ The command and storage layers will construct `Student` values and delegate dupl
 
 Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableStudentRoster` then checks each loaded Student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
 
+### Student editing
+
+`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated or unknown prefixes, and applies the same student value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization set, including legacy person prefixes that must be recognized and rejected consistently. An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
+
+`EditCommand#execute` resolves the displayed index once through `Model#getStudentRoster()` and then works with the selected student's stable `StudentId`. It reads the immutable roster record through `Model#getStudent(StudentId)` rather than the presentation-facing `StudentProfile`, then composes a replacement immutable `Student` that retains every omitted field and the original ID. `Model#findConflictingStudent(StudentId, Student)` delegates to the roster's single duplicate-conflict lookup so the command can format a useful error without reproducing identity rules. `Model#setStudent(StudentId, Student)` uses the same lookup authoritatively while also checking that the target exists and the replacement retains its ID. `AddressBook` replaces only the roster entry, so the session history keyed by the same ID is untouched.
+
+Changing a name or phone may reorder the roster. `MainWindow` retains an open profile by stable ID, so the highlighted card and profile move to the edited student's new index and show the replacement details after the successful command. `LogicManager` uses its normal persistence snapshot and rollback path; a failed save restores the original student and session history. Edit command string representations and command-routing logs omit supplied field values because contact and lesson context can contain private information.
+
 ### Student roster contract
 
 `Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, then normalized parent or guardian phone number, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Student ID is the final tie-breaker for students with equal names and normalized parent or guardian phone numbers. Note counts are supplied as projection data so the student-roster context does not own session-note storage; `Model#getStudentRoster()` takes each student's count from that student's session history.
 
-The `list` command parses only the exact command word and obtains a fresh roster snapshot through `Model#getStudentRoster()`. It reports the number of students for a populated roster and gives an actionable add-student message for an empty roster. JavaFX presentation consumes the same model-facing roster API in the subsequent UI slice.
+`Model#getStudentRoster()` obtains a fresh immutable roster snapshot for the JavaFX presentation. `Model#getStudent(StudentId)` returns the immutable student-domain record used by roster operations, while `Model#findConflictingStudent(StudentId, Student)` applies duplicate detection excluding the record being replaced. `Model#setStudent(StudentId, Student)` replaces one record without changing its stable identity or session history. `MainWindow` creates the roster panel from a roster snapshot during launch, and refreshes it after every successful command, so no separate roster command is needed. The panel reports an actionable add-student message when the snapshot is empty.
 
 ### Student roster UI
 
@@ -187,7 +192,7 @@ The panel keeps the displayed-profile selection by stable `StudentId`, not by ro
 
 ### Roster listing integration
 
-`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the empty persisted-roster path and the roster projection's note-count input. Newly added students report zero notes; `ModelManagerTest` covers non-zero counts from recorded session notes, and `SessionNoteIntegrationTest` checks that notes added with `note` are saved, reloaded, and counted.
+`RosterListingIntegrationTest` adds students through `LogicManager`, verifies the saved JSON can be reloaded, and checks normalized ordering, one-based indices, and stable IDs across the reload. It also verifies the roster projection's note-count input. Newly added students report zero notes; `ModelManagerTest` covers non-zero counts from recorded session notes, and `SessionNoteIntegrationTest` checks that notes added with `note` are saved, reloaded, and counted.
 
 ### Session note types
 
@@ -195,7 +200,7 @@ Session notes live in the `seedu.address.model.session` package, separate from `
 
 `SessionNote` is an immutable value holding the note text and the `OffsetDateTime` at which it was recorded. Its text is stripped of surrounding whitespace, while internal spaces are kept exactly as typed. Valid text has 1 to 500 characters, counted as Unicode code points so that an emoji counts as one character, and contains no control characters (such as line breaks or tabs) or Unicode line and paragraph separators. Identical text may be recorded more than once because each note describes a separate lesson. `SessionNote` does not read the clock itself; the caller supplies `recordedAt`, which keeps the type deterministic to test and lets the model decide when a note is timestamped.
 
-`SessionHistory` is the immutable, newest-first collection of one student's notes. `SessionHistory#empty()` returns a history without notes, and `SessionHistory#withNote(SessionNote)` returns a new history with the note inserted, leaving the original unchanged. Notes are ordered by the instant they were recorded rather than by their local clock reading, so notes recorded with different time-zone offsets still appear in the correct order. Notes with equal instants keep the order in which they were added. `SessionHistory#getNotes()` returns an unmodifiable list, and `SessionHistory#size()` provides the note count shown in the roster.
+`SessionHistory` is the immutable, newest-first collection of one student's notes. `SessionHistory#empty()` returns a history without notes, and `SessionHistory#withNote(SessionNote)` returns a new history with the note inserted, leaving the original unchanged. Notes are ordered by the instant they were recorded rather than by their local clock reading, so notes recorded with different time-zone offsets still appear in the correct order. Because timestamps are truncated to whole seconds, two notes can share an instant; `withNote` places the added note before notes with an equal instant, so it is treated as the newer one and notes are numbered in the order they were added. `SessionHistory#of(List<SessionNote>)` builds a history from a list in one step, sorting it newest first with a stable sort so that notes with equal instants keep their given order. `SessionHistory#getNotes()` returns an unmodifiable list, and `SessionHistory#size()` provides the note count shown in the roster. `SessionHistory#getNote(Index)` and `SessionHistory#withoutNote(Index)` accept the chronological note number shown to the user, where one identifies the oldest note. They convert it to the newest-first list position with `history size - NOTE_NUMBER`; removing a note returns a new history and leaves the original snapshot unchanged.
 
 ### Session note model integration
 
@@ -203,10 +208,12 @@ Session notes live in the `seedu.address.model.session` package, separate from `
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
-The `Model` API offers three session-note operations:
+The `Model` API offers five session-note operations:
 
 * `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
+* `Model#editSessionNote(StudentId, Index, String)` replaces one note's text while preserving its recorded timestamp and chronological number.
+* `Model#deleteSessionNote(StudentId, Index)` removes and returns one note selected by its chronological note number while preserving the student and every other session note.
 * `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed.
 
 Student deletion crosses the roster and session-history contexts through one model boundary. `Model#deleteStudent(StudentId)` validates that the stable ID identifies a roster student, then removes the student and session history together and returns the removed-note count. Keeping this coordination inside the model prevents commands from leaving an orphaned student or history if validation fails.
@@ -217,7 +224,7 @@ Student deletion crosses the roster and session-history contexts through one mod
 
 The `view INDEX` command resolves the chosen roster entry to its stable `StudentId` and carries that ID in `CommandResult`. `MainWindow` retains that stable ID, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card; the command layer does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
-`StudentProfilePanel` preserves the model's newest-first note order. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
+`StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
 
 `MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
 
@@ -229,7 +236,7 @@ Each student's session notes are saved inside that student's JSON record as a `s
 "sessionNotes": [ { "recordedAt": "2026-09-18T18:35:00+08:00", "text": "Reviewed factorisation." } ]
 ```
 
-Notes are nested in the student record so that the data file stays easy to read and edit by hand, even though the model keeps histories beside the student list. `JsonSerializableAddressBook` writes each student with `ReadOnlyAddressBook#getSessionHistory(StudentId)`, and when loading, it adds each student first and then adds that student's notes through `AddressBook#addSessionNote`.
+Notes are nested in the student record so that the data file stays easy to read and edit by hand, even though the model keeps histories beside the student list. `JsonSerializableAddressBook` writes each student with `ReadOnlyAddressBook#getSessionHistory(StudentId)`, and when loading, it adds each student first and then sets that student's whole history through `AddressBook#setSessionHistory`. Loading builds the history with `SessionHistory#of` instead of adding the saved notes one by one with `withNote`, which would treat each later-loaded note as newer and reverse notes with equal timestamps on every reload.
 
 `JsonAdaptedSessionNote` writes `recordedAt` with `DateTimeFormatter.ISO_OFFSET_DATE_TIME`, which always includes seconds; `OffsetDateTime#toString()` would leave out seconds that are zero. Loading rebuilds each note through `SessionNote`, so persisted notes follow the same validation as notes entered through the app. Notes with equal timestamps keep their saved order, and notes in a hand-edited file are sorted newest first when loaded.
 
@@ -237,31 +244,69 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 ### Session note command
 
-`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing or invalid index is reported as an invalid command format, as `DeleteCommandParser` does, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing index or several words before `nt/` are reported as an invalid command format. A single word that is not a positive integer, such as `0`, `x`, or a number too large for an index, is reported as an invalid `INDEX`, as `DeleteCommandParser` does for `delete note`, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
 
-`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that `list` and the roster panel show, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
+`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
 `NoteCommand#toString` omits the note text, because notes may contain private lesson details.
 
-### Student deletion
+### Confirmed deletion
 
-`delete INDEX` is parsed by `DeleteCommandParser`, which accepts exactly one positive whole-number index. `DeleteCommand#execute` resolves that index against `Model#getStudentRoster()`, the same sorted snapshot displayed by `list`, and reports the student-specific invalid-index error before mutation when the index is outside the roster.
+`DeleteCommandParser` supports `delete STUDENT_INDEX [/confirm]` for a whole student and `delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` for one session note. `/confirm` is an exact, case-sensitive terminal token. Duplicated, misplaced, differently cased, concatenated, or value-bearing confirmation tokens are rejected during parsing, before the model can change. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
-The command passes the selected entry's stable `StudentId` to `Model#deleteStudent`, which removes the student and session history atomically and returns the number of notes removed. The command result reports the student's name and note count. `LogicManager` then saves the complete address book; its existing rollback restores both records if saving fails.
+#### Preview and pending target
 
-After a successful command, `MainWindow` requests a fresh roster snapshot, so the remaining students receive consecutive one-based indices. It also refreshes the displayed profile by stable ID; if the deleted student was open, the absent profile causes the panel to close without UI code reaching into the model.
+For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. It returns the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter any other command.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`.
+
+For `delete note STUDENT_INDEX NOTE_NUMBER`, `DeleteSessionNoteCommand#execute` resolves the same sorted roster and checks that the selected student has the displayed note number. After returning the preview and exact confirmation command, `LogicManager` retains a `PendingSessionNoteDeletion` containing the student index, stable `StudentId`, chronological note number, and exact immutable `SessionHistory` snapshot. The note number maps to the internal newest-first list position with `history size - NOTE_NUMBER`; because it is a display selector rather than a stored note ID, the remaining notes are numbered consecutively after deletion.
+
+Both pending types occupy the same single `PendingDeletion` slot in `LogicManager`. Starting either valid preview after another preview consumes the earlier pending state and replaces it with the new target. Pending state contains no private student fields, is not part of the model or JSON schema, and is never persisted.
+
+#### Confirmation, cancellation, and mutation
+
+At the start of the next `LogicManager#execute` call, the pending deletion is copied locally and cleared before the new input is parsed. Any other submitted command, including malformed input, therefore cancels the pending deletion before that input is processed. A direct or repeated confirmation has no pending target and is rejected. A confirmation for the wrong deletion type or different selectors is a mismatch and is also rejected without mutation.
+
+A student confirmation must use the pending index, and that index must still resolve to the pending stable `StudentId`. A session-note confirmation must additionally use the pending note number and find the same immutable history object for that student. These checks prevent a roster reorder or session-history change from redirecting confirmation to a different target even when the displayed numbers are reused.
+
+After a match, `LogicManager` snapshots the address book and calls either `Model#deleteStudent(StudentId)` or `Model#deleteSessionNote(StudentId, Index)`. Student deletion removes the student and complete history atomically; session-note deletion removes only the selected note and preserves the student and every other note. `LogicManager` then saves the complete address book. A save failure restores the snapshot and leaves no confirmation pending, so the user must preview again. No storage-schema change is needed because the existing `sessionNotes` list stores the updated history, while note numbers and pending state remain transient.
+
+After a successful student deletion, `MainWindow` requests a fresh roster snapshot, assigns consecutive student indices, and closes the profile if it belonged to the deleted student. After a successful note deletion, it refreshes an open profile so the remaining newest-first notes and their reassigned numbers are visible. A preview or rejected confirmation leaves the roster and profile unchanged.
+
+**Design considerations:**
+
+* **Trailing `/confirm` flag (current choice):** The confirmation repeats the complete destructive command and target in the same `word /clause` style as other TutorTrack commands. It remains keyboard-first, requires no extra command vocabulary, and lets the parser reject malformed confirmation placement. The cost is that the user must retype or recall the command exactly.
+* **Standalone `confirm` and `cancel` commands:** Separate commands would require `ConfirmCommand`, `CancelCommand`, parser routes, help text, and another way to show which target `confirm` means. TutorTrack instead treats any other submitted command as cancellation and keeps the exact target visible in the confirmation command.
+* **JavaFX confirmation dialog:** A modal dialog would duplicate the command path, introduce mouse-oriented UI state, and make parser and end-to-end testing less representative of the fast-typing workflow.
+* **Persistent session-note IDs:** A stored ID would require a schema and migration change. Chronological display numbers are sufficient because the pending deletion also binds the immutable history snapshot, making a stale number fail safely.
+* **Separate student and note coordinators:** Both operations have the same preview, pending match, save, and rollback lifecycle. One pending-deletion slot prevents simultaneous ambiguous confirmations while the two model operations retain their distinct domain responsibilities.
+
+### Edit note command
+
+The `edit note` command replaces the text of one existing session note without changing when it was recorded. Its format is `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`, where `STUDENT_INDEX` selects a student in the current roster and `NOTE_NUMBER` selects a note in that student's displayed chronological numbering.
+
+`EditNoteCommandParser` validates the student index, note number, `nt/` prefix, and new note text before creating an `EditNoteCommand`. The parser rejects a missing or malformed selector, an empty or overlong replacement, control characters, and duplicate `nt/` prefixes without changing the model. The command resolves the roster index to the student's stable `StudentId`, just as the existing note and deletion commands do.
+
+The model operation creates a new immutable `SessionNote` with the replacement text and the original note's `recordedAt` value, then replaces the selected entry in the student's immutable `SessionHistory`. Keeping the original timestamp preserves the note's chronological position and means that editing does not renumber the remaining notes or alter the roster's note count. The operation crosses the model boundary through the student's `StudentId`; command code does not mutate a history or a storage DTO directly.
+
+`LogicManager` snapshots the address book before the edit, saves the updated data through the existing persistence path, and restores the snapshot if saving fails. No storage-schema change is required because the existing `sessionNotes` entry is rewritten with the same `recordedAt` and the new `text`. After a successful edit, `MainWindow` refreshes the open profile so the updated text is visible while the note number and timestamp remain unchanged. A failed validation or save leaves the profile, roster, in-memory model, and data file unchanged.
+
+**Design considerations:**
+
+* **Preserve the original timestamp (current choice):** Editing corrects the note's text while retaining its lesson context and chronological position. The replacement is reconstructed with the old `recordedAt` value rather than being treated as a new lesson note.
+* **Delete and add a new note:** This would reuse existing operations, but it would assign a new timestamp and could move the edited note in the history. It would also make an edit look like a second lesson, so it is not suitable.
+* **Use a persistent note ID:** A stored ID would require a storage-schema and migration change. The current chronological note number is sufficient when paired with the current roster context and the immutable history used for the edit operation.
 
 ### Save-failure rollback
 
-A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command, `LogicManager#execute` copies the address book with `new AddressBook(model.getAddressBook())`. If `Storage#saveAddressBook` then throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws the same `CommandException` as before.
+A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command on the persistence path, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. After the command runs, `LogicManager` compares the copy with the model's address book and skips saving when they are equal, so commands that change no data, such as `view`, `help`, and `exit`, still work when the data file cannot be written, and never overwrite a data file that failed to load. Otherwise, if `Storage#saveAddressBook` throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws a `CommandException` that names the data file from `Storage#getAddressBookFilePath()`; the exception itself may name the temporary file used for the write. A deletion preview bypasses this path because it does not mutate or save data.
 
 The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
 
 **Design considerations:**
 
-* **Alternative 1 (current choice):** `LogicManager` copies the address book before every command and restores it when saving fails.
-  * Pros: Covers every command, including future ones, in one place.
-  * Cons: Copies the address book even for commands that do not change it.
+* **Alternative 1 (current choice):** `LogicManager` copies the address book before commands on the persistence path and restores it when saving fails.
+  * Pros: Covers persisted commands, including future ones, in one place while allowing non-mutating multi-step previews to opt out.
+  * Cons: Copies and compares the address book for commands that do not change it.
 * **Alternative 2:** Each command undoes its own changes when saving fails.
   * Pros: Copies nothing for commands that do not change data.
   * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
@@ -325,7 +370,7 @@ The `redo` command does the opposite — it calls `Model#redoAddressBook()`,
 
 </div>
 
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+Step 5. The user then decides to execute the command `help`. Commands that do not modify the address book, such as `help`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
 
 ![UndoRedoState4](images/UndoRedoState4.png)
 
@@ -403,18 +448,19 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | tutor preparing for a lesson                        | review a student's recent session notes                                          | continue from where the student previously left off                                        |
 | `* * *`  | tutor                                               | see the date and time each session note was written                              | know when each lesson took place                                                           |
 | `* * *`  | tutor who has just completed a lesson               | add a short session note about a student's progress, difficulties, or next steps | preserve what happened while it is still fresh                                             |
-| `* * *`  | tutor                                               | delete a student from my roster                                                  | remove information I no longer need, or re-enter a student whose details I entered wrongly |
-| `* * *`  | tutor                                               | be told how many session notes were removed when I delete a student              | notice immediately if I deleted the wrong student                                          |
+| `* * *`  | tutor                                               | delete a student from my roster                                                  | remove information I no longer need                                                        |
+| `* * *`  | tutor                                               | see the student and session-note count before confirming a deletion              | verify the impact before removing data                                                      |
+| `* * *`  | tutor                                               | confirm before a student is deleted                                              | avoid deleting the wrong student by accident                                               |
 | `* * *`  | tutor                                               | be told exactly what is wrong when a command fails                               | fix the mistake without guessing or retyping the whole command                             |
 | `* * *`  | tutor                                               | have my roster and session notes saved automatically after every change          | continue where I left off the next time I open TutorTrack                                  |
 | `* * *`  | tutor new to TutorTrack                             | see usage instructions                                                           | refer to instructions when I forget how to use TutorTrack                                  |
 | `* *`    | tutor trying TutorTrack for the first time          | see sample students and session notes                                            | understand how TutorTrack supports my tutoring work                                        |
 | `* *`    | tutor ready to use TutorTrack for real              | remove all sample data at once                                                   | start my roster with only my own students                                                  |
-| `* *`    | tutor                                               | update a student's parent contact without losing the student's session notes     | keep the parent contact reliable when a parent changes their phone number or email         |
-| `* *`    | tutor                                               | remove a parent email that is no longer valid                                    | avoid contacting an address that no longer works                                           |
-| `* *`    | tutor                                               | correct a misspelled student name without losing the student's session notes     | keep my roster accurate                                                                    |
-| `* *`    | tutor                                               | update a student's level without losing the student's session notes              | keep the student's details in line with their current stage of learning                    |
-| `* *`    | tutor                                               | update the subject I teach a student without losing the student's session notes  | keep the student's details relevant when their tuition changes                             |
+| `* * *`  | tutor                                               | update a student's parent contact without losing the student's session notes     | keep the parent contact reliable when a parent changes their phone number or email         |
+| `* * *`  | tutor                                               | remove a parent email that is no longer valid                                    | avoid contacting an address that no longer works                                           |
+| `* * *`  | tutor                                               | correct a misspelled student name without losing the student's session notes     | keep my roster accurate                                                                    |
+| `* * *`  | tutor                                               | update a student's level without losing the student's session notes              | keep the student's details in line with their current stage of learning                    |
+| `* * *`  | tutor                                               | update the subject I teach a student without losing the student's session notes  | keep the student's details relevant when their tuition changes                             |
 | `* *`    | tutor preparing for a lesson                        | find a student by name                                                           | retrieve their context without scanning my whole roster                                    |
 | `* *`    | tutor with students in different subjects or levels | narrow my roster to students of a particular subject or level                    | focus on the students I am working with                                                    |
 | `* *`    | tutor                                               | return to my full roster after a search                                          | select any student by their roster number again                                            |
@@ -429,7 +475,6 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `*`      | tutor teaching siblings                             | link siblings to one shared parent contact                                       | update the parent contact once for all of them                                             |
 | `*`      | tutor                                               | correct a mistake in a saved session note                                        | keep each student's history accurate                                                       |
 | `*`      | tutor                                               | delete several students in one command                                           | remove students who have stopped lessons quickly                                           |
-| `*`      | tutor                                               | confirm before a student is deleted                                              | avoid deleting the wrong student by accident                                               |
 | `*`      | tutor who works on more than one computer           | access my roster from any of my computers                                        | prepare for lessons wherever I am                                                          |
 
 ### Use cases
@@ -481,7 +526,48 @@ student roster.
 
     Use case ends.
 
-**Use case: List the student roster**
+**Use case: Edit a student**
+
+**Preconditions:** The system is running and the current roster index context is available.
+
+**Guarantees:** A successful edit saves the supplied replacement details while preserving the student's stable identity and complete session history. A rejected edit changes nothing.
+
+**MSS**
+
+1. Tutor selects a student by roster index and supplies one or more replacement details.
+1. TutorTrack validates the index and supplied details.
+1. TutorTrack replaces the student record while retaining the stable student ID and every session note.
+1. TutorTrack saves the record, refreshes the sorted roster and any open profile, and confirms the edit.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. Tutor supplies `e/` without a value.
+
+  * 1a1. TutorTrack removes the optional parent or guardian email and continues at step 2.
+* 1b. Tutor supplies no field to edit, repeats a field, or supplies an unsupported field.
+
+  * 1b1. TutorTrack reports the command error and makes no changes.
+
+    Use case ends.
+* 2a. The index or a supplied value is invalid.
+
+  * 2a1. TutorTrack reports the validation error and makes no changes.
+
+    Use case ends.
+* 2b. The replacement name and phone duplicate another student.
+
+  * 2b1. TutorTrack reports the duplicate and makes no changes.
+
+    Use case ends.
+* 4a. TutorTrack cannot save the updated data.
+
+  * 4a1. TutorTrack reports the storage error and restores the complete original record.
+
+    Use case ends.
+
+**Use case: Display the student roster**
 
 **Preconditions:** The system is running and the student roster is available.
 
@@ -490,11 +576,10 @@ be used to select a student in a subsequent use case. No data is changed.
 
 **MSS**
 
-1. Tutor requests to list the student roster.
-2. TutorTrack displays every student sorted by normalized name, together with
+1. TutorTrack displays every student sorted by normalized name, together with
    an index, subject, current level, and session-note count.
-3. TutorTrack reports the number of students shown and establishes the
-   displayed indices as the current selection context.
+2. TutorTrack establishes the displayed indices as the current selection
+   context.
 
    Use case ends.
 
@@ -506,13 +591,6 @@ be used to select a student in a subsequent use case. No data is changed.
     one.
 
     Use case ends.
-* 1a. The request contains an index, parameter, or other extra input.
-
-  * 1a1. TutorTrack reports the correct usage and leaves the displayed roster
-    and selection context unchanged.
-
-    Use case ends.
-
 **Use case: View a student profile**
 
 **Preconditions:** The system is running and the current roster index context
@@ -585,39 +663,86 @@ history and saved locally. No other student record is changed.
 
     Use case ends.
 
-**Use case: Delete a student**
+**Use case: Delete a student or session note**
 
-**Preconditions:** The system is running and the current roster index context
-is available.
+**Preconditions:** The system is running and the current roster index context is available. Deleting a session note also requires a note number from the student's displayed history.
 
-**Guarantees:** The selected student and all of the student's session notes are
-removed from the roster and local storage.
+**Guarantees:** A preview or rejected confirmation leaves the roster and local storage unchanged. A matching confirmation removes exactly the previewed student and complete history, or exactly the previewed note while retaining its student and other notes.
 
 **MSS**
 
-1. Tutor selects a student by the student's roster index.
-2. TutorTrack identifies the selected student and the number of session notes
-   associated with the student.
-3. TutorTrack removes the student and all associated session notes and saves the
-   updated roster.
-4. TutorTrack confirms the deletion, including the student's name and the
-   number of session notes removed.
-5. TutorTrack displays the updated roster and establishes its displayed indices
-   as the current selection context.
+1. Tutor requests deletion using a student's roster index and, for one session note, its displayed note number.
+1. TutorTrack displays the target, exact confirmation command, and instruction that any other command cancels the deletion.
+1. Tutor submits the matching confirmation command next.
+1. TutorTrack verifies that the index still identifies the same stable student ID and, for a note, that the displayed history is unchanged.
+1. TutorTrack removes the previewed student and complete history, or removes only the previewed note, and saves the updated data.
+1. TutorTrack reports the deleted target and refreshes the roster and any open profile.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. The index is missing, invalid, or outside the roster.
+* 1a. A required index or note number is missing, malformed, or outside its displayed range.
 
-  * 1a1. TutorTrack reports the index error and makes no changes.
+  * 1a1. TutorTrack reports the applicable validation error and makes no changes.
+
+    Use case ends.
+* 3a. Tutor enters any other command.
+
+  * 3a1. TutorTrack cancels the pending deletion and processes the new command normally.
+
+    Use case ends.
+* 3b. Tutor enters a direct, repeated, or mismatched confirmation.
+
+  * 3b1. TutorTrack reports that the confirmation does not match or that no deletion is pending, and makes no deletion.
+
+    Use case ends.
+* 3c. Tutor duplicates or misplaces `/confirm` or adds extra arguments.
+
+  * 3c1. TutorTrack reports the command-format error and makes no deletion.
+
+    Use case ends.
+* 4a. The roster or selected session history changes before confirmation.
+
+  * 4a1. TutorTrack rejects the stale confirmation and makes no deletion.
+
+    Use case ends.
+* 5a. TutorTrack cannot save the updated data.
+
+  * 5a1. TutorTrack reports the storage error, restores the complete pre-command data, and clears the pending deletion.
+
+    Use case ends.
+
+**Use case: Edit a session note**
+
+**Preconditions:** The system is running, the current roster index context is available, and the selected student has the displayed note number.
+
+**Guarantees:** A valid replacement text updates only the selected note. Its recorded date and time, chronological position, and note number remain unchanged, and the updated history is saved locally.
+
+**MSS**
+
+1. Tutor requests an edit using a student's roster index, a displayed note number, and replacement text.
+1. TutorTrack validates the selectors and replacement text.
+1. TutorTrack creates a replacement note with the original recorded date and time, updates the student's history, and saves the updated data.
+1. TutorTrack reports that the note was edited and refreshes the student's open profile.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The student index or note number is missing, malformed, or outside the current displayed range.
+
+  * 1a1. TutorTrack reports the applicable selector error and makes no changes.
+
+    Use case ends.
+* 1b. The `nt/` prefix is missing, duplicated, or followed by invalid note text.
+
+  * 1b1. TutorTrack reports the note validation error and makes no changes.
 
     Use case ends.
 * 3a. TutorTrack cannot save the updated data.
 
-  * 3a1. TutorTrack reports the storage error and does not delete the student or
-    the session notes.
+  * 3a1. TutorTrack reports the storage error, restores the complete pre-command data, and leaves the original note unchanged.
 
     Use case ends.
 
@@ -685,17 +810,21 @@ testers are expected to do more *exploratory* testing.
 
 ### Roster and profile workspace
 
-1. Start with an empty data file and enter `list`.
+1. Start with an empty data file.
    Expected: The roster displays `No students yet` with an instruction to use `add`, while the profile displays `No student selected` with an instruction to use `view INDEX`.
 1. Enter `add n/Alicia Alexandra Lim Wei Xuan p/8000 0001 e/guardian.with.a.long.address@example.com sub/Additional Mathematics and Mathematical Modelling l/Secondary 4 Express`, followed by `add n/Blair Tan p/8000 0002 sub/English Literature l/JC 1`.
    Expected: Both roster cards remain within the left pane. Long values wrap vertically instead of being clipped or creating a horizontal scrollbar.
 1. Enter `view 1`.
    Expected: Alicia's roster card has the teal profile-selection treatment. Her name, phone, email, subject, and level appear in the profile and wrap within the value column where needed.
-1. Move the pointer over Blair's card, then use `Tab` until the roster has keyboard focus and use an arrow key.
-   Expected: Hover and keyboard focus are visually distinct from Alicia's persistent profile selection. Blair's profile does not open because profile navigation remains command-driven.
+1. Drag across text in Alicia's profile, press `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS, and paste into a temporary plain-text document. Repeat with a wrapped session note after completing the note step below.
+   Expected: Short and multi-line text can be selected and copied exactly. Typing while the profile text is selected does not edit the displayed content, and scrolling the session history still works normally.
+1. Move the pointer over Blair's card, click it, then click the result/error display.
+   Expected: Hovering or clicking Blair's card leaves it unchanged, and clicking the result/error display does not add a focus border. Neither region opens a profile or otherwise behaves like a clickable control.
 1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
    Expected: The timestamp and note wrap inside one session-note card, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
 1. Enter `delete 1`.
+   Expected: TutorTrack displays Alicia's name, note count, `delete 1 /confirm`, and `To cancel, enter any other command.` Alicia's profile and roster remain unchanged.
+1. Enter `delete 1 /confirm`.
    Expected: Alicia's profile and profile-selection treatment both clear. Blair is reindexed to 1 and remains usable.
 1. Repeat the populated-workspace checks at 1920x1080 with 100% and 125% scaling and at 1280x720 with 150% scaling.
    Expected: All fields, commands, feedback, scrollbars, and status information remain reachable. Content uses vertical wrapping or scrolling rather than clipping or horizontal expansion.
@@ -703,76 +832,138 @@ testers are expected to do more *exploratory* testing.
 ### Adding a student
 
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
-   Expected: TutorTrack confirms that Alicia Lim was added.
+   Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
 2. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
-   Expected: TutorTrack rejects it as a duplicate student and preserves the existing record.
+   Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone.` and preserves the existing record.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
+4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
+   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and neither changes the roster or data file.
+
+### Editing a student
+
+1. Add Alicia and Bea, add two session notes to Alicia, and enter `view 1` to open Alicia's profile.
+1. Enter `edit 1 n/Zara Lim p/+65 8000 0000 sub/Physics l/Secondary 4`.
+   Expected: TutorTrack reports `Edited student: Zara Lim (Physics, Secondary 4).` Zara moves to her new sorted position, retains both session notes and the same selected profile, and the saved JSON retains her original `studentId`.
+1. Enter `edit 2 e/` for a student with an email.
+   Expected: The email is removed, every omitted field and session note is unchanged, and an open profile displays `Not provided`.
+1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
+   Expected: Each command reports the applicable error and edit usage without changing the roster, profile, notes, or data file.
+1. Try to edit one student so that both the normalized name and parent phone match the other student.
+   Expected: TutorTrack reports the duplicate and leaves both students unchanged.
+1. Make the data file unwritable and enter an otherwise valid edit, then restore write access.
+   Expected: TutorTrack reports the save error and restores the original student, roster position, profile, notes, and data file.
 
 ### Rejecting inherited AB3 person commands
 
-1. Add one student, add a session note for that student, and enter `list`.
-1. Enter each of `edit 1 n/Changed Name`, `find Changed`, and `clear`.
+1. Add one student and add a session note for that student.
+1. Enter `list`.
+   Expected: TutorTrack reports `Unknown command.` and leaves the roster, session note, and saved data unchanged.
+1. Enter each of `find Changed` and `clear`.
    Expected: Each input reports `Unknown command.` The student, session note, roster display, and saved data remain unchanged.
 1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
-   Expected: TutorTrack reports the current student-add command format. It does not create a hidden person or change the roster, session notes, or saved data.
+   Expected: TutorTrack reports `a/` as an unknown parameter, lists the supported add parameters, and shows the add format. It does not create a hidden person or change the roster, session notes, or saved data.
 1. Enter `add n/Bea Lim p/9876 5432 sub/English l/JC 1`.
    Expected: The valid student form still adds Bea Lim normally.
 
-### Listing the student roster
+### Displaying the student roster
 
 1. Empty roster
 
-   1. Start TutorTrack with no student records and enter `list`.
+   1. Start TutorTrack with no student records.
       Expected: The roster panel shows a clear message explaining that there are no students and how to use `add`.
 2. Populated roster
 
-   1. Add students with different names, subjects, and levels, then enter `list`.
+   1. Add students with different names, subjects, and levels.
       Expected: Cards appear in normalized alphabetical order and each card shows its index, name, subject, level, and session-note count.
    2. Resize the window or add enough students to exceed the panel height.
-      Expected: The roster remains usable through the list's vertical scrolling.
-   3. Add another student and enter `list` again.
+      Expected: The roster remains usable through its vertical scrolling.
+   3. Add another student.
       Expected: The displayed roster refreshes and indices match the new alphabetical order.
 
 ### Adding a session note
 
-1. Prerequisites: add at least two students and enter `list`.
+1. Prerequisites: add at least two students.
 1. Enter `note 1 nt/Reviewed factorisation.`
    Expected: TutorTrack reports `Added session note for <name of student 1>.` and that student's session-note count increases by one.
-1. Close and relaunch TutorTrack, then enter `list`.
+1. Close and relaunch TutorTrack.
    Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
 1. Enter `note 1 nt/Next: 3 sub/topics`.
    Expected: The note is added with `sub/topics` as part of its text.
-1. Enter each of `note`, `note 1`, `note 0 nt/text`, `note x nt/text`, and `note 1 2 nt/text`.
+1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
    Expected: Each shows an invalid command format error, and no note count changes.
+1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
+   Expected: Each reports that `INDEX` must be a positive integer and shows the `note` format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
    Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid, and no note count changes.
 
+### Editing a session note
+
+1. Add one student, record two session notes, and enter `view 1`.
+1. Enter `edit note 1 1 nt/Corrected oldest lesson summary.`
+   Expected: TutorTrack reports `Successfully edited session note [1] for <name of student 1>.` The oldest note's text changes, while its timestamp, `[1]` number, and the student's note count remain unchanged.
+1. Close and relaunch TutorTrack, then enter `view 1`.
+   Expected: The corrected note remains saved with the same timestamp and number.
+1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, and `edit note 1 1 nt/`.
+   Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
+1. Enter `edit note 1 1 nt/first nt/second`.
+   Expected: TutorTrack reports a duplicate `nt/` prefix error and leaves the original note unchanged.
+
 ### Deleting a student
 
-1. Add Ari Tan and Bea Tan, add two session notes to Ari, enter `list`, and open Ari's profile with `view 1`.
+1. Add Ari Tan and Bea Tan, add two session notes to Ari, and open Ari's profile with `view 1`.
 1. Enter `delete 1`.
-   Expected: TutorTrack reports `Deleted student: Ari Tan. Session notes removed: 2.` Ari and the two notes are removed, Bea becomes roster index 1, and Ari's open profile closes.
-1. Close and relaunch TutorTrack, then enter `list`.
+   Expected: TutorTrack reports `Are you sure you want to delete Ari Tan and 2 session notes?`, shows `If yes, type: delete 1 /confirm`, and states `To cancel, enter any other command.` The roster, notes, profile, and data file remain unchanged.
+1. Enter `help`, followed by `delete 1 /confirm`.
+   Expected: `help` cancels the pending deletion and opens the help window. The confirmation is then rejected because no matching deletion is pending; Ari and the notes remain unchanged.
+1. Enter `delete 1`, followed immediately by `delete 1 /confirm`.
+   Expected: TutorTrack reports `Successfully deleted Ari Tan.` Ari and the two notes are removed, Bea becomes roster index 1, and Ari's open profile closes.
+1. Enter `delete 1 /confirm` again.
+   Expected: TutorTrack rejects the repeated confirmation because no matching deletion is pending, and Bea remains unchanged.
+1. Close and relaunch TutorTrack.
    Expected: Ari and the notes remain absent, while Bea remains at index 1.
-1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, and `delete 1-2`.
+1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /confirm /confirm`, and `delete 1 /confirm extra`.
    Expected: Each command reports an invalid command format and leaves the roster, notes, open profile, and data file unchanged.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid and makes no changes.
+
+### Deleting one session note
+
+1. Start with an empty roster. Enter `add n/Ari Tan p/9123 4567 sub/Mathematics l/Secondary 3` and `add n/Bea Tan p/9876 5432 sub/English l/Secondary 3`.
+1. Enter `note 1 nt/Oldest synthetic lesson note.`, `note 1 nt/Middle synthetic lesson note.`, and `note 1 nt/Newest synthetic lesson note.` in that order, pausing at least one second between submissions, and then enter `view 1`.
+   Expected: Ari's profile shows `[3] Newest synthetic lesson note.` at the top, followed by `[2] Middle synthetic lesson note.` and `[1] Oldest synthetic lesson note.` Bea remains at roster index 2 with no session notes.
+1. Enter `delete note 1 2`.
+   Expected: TutorTrack asks whether to delete session note `[2]` for Ari Tan, shows `If yes, type: delete note 1 2 /confirm`, and states `To cancel, enter any other command.` All three notes, the roster, the profile, and the data file remain unchanged.
+1. Enter `help`, followed by `delete note 1 2 /confirm`.
+   Expected: `help` cancels the pending deletion and opens the help window. The confirmation is then rejected because no matching session-note deletion is pending, and all three notes remain.
+1. Enter `delete note 1 2`, followed immediately by `delete 2 /confirm`.
+   Expected: TutorTrack rejects the student confirmation because it does not match the pending session-note deletion. Ari, Bea, and all three notes remain unchanged, and the pending deletion is cleared.
+1. Enter `delete note 1 2`, followed immediately by `delete note 1 1 /confirm`.
+   Expected: TutorTrack rejects the confirmation because the note number does not match the preview. All three notes remain, and the pending deletion is cleared.
+1. Enter `delete note 1 2`, followed immediately by `delete note 1 2 /confirm`.
+   Expected: TutorTrack reports `Successfully deleted session note [2] for Ari Tan.` Ari and Bea remain in the roster. Ari's profile refreshes with the former newest note renumbered to `[2]` at the top and the oldest note still numbered `[1]`; the deleted middle note is absent.
+1. Close and relaunch TutorTrack, and enter `view 1`.
+   Expected: Ari still has exactly the two remaining notes in newest-first order as `[2]` and `[1]`. Ari's `sessionNotes` entries in `data/addressbook.json` do not contain `noteNumber` fields.
+1. Enter `delete note 2 1`.
+   Expected: TutorTrack reports that Bea Tan has no session notes to delete and makes no changes.
+1. Enter `delete note 1 3`.
+   Expected: TutorTrack reports that session note `[3]` does not exist for Ari Tan and gives the current range from 1 to 2. No note is deleted.
+1. Enter each of `delete note`, `delete note 1`, `delete note 0 1`, `delete note 1 0`, `delete note x 1`, `delete note 1 x`, `delete note 1 1 /Confirm`, `delete note /confirm 1 1`, `delete note 1 1 /confirm /confirm`, and `delete note 1 1 /confirm extra`.
+   Expected: Each command reports the applicable session-note deletion format or validation error and leaves both students, both remaining notes, the open profile, and the data file unchanged.
 
 ### Navigating command history
 
 1. Restart TutorTrack, type `unfinished command` without pressing `Enter`, and press `Up`.
    Expected: The draft remains unchanged because the new session has no command history.
-1. Submit `list`, `invalid`, and `list` in that order, then type `unfinished command` without submitting it.
+1. Submit `help`, `invalid`, and `help` in that order, then type `unfinished command` without submitting it.
    Expected: The first and third submissions succeed, the second fails, and the draft remains in the command box.
 1. Press `Up` repeatedly.
-   Expected: The command box shows `list`, then `invalid`, then the older `list`; another `Up` leaves the oldest `list` displayed.
+   Expected: The command box shows `help`, then `invalid`, then the older `help`; another `Up` leaves the oldest `help` displayed.
 1. Press `Down` repeatedly.
-   Expected: The command box moves through `invalid` and the newer `list`, then restores `unfinished command`; another `Down` leaves the draft displayed.
-1. Press `Up`, change the recalled `list` to `help`, submit it, and press `Up` again.
+   Expected: The command box moves through `invalid` and the newer `help`, then restores `unfinished command`; another `Down` leaves the draft displayed.
+1. Press `Up`, change the recalled `help` to `exit`, submit it, and press `Up` again.
    Expected: `help` opens the help window and is recalled as the newest history entry.
 1. Close and relaunch TutorTrack, then press `Up` in an empty command box.
    Expected: No command is recalled because history is kept only for the app session.

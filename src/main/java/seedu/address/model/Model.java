@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionHistory;
@@ -71,10 +72,31 @@ public interface Model {
     }
 
     /**
+     * Returns the immutable student with {@code studentId}, or an empty optional if that student is absent.
+     */
+    default Optional<Student> getStudent(StudentId studentId) {
+        return getAddressBook().getStudent(studentId);
+    }
+
+    /**
+     * Returns another student with the same identity as {@code editedStudent}, if one exists.
+     */
+    default Optional<Student> findConflictingStudent(StudentId targetStudentId, Student editedStudent) {
+        return getAddressBook().findConflictingStudent(targetStudentId, editedStudent);
+    }
+
+    /**
      * Adds a student to the model.
      */
     default void addStudent(Student student) {
         throw new UnsupportedOperationException("Student additions are not supported by this model.");
+    }
+
+    /**
+     * Replaces the student with {@code studentId} while preserving that student's session history.
+     */
+    default void setStudent(StudentId studentId, Student editedStudent) {
+        throw new UnsupportedOperationException("Student edits are not supported by this model.");
     }
 
     /**
@@ -133,6 +155,27 @@ public interface Model {
      */
     default SessionNote addSessionNote(StudentId studentId, String text) {
         throw new UnsupportedOperationException("Session note additions are not supported by this model.");
+    }
+
+    /**
+     * Deletes and returns the note with the given chronological {@code noteNumber} from the student's history.
+     */
+    default SessionNote deleteSessionNote(StudentId studentId, Index noteNumber) {
+        throw new UnsupportedOperationException("Session note deletions are not supported by this model.");
+    }
+
+    /**
+     * Replaces a session note's text while preserving its recorded date and time.
+     *
+     * @param studentId The identifier of a student in the roster.
+     * @param noteNumber The chronological number of the note to edit.
+     * @param text Valid replacement note text, as checked by {@link SessionNote#isValidText(String)}.
+     * @return The replacement note.
+     * @throws IllegalArgumentException If the text is invalid or no student in the roster has {@code studentId}.
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
+     */
+    default SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
+        throw new UnsupportedOperationException("Session note editing is not supported by this model.");
     }
 
     /**

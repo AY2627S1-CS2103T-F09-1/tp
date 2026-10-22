@@ -96,9 +96,7 @@ public class JsonAdaptedStudentTest {
     @Test
     public void toModelSessionHistory_emptyEntry_throwsIllegalValueException() {
         JsonAdaptedSessionNote validNote = new JsonAdaptedSessionNote(INDICES_NOTE);
-        List<JsonAdaptedSessionNote> sessionNotes = Arrays.asList(validNote, null);
-        JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
-                "Mathematics", "Secondary 3", sessionNotes);
+        JsonAdaptedStudent student = createStudentWithNotes(Arrays.asList(validNote, null));
 
         assertThrows(IllegalValueException.class, JsonAdaptedStudent.MISSING_SESSION_NOTE_MESSAGE,
                 student::toModelSessionHistory);
@@ -106,13 +104,35 @@ public class JsonAdaptedStudentTest {
 
     @Test
     public void toModelSessionHistory_invalidNote_throwsIllegalValueException() {
-        List<JsonAdaptedSessionNote> sessionNotes = List.of(
-                new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Line one\nLine two"));
-        JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
-                "Mathematics", "Secondary 3", sessionNotes);
+        JsonAdaptedStudent student = createStudentWithNotes(List.of(
+                new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Line one\nLine two")));
 
         assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS,
                 student::toModelSessionHistory);
+    }
+
+    @Test
+    public void toModelSessionHistory_notesOutOfOrder_returnsNewestFirstKeepingOrderOfEqualTimestamps()
+            throws Exception {
+        JsonAdaptedStudent student = createStudentWithNotes(List.of(
+                new JsonAdaptedSessionNote("2026-09-11T18:35:00+08:00", "Reviewed indices."),
+                new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Finished algebra worksheet."),
+                new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Started algebra worksheet.")));
+
+        List<String> noteTexts = student.toModelSessionHistory().getNotes().stream()
+                .map(SessionNote::getText)
+                .toList();
+
+        assertEquals(List.of("Finished algebra worksheet.", "Started algebra worksheet.", "Reviewed indices."),
+                noteTexts);
+    }
+
+    /**
+     * Returns a valid persisted student without an identifier that has {@code sessionNotes}.
+     */
+    private JsonAdaptedStudent createStudentWithNotes(List<JsonAdaptedSessionNote> sessionNotes) {
+        return new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null, "Mathematics", "Secondary 3",
+                sessionNotes);
     }
 
     private void assertMissingField(String name, String phone, String email, String subject, String currentLevel,
