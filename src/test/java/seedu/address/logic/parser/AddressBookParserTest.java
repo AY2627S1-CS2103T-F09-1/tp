@@ -16,6 +16,8 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
+import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.EditCommand.EditStudentDescriptor;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.NoteCommand;
@@ -70,6 +72,15 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_edit() throws Exception {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Physics"));
+        EditCommand command = (EditCommand) parser.parseCommand("edit 1 sub/Physics");
+
+        assertEquals(new EditCommand(INDEX_FIRST_PERSON, descriptor), command);
+    }
+
+    @Test
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
@@ -115,7 +126,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_removedLegacyCommands_throwParseException() {
-        List<String> legacyCommands = List.of("edit 1 n/Alicia Lim", "find Alicia", "clear");
+        List<String> legacyCommands = List.of("find Alicia", "clear");
 
         for (String legacyCommand : legacyCommands) {
             assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(legacyCommand));
@@ -150,7 +161,7 @@ public class AddressBookParserTest {
     @Test
     public void getLoggableCommandWord_everyCommandWord_returnsCommandWord() {
         List<String> commandWords = List.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
-                NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
+                EditCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
                 ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD);
 
         for (String commandWord : commandWords) {
@@ -160,7 +171,7 @@ public class AddressBookParserTest {
 
     @Test
     public void getLoggableCommandWord_removedLegacyCommandWords_returnsUnknown() {
-        List<String> removedCommandWords = List.of("edit", "find", "clear");
+        List<String> removedCommandWords = List.of("find", "clear");
 
         for (String commandWord : removedCommandWords) {
             assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD,

@@ -1,5 +1,6 @@
 package seedu.address.logic;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,6 +26,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.NoteCommand;
@@ -38,7 +40,10 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
+import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.StudentName;
 import seedu.address.model.student.StudentRosterEntry;
+import seedu.address.model.student.Subject;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -353,6 +358,37 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_editStudent_successSavesAndPreservesStableData() throws Exception {
+        model.addStudent(ALEX);
+        model.addSessionNote(ALEX.getId(), "Reviewed indices.");
+
+        CommandResult result = logic.execute("edit 1 n/Alexis Tan p/8000 0001 "
+                + "e/guardian@example.com sub/Physics l/Secondary 4");
+
+        assertEquals("Edited student: Alexis Tan (Physics, Secondary 4).", result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), model.getStudentProfile(ALEX.getId()).orElseThrow().getStudentId());
+        assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
+        ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
+                .readAddressBook().orElseThrow();
+        assertEquals(ALEX.getId(), savedData.getStudentList().get(0).getId());
+        assertEquals(new StudentName("Alexis Tan"), savedData.getStudentList().get(0).getName());
+        assertEquals(new Subject("Physics"), savedData.getStudentList().get(0).getSubject());
+        assertEquals(new CurrentLevel("Secondary 4"), savedData.getStudentList().get(0).getCurrentLevel());
+        assertEquals(model.getSessionHistory(ALEX.getId()), savedData.getSessionHistory(ALEX.getId()));
+    }
+
+    @Test
+    public void execute_editStudentAfterDeletePreview_cancelsPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+
+        logic.execute("edit 1 sub/Physics");
+
+        assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
+        assertEquals(new Subject("Physics"), model.getStudentProfile(ALEX.getId()).orElseThrow().getSubject());
+    }
+
+    @Test
     public void execute_legacyPersonAdd_throwsParseException() {
         String legacyAddCommand =
                 "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
@@ -366,7 +402,7 @@ public class LogicManagerTest {
     @Test
     public void execute_removedLegacyCommands_throwParseException() {
         model.addStudent(ALEX);
-        List<String> legacyCommands = List.of("edit 1 n/Alicia Lim", "find Alicia", "clear");
+        List<String> legacyCommands = List.of("find Alicia", "clear");
 
         for (String legacyCommand : legacyCommands) {
             assertParseException(legacyCommand, MESSAGE_UNKNOWN_COMMAND);
@@ -433,6 +469,32 @@ public class LogicManagerTest {
 
         assertEquals(List.of(ALEX.getId()), failingLogic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void execute_editStudentWithStorageFailure_restoresStudentAndSessionHistory() {
+        Model studentModel = createModelWithAlex();
+        studentModel.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        SessionHistory originalHistory = studentModel.getSessionHistory(ALEX.getId());
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
+
+        assertThrows(CommandException.class, getSaveFailureMessage(), () ->
+                failingLogic.execute("edit 1 n/Alexis Tan sub/Physics"));
+
+        assertEquals(ALEX.getName(), studentModel.getStudentProfile(ALEX.getId()).orElseThrow().getName());
+        assertEquals(ALEX.getSubject(), studentModel.getStudentProfile(ALEX.getId()).orElseThrow().getSubject());
+        assertEquals(originalHistory, studentModel.getSessionHistory(ALEX.getId()));
+    }
+
+    @Test
+    public void execute_editStudentWithUnchangedValueWhenSavesFail_succeeds() throws Exception {
+        Model studentModel = createModelWithAlex();
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, Integer.MAX_VALUE);
+
+        CommandResult result = failingLogic.execute("edit 1 n/Alex Tan");
+
+        assertEquals(String.format(EditCommand.MESSAGE_SUCCESS, ALEX.getName(), ALEX.getSubject(),
+                ALEX.getCurrentLevel()), result.getFeedbackToUser());
     }
 
     @Test
@@ -521,6 +583,19 @@ public class LogicManagerTest {
 
         assertTrue(logMessages.contains("----------------[USER COMMAND][note]"));
         assertTrue(logMessages.stream().noneMatch(message -> message.contains("Reviewed indices")));
+    }
+
+    @Test
+    public void execute_editCommand_logsCommandWordOnly() {
+        model.addStudent(ALEX);
+        String commandText = "edit 1 n/Alexis Tan p/8000 0001";
+
+        List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
+                assertDoesNotThrow(() -> logic.execute(commandText)));
+
+        assertTrue(logMessages.contains("----------------[USER COMMAND][edit]"));
+        assertTrue(logMessages.stream()
+                .noneMatch(message -> message.contains("Alexis") || message.contains("8000")));
     }
 
     @Test

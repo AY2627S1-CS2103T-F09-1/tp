@@ -7,6 +7,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,24 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+    }
+
+    @Test
+    public void findUnknownPrefix_supportedAndOrdinarySlashes_returnsEmpty() {
+        assertTrue(ParserUtil.findUnknownPrefix(" n/Alex p/9123 4567 sub/E Math/A Math",
+                List.of(new Prefix("n/"), new Prefix("p/"), new Prefix("sub/"))).isEmpty());
+    }
+
+    @Test
+    public void findUnknownPrefix_unsupportedPrefix_returnsFirstUnsupportedPrefix() {
+        assertEquals(Optional.of("x/"), ParserUtil.findUnknownPrefix(" n/Alex x/value a/address",
+                List.of(new Prefix("n/"))));
+    }
+
+    @Test
+    public void findUnknownPrefix_nullArguments_throwNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.findUnknownPrefix(null, List.of()));
+        assertThrows(NullPointerException.class, () -> ParserUtil.findUnknownPrefix("", null));
     }
 
     @Test
