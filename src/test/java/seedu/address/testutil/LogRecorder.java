@@ -17,9 +17,19 @@ public class LogRecorder {
     private LogRecorder() {} // prevents instantiation
 
     /**
-     * Returns the messages that {@code loggingClass} logs at any level while {@code action} runs.
+     * Represents an action under test that may throw a checked exception of type {@code E}.
      */
-    public static List<String> captureMessages(Class<?> loggingClass, Runnable action) {
+    @FunctionalInterface
+    public interface Action<E extends Exception> {
+        void run() throws E;
+    }
+
+    /**
+     * Returns the messages that {@code loggingClass} logs at any level while {@code action} runs.
+     * Any exception that {@code action} throws is rethrown after the recording stops.
+     */
+    public static <E extends Exception> List<String> captureMessages(Class<?> loggingClass, Action<E> action)
+            throws E {
         List<String> messages = new ArrayList<>();
         Handler handler = new Handler() {
             @Override
