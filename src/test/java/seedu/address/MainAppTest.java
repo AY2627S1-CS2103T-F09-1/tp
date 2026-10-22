@@ -7,6 +7,7 @@ import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +51,38 @@ public class MainAppTest {
         Model model = new MainApp().initModelManager(storage, new UserPrefs());
 
         assertEquals(persistedData, new AddressBook(model.getAddressBook()));
+    }
+
+    @Test
+    public void getDataFilePath_default_returnsTutorTrackDataFile() {
+        assertEquals(Paths.get("data", "tutortrack.json"), new MainApp().getDataFilePath());
+    }
+
+    @Test
+    public void getUserPrefsFilePath_default_returnsPreferencesFile() {
+        assertEquals(Paths.get("preferences.json"), new MainApp().getUserPrefsFilePath());
+    }
+
+    @Test
+    public void init_filesInTestFolder_logsInitializationAndUsesDataFile() throws Exception {
+        Path dataFilePath = testFolder.resolve("tutortrack.json");
+        MainApp app = new MainApp() {
+            @Override
+            protected Path getUserPrefsFilePath() {
+                return testFolder.resolve("preferences.json");
+            }
+
+            @Override
+            protected Path getDataFilePath() {
+                return dataFilePath;
+            }
+        };
+
+        List<String> logMessages = LogRecorder.captureMessages(MainApp.class, app::init);
+
+        assertTrue(logMessages.stream().anyMatch(message -> message.contains("[ Initializing TutorTrack ]")));
+        assertEquals(dataFilePath, app.storage.getAddressBookFilePath());
+        assertTrue(app.model.getAddressBook().getStudentList().isEmpty());
     }
 
     @Test
