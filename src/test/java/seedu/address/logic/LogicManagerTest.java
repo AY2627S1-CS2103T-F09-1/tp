@@ -25,6 +25,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
+import seedu.address.logic.commands.EditNoteCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.NoteCommand;
@@ -248,6 +249,22 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_editNote_replacesTextPreservesTimestampAndSaves() throws Exception {
+        model.addStudent(ALEX);
+        SessionNote originalNote = model.addSessionNote(ALEX.getId(), "Original summary.");
+
+        CommandResult result = logic.execute("edit note 1 1 nt/Corrected summary.");
+
+        assertEquals(String.format(EditNoteCommand.MESSAGE_SUCCESS, 1, ALEX.getName()), result.getFeedbackToUser());
+        SessionNote editedNote = model.getSessionHistory(ALEX.getId()).getNote(Index.fromOneBased(1));
+        assertEquals("Corrected summary.", editedNote.getText());
+        assertEquals(originalNote.getRecordedAt(), editedNote.getRecordedAt());
+        ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
+                .readAddressBook().orElseThrow();
+        assertEquals(model.getSessionHistory(ALEX.getId()), savedData.getSessionHistory(ALEX.getId()));
+    }
+
+    @Test
     public void execute_mismatchedDeleteSessionNoteConfirmation_cancelsPendingDeletion() throws Exception {
         model.addStudent(ALEX);
         model.addSessionNote(ALEX.getId(), "Reviewed indices.");
@@ -366,7 +383,7 @@ public class LogicManagerTest {
     @Test
     public void execute_removedLegacyCommands_throwParseException() {
         model.addStudent(ALEX);
-        List<String> legacyCommands = List.of("edit 1 n/Alicia Lim", "find Alicia", "clear");
+        List<String> legacyCommands = List.of("find Alicia", "clear");
 
         for (String legacyCommand : legacyCommands) {
             assertParseException(legacyCommand, MESSAGE_UNKNOWN_COMMAND);
@@ -477,6 +494,20 @@ public class LogicManagerTest {
         assertEquals(savedData, Files.readString(savedFile));
         assertThrows(CommandException.class, DeleteSessionNoteCommand.MESSAGE_NO_PENDING_DELETION, () ->
                 failingLogic.execute("delete note 1 1 /confirm"));
+    }
+
+    @Test
+    public void execute_editNoteWithStorageFailure_restoresHistory() {
+        Model studentModel = createModelWithAlex();
+        studentModel.addSessionNote(ALEX.getId(), "Original summary.");
+        SessionHistory originalHistory = studentModel.getSessionHistory(ALEX.getId());
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
+
+        assertThrows(CommandException.class, getSaveFailureMessage(), () -> failingLogic
+                .execute("edit note 1 1 nt/Corrected summary."));
+
+        assertEquals(originalHistory, studentModel.getSessionHistory(ALEX.getId()));
+        assertEquals(1, failingLogic.getStudentRoster().getEntries().get(0).getNoteCount());
     }
 
     @Test

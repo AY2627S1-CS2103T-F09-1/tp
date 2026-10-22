@@ -160,7 +160,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### TutorTrack command routing
 
-`AddressBookParser` registers the TutorTrack domain commands `add`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `edit`, `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
+`AddressBookParser` registers the TutorTrack domain commands `add`, `view`, `note`, `edit note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 person-form `edit`, as well as `find`, `clear`, and the removed TutorTrack `list` word, have no routes and produce the standard unknown-command error. `EditNoteCommandParser` accepts only the `edit note` syntax documented in the User Guide. `AddCommandParser` accepts only the student fields documented in the User Guide, so the inherited person form containing `a/ADDRESS` and `t/TAG` is rejected before it can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
 ### Student identity
 
@@ -200,10 +200,11 @@ Session notes live in the `seedu.address.model.session` package, separate from `
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
-The `Model` API offers four session-note operations:
+The `Model` API offers five session-note operations:
 
 * `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
+* `Model#editSessionNote(StudentId, Index, String)` replaces one note's text while preserving its recorded timestamp and chronological number.
 * `Model#deleteSessionNote(StudentId, Index)` removes and returns one note selected by its chronological note number while preserving the student and every other session note.
 * `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed.
 
@@ -270,6 +271,22 @@ After a successful student deletion, `MainWindow` requests a fresh roster snapsh
 * **JavaFX confirmation dialog:** A modal dialog would duplicate the command path, introduce mouse-oriented UI state, and make parser and end-to-end testing less representative of the fast-typing workflow.
 * **Persistent session-note IDs:** A stored ID would require a schema and migration change. Chronological display numbers are sufficient because the pending deletion also binds the immutable history snapshot, making a stale number fail safely.
 * **Separate student and note coordinators:** Both operations have the same preview, pending match, save, and rollback lifecycle. One pending-deletion slot prevents simultaneous ambiguous confirmations while the two model operations retain their distinct domain responsibilities.
+
+### Edit note command
+
+The `edit note` command replaces the text of one existing session note without changing when it was recorded. Its format is `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`, where `STUDENT_INDEX` selects a student in the current roster and `NOTE_NUMBER` selects a note in that student's displayed chronological numbering.
+
+`EditNoteCommandParser` validates the student index, note number, `nt/` prefix, and new note text before creating an `EditNoteCommand`. The parser rejects a missing or malformed selector, an empty or overlong replacement, control characters, and duplicate `nt/` prefixes without changing the model. The command resolves the roster index to the student's stable `StudentId`, just as the existing note and deletion commands do.
+
+The model operation creates a new immutable `SessionNote` with the replacement text and the original note's `recordedAt` value, then replaces the selected entry in the student's immutable `SessionHistory`. Keeping the original timestamp preserves the note's chronological position and means that editing does not renumber the remaining notes or alter the roster's note count. The operation crosses the model boundary through the student's `StudentId`; command code does not mutate a history or a storage DTO directly.
+
+`LogicManager` snapshots the address book before the edit, saves the updated data through the existing persistence path, and restores the snapshot if saving fails. No storage-schema change is required because the existing `sessionNotes` entry is rewritten with the same `recordedAt` and the new `text`. After a successful edit, `MainWindow` refreshes the open profile so the updated text is visible while the note number and timestamp remain unchanged. A failed validation or save leaves the profile, roster, in-memory model, and data file unchanged.
+
+**Design considerations:**
+
+* **Preserve the original timestamp (current choice):** Editing corrects the note's text while retaining its lesson context and chronological position. The replacement is reconstructed with the old `recordedAt` value rather than being treated as a new lesson note.
+* **Delete and add a new note:** This would reuse existing operations, but it would assign a new timestamp and could move the edited note in the history. It would also make an edit look like a second lesson, so it is not suitable.
+* **Use a persistent note ID:** A stored ID would require a storage-schema and migration change. The current chronological note number is sufficient when paired with the current roster context and the immutable history used for the edit operation.
 
 ### Save-failure rollback
 
@@ -647,6 +664,39 @@ history and saved locally. No other student record is changed.
 
     Use case ends.
 
+**Use case: Edit a session note**
+
+**Preconditions:** The system is running, the current roster index context is available, and the selected student has the displayed note number.
+
+**Guarantees:** A valid replacement text updates only the selected note. Its recorded date and time, chronological position, and note number remain unchanged, and the updated history is saved locally.
+
+**MSS**
+
+1. Tutor requests an edit using a student's roster index, a displayed note number, and replacement text.
+1. TutorTrack validates the selectors and replacement text.
+1. TutorTrack creates a replacement note with the original recorded date and time, updates the student's history, and saves the updated data.
+1. TutorTrack reports that the note was edited and refreshes the student's open profile.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The student index or note number is missing, malformed, or outside the current displayed range.
+
+  * 1a1. TutorTrack reports the applicable selector error and makes no changes.
+
+    Use case ends.
+* 1b. The `nt/` prefix is missing, duplicated, or followed by invalid note text.
+
+  * 1b1. TutorTrack reports the note validation error and makes no changes.
+
+    Use case ends.
+* 3a. TutorTrack cannot save the updated data.
+
+  * 3a1. TutorTrack reports the storage error, restores the complete pre-command data, and leaves the original note unchanged.
+
+    Use case ends.
+
 ### Non-Functional Requirements
 
 1. Should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or a separate server.
@@ -785,6 +835,18 @@ testers are expected to do more *exploratory* testing.
    Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that the student index is invalid, and no note count changes.
+
+### Editing a session note
+
+1. Add one student, record two session notes, and enter `view 1`.
+1. Enter `edit note 1 1 nt/Corrected oldest lesson summary.`
+   Expected: TutorTrack reports `Successfully edited session note [1] for <name of student 1>.` The oldest note's text changes, while its timestamp, `[1]` number, and the student's note count remain unchanged.
+1. Close and relaunch TutorTrack, then enter `view 1`.
+   Expected: The corrected note remains saved with the same timestamp and number.
+1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, and `edit note 1 1 nt/`.
+   Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
+1. Enter `edit note 1 1 nt/first nt/second`.
+   Expected: TutorTrack reports a duplicate `nt/` prefix error and leaves the original note unchanged.
 
 ### Deleting a student
 

@@ -19,11 +19,12 @@ includes:
 * Displaying the student roster automatically on launch and after roster mutations
 * Viewing a student profile
 * Adding a session note
+* Editing one session note
 * Deleting one session note
 * Deleting a student and the student's session notes
 * Saving and loading data from a local, human-editable JSON file
 
-The MVP does not include editing, searching, undo, scheduling, attendance,
+The MVP does not include student editing, searching, undo, scheduling, attendance,
 messaging, billing, accounts, multi-user access, or cloud synchronisation.
 The `exit` command remains application lifecycle behavior rather than a
 TutorTrack domain feature.
@@ -106,6 +107,9 @@ public interface StudentProfileService {
     /** Validates, timestamps, and appends one session note. */
     SessionNote addSessionNote(StudentId studentId, String noteText);
 
+    /** Replaces one note's text while preserving its recorded timestamp. */
+    SessionNote editSessionNote(StudentId studentId, Index noteNumber, String noteText);
+
     /** Deletes and returns one note selected by its chronological note number. */
     SessionNote deleteSessionNote(StudentId studentId, Index noteNumber);
 
@@ -115,6 +119,8 @@ public interface StudentProfileService {
 ```
 
 `StudentProfile` contains the student's stable ID, name, parent or guardian contact, subject, current level, and an immutable list of `SessionNote` objects ordered newest first. `SessionNote` contains its saved timestamp and text. An unknown or deleted student ID returns an empty optional, which lets the UI discard stale profile state without exposing model internals.
+
+Editing a session note validates the student ID, chronological note number, and replacement text, then returns a new note with the original timestamp and the replacement text. The history order, visible note number, and note count remain unchanged. The mutation uses the existing save-and-rollback behavior; it does not add a persistent note identifier or change the JSON schema.
 
 Neither API exposes JavaFX controls, Jackson DTOs, mutable collections, or file
 paths. The profile/session context does not perform cross-student searches or
@@ -323,7 +329,7 @@ Before feature branches begin, the team should confirm:
 * The JSON field names and timestamp format
 * The validation limits and normalization rules
 * The no-partial-update storage guarantee
-* The inherited command policy: remove person-form `add`, `edit`, `find`, and `clear`; retain `help` and `exit`
+* The inherited command policy: remove person-form `add` and `edit`, retain TutorTrack's `edit note`, and retain `help` and `exit`; remove `find` and `clear`
 * The migration behavior for existing AddressBook data
 
 After ratification, this document becomes the reference for branch
