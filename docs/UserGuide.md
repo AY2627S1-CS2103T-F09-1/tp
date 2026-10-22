@@ -250,6 +250,9 @@ _Details coming soon ..._
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorTrack home folder.
 
+**Q**: I upgraded from v1.3 and my roster is empty. How do I get my students back?<br>
+**A**: From v1.4, TutorTrack saves its data in `data/tutortrack.json` instead of `data/addressbook.json`. Close TutorTrack, then in the `data` folder of your TutorTrack home folder, delete `tutortrack.json` if it exists and rename `addressbook.json` to `tutortrack.json`. Your students and session notes appear the next time you start TutorTrack.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Known issues
