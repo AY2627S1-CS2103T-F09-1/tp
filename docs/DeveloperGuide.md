@@ -148,6 +148,14 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+#### Data-file format and recovery
+
+TutorTrack stores application data in `data/addressbook.json` relative to the application's working directory. Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
+
+The storage adapter validates manually edited records by rebuilding the corresponding domain value types. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/addressbook.json.backup-<unique>.bak`.
+
+Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.

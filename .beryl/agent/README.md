@@ -11,6 +11,22 @@
 * `testing-policy.md`: available checks and test-change rules.
 * `skills/`: focused workflows for planning, approved implementation, debugging, explanation, pull-request review, and design critique.
 
+## Documentation Ownership
+
+Use the smallest document that answers the question:
+
+* `docs/UserGuide.md` is the source of truth for current user-visible commands,
+  syntax, examples, validation, errors, and recovery.
+* `docs/DeveloperGuide.md` is the source of truth for current implementation
+  flow, component interactions, persistence details, and manual testing.
+* `architecture.md`, `design-tree.md`, `ubiquitous-language.md`, and `adr/`
+  record durable boundaries, decisions, and terminology; they do not duplicate
+  the complete command reference.
+
+Do not create a separate command contract or feature specification when the
+behavior is already covered by the User Guide and Developer Guide. Update the
+owning document when behavior or design changes.
+
 Tool-specific instruction files are generated shims. Change `tool-instruction-template.md`, then run:
 
 ```bash
