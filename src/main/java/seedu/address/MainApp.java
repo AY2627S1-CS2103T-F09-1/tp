@@ -45,7 +45,7 @@ public class MainApp extends Application {
 
     @Override
     public void init() throws Exception {
-        logger.info("=============================[ Initializing AddressBook ]===========================");
+        logger.info("=============================[ Initializing TutorTrack ]============================");
         super.init();
 
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
@@ -77,7 +77,7 @@ public class MainApp extends Application {
             initialData = addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
-                    + " Will be starting with an empty AddressBook.");
+                    + " Will be starting with an empty roster.");
             dataLoadErrorMessage = createDataLoadErrorMessage(storage);
             initialData = new AddressBook();
         }
@@ -134,13 +134,13 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        logger.info("Starting AddressBook " + MainApp.VERSION);
+        logger.info("Starting TutorTrack " + MainApp.VERSION);
         ui.start(primaryStage);
     }
 
     @Override
     public void stop() {
-        logger.info("============================ [ Stopping AddressBook ] =============================");
+        logger.info("============================ [ Stopping TutorTrack ] ==============================");
         try {
             storage.saveUserPrefs(model.getUserPrefs());
         } catch (IOException e) {
