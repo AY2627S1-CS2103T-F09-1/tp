@@ -177,11 +177,41 @@ public class SessionHistoryTest {
     }
 
     @Test
+    public void withEditedNote_replacesTextAndPreservesTimestampAndPosition() {
+        SessionNote middleNote = new SessionNote("Practised completing the square.", EARLIER.plusDays(2));
+        SessionHistory history = SessionHistory.empty()
+                .withNote(EARLIER_NOTE)
+                .withNote(middleNote)
+                .withNote(LATER_NOTE);
+
+        SessionHistory editedHistory = history.withEditedNote(Index.fromOneBased(2), "Corrected summary.");
+        SessionNote editedNote = editedHistory.getNote(Index.fromOneBased(2));
+
+        assertEquals("Corrected summary.", editedNote.getText());
+        assertEquals(middleNote.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(List.of(LATER_NOTE, editedNote, EARLIER_NOTE), editedHistory.getNotes());
+        assertEquals(List.of(LATER_NOTE, middleNote, EARLIER_NOTE), history.getNotes());
+    }
+
+    @Test
+    public void withEditedNote_invalidTextOrNumber_throwsAndKeepsHistory() {
+        SessionHistory history = SessionHistory.empty().withNote(EARLIER_NOTE);
+
+        assertThrows(IllegalArgumentException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> history
+                .withEditedNote(Index.fromOneBased(1), " "));
+        assertThrows(IndexOutOfBoundsException.class, () -> history
+                .withEditedNote(Index.fromOneBased(2), "Corrected summary."));
+        assertEquals(List.of(EARLIER_NOTE), history.getNotes());
+    }
+
+    @Test
     public void noteSelection_invalidArguments_throwsException() {
         SessionHistory history = SessionHistory.empty().withNote(EARLIER_NOTE);
 
         assertThrows(NullPointerException.class, () -> history.getNote(null));
         assertThrows(NullPointerException.class, () -> history.withoutNote(null));
+        assertThrows(NullPointerException.class, () -> history.withEditedNote(null, "Corrected summary."));
+        assertThrows(NullPointerException.class, () -> history.withEditedNote(Index.fromOneBased(1), null));
         assertThrows(IndexOutOfBoundsException.class, () -> history.getNote(Index.fromOneBased(2)));
         assertThrows(IndexOutOfBoundsException.class, () -> history.withoutNote(Index.fromOneBased(2)));
         assertThrows(IndexOutOfBoundsException.class, () -> SessionHistory.empty()

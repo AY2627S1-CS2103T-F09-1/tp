@@ -16,6 +16,7 @@ The complete tutoring loop is:
 1. View the automatically displayed roster and identify a student by the displayed index.
 1. View that student's preparation context and previous session notes.
 1. Record a new session note after a lesson.
+1. Correct the text of one recorded session note without changing its lesson timestamp.
 1. Delete one incorrect session note, or delete a student and all of that student's notes when the record is no longer needed.
 
 The application targets a small active roster, but the implementation does not enforce a maximum student count.
@@ -28,6 +29,7 @@ The application targets a small active roster, but the implementation does not e
 * Display student roster automatically
 * View student profile
 * Add session note
+* Edit one session note
 * Delete a student or one session note
 
 Student data and session notes are saved automatically to a local JSON file. These five features form one repeatable tutoring workflow.
@@ -40,7 +42,7 @@ The storage model also retains the inherited 'persons' collection for compatibil
 
 ### Not implemented in the current MVP
 
-The current command parser does not implement student editing, searching, undo, scheduling, attendance, messaging, billing, accounts, multi-user access, cloud synchronisation, archiving, or restoring. To correct a student record, the tutor must delete it and add it again; deleting the record also deletes its session-note history.
+The current command parser does not implement student editing, searching, undo, scheduling, attendance, messaging, billing, accounts, multi-user access, cloud synchronisation, archiving, or restoring. To correct a student record, the tutor must delete it and add it again; deleting the record also deletes its session-note history. Per-note editing is specified below.
 
 ## Shared command and UI behavior
 
@@ -283,7 +285,32 @@ Example: note 1 nt/Reviewed factorisation; revise negative coefficients next les
 
 On success, the note receives the current system date-time in the default time zone, truncated to whole seconds, and is inserted newest first. The exact result is Added session note for <Name>. The roster count increases, an open profile refreshes, roster order does not change, the data is saved, and the command box is cleared.
 
-Identical note text is allowed repeatedly; each note is a separate lesson event. A second nt/ produces Multiple values specified for the following single-valued field(s): nt/. Control characters, line separators, empty text, overlong text, and invalid indices are rejected without a partial update. If saving fails, the new note is removed from memory and the save error is shown. There is no per-note edit command; use the deletion workflow below to remove an incorrect note.
+Identical note text is allowed repeatedly; each note is a separate lesson event. A second nt/ produces Multiple values specified for the following single-valued field(s): nt/. Control characters, line separators, empty text, overlong text, and invalid indices are rejected without a partial update. If saving fails, the new note is removed from memory and the save error is shown.
+
+## Feature 5 — Edit one session note
+
+**Priority:** Must-have.
+
+**Purpose:** Corrects the text of one recorded lesson note without making it appear to be a new lesson event.
+
+### Command format and examples
+
+~~~text
+edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE
+~~~
+
+~~~text
+edit note 1 2 nt/Corrected lesson summary.
+edit note 2 1 nt/Next lesson: revisit negative coefficients.
+~~~
+
+The student index is resolved against the current sorted roster. The note number is the chronological number displayed in the student's profile, with `[1]` assigned to the oldest note. Only `nt/` is a command prefix; other prefix-like text remains part of the replacement.
+
+### Outputs and possible errors
+
+On success, the exact result is `Successfully edited session note [<NOTE_NUMBER>] for <Name>.` The replacement keeps the original note's timestamp, chronological position, visible number, and the student's note count. An open profile refreshes and the updated data is saved.
+
+Missing or malformed selectors, an out-of-range selector, empty or overlong text, control characters, and duplicate `nt/` prefixes are rejected without changing the note. If saving fails, the original history and data file are restored. No new JSON field is required.
 
 ### Relevant UI mock-up
 
@@ -297,7 +324,7 @@ Identical note text is allowed repeatedly; each note is a separate lesson event.
 |                             | Added note text appears here.       |
 ~~~
 
-## Feature 5 — Delete a student or session note
+## Feature 6 — Delete a student or session note
 
 **Priority:** Must-have.
 

@@ -94,6 +94,17 @@ public class StudentSessionHistoriesTest {
     }
 
     @Test
+    public void editNote_validNumber_replacesTextAndPreservesTimestamp() {
+        histories.addNote(ALEX_ID, INDICES_NOTE);
+
+        SessionNote editedNote = histories.editNote(ALEX_ID, Index.fromOneBased(1), "Corrected summary.");
+
+        assertEquals("Corrected summary.", editedNote.getText());
+        assertEquals(INDICES_NOTE.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(List.of(editedNote), histories.getHistory(ALEX_ID).getNotes());
+    }
+
+    @Test
     public void removeHistory_studentWithNotes_returnsRemovedCount() {
         histories.addNote(ALEX_ID, INDICES_NOTE);
         histories.addNote(ALEX_ID, FACTORISATION_NOTE);
@@ -124,6 +135,9 @@ public class StudentSessionHistoriesTest {
         assertThrows(NullPointerException.class, () -> histories.addNote(ALEX_ID, null));
         assertThrows(NullPointerException.class, () -> histories.removeNote(null, Index.fromOneBased(1)));
         assertThrows(NullPointerException.class, () -> histories.removeNote(ALEX_ID, null));
+        assertThrows(NullPointerException.class, () -> histories.editNote(null, Index.fromOneBased(1), "text"));
+        assertThrows(NullPointerException.class, () -> histories.editNote(ALEX_ID, null, "text"));
+        assertThrows(NullPointerException.class, () -> histories.editNote(ALEX_ID, Index.fromOneBased(1), null));
         assertThrows(NullPointerException.class, () -> histories.setHistory(null, SessionHistory.empty()));
         assertThrows(NullPointerException.class, () -> histories.setHistory(ALEX_ID, null));
         assertThrows(NullPointerException.class, () -> histories.removeHistory(null));

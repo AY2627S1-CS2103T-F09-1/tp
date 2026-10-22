@@ -189,6 +189,30 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void editSessionNote_validNumber_replacesTextAndPreservesTimestamp() {
+        modelManager.addStudent(ALEX);
+        SessionNote originalNote = modelManager.addSessionNote(ALEX.getId(), "Original summary.");
+
+        SessionNote editedNote = modelManager.editSessionNote(ALEX.getId(), Index.fromOneBased(1),
+                "Corrected summary.");
+
+        assertEquals("Corrected summary.", editedNote.getText());
+        assertEquals(originalNote.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(1, modelManager.getStudentRoster().getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void editSessionNote_invalidText_throwsIllegalArgumentExceptionAndKeepsHistory() {
+        modelManager.addStudent(ALEX);
+        SessionNote originalNote = modelManager.addSessionNote(ALEX.getId(), "Original summary.");
+
+        assertThrows(IllegalArgumentException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> modelManager
+                .editSessionNote(ALEX.getId(), Index.fromOneBased(1), " "));
+
+        assertEquals(List.of(originalNote), modelManager.getSessionHistory(ALEX.getId()).getNotes());
+    }
+
+    @Test
     public void getStudentProfile_studentInRoster_returnsComposedProfile() {
         Clock clock = Clock.fixed(Instant.parse("2026-09-18T10:35:00Z"), ZoneOffset.ofHours(8));
         ModelManager model = new ModelManager(new AddressBook(), new UserPrefs(), clock);

@@ -48,6 +48,19 @@ public class StudentSessionHistories {
     }
 
     /**
+     * Replaces one note's text while preserving its recorded date and time.
+     *
+     * @return The replacement note.
+     */
+    public SessionNote editNote(StudentId studentId, Index noteNumber, String text) {
+        requireAllNonNull(studentId, noteNumber, text);
+        SessionHistory history = getHistory(studentId);
+        SessionHistory editedHistory = history.withEditedNote(noteNumber, text);
+        setHistory(studentId, editedHistory);
+        return editedHistory.getNote(noteNumber);
+    }
+
+    /**
      * Replaces the session history of the student with {@code studentId} with {@code history}.
      * An empty {@code history} removes the student's entry.
      */

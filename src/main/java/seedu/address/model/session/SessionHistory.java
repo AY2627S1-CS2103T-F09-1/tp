@@ -84,6 +84,22 @@ public final class SessionHistory {
     }
 
     /**
+     * Returns a new history with the selected note's text replaced while preserving its recorded date and time.
+     *
+     * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds this history's size.
+     * @throws IllegalArgumentException If {@code text} is invalid.
+     */
+    public SessionHistory withEditedNote(Index noteNumber, String text) {
+        requireNonNull(noteNumber);
+        requireNonNull(text);
+        int noteIndex = toNewestFirstIndex(noteNumber);
+        SessionNote editedNote = new SessionNote(text, notes.get(noteIndex).getRecordedAt());
+        List<SessionNote> updatedNotes = new ArrayList<>(notes);
+        updatedNotes.set(noteIndex, editedNote);
+        return new SessionHistory(List.copyOf(updatedNotes));
+    }
+
+    /**
      * Returns an unmodifiable list of the notes, newest first.
      */
     public List<SessionNote> getNotes() {
