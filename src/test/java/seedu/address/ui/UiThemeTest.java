@@ -35,7 +35,7 @@ public class UiThemeTest {
         assertTrue(helpWindow.contains("title=\"TutorTrack Help\""));
         assertTrue(helpWindow.contains("@TutorTrackTheme.css"));
         assertFalse(mainWindow.contains("DarkTheme.css"));
-        assertEquals("https://nus-cs2103-ay2627-s1.github.io/tp/UserGuide.html", HelpWindow.USERGUIDE_URL);
+        assertEquals("https://ay2627s1-cs2103t-f09-1.github.io/tp/UserGuide.html", HelpWindow.USERGUIDE_URL);
     }
 
     @Test
