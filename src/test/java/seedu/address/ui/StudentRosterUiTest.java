@@ -53,6 +53,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
@@ -450,13 +451,14 @@ public class StudentRosterUiTest {
         assertEquals(9, textControls.size());
         assertTrue(textControls.stream().noneMatch(SelectableText::isEditable));
         assertTrue(textControls.stream().allMatch(SelectableText::isWrapText));
+        assertTrue(textControls.stream().allMatch(text -> text.getPrefColumnCount() > 1));
         assertTrue(textControls.stream().allMatch(text -> text.getStyleClass().contains("selectable-text")));
         assertEquals(List.of("Parent/guardian phone", "Parent/guardian email", "Subject", "Current level",
                 "Session notes"), labels.stream().map(Label::getText).toList());
     }
 
     @Test
-    public void profilePanel_tallWindow_detailsGridStaysAtPreferredHeight() throws Exception {
+    public void profilePanel_tallWindow_detailsGridCanResize() throws Exception {
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
 
         onFxThread(() -> {
@@ -472,7 +474,37 @@ public class StudentRosterUiTest {
                 double preferredHeight = details.prefHeight(details.getWidth());
 
                 assertTrue(details.getHeight() <= preferredHeight + 1);
-                assertTrue(details.maxHeight(details.getWidth()) <= preferredHeight + 1);
+                assertTrue(details.maxHeight(details.getWidth()) > preferredHeight + 1);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void profilePanel_resized_contentIsClippedToPanel() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            assertTrue(panel.getRoot().getClip() instanceof Rectangle);
+            Rectangle panelClip = (Rectangle) panel.getRoot().getClip();
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 360, 480));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                assertEquals(panel.getRoot().getWidth(), panelClip.getWidth());
+                assertEquals(panel.getRoot().getHeight(), panelClip.getHeight());
+
+                stage.setWidth(520);
+                stage.setHeight(640);
+                stage.getScene().getRoot().layout();
+
+                assertEquals(panel.getRoot().getWidth(), panelClip.getWidth());
+                assertEquals(panel.getRoot().getHeight(), panelClip.getHeight());
             } finally {
                 stage.hide();
             }

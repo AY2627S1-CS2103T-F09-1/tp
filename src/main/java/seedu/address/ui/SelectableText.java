@@ -14,6 +14,7 @@ import javafx.scene.text.Text;
 public class SelectableText extends TextArea {
 
     private static final double HEIGHT_BUFFER = 2;
+    private static final int PREFERRED_COLUMN_COUNT = 20;
 
     private final Text measuringText = new Text();
     private double lineSpacing;
@@ -27,7 +28,7 @@ public class SelectableText extends TextArea {
         setFocusTraversable(false);
         setMinWidth(0);
         setMaxWidth(Double.MAX_VALUE);
-        setPrefColumnCount(1);
+        setPrefColumnCount(PREFERRED_COLUMN_COUNT);
         setPrefRowCount(1);
         setMinHeight(USE_PREF_SIZE);
         setMaxHeight(USE_PREF_SIZE);

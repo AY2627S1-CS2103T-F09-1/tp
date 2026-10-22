@@ -828,6 +828,8 @@ testers are expected to do more *exploratory* testing.
    Expected: Short and multi-line text can be selected and copied exactly. Typing while the profile text is selected does not edit the displayed content, and scrolling the session history still works normally.
 1. Move the pointer over Blair's card, click it, then click the result/error display.
    Expected: Hovering or clicking Blair's card leaves it unchanged, and clicking the result/error display does not add a focus border. Neither region opens a profile or otherwise behaves like a clickable control.
+1. Click the command box and type `view 2` without submitting it.
+   Expected: The command box regains focus and accepts the text. The profile remains contained within the right pane and does not cover the command box or result display.
 1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
    Expected: The timestamp and note wrap inside one session-note card, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
 1. Enter `delete 1`.
