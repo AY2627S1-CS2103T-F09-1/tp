@@ -9,6 +9,8 @@ package Logic as LogicPackage {
 package "Parser Classes" as ParserClasses{
 }
 Class XYZCommand
+Class EditCommand
+Class EditNoteCommand
 Class CommandResult
 Class "{abstract}\nCommand" as Command
 
@@ -32,6 +34,8 @@ LogicManager -right->"1" ParserClasses
 ParserClasses ..> XYZCommand : <<create>>
 
 XYZCommand -up-|> Command
+EditCommand -up-|> Command
+EditNoteCommand -up-|> Command
 LogicManager .left.> Command : <<call>>
 
 LogicManager --> Model
@@ -40,6 +44,8 @@ Storage --[hidden] Model
 Command .[hidden]up.> Storage
 Command .right.> Model
 note right of XYZCommand: XYZCommand = AddCommand, \nDeleteCommand, etc
+note right of EditCommand: Student field edits preserve\nthe stable StudentId.
+note right of EditNoteCommand: Note text edits preserve\nthe recorded timestamp.
 
 Logic ..> CommandResult
 LogicManager .down.> CommandResult

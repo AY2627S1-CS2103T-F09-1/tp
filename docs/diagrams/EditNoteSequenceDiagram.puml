@@ -1,0 +1,90 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box UI UI_COLOR_T1
+actor User as user USER_COLOR
+participant ":MainWindow" as ui UI_COLOR
+end box
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as logic LOGIC_COLOR
+participant ":AddressBookParser" as addressBookParser LOGIC_COLOR
+participant ":EditNoteCommandParser" as editNoteCommandParser LOGIC_COLOR
+participant "command:EditNoteCommand" as editNoteCommand LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as model MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant "s:Storage" as storage STORAGE_COLOR
+end box
+
+user -> ui : "edit note 1 1 nt/Corrected summary."
+activate ui
+ui -> logic : execute(commandText)
+activate logic
+logic -> addressBookParser : parseCommand(commandText)
+activate addressBookParser
+addressBookParser -> editNoteCommandParser : parse(arguments)
+activate editNoteCommandParser
+create editNoteCommand
+editNoteCommandParser -> editNoteCommand : new EditNoteCommand(studentIndex, noteNumber, text)
+editNoteCommand --> editNoteCommandParser
+editNoteCommandParser --> addressBookParser : editNoteCommand
+deactivate editNoteCommandParser
+addressBookParser --> logic : editNoteCommand
+deactivate addressBookParser
+
+logic -> model : getAddressBook()
+activate model
+model --> logic : dataBeforeCommand
+deactivate model
+logic -> editNoteCommand : execute(model)
+activate editNoteCommand
+editNoteCommand -> model : getStudentRoster()
+activate model
+model --> editNoteCommand : roster
+deactivate model
+editNoteCommand -> model : getSessionHistory(studentId)
+activate model
+model --> editNoteCommand : history
+deactivate model
+editNoteCommand -> model : editSessionNote(studentId, noteNumber, text)
+activate model
+model --> editNoteCommand : replacement note
+deactivate model
+editNoteCommand --> logic : success result
+deactivate editNoteCommand
+
+logic -> model : getAddressBook()
+activate model
+model --> logic : updatedData
+deactivate model
+logic -> storage : saveAddressBook(updatedData)
+activate storage
+alt save succeeds
+    storage --> logic
+else save fails
+    storage --> logic : IOException
+    logic -> model : setAddressBook(dataBeforeCommand)
+    activate model
+    model --> logic
+    deactivate model
+end
+deactivate storage
+logic --> ui : CommandResult
+deactivate logic
+ui -> logic : getStudentProfile(studentId)
+activate logic
+logic -> model : getStudentProfile(studentId)
+activate model
+model --> logic : updated profile
+deactivate model
+logic --> ui : updated profile
+deactivate logic
+ui --> user : refreshed note text
+deactivate ui
+@enduml
