@@ -73,7 +73,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/se-
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -114,8 +114,8 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 
 How the parsing works:
 
-* For `add`, `AddressBookParser` creates an `AddCommandParser`. That parser checks the supported prefixes and required fields, builds a validated `Student`, and returns an `AddCommand` as a `Command` object. The diagram shows this route explicitly.
-* `AddCommandParser` and the other command parsers implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
+* To parse a command, `AddressBookParser` creates the matching command parser, represented by `XYZCommandParser` in the diagram. For example, `add` uses `AddCommandParser` and `delete` uses `DeleteCommandParser`. The command parser returns an `XYZCommand` (such as `AddCommand` or `DeleteCommand`), which `AddressBookParser` returns as a `Command`.
+* Command parsers such as `AddCommandParser` and `DeleteCommandParser` implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
 
