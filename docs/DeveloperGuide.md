@@ -228,7 +228,7 @@ Session notes live in the `seedu.address.model.session` package, separate from `
 
 ### Session note model integration
 
-`AddressBook` stores session histories in a `StudentSessionHistories` object, which maps each `StudentId` to that student's `SessionHistory`, in the same way that it delegates person rules to `UniquePersonList`. Students without notes have no stored entry and report an empty history. Histories are kept beside the student list rather than inside `Student`, so adding a note does not replace the `Student` or change its equality, and the roster, duplicate detection, and student JSON are unaffected by notes.
+The [Model class diagram](#model-component) shows where the session note classes sit in the `Model` component. `AddressBook` stores session histories in a `StudentSessionHistories` object, which maps each `StudentId` to that student's `SessionHistory`, in the same way that it delegates person rules to `UniquePersonList`. Students without notes have no stored entry and report an empty history. Histories are kept beside the student list rather than inside `Student`, so adding a note does not replace the `Student` or change its equality, and the roster, duplicate detection, and student JSON are unaffected by notes.
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
@@ -326,13 +326,22 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 ### Save-failure rollback
 
-A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command on the persistence path, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. After the command runs, `LogicManager` compares the copy with the model's address book and skips saving when they are equal, so commands that change no data, such as `view`, `help`, and `exit`, still work when the data file cannot be written, and never overwrite a data file that failed to load. Otherwise, if `Storage#saveAddressBook` throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws a `CommandException` that names the data file from `Storage#getAddressBookFilePath()`; the exception itself may name the temporary file used for the write. A deletion preview bypasses this path because it does not mutate or save data.
+A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. `LogicManager` handles this in one place for every command on the persistence path, so individual commands do not need their own recovery code.
 
 The activity diagram below shows how `LogicManager` decides whether to save, skip saving, or roll back after a command runs.
 
 <img src="images/SaveRollbackActivityDiagram.png" width="370" />
 
-The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
+* **Copy address book:** Before running the command, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. The copy is made after parsing, so input that fails to parse never copies anything.
+* **Skip saving:** After the command runs, `LogicManager` compares the copy with the model's address book and skips saving when they are equal. Commands that change no data, such as `view`, `help`, and `exit`, therefore still work when the data file cannot be written, and never overwrite a data file that failed to load.
+* **Save address book:** Otherwise, `LogicManager` saves the changed address book with `Storage#saveAddressBook`.
+* **Restore copied address book and report save error:** If saving throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws a `CommandException`. The error names the data file from `Storage#getAddressBookFilePath()`, because the exception itself may name the temporary file used for the write.
+
+<div markdown="span" class="alert alert-info">:information_source: **Note:** The diagram is a simplified view. It leaves out a command that fails with a `CommandException`, which reaches the user without any save. Deletions also follow their own path: a deletion preview neither changes nor saves data, and a confirmed deletion always saves without the unchanged-data check.
+
+</div>
+
+Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
 
 **Design considerations:**
 
