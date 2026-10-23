@@ -95,9 +95,7 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component for the two-command confirmed-deletion workflow shared by student and session-note deletion.
-
-![Interactions Inside the Logic Component for Confirmed Deletion](images/DeleteSequenceDiagram.png)
+The [architecture sequence diagram](#architecture) shows the two-command workflow for deleting a student. A similarly high-level [session-note deletion sequence](#session-note-deletion-sequence) appears below.
 
 How the `Logic` component works:
 
@@ -194,7 +192,7 @@ Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `s
 
 `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated or unknown prefixes, and applies the same student value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization set, including legacy person prefixes that must be recognized and rejected consistently. An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
 
-The sequence below shows how a student edit resolves the displayed roster index to a stable `StudentId`, replaces only the supplied fields, saves the updated address book, and refreshes the roster and profile.
+The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile.
 
 ![Student edit sequence diagram](images/EditStudentSequenceDiagram.png)
 
@@ -299,6 +297,12 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 ### Confirmed deletion
 
 `DeleteCommandParser` supports `delete STUDENT_INDEX [/confirm]` for a whole student and `delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` for one session note. `/confirm` is an exact, case-sensitive terminal token. Duplicated, misplaced, differently cased, concatenated, or value-bearing confirmation tokens are rejected during parsing, before the model can change. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
+
+The [architecture sequence diagram](#architecture) illustrates student deletion. The sequence below shows the successful path for deleting one session note; confirmation checks and failure handling are explained in the following sections.
+
+#### Session-note deletion sequence
+
+![Session-note deletion sequence diagram](images/DeleteSessionNoteSequenceDiagram.png)
 
 #### Preview and pending target
 

@@ -2,99 +2,42 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 
-box UI UI_COLOR_T1
+title Edit a student whose profile is open
+
 actor User as user USER_COLOR
-participant ":MainWindow" as ui UI_COLOR
-end box
-
-box Logic LOGIC_COLOR_T1
-participant ":LogicManager" as logic LOGIC_COLOR
-participant ":AddressBookParser" as addressBookParser LOGIC_COLOR
-participant ":EditCommandParser" as editCommandParser LOGIC_COLOR
-participant "command:EditCommand" as editCommand LOGIC_COLOR
-end box
-
-box Model MODEL_COLOR_T1
-participant "m:Model" as model MODEL_COLOR
-end box
-
-box Storage STORAGE_COLOR_T1
-participant "s:Storage" as storage STORAGE_COLOR
-end box
+participant ":UI" as ui UI_COLOR
+participant ":Logic" as logic LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
 
 user -> ui : "edit 1 l/Secondary 4"
 activate ui
-ui -> logic : execute(commandText)
-activate logic
-logic -> addressBookParser : parseCommand(commandText)
-activate addressBookParser
-addressBookParser -> editCommandParser : parse(arguments)
-activate editCommandParser
-create editCommand
-editCommandParser -> editCommand : new EditCommand(index, descriptor)
-editCommand --> editCommandParser
-editCommandParser --> addressBookParser : editCommand
-deactivate editCommandParser
-addressBookParser --> logic : editCommand
-deactivate addressBookParser
-
-logic -> model : getAddressBook()
-activate model
-model --> logic : dataBeforeCommand
-deactivate model
-logic -> editCommand : execute(model)
-activate editCommand
-editCommand -> model : getStudentRoster()
-activate model
-model --> editCommand : roster
-deactivate model
-editCommand -> model : getStudent(studentId)
-activate model
-model --> editCommand : originalStudent
-deactivate model
-editCommand -> model : findConflictingStudent(studentId, editedStudent)
-activate model
-model --> editCommand : no conflict
-deactivate model
-editCommand -> model : setStudent(studentId, editedStudent)
-activate model
-model --> editCommand
-deactivate model
-editCommand --> logic : success result
-deactivate editCommand
-
-logic -> model : getAddressBook()
-activate model
-model --> logic : updatedData
-deactivate model
-logic -> storage : saveAddressBook(updatedData)
-activate storage
-alt save succeeds
-    storage --> logic
-else save fails
-    storage --> logic : IOException
-    logic -> model : setAddressBook(dataBeforeCommand)
-    activate model
-    model --> logic
-    deactivate model
-end
-deactivate storage
-logic --> ui : CommandResult
-deactivate logic
-ui -> logic : getStudentRoster()
+ui -> logic : execute("edit 1 l/Secondary 4")
 activate logic
 logic -> model : getStudentRoster()
 activate model
-model --> logic : updated roster
+model --> logic : roster
 deactivate model
+note over logic
+  Resolve the displayed index to a stable
+  StudentId and retain the other fields.
+end note
+logic -> model : setStudent(studentId, editedStudent)
+activate model
+model --> logic
+deactivate model
+logic -> storage : saveAddressBook(addressBook)
+activate storage
+storage --> logic
+deactivate storage
+logic --> ui : success result
+deactivate logic
+ui -> logic : getStudentRoster()
+activate logic
 logic --> ui : updated roster
 deactivate logic
 ui -> logic : getStudentProfile(studentId)
 activate logic
-logic -> model : getStudentProfile(studentId)
-activate model
-model --> logic : updated profile
-deactivate model
 logic --> ui : updated profile
 deactivate logic
 ui --> user : refreshed roster and profile

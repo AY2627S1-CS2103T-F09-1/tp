@@ -1,0 +1,53 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+title Delete a session note after confirmation
+
+actor User as user USER_COLOR
+participant ":UI" as ui UI_COLOR
+participant ":Logic" as logic LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
+
+user -> ui : "delete note 1 2"
+activate ui
+ui -> logic : execute("delete note 1 2")
+activate logic
+logic -> model : getStudentRoster()
+activate model
+model --> logic : roster
+deactivate model
+logic -> model : getSessionHistory(studentId)
+activate model
+model --> logic : history
+deactivate model
+note over logic
+  Keep the target pending
+  for confirmation.
+end note
+logic --> ui : confirmation prompt
+deactivate logic
+ui --> user : preview and confirmation command
+deactivate ui
+
+user -> ui : "delete note 1 2 /confirm"
+activate ui
+ui -> logic : execute("delete note 1 2 /confirm")
+activate logic
+note over logic
+  Confirm the pending target still matches.
+end note
+logic -> model : deleteSessionNote(studentId, noteNumber)
+activate model
+model --> logic
+deactivate model
+logic -> storage : saveAddressBook(addressBook)
+activate storage
+storage --> logic
+deactivate storage
+logic --> ui : success result
+deactivate logic
+ui --> user : note deleted
+deactivate ui
+@enduml
