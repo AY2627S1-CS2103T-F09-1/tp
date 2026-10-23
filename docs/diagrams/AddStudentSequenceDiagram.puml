@@ -1,0 +1,51 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+title Successful student addition
+
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant ":AddressBookParser" as Router LOGIC_COLOR
+participant ":AddCommandParser" as Parser LOGIC_COLOR
+participant "command:AddCommand" as Command LOGIC_COLOR
+participant "m:Model" as Model MODEL_COLOR
+participant "s:Storage" as Storage STORAGE_COLOR
+
+[-> Logic : execute("add ...")
+activate Logic
+Logic -> Router : parseCommand(commandText)
+activate Router
+Router -> Parser : parse(arguments)
+activate Parser
+create Command
+Parser -> Command : new AddCommand(student)
+activate Command
+Command --> Parser : command
+deactivate Command
+Parser --> Router : command
+deactivate Parser
+Router --> Logic : command
+deactivate Router
+Logic -> Command : execute(m)
+activate Command
+Command -> Model : hasStudent(student)
+activate Model
+Model --> Command : false
+deactivate Model
+Command -> Model : addStudent(student)
+activate Model
+Model --> Command
+deactivate Model
+Command --> Logic : CommandResult
+deactivate Command
+Logic -> Model : getAddressBook()
+activate Model
+Model --> Logic : updatedData
+deactivate Model
+Logic -> Storage : saveAddressBook(updatedData)
+activate Storage
+Storage --> Logic
+deactivate Storage
+[<-- Logic : CommandResult
+deactivate Logic
+@enduml

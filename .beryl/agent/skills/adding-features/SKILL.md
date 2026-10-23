@@ -51,6 +51,7 @@ If the approved plan has no commit boundaries, define them before coding. If a c
    * `.beryl/agent/ubiquitous-language.md`
    * `.beryl/agent/testing-policy.md`
    * `.beryl/agent/agent-rules.md`
+   * `.beryl/agent/UML-policy.md` when the slice changes diagrams or their guide text
 3. If the feature needs multiple implementation steps or may be interrupted, create or update `.beryl/agent/session-state.md` with the smallest internal feature-slice checklist.
 4. Select exactly one internal feature slice before coding.
 5. State the success checks for the selected slice.

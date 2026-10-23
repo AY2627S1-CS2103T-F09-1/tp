@@ -19,6 +19,12 @@ Class Email
 Class Name
 Class Phone
 Class Tag
+Class Student
+Class StudentId
+Class StudentName
+Class ParentGuardianContact
+Class Subject
+Class CurrentLevel
 
 Class I #FFFFFF
 }
@@ -37,6 +43,12 @@ UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" UniquePersonList
 UniquePersonList --> "~* all" Person
+AddressBook *--> "*" Student : students
+Student *--> "1" StudentId
+Student *--> "1" StudentName
+Student *--> "1" ParentGuardianContact
+Student *--> "1" Subject
+Student *--> "1" CurrentLevel
 Person *--> Name
 Person *--> Phone
 Person *--> Email
