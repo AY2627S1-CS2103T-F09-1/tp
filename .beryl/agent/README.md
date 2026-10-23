@@ -9,6 +9,7 @@
 * `project-brief.md`: product goal, users, workflows, and scope.
 * `design-tree.md`, `architecture.md`, `ubiquitous-language.md`, and `adr/`: durable product and architecture knowledge.
 * `testing-policy.md`: available checks and test-change rules.
+* `UML-policy.md`: course UML notation and diagram review rules; read it for diagram work.
 * `skills/`: focused workflows for planning, approved implementation, debugging, explanation, pull-request review, and design critique.
 
 ## Documentation Ownership
