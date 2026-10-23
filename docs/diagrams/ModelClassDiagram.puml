@@ -4,7 +4,7 @@ skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
 skinparam classBackgroundColor MODEL_COLOR
 
-Package Model as ModelPackage <<Rectangle>>{
+Package Model as ModelPackage {
 Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
 Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
 Class "<<interface>>\nModel" as Model
@@ -25,6 +25,14 @@ Class StudentName
 Class ParentGuardianContact
 Class Subject
 Class CurrentLevel
+Class StudentSessionHistories
+Class SessionHistory
+Class SessionNote
+
+note left of StudentSessionHistories
+  Keys each SessionHistory
+  by the student's StudentId.
+end note
 
 Class I #FFFFFF
 }
@@ -49,6 +57,9 @@ Student *--> "1" StudentName
 Student *--> "1" ParentGuardianContact
 Student *--> "1" Subject
 Student *--> "1" CurrentLevel
+AddressBook *--> "1" StudentSessionHistories
+StudentSessionHistories --> "*" SessionHistory
+SessionHistory --> "*" SessionNote
 Person *--> Name
 Person *--> Phone
 Person *--> Email
