@@ -17,6 +17,18 @@ title: Developer Guide
 
 Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
+### PlantUML diagrams
+
+The repository stores PlantUML source files in `docs/diagrams` and exported diagram images in `docs/images`. VS Code users should install the recommended `PlantUML` extension when prompted. The recommendation is recorded in `.vscode/extensions.json`.
+
+Install Graphviz to enable local diagram rendering:
+
+* macOS: `brew install graphviz`
+* Ubuntu/Debian: `sudo apt install graphviz`
+* Windows: install Graphviz from [graphviz.org](https://graphviz.org/download/) and add its `bin` directory to `PATH`.
+
+Open any `.puml` file and run `PlantUML: Preview Current Diagram` from the Command Palette. If Java is not detected automatically, set the PlantUML extension's `plantuml.java` setting to the path of the Java executable. Use `dot -V` in a terminal to verify that Graphviz is available before previewing a diagram.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Design**
