@@ -296,6 +296,8 @@ If PlantUML is used, commit the source `.puml` file under `docs/diagrams` and re
 
 ### Architecture and UML
 
+Read [UML diagram policy](UML-policy.md) before editing diagrams or their guide text.
+
 * Use intuitive symbols and labels that a reader can understand without inspecting implementation details.
 * Use single-headed arrows for direction and relationship intent. Use double-headed arrows only when bidirectionality is real and necessary.
 * Keep architecture diagrams high-level. Move low-level fields, framework plumbing, and incidental methods to a more suitable detailed diagram.

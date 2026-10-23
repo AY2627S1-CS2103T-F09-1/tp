@@ -1,0 +1,29 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+start
+:Copy address book;
+note right
+  Deletion previews skip this
+  workflow, and confirmed
+  deletions always save.
+end note
+:Execute command;
+
+'Since the beta syntax does not support placing the condition outside the
+'diamond we place it as the true branch instead.
+
+if () then ([data unchanged])
+    :Skip saving;
+else ([else])
+    :Save address book;
+    if () then ([save fails])
+        :Restore copied
+        address book;
+        :Report save error;
+    else ([else])
+    endif
+endif
+stop
+@enduml

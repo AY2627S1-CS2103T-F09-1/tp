@@ -1,0 +1,45 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+title Edit a student whose profile is open
+
+actor User as user USER_COLOR
+participant ":UI" as ui UI_COLOR
+participant ":Logic" as logic LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
+
+user -> ui : "edit 1 l/Secondary 4"
+activate ui
+ui -> logic : execute("edit 1 l/Secondary 4")
+activate logic
+logic -> model : getStudentRoster()
+activate model
+model --> logic : roster
+deactivate model
+note over logic
+  Resolve the displayed index to a stable
+  StudentId and retain the other fields.
+end note
+logic -> model : setStudent(studentId, editedStudent)
+activate model
+model --> logic
+deactivate model
+logic -> storage : saveAddressBook(addressBook)
+activate storage
+storage --> logic
+deactivate storage
+logic --> ui : success result
+deactivate logic
+ui -> logic : getStudentRoster()
+activate logic
+logic --> ui : updated roster
+deactivate logic
+ui -> logic : getStudentProfile(studentId)
+activate logic
+logic --> ui : updated profile
+deactivate logic
+ui --> user : refreshed roster and profile
+deactivate ui
+@enduml

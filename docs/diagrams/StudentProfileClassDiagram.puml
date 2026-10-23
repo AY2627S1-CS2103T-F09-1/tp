@@ -1,0 +1,43 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor MODEL_COLOR
+skinparam classBackgroundColor MODEL_COLOR
+skinparam classAttributeIconSize 0
+show members
+hide empty members
+
+title Student profile projection
+
+package Model as ModelPackage <<Rectangle>> {
+Class "<<interface>>\nModel" as Model
+Class StudentProfile
+Class StudentId
+Class StudentName
+Class ParentGuardianContact
+Class Subject
+Class CurrentLevel
+Class SessionNote
+
+Model : +getStudentProfile(StudentId): Optional~<StudentProfile>
+Model -down..> StudentProfile
+
+StudentProfile -left-> "1" StudentId
+StudentProfile -left-> "1" StudentName
+StudentProfile -left-> "1" ParentGuardianContact
+StudentProfile -right-> "1" Subject
+StudentProfile -right-> "1" CurrentLevel
+StudentProfile -right-> "*" SessionNote: newest first
+
+ParentGuardianContact -[hidden]down- StudentName
+StudentName -[hidden]down- StudentId
+Subject -[hidden]down- CurrentLevel
+CurrentLevel -[hidden]down- SessionNote
+
+note bottom of StudentProfile
+  Immutable snapshot.
+  The session-note list is copied
+  and cannot be modified.
+end note
+}
+@enduml

@@ -404,6 +404,7 @@ check_agent_core() {
     "${BERYL_ROOT}/agent/architecture.md"
     "${BERYL_ROOT}/agent/testing-policy.md"
     "${BERYL_ROOT}/agent/coding-policy.md"
+    "${BERYL_ROOT}/agent/UML-policy.md"
     "${BERYL_ROOT}/agent/constraints.md"
     "${BERYL_ROOT}/agent/agent-rules.md"
     "${BERYL_ROOT}/agent/tool-instruction-template.md"

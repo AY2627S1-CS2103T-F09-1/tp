@@ -85,7 +85,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/se-
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -107,9 +107,7 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component for the two-command confirmed-deletion workflow shared by student and session-note deletion.
-
-![Interactions Inside the Logic Component for Confirmed Deletion](images/DeleteSequenceDiagram.png)
+The [architecture sequence diagram](#architecture) shows the two-command workflow for deleting a student. A similarly high-level [session-note deletion sequence](#session-note-deletion-sequence) appears below.
 
 How the `Logic` component works:
 
@@ -125,18 +123,21 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 <img src="images/ParserClasses.png" width="600"/>
 
 How the parsing works:
-* When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
-* All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
+
+* To parse a command, `AddressBookParser` creates the matching command parser, represented by `XYZCommandParser` in the diagram. For example, `add` uses `AddCommandParser` and `delete` uses `DeleteCommandParser`. The command parser returns an `XYZCommand` (such as `AddCommand` or `DeleteCommand`), which `AddressBookParser` returns as a `Command`.
+* Command parsers such as `AddCommandParser` and `DeleteCommandParser` implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
 
 **API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<img src="images/ModelClassDiagram.png" width="450" />
+<img src="images/ModelClassDiagram.png" width="800" />
 
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores added `Student` records in `AddressBook`; each student has a stable `StudentId`, name, parent or guardian contact, subject, and current level. The diagram shows these student relationships alongside the inherited person model.
+* stores each student's session notes in a `StudentSessionHistories` object beside the student list, rather than inside `Student`. It keeps one `SessionHistory` of `SessionNote`s per `StudentId` (see [Session note model integration](#session-note-model-integration)).
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -158,6 +159,7 @@ The `Storage` component,
 
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+* serializes added students through `JsonSerializableAddressBook` and `JsonAdaptedStudent`, including their optional session notes.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 #### Data-file format and recovery
@@ -182,6 +184,14 @@ This section describes some noteworthy details on how certain features are imple
 
 `AddressBookParser` registers the TutorTrack domain commands `add`, `edit`, `edit note`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. TutorTrack's `edit` route dispatches `edit note` to `EditNoteCommandParser` and all other edit arguments to `EditCommandParser`, so it can update either a session note or a student record without exposing the inherited person edit behavior. The student add and edit parsers accept only the fields documented in the User Guide, so inherited person parameters such as `a/ADDRESS` and `t/TAG` are rejected before they can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
+### Adding a student
+
+The following sequence shows only the main successful `add` path. `AddressBookParser` delegates to `AddCommandParser`, which constructs a validated `Student`. `AddCommand` checks duplicate identity through `Model#hasStudent` before calling `Model#addStudent`, and `LogicManager` saves the changed address book. Invalid, missing, repeated, or unsupported parameters produce a parse error; a duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
+
+![Student add sequence diagram](images/AddStudentSequenceDiagram.png)
+
+The class diagrams in [Logic](#logic-component), [Model](#model-component), [Storage](#storage-component), and [UI](#ui-component) show the corresponding relationships. A newly added student appears in `StudentRosterPanel` as a `StudentRosterCard`; `JsonAdaptedStudent` stores the student when the address book is saved.
+
 ### Student identity
 
 TutorTrack's first student-domain slice introduces immutable `Student`, `StudentName`, `ParentGuardianContact`, `Subject`, and `CurrentLevel` value types. The `StudentIdentity` value object is the single source of truth for duplicate detection. It compares a student's name after trimming, collapsing internal whitespace, and converting it to lower case with the parent or guardian phone number after removing spaces and hyphens. Subject, current level, and parent email do not affect identity, so siblings may share a parent phone number.
@@ -193,6 +203,10 @@ Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `s
 ### Student editing
 
 `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated or unknown prefixes, and applies the same student value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization set, including legacy person prefixes that must be recognized and rejected consistently. An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
+
+The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile.
+
+![Student edit sequence diagram](images/EditStudentSequenceDiagram.png)
 
 `EditCommand#execute` resolves the displayed index once through `Model#getStudentRoster()` and then works with the selected student's stable `StudentId`. It reads the immutable roster record through `Model#getStudent(StudentId)` rather than the presentation-facing `StudentProfile`, then composes a replacement immutable `Student` that retains every omitted field and the original ID. `Model#findConflictingStudent(StudentId, Student)` delegates to the roster's single duplicate-conflict lookup so the command can format a useful error without reproducing identity rules. `Model#setStudent(StudentId, Student)` uses the same lookup authoritatively while also checking that the target exists and the replacement retains its ID. `AddressBook` replaces only the roster entry, so the session history keyed by the same ID is untouched.
 
@@ -224,7 +238,7 @@ Session notes live in the `seedu.address.model.session` package, separate from `
 
 ### Session note model integration
 
-`AddressBook` stores session histories in a `StudentSessionHistories` object, which maps each `StudentId` to that student's `SessionHistory`, in the same way that it delegates person rules to `UniquePersonList`. Students without notes have no stored entry and report an empty history. Histories are kept beside the student list rather than inside `Student`, so adding a note does not replace the `Student` or change its equality, and the roster, duplicate detection, and student JSON are unaffected by notes.
+The [Model class diagram](#model-component) shows where the session note classes sit in the `Model` component. `AddressBook` stores session histories in a `StudentSessionHistories` object, which maps each `StudentId` to that student's `SessionHistory`, in the same way that it delegates person rules to `UniquePersonList`. Students without notes have no stored entry and report an empty history. Histories are kept beside the student list rather than inside `Student`, so adding a note does not replace the `Student` or change its equality, and the roster, duplicate detection, and student JSON are unaffected by notes.
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
@@ -240,9 +254,31 @@ Student deletion crosses the roster and session-history contexts through one mod
 
 ### Student profile projection
 
-`Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. `Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
+The profile feature separates temporary roster selection from stable student identity. The command resolves the displayed index once, while later profile retrieval and UI refreshes use the student's `StudentId`.
 
-The `view INDEX` command resolves the chosen roster entry to its stable `StudentId` and carries that ID in `CommandResult`. `MainWindow` retains that stable ID, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card; the command layer does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
+#### Student profile model
+
+`Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
+
+<img src="images/StudentProfileClassDiagram.png" width="700" />
+
+`Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary.
+
+#### View command execution
+
+The sequence below shows how `view INDEX` resolves a temporary position in the sorted roster to a stable `StudentId`. It shows the detailed interactions inside the Logic component while treating UI and Model as black boxes.
+
+<img src="images/ViewCommandSequenceDiagram.png" width="950" />
+
+`ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
+
+#### Profile display and refresh
+
+The next sequence shows the detailed UI interactions after Logic returns a successful view result. Logic remains a black box here; its command execution is described in the preceding sequence.
+
+<img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
+
+`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
 `StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
 
@@ -274,6 +310,12 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 `DeleteCommandParser` supports `delete STUDENT_INDEX [/confirm]` for a whole student and `delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` for one session note. `/confirm` is an exact, case-sensitive terminal token. Duplicated, misplaced, differently cased, concatenated, or value-bearing confirmation tokens are rejected during parsing, before the model can change. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
+The [architecture sequence diagram](#architecture) illustrates student deletion. The sequence below shows the successful path for deleting one session note; confirmation checks and failure handling are explained in the following sections.
+
+#### Session-note deletion sequence
+
+![Session-note deletion sequence diagram](images/DeleteSessionNoteSequenceDiagram.png)
+
 #### Preview and pending target
 
 For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. It returns the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter any other command.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`.
@@ -304,6 +346,10 @@ After a successful student deletion, `MainWindow` requests a fresh roster snapsh
 
 The `edit note` command replaces the text of one existing session note without changing when it was recorded. Its format is `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`, where `STUDENT_INDEX` selects a student in the current roster and `NOTE_NUMBER` selects a note in that student's displayed chronological numbering.
 
+The sequence below shows how the command preserves the selected note's timestamp while saving the replacement text and refreshing the displayed profile.
+
+![Session-note edit sequence diagram](images/EditNoteSequenceDiagram.png)
+
 `EditNoteCommandParser` validates the student index, note number, `nt/` prefix, and new note text before creating an `EditNoteCommand`. The parser rejects a missing or malformed selector, an empty or overlong replacement, control characters, and duplicate `nt/` prefixes without changing the model. The command resolves the roster index to the student's stable `StudentId`, just as the existing note and deletion commands do.
 
 The model operation creates a new immutable `SessionNote` with the replacement text and the original note's `recordedAt` value, then replaces the selected entry in the student's immutable `SessionHistory`. Keeping the original timestamp preserves the note's chronological position and means that editing does not renumber the remaining notes or alter the roster's note count. The operation crosses the model boundary through the student's `StudentId`; command code does not mutate a history or a storage DTO directly.
@@ -318,9 +364,22 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 ### Save-failure rollback
 
-A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command on the persistence path, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. After the command runs, `LogicManager` compares the copy with the model's address book and skips saving when they are equal, so commands that change no data, such as `view`, `help`, and `exit`, still work when the data file cannot be written, and never overwrite a data file that failed to load. Otherwise, if `Storage#saveAddressBook` throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws a `CommandException` that names the data file from `Storage#getAddressBookFilePath()`; the exception itself may name the temporary file used for the write. A deletion preview bypasses this path because it does not mutate or save data.
+A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. `LogicManager` handles this in one place for every command on the persistence path, so individual commands do not need their own recovery code.
 
-The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
+The activity diagram below shows how `LogicManager` decides whether to save, skip saving, or roll back after a command runs.
+
+<img src="images/SaveRollbackActivityDiagram.png" width="370" />
+
+* **Copy address book:** Before running the command, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. The copy is made after parsing, so input that fails to parse never copies anything.
+* **Skip saving:** After the command runs, `LogicManager` compares the copy with the model's address book and skips saving when they are equal. Commands that change no data, such as `view`, `help`, and `exit`, therefore still work when the data file cannot be written, and never overwrite a data file that failed to load.
+* **Save address book:** Otherwise, `LogicManager` saves the changed address book with `Storage#saveAddressBook`.
+* **Restore copied address book and report save error:** If saving throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws a `CommandException`. The error names the data file from `Storage#getAddressBookFilePath()`, because the exception itself may name the temporary file used for the write.
+
+<div markdown="span" class="alert alert-info">:information_source: **Note:** The diagram is a simplified view. It leaves out a command that fails with a `CommandException`, which reaches the user without any save. Deletions also follow their own path: a deletion preview neither changes nor saves data, and a confirmed deletion always saves without the unchanged-data check.
+
+</div>
+
+Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
 
 **Design considerations:**
 
