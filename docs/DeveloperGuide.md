@@ -327,6 +327,10 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 A failed save must leave the model unchanged, so that a command reported as failed does not take effect and is not written to the file by a later save. Before running a command on the persistence path, `LogicManager` copies the address book with `new AddressBook(model.getAddressBook())`. After the command runs, `LogicManager` compares the copy with the model's address book and skips saving when they are equal, so commands that change no data, such as `view`, `help`, and `exit`, still work when the data file cannot be written, and never overwrite a data file that failed to load. Otherwise, if `Storage#saveAddressBook` throws an `IOException`, `LogicManager` restores the copy with `Model#setAddressBook`, logs a warning without any student data, and throws a `CommandException` that names the data file from `Storage#getAddressBookFilePath()`; the exception itself may name the temporary file used for the write. A deletion preview bypasses this path because it does not mutate or save data.
 
+The activity diagram below shows how `LogicManager` decides whether to save, skip saving, or roll back after a command runs.
+
+<img src="images/SaveRollbackActivityDiagram.png" width="370" />
+
 The copy is made after parsing, so input that fails to parse never copies anything. Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying the address book only copies its lists and map, and the cost is small for a tutor's roster.
 
 **Design considerations:**
