@@ -243,9 +243,31 @@ Student deletion crosses the roster and session-history contexts through one mod
 
 ### Student profile projection
 
-`Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. `Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
+The profile feature separates temporary roster selection from stable student identity. The command resolves the displayed index once, while later profile retrieval and UI refreshes use the student's `StudentId`.
 
-The `view INDEX` command resolves the chosen roster entry to its stable `StudentId` and carries that ID in `CommandResult`. `MainWindow` retains that stable ID, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card; the command layer does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
+#### Student profile model
+
+`Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
+
+<img src="images/StudentProfileClassDiagram.png" width="700" />
+
+`Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary.
+
+#### View command execution
+
+The sequence below shows how `view INDEX` resolves a temporary position in the sorted roster to a stable `StudentId`. It shows the detailed interactions inside the Logic component while treating UI and Model as black boxes.
+
+<img src="images/ViewCommandSequenceDiagram.png" width="950" />
+
+`ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
+
+#### Profile display and refresh
+
+The next sequence shows the detailed UI interactions after Logic returns a successful view result. Logic remains a black box here; its command execution is described in the preceding sequence.
+
+<img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
+
+`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
 `StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
 

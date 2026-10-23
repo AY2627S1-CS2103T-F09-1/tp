@@ -1,0 +1,57 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+title Displaying a student profile
+
+box UI UI_COLOR_T1
+actor Tutor as Tutor USER_COLOR
+participant ":MainWindow" as MainWindow UI_COLOR
+participant ":StudentRosterPanel" as StudentRosterPanel UI_COLOR
+participant ":StudentProfilePanel" as StudentProfilePanel UI_COLOR
+participant ":ResultDisplay" as ResultDisplay UI_COLOR
+end box
+
+box Logic LOGIC_COLOR_T1
+participant "logic:Logic" as Logic LOGIC_COLOR
+end box
+
+Tutor -> MainWindow : "view 2"
+activate MainWindow
+MainWindow -> Logic : execute(commandText)
+activate Logic
+Logic --> MainWindow : CommandResult(studentId, feedback)
+deactivate Logic
+
+MainWindow -> Logic : getStudentRoster()
+activate Logic
+Logic --> MainWindow : roster
+deactivate Logic
+MainWindow -> StudentRosterPanel : setRoster(roster)
+activate StudentRosterPanel
+StudentRosterPanel --> MainWindow
+deactivate StudentRosterPanel
+
+note right of MainWindow
+  Retain the stable StudentId for
+  later profile refreshes.
+end note
+MainWindow -> Logic : getStudentProfile(studentId)
+activate Logic
+Logic --> MainWindow : profile
+deactivate Logic
+MainWindow -> StudentProfilePanel : setProfile(profile)
+activate StudentProfilePanel
+StudentProfilePanel --> MainWindow
+deactivate StudentProfilePanel
+MainWindow -> StudentRosterPanel : selectStudent(studentId)
+activate StudentRosterPanel
+StudentRosterPanel --> MainWindow
+deactivate StudentRosterPanel
+MainWindow -> ResultDisplay : setFeedbackToUser(feedback)
+activate ResultDisplay
+ResultDisplay --> MainWindow
+deactivate ResultDisplay
+MainWindow --> Tutor : profile and roster highlight
+deactivate MainWindow
+@enduml
