@@ -5,14 +5,14 @@ skinparam arrowColor LOGIC_COLOR_T4
 skinparam classBackgroundColor LOGIC_COLOR
 
 Class "{abstract}\nCommand" as Command
-Class XYZCommand
+Class AddCommand
 Class EditCommand
 Class EditNoteCommand
 
 package "Parser classes"{
 Class "<<interface>>\nParser" as Parser
 Class AddressBookParser
-Class XYZCommandParser
+Class AddCommandParser
 Class EditCommandParser
 Class EditNoteCommandParser
 Class CliSyntax
@@ -25,30 +25,28 @@ Class Prefix
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> AddressBookParser
 
-AddressBookParser .down.> XYZCommandParser: <<create>>
+AddressBookParser .down.> AddCommandParser: <<create>>
 AddressBookParser .down.> EditCommandParser: <<create>>
 AddressBookParser .down.> EditNoteCommandParser: <<create>>
 
-XYZCommandParser ..> XYZCommand : <<create>>
+AddCommandParser ..> AddCommand : <<create>>
 EditCommandParser ..> EditCommand : <<create>>
 EditNoteCommandParser ..> EditNoteCommand : <<create>>
 AddressBookParser ..> Command : <<use>>
-XYZCommandParser .up.|> Parser
+AddCommandParser .up.|> Parser
 EditCommandParser .up.|> Parser
 EditNoteCommandParser .up.|> Parser
-XYZCommandParser ..> ArgumentMultimap
+AddCommandParser ..> ArgumentMultimap
 EditCommandParser ..> ArgumentMultimap
 EditNoteCommandParser ..> ArgumentMultimap
-XYZCommandParser ..> ArgumentTokenizer
+AddCommandParser ..> ParserUtil : tokenizeStudentFields()
 EditCommandParser ..> ArgumentTokenizer
 EditNoteCommandParser ..> ArgumentTokenizer
 ArgumentTokenizer .left.> ArgumentMultimap
-XYZCommandParser ..> CliSyntax
 CliSyntax ..> Prefix
-XYZCommandParser ..> ParserUtil
 ParserUtil .down.> Prefix
 ArgumentTokenizer .down.> Prefix
-XYZCommand -up-|> Command
+AddCommand -up-|> Command
 EditCommand -up-|> Command
 EditNoteCommand -up-|> Command
 @enduml

@@ -1,0 +1,26 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+title Successful student addition
+
+participant ":LogicManager" as Logic LOGIC_COLOR
+participant ":AddressBookParser" as Router LOGIC_COLOR
+participant "command:AddCommand" as Command LOGIC_COLOR
+participant "m:Model" as Model MODEL_COLOR
+participant "s:Storage" as Storage STORAGE_COLOR
+
+[-> Logic : execute("add ...")
+Logic -> Router : parseCommand(commandText)
+note over Router : Delegates to AddCommandParser.
+Router --> Logic : AddCommand
+Logic -> Command : execute(m)
+Command -> Model : hasStudent(student)
+Model --> Command : false
+Command -> Model : addStudent(student)
+Command --> Logic : CommandResult
+Logic -> Model : getAddressBook()
+Model --> Logic : updatedData
+Logic -> Storage : saveAddressBook(updatedData)
+[<-- Logic : CommandResult
+@enduml
