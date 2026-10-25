@@ -470,7 +470,7 @@ public class StudentRosterUiTest {
 
             Stage stage = new Stage();
             try {
-                stage.setScene(new Scene(panel.getRoot(), 520, 480));
+                stage.setScene(new Scene(panel.getRoot(), 700, 480));
                 stage.show();
                 stage.getScene().getRoot().applyCss();
                 stage.getScene().getRoot().layout();
