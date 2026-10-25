@@ -255,7 +255,7 @@ public class StudentRosterUiTest {
         VBox details = (VBox) grid.getChildren().get(0);
         HBox heading = (HBox) details.getChildren().get(0);
 
-        assertEquals("2. ", ((Label) heading.getChildren().get(0)).getText());
+        assertEquals("2", ((Label) heading.getChildren().get(0)).getText());
         assertEquals("Alex Tan", ((Label) heading.getChildren().get(1)).getText());
         assertEquals("Subject: Mathematics", ((Label) details.getChildren().get(1)).getText());
         assertEquals("Level: Secondary 3", ((Label) details.getChildren().get(2)).getText());
@@ -264,6 +264,53 @@ public class StudentRosterUiTest {
         assertTrue(((Label) details.getChildren().get(1)).isWrapText());
         assertTrue(((Label) details.getChildren().get(2)).isWrapText());
         assertTrue(((Label) details.getChildren().get(3)).isWrapText());
+    }
+
+    @Test
+    public void rosterPanel_narrowWidthWithLongFields_wrapsWithoutHorizontalScroll() throws Exception {
+        Student student = new Student(new StudentName("Alicia Alexandra Catherine Elizabeth Lim Wei Xuan"),
+                new ParentGuardianContact("8000 0001",
+                        Optional.of("guardian.with.a.long.address@example.com")),
+                new Subject("Additional Mathematics and Mathematical Modelling"),
+                new CurrentLevel("Secondary Four Express Integrated Academic Programme"), ALEX_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of(student))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 260, 500));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListView<StudentRosterEntry> listView = getListView(panel);
+                ScrollBar horizontalScrollBar = findDescendants(listView, ScrollBar.class).stream()
+                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.HORIZONTAL)
+                        .findFirst()
+                        .orElseThrow();
+                assertFalse(horizontalScrollBar.isVisible());
+
+                @SuppressWarnings("rawtypes")
+                ListCell cell = findDescendants(listView, ListCell.class).stream()
+                        .filter(listCell -> listCell.getGraphic() != null)
+                        .findFirst()
+                        .orElseThrow();
+                HBox card = (HBox) cell.getGraphic();
+                VBox details = (VBox) ((GridPane) card.getChildren().get(0)).getChildren().get(0);
+                Label name = (Label) ((HBox) details.getChildren().get(0)).getChildren().get(1);
+                Label subject = (Label) details.getChildren().get(1);
+                Label currentLevel = (Label) details.getChildren().get(2);
+                Label noteCount = (Label) details.getChildren().get(3);
+                assertTrue(card.getWidth() <= listView.getWidth());
+                assertTrue(name.getHeight() > name.getFont().getSize() * 1.5);
+                assertTrue(subject.getHeight() > subject.getFont().getSize() * 2);
+                assertTrue(currentLevel.getHeight() > currentLevel.getFont().getSize() * 1.5);
+                assertTrue(noteCount.getWidth() <= noteCount.prefWidth(-1) + 1);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
     }
 
     @Test
