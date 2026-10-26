@@ -42,17 +42,27 @@ public class EditNoteCommandParserTest {
 
     @Test
     public void parse_invalidIndices_throwsSpecificParseException() {
-        String[] invalidStudentIndices = {"0", "-1", "x", "2147483648"};
+        String[] invalidStudentIndices = {"0", "-1", "x"};
         for (String invalidIndex : invalidStudentIndices) {
             assertParseFailure(parser, "note " + invalidIndex + " 1 nt/text",
                     "STUDENT_INDEX must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE);
         }
 
-        String[] invalidNoteNumbers = {"0", "-1", "x", "2147483648"};
+        String[] invalidNoteNumbers = {"0", "-1", "x"};
         for (String invalidNumber : invalidNoteNumbers) {
             assertParseFailure(parser, "note 1 " + invalidNumber + " nt/text",
                     "NOTE_NUMBER must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE);
         }
+    }
+
+    @Test
+    public void parse_oversizedIndices_throwsTooLargeParseException() {
+        assertParseFailure(parser, "note 99999999999 1 nt/text",
+                "STUDENT_INDEX is too large. Enter a smaller positive integer.\n"
+                        + EditNoteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "note 1 99999999999 nt/text",
+                "NOTE_NUMBER is too large. Enter a smaller positive integer.\n"
+                        + EditNoteCommand.MESSAGE_USAGE);
     }
 
     @Test
