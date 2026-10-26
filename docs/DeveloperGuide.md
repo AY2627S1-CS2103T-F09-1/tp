@@ -977,7 +977,7 @@ testers are expected to do more *exploratory* testing.
    Expected: TutorTrack reports `Successfully edited session note [1] for <name of student 1>.` The oldest note's text changes, while its timestamp, `[1]` number, and the student's note count remain unchanged.
 1. Close and relaunch TutorTrack, then enter `view 1`.
    Expected: The corrected note remains saved with the same timestamp and number.
-1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, and `edit note 1 1 nt/`.
+1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, `edit note 99999999999 1 nt/text`, `edit note 1 99999999999 nt/text`, and `edit note 1 1 nt/`.
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
 1. With two students in the roster, enter `edit note 3 1 nt/text`.
    Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
