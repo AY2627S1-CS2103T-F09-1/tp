@@ -160,7 +160,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 
-If either selector is missing, invalid, or outside the current range, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. If you type a non-numeric edit target by mistake, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. A failed save also restores the original note.
+If either selector is missing, invalid, or outside the current range, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a non-numeric edit target by mistake, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. A failed save also restores the original note.
 
 ### Viewing a student profile: `view`
 

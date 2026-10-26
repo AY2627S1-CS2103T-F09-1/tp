@@ -981,6 +981,8 @@ testers are expected to do more *exploratory* testing.
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
 1. Enter `edit notes 1 1 nt/text`.
    Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE?` and leaves the note unchanged.
+1. Enter `edit note 1 nt/text`.
+   Expected: TutorTrack reports the missing NOTE_NUMBER and explains that it is the number shown beside the note in the profile.
 1. Enter `edit note 1 1 nt/first nt/second`.
    Expected: TutorTrack reports a duplicate `nt/` prefix error and leaves the original note unchanged.
 
