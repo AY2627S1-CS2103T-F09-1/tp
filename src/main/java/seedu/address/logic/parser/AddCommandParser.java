@@ -25,7 +25,6 @@ import seedu.address.model.student.Subject;
 public class AddCommandParser implements Parser<AddCommand> {
 
     public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter: %1$s. Supported parameters: %2$s.";
-
     private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
             PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
     public static final String MESSAGE_SUPPORTED_PARAMETERS = SUPPORTED_PREFIXES.stream()
@@ -38,12 +37,8 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public AddCommand parse(String args) throws ParseException {
-        ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
-
-        Optional<String> unknownPrefix = ParserUtil.findUnknownPrefix(args, SUPPORTED_PREFIXES);
-        if (unknownPrefix.isPresent()) {
-            throw new ParseException(getUnknownPrefixMessage(unknownPrefix.get()));
-        }
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
+                PREFIX_SUBJECT, PREFIX_LEVEL);
 
         Optional<Prefix> missingPrefix = findMissingRequiredPrefix(argMultimap);
         if (missingPrefix.isPresent()) {
@@ -80,13 +75,6 @@ public class AddCommandParser implements Parser<AddCommand> {
         return List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL).stream()
                 .filter(prefix -> argumentMultimap.getValue(prefix).filter(value -> !value.isEmpty()).isEmpty())
                 .findFirst();
-    }
-
-    /**
-     * Returns an error message for an unsupported prefix.
-     */
-    private static String getUnknownPrefixMessage(String prefix) {
-        return withUsage(String.format(MESSAGE_UNKNOWN_PARAMETER, prefix, MESSAGE_SUPPORTED_PARAMETERS));
     }
 
     /**

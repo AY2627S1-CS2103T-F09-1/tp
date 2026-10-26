@@ -33,7 +33,6 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
-import seedu.address.logic.parser.AddCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -42,6 +41,8 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.ParentGuardianContact;
+import seedu.address.model.student.Student;
 import seedu.address.model.student.StudentName;
 import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.model.student.Subject;
@@ -406,14 +407,18 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_legacyPersonAdd_throwsParseException() {
-        String legacyAddCommand =
-                "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
+    public void execute_addStudentWithPrefixLikeText_success() throws Exception {
+        String addCommand = "add n/Amy Bee p/11111111 e/amy@example.com "
+                + "sub/Mathematics nt/Science l/Secondary nt/1";
+        Student student = new Student(new StudentName("Amy Bee"),
+                new ParentGuardianContact("11111111", Optional.of("amy@example.com")),
+                new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/1"));
+        Model expectedModel = new ModelManager();
+        expectedModel.addStudent(student);
 
-        assertParseException(legacyAddCommand,
-                String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "a/",
-                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
-                        + "\n" + AddCommand.MESSAGE_USAGE);
+        assertCommandSuccess(addCommand,
+                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, student.getName(), student.getSubject(),
+                        student.getCurrentLevel()), expectedModel);
     }
 
     @Test

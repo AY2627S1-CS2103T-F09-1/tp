@@ -53,6 +53,16 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_prefixLikeTextInSubjectAndLevel_success() {
+        Student student = new Student(new StudentName("Alicia Lim"),
+                new ParentGuardianContact("+65 9123 4567", Optional.empty()),
+                new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/4"));
+
+        assertParseSuccess(parser, " n/Alicia Lim p/+65 9123 4567 sub/Mathematics nt/Science l/Secondary nt/4",
+                new AddCommand(student));
+    }
+
+    @Test
     public void parse_missingLevel_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics",
                 "Value missing for parameter: l/\n" + AddCommand.MESSAGE_USAGE);
@@ -77,29 +87,22 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_legacyPersonArguments_failure() {
+    public void parse_legacyPersonArguments_treatedAsFreeText() {
         String legacyPersonArguments =
-                " n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
+                " n/Amy Bee p/11111111 e/amy@example.com sub/Mathematics a/Block 312 l/Secondary 1 t/friend";
+        Student student = new Student(new StudentName("Amy Bee"),
+                new ParentGuardianContact("11111111", Optional.of("amy@example.com")),
+                new Subject("Mathematics a/Block 312"), new CurrentLevel("Secondary 1 t/friend"));
 
-        assertParseFailure(parser, legacyPersonArguments,
-                getUnknownParameterMessage("a/"));
+        assertParseSuccess(parser, legacyPersonArguments, new AddCommand(student));
     }
 
     @Test
-    public void parse_studentArgumentsWithLegacyPersonPrefix_failure() {
-        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " a/Block 312, Amy Street 1 t/friend",
-                getUnknownParameterMessage("a/"));
-    }
+    public void parse_prefixLikeTextAfterLevel_success() {
+        Student student = new Student(new StudentName("Alicia Lim"),
+                new ParentGuardianContact("+65 9123 4567", Optional.empty()),
+                new Subject("Mathematics"), new CurrentLevel("Secondary 3 x/value"));
 
-    @Test
-    public void parse_unknownPrefix_failure() {
-        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " x/value",
-                getUnknownParameterMessage("x/"));
-    }
-
-    private static String getUnknownParameterMessage(String prefix) {
-        return String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, prefix,
-                AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
-                + "\n" + AddCommand.MESSAGE_USAGE;
+        assertParseSuccess(parser, VALID_REQUIRED_ARGUMENTS + " x/value", new AddCommand(student));
     }
 }

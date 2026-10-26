@@ -92,9 +92,10 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * **Required details:** Name, parent or guardian phone number, subject, and current level must be provided.
 * **Optional detail:** Parent or guardian email may be included with `e/`.
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
+* **Subject and level text:** Prefix-like text such as `nt/` is kept as part of a subject or current level.
 * **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
 * **After a successful addition:** TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
-* **Invalid input:** Missing values, invalid values, duplicate students, and unknown parameters leave the roster unchanged, explain the problem, and show the command format again.
+* **Invalid input:** Missing values, invalid values, and duplicate students leave the roster unchanged, explain the problem, and show the command format again.
 
 Examples:
 
