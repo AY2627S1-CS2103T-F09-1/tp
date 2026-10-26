@@ -69,6 +69,18 @@ public class StudentRosterTest {
     }
 
     @Test
+    public void constructor_nonDecomposingAccentedNamesAreSortedWithBaseLetters() {
+        Student lastName = student("Zoe Lim", ZOE_ID, "Mathematics", "Primary 5");
+        Student oName = student("Øscar Lim", BEA_ID, "Mathematics", "Primary 5");
+        Student lName = student("Łiam Lim", ALEX_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(lastName, oName, lName));
+
+        assertEquals(List.of(ALEX_ID, BEA_ID, ZOE_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
     public void constructor_emptyStudents_returnsEmptySnapshot() {
         StudentRoster roster = new StudentRoster(List.of());
 

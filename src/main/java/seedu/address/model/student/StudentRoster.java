@@ -19,6 +19,11 @@ import java.util.regex.Pattern;
 public final class StudentRoster {
 
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
+    private static final Map<Character, Character> NON_DECOMPOSING_LETTERS = Map.of(
+            'Ø', 'O',
+            'ø', 'o',
+            'Ł', 'L',
+            'ł', 'l');
     private static final Comparator<Student> BY_NORMALIZED_NAME = Comparator
             .comparing((Student student) -> sortableName(student.getName().getValue()),
                     String.CASE_INSENSITIVE_ORDER)
@@ -95,7 +100,13 @@ public final class StudentRoster {
 
     private static String sortableName(String name) {
         String decomposedName = Normalizer.normalize(name, Normalizer.Form.NFD);
-        return DIACRITICS.matcher(decomposedName).replaceAll("");
+        String nameWithoutDiacritics = DIACRITICS.matcher(decomposedName).replaceAll("");
+        StringBuilder sortableName = new StringBuilder(nameWithoutDiacritics.length());
+        for (int index = 0; index < nameWithoutDiacritics.length(); index++) {
+            char character = nameWithoutDiacritics.charAt(index);
+            sortableName.append(NON_DECOMPOSING_LETTERS.getOrDefault(character, character));
+        }
+        return sortableName.toString();
     }
 
     private static StudentRosterEntry createEntry(Student student, int rosterIndex,
