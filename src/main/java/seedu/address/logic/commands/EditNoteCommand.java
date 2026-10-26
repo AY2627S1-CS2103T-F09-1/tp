@@ -19,7 +19,9 @@ public class EditNoteCommand extends Command {
 
     public static final String COMMAND_WORD = "edit";
     public static final String NOTE_TARGET = "note";
-    public static final String MESSAGE_USAGE = COMMAND_WORD + " " + NOTE_TARGET
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " " + NOTE_TARGET
+            + " STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE";
+    public static final String MESSAGE_USAGE = COMMAND_FORMAT
             + ": Edits one session note without changing when it was recorded.\n"
             + "Parameters: STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE\n"
             + "Example: " + COMMAND_WORD + " " + NOTE_TARGET + " 1 2 nt/Corrected lesson summary.";

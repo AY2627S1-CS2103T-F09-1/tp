@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
@@ -27,8 +28,8 @@ public class AddressBookParser {
 
     /** Placeholder logged in place of a command word that does not name a known command */
     static final String UNKNOWN_COMMAND_WORD = "unknown";
-    static final String MESSAGE_MISTYPED_NOTE_TARGET =
-            "Unknown edit target: notes. Did you mean edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE?";
+    static final String MESSAGE_MISTYPED_NOTE_TARGET_FORMAT =
+            "Unknown edit target: %s. Did you mean %s?";
 
     /**
      * Used for initial separation of command word and args.
@@ -99,8 +100,9 @@ public class AddressBookParser {
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
         }
-        if ("notes".equals(editTarget)) {
-            throw new ParseException(MESSAGE_MISTYPED_NOTE_TARGET);
+        if (!editTarget.isEmpty() && !StringUtil.isNonZeroUnsignedInteger(editTarget)) {
+            throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
+                    editTarget, EditNoteCommand.COMMAND_FORMAT));
         }
         return new EditCommandParser().parse(arguments);
     }
