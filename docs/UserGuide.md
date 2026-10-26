@@ -125,7 +125,7 @@ A successful edit reports the student's updated name, subject, and current level
 
 TutorTrack displays all students in normalized alphabetical order when the application launches and after each successful command. When the roster is empty, TutorTrack shows that there are no students and suggests using the `add` command.
 
-Each student card shows the roster index, student name, subject, current academic level, and number of session notes. Long names, subjects, and levels wrap within their cards, and the roster can be scrolled when it contains more students than fit in the window.
+Each student card shows the roster index, student name, subject, current academic level, and number of session notes. Long names, subjects, and levels wrap within their cards, and the roster can be scrolled when it contains more students than fit in the window. Resizing the roster pane recalculates wrapped cards so every student remains reachable.
 
 ### Adding a session note: `note`
 

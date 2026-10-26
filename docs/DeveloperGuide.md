@@ -208,7 +208,7 @@ Changing a name or phone may reorder the roster. `MainWindow` retains an open pr
 
 ### Student roster UI
 
-`StudentRosterPanel` copies the immutable roster entries into a JavaFX `ListView`, which provides scrolling for larger rosters. Each cell creates a wrapping `StudentRosterCard` from one `StudentRosterEntry`; the card displays the one-based index, name, subject, current level, and session-note count. When the snapshot is empty, the panel hides the list cells and shows an actionable message explaining how to add a student. `MainWindow` refreshes the panel from `Logic#getStudentRoster()` after each successful command.
+`StudentRosterPanel` copies the immutable roster entries into a JavaFX `ListView`, which provides scrolling for larger rosters. Each cell creates a wrapping `StudentRosterCard` from one `StudentRosterEntry`; the card displays the one-based index, name, subject, current level, and session-note count. A width change refreshes the virtualized list so wrapped card heights are recalculated and narrow-pane resizing does not hide cards. When the snapshot is empty, the panel hides the list cells and shows an actionable message explaining how to add a student. `MainWindow` refreshes the panel from `Logic#getStudentRoster()` after each successful command.
 
 The panel keeps the displayed-profile selection by stable `StudentId`, not by roster index. A dedicated `profile-selected` cell state renders that selection independently from JavaFX's temporary pointer or keyboard focus, so moving focus does not imply that another profile is open. Roster interaction selectors are scoped to `student-roster-list`, preventing hover or selection styling from leaking into session-note cells.
 
@@ -947,8 +947,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Add students with different names, subjects, and levels.
       Expected: Cards appear in normalized alphabetical order and each card shows its index, name, subject, level, and session-note count.
-   2. Resize the window or add enough students to exceed the panel height.
-      Expected: The roster remains usable through its vertical scrolling.
+   2. Resize the window or drag the roster/profile divider to make the roster pane narrow, or add enough students to exceed the panel height.
+      Expected: Wrapped cards are recalculated and every student remains reachable through vertical scrolling.
    3. Add another student.
       Expected: The displayed roster refreshes and indices match the new alphabetical order.
 
