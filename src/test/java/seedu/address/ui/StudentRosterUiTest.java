@@ -140,6 +140,42 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void roster_resizedNarrowly_keepsLastCardReachable() throws Exception {
+        List<Student> students = new ArrayList<>();
+        for (int index = 0; index < 20; index++) {
+            students.add(student("Student " + "LongName ".repeat(5) + index, StudentId.fromString(String.format(
+                    "123e4567-e89b-12d3-a456-%012d", index))));
+        }
+        StudentRoster roster = new StudentRoster(students);
+        StudentRosterEntry lastEntry = roster.getEntries().get(roster.size() - 1);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(roster));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 420, 500));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListView<StudentRosterEntry> listView = getListView(panel);
+                stage.setWidth(180);
+                stage.getScene().getRoot().layout();
+                listView.scrollTo(lastEntry.getRosterIndex() - 1);
+                stage.getScene().getRoot().layout();
+
+                assertTrue(listView.lookupAll(".list-cell").stream()
+                        .filter(ListCell.class::isInstance)
+                        .map(ListCell.class::cast)
+                        .anyMatch(cell -> cell.getItem() == lastEntry));
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void setRoster_newRoster_replacesDisplayedEntries() throws Exception {
         StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of())));
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
