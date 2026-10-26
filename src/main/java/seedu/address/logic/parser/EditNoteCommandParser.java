@@ -26,6 +26,9 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
             "STUDENT_INDEX is too large. Enter a smaller positive integer.\n" + EditNoteCommand.MESSAGE_USAGE;
     private static final String MESSAGE_NOTE_NUMBER_TOO_LARGE =
             "NOTE_NUMBER is too large. Enter a smaller positive integer.\n" + EditNoteCommand.MESSAGE_USAGE;
+    private static final String MESSAGE_MISSING_NOTE_NUMBER =
+            "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile, "
+                    + "e.g. edit note 1 2 nt/...\n" + EditNoteCommand.MESSAGE_USAGE;
 
     /**
      * Parses the given {@code String} of arguments in the context of the edit note command.
@@ -38,6 +41,10 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
         Optional<String> noteText = argMultimap.getValue(PREFIX_NOTE);
         String[] preamble = argMultimap.getPreamble().split("\\s+");
 
+        if (noteText.isPresent() && preamble.length == 2
+                && EditNoteCommand.NOTE_TARGET.equals(preamble[0])) {
+            throw new ParseException(MESSAGE_MISSING_NOTE_NUMBER);
+        }
         if (noteText.isEmpty() || preamble.length != 3
                 || !EditNoteCommand.NOTE_TARGET.equals(preamble[0])) {
             throw new ParseException(MESSAGE_INVALID_FORMAT);

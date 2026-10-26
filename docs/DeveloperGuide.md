@@ -979,6 +979,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The corrected note remains saved with the same timestamp and number.
 1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, `edit note 99999999999 1 nt/text`, `edit note 1 99999999999 nt/text`, and `edit note 1 1 nt/`.
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
+1. Enter `edit note 1 nt/text`.
+   Expected: TutorTrack reports the missing NOTE_NUMBER and explains that it is the number shown beside the note in the profile.
 1. Enter `edit note 1 1 nt/first nt/second`.
    Expected: TutorTrack reports a duplicate `nt/` prefix error and leaves the original note unchanged.
 

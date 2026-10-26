@@ -41,6 +41,13 @@ public class EditNoteCommandParserTest {
     }
 
     @Test
+    public void parse_missingNoteNumber_throwsSpecificParseException() {
+        assertParseFailure(parser, "note 1 nt/Corrected summary.",
+                "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile, "
+                        + "e.g. edit note 1 2 nt/...\n" + EditNoteCommand.MESSAGE_USAGE);
+    }
+
+    @Test
     public void parse_invalidIndices_throwsSpecificParseException() {
         String[] invalidStudentIndices = {"0", "-1", "x"};
         for (String invalidIndex : invalidStudentIndices) {

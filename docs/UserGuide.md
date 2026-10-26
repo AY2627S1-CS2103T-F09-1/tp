@@ -160,7 +160,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 
-If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. A failed save also restores the original note.
+If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. A failed save also restores the original note.
 
 ### Viewing a student profile: `view`
 
