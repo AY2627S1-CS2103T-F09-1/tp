@@ -53,6 +53,10 @@ public class FileUtil {
      * @throws IOException if the temporary file cannot be written or moved into place.
      */
     public static void writeToFile(Path file, String content) throws IOException {
+        if (Files.exists(file) && !Files.isWritable(file)) {
+            throw new IOException("Target file is not writable: " + file);
+        }
+
         Path parentDirectory = file.toAbsolutePath().getParent();
         Files.createDirectories(parentDirectory);
         Path temporaryFile = Files.createTempFile(parentDirectory, file.getFileName().toString(), ".tmp");
