@@ -27,6 +27,8 @@ public class AddressBookParser {
 
     /** Placeholder logged in place of a command word that does not name a known command */
     static final String UNKNOWN_COMMAND_WORD = "unknown";
+    static final String MESSAGE_MISTYPED_NOTE_TARGET =
+            "Unknown edit target: notes. Did you mean edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE?";
 
     /**
      * Used for initial separation of command word and args.
@@ -96,6 +98,9 @@ public class AddressBookParser {
         String editTarget = arguments.stripLeading().split("\\s+", 2)[0];
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
+        }
+        if ("notes".equals(editTarget)) {
+            throw new ParseException(MESSAGE_MISTYPED_NOTE_TARGET);
         }
         return new EditCommandParser().parse(arguments);
     }
