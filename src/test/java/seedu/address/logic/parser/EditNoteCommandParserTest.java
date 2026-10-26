@@ -57,12 +57,20 @@ public class EditNoteCommandParserTest {
 
     @Test
     public void parse_oversizedIndices_throwsTooLargeParseException() {
-        assertParseFailure(parser, "note 99999999999 1 nt/text",
+        assertParseFailure(parser, "note 2147483648 1 nt/text",
                 "STUDENT_INDEX is too large. Enter a smaller positive integer.\n"
                         + EditNoteCommand.MESSAGE_USAGE);
-        assertParseFailure(parser, "note 1 99999999999 nt/text",
+        assertParseFailure(parser, "note 1 2147483648 nt/text",
                 "NOTE_NUMBER is too large. Enter a smaller positive integer.\n"
                         + EditNoteCommand.MESSAGE_USAGE);
+    }
+
+    @Test
+    public void parse_maximumIndices_areAccepted() {
+        assertParseSuccess(parser, "note 2147483647 1 nt/text",
+                new EditNoteCommand(Index.fromOneBased(Integer.MAX_VALUE), Index.fromOneBased(1), "text"));
+        assertParseSuccess(parser, "note 1 2147483647 nt/text",
+                new EditNoteCommand(Index.fromOneBased(1), Index.fromOneBased(Integer.MAX_VALUE), "text"));
     }
 
     @Test
