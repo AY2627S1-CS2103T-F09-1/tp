@@ -5,9 +5,11 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -37,6 +39,7 @@ public class MainWindow extends UiPart<Stage> {
     private static final double SCREEN_SIZE_TOLERANCE = 1;
 
     private final Logger logger = LogsCenter.getLogger(getClass());
+    private final ListChangeListener<Screen> screenConfigurationListener = change -> updateWindowMaximumSize();
 
     private Stage primaryStage;
     private Logic logic;
@@ -81,6 +84,7 @@ public class MainWindow extends UiPart<Stage> {
 
         // Configure the UI
         setWindowDefaultSize(logic.getGuiSettings());
+        configureWindowMaximumSizeUpdates();
 
         setAccelerators();
 
@@ -150,8 +154,7 @@ public class MainWindow extends UiPart<Stage> {
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
         Rectangle2D visualBounds = getTargetScreenVisualBounds(guiSettings);
-        primaryStage.setMaxWidth(visualBounds.getWidth());
-        primaryStage.setMaxHeight(visualBounds.getHeight());
+        setWindowMaximumSize(visualBounds);
         primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), visualBounds.getHeight()));
         primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), visualBounds.getWidth()));
         Point windowCoordinates = guiSettings.getWindowCoordinates();
@@ -161,6 +164,47 @@ public class MainWindow extends UiPart<Stage> {
             primaryStage.setX(clampCoordinate(windowCoordinates.getX(), visualBounds.getMinX(), maximumX));
             primaryStage.setY(clampCoordinate(windowCoordinates.getY(), visualBounds.getMinY(), maximumY));
         }
+    }
+
+    private void configureWindowMaximumSizeUpdates() {
+        primaryStage.xProperty().addListener((observable, oldX, newX) -> updateWindowMaximumSize());
+        primaryStage.yProperty().addListener((observable, oldY, newY) -> updateWindowMaximumSize());
+        primaryStage.showingProperty().addListener((observable, wasShowing, isShowing) -> {
+            if (isShowing) {
+                Screen.getScreens().addListener(screenConfigurationListener);
+                updateWindowMaximumSize();
+            } else {
+                Screen.getScreens().removeListener(screenConfigurationListener);
+            }
+        });
+    }
+
+    private void updateWindowMaximumSize() {
+        setWindowMaximumSize(getScaleAdjustedVisualBounds(getCurrentScreen()));
+    }
+
+    private void setWindowMaximumSize(Rectangle2D visualBounds) {
+        primaryStage.setMaxWidth(visualBounds.getWidth());
+        primaryStage.setMaxHeight(visualBounds.getHeight());
+    }
+
+    private Screen getCurrentScreen() {
+        Rectangle2D windowBounds = new Rectangle2D(primaryStage.getX(), primaryStage.getY(),
+                primaryStage.getWidth(), primaryStage.getHeight());
+        return Screen.getScreensForRectangle(windowBounds).stream()
+                .max(Comparator.comparingDouble(screen -> calculateIntersectionArea(
+                        windowBounds, screen.getBounds())))
+                .orElse(Screen.getPrimary());
+    }
+
+    private double calculateIntersectionArea(Rectangle2D firstBounds, Rectangle2D secondBounds) {
+        double intersectionWidth = Math.max(0,
+                Math.min(firstBounds.getMaxX(), secondBounds.getMaxX())
+                        - Math.max(firstBounds.getMinX(), secondBounds.getMinX()));
+        double intersectionHeight = Math.max(0,
+                Math.min(firstBounds.getMaxY(), secondBounds.getMaxY())
+                        - Math.max(firstBounds.getMinY(), secondBounds.getMinY()));
+        return intersectionWidth * intersectionHeight;
     }
 
     private double clampCoordinate(double savedCoordinate, double minimumCoordinate, double maximumCoordinate) {

@@ -1042,6 +1042,28 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void mainWindow_movedAfterStartup_refreshesMaximumSizeFromCurrentScreen() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+            logic.setInitialGuiSettings(new GuiSettings(700, 420,
+                    (int) visualBounds.getMinX(), (int) visualBounds.getMinY()));
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            stage.setMaxWidth(visualBounds.getWidth() / 2);
+            stage.setMaxHeight(visualBounds.getHeight() / 2);
+
+            stage.setX(stage.getX() + 1);
+
+            assertEquals(visualBounds.getWidth(), stage.getMaxWidth());
+            assertEquals(visualBounds.getHeight(), stage.getMaxHeight());
+            return null;
+        });
+    }
+
+    @Test
     public void adjustVisualBoundsForOutputScale_physicalBoundsReportedAsLogical_correctsBounds() {
         Rectangle2D physicalBoundsReportedAsLogical = new Rectangle2D(0, 0, 1280, 720);
 
