@@ -861,7 +861,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
    2. Double-click the JAR file.
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+      Expected: The GUI opens with an empty student roster and profile, with instructions to use `add` and `view INDEX`. The window size may not be optimal.
 2. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
