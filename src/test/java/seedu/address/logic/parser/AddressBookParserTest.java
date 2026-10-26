@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.AddCommand;
@@ -85,6 +86,23 @@ public class AddressBookParserTest {
     public void parseCommand_editNote() throws Exception {
         EditNoteCommand command = (EditNoteCommand) parser.parseCommand("edit note 1 2 nt/Corrected summary.");
         assertEquals(new EditNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), "Corrected summary."), command);
+    }
+
+    @Test
+    public void parseCommand_mistypedEditNoteTarget_suggestsCorrectCommand() {
+        List<String> mistypedTargets = List.of("notes", "nte");
+        for (String mistypedTarget : mistypedTargets) {
+            String expectedMessage = String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
+                    mistypedTarget, EditNoteCommand.COMMAND_FORMAT);
+            Executable parseMistypedCommand = () -> parser.parseCommand(
+                    "edit " + mistypedTarget + " 1 2 nt/Corrected summary.");
+            assertThrows(ParseException.class, expectedMessage, parseMistypedCommand);
+        }
+    }
+
+    @Test
+    public void parseCommand_editWithoutTarget_usesStudentEditParser() {
+        assertThrows(ParseException.class, () -> parser.parseCommand("edit"));
     }
 
     @Test
