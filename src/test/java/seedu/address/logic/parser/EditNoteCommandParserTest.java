@@ -41,18 +41,43 @@ public class EditNoteCommandParserTest {
     }
 
     @Test
+    public void parse_missingNoteNumber_throwsSpecificParseException() {
+        assertParseFailure(parser, "note 1 nt/Corrected summary.",
+                "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile, "
+                        + "e.g. edit note 1 2 nt/...\n" + EditNoteCommand.MESSAGE_USAGE);
+    }
+
+    @Test
     public void parse_invalidIndices_throwsSpecificParseException() {
-        String[] invalidStudentIndices = {"0", "-1", "x", "2147483648"};
+        String[] invalidStudentIndices = {"0", "-1", "x"};
         for (String invalidIndex : invalidStudentIndices) {
             assertParseFailure(parser, "note " + invalidIndex + " 1 nt/text",
                     "STUDENT_INDEX must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE);
         }
 
-        String[] invalidNoteNumbers = {"0", "-1", "x", "2147483648"};
+        String[] invalidNoteNumbers = {"0", "-1", "x"};
         for (String invalidNumber : invalidNoteNumbers) {
             assertParseFailure(parser, "note 1 " + invalidNumber + " nt/text",
                     "NOTE_NUMBER must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE);
         }
+    }
+
+    @Test
+    public void parse_oversizedIndices_throwsTooLargeParseException() {
+        assertParseFailure(parser, "note 2147483648 1 nt/text",
+                "STUDENT_INDEX is too large. Enter a smaller positive integer.\n"
+                        + EditNoteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "note 1 2147483648 nt/text",
+                "NOTE_NUMBER is too large. Enter a smaller positive integer.\n"
+                        + EditNoteCommand.MESSAGE_USAGE);
+    }
+
+    @Test
+    public void parse_maximumIndices_areAccepted() {
+        assertParseSuccess(parser, "note 2147483647 1 nt/text",
+                new EditNoteCommand(Index.fromOneBased(Integer.MAX_VALUE), Index.fromOneBased(1), "text"));
+        assertParseSuccess(parser, "note 1 2147483647 nt/text",
+                new EditNoteCommand(Index.fromOneBased(1), Index.fromOneBased(Integer.MAX_VALUE), "text"));
     }
 
     @Test
