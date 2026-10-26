@@ -208,7 +208,7 @@ Changing a name or phone may reorder the roster. `MainWindow` retains an open pr
 
 ### Student roster UI
 
-`StudentRosterPanel` copies the immutable roster entries into a JavaFX `ListView`, which provides scrolling for larger rosters. Each cell creates a wrapping `StudentRosterCard` from one `StudentRosterEntry`; the card displays the one-based index, name, subject, current level, and session-note count. When the snapshot is empty, the panel hides the list cells and shows an actionable message explaining how to add a student. `MainWindow` refreshes the panel from `Logic#getStudentRoster()` after each successful command.
+`StudentRosterPanel` copies the immutable roster entries into a JavaFX `ListView`, which provides scrolling for larger rosters. Each cell creates a wrapping `StudentRosterCard` from one `StudentRosterEntry`; the card displays the one-based index, name, subject, current level, and session-note count. A width change refreshes the virtualized list so wrapped card heights are recalculated and narrow-pane resizing does not hide cards. When the snapshot is empty, the panel hides the list cells and shows an actionable message explaining how to add a student. `MainWindow` refreshes the panel from `Logic#getStudentRoster()` after each successful command.
 
 The panel keeps the displayed-profile selection by stable `StudentId`, not by roster index. A dedicated `profile-selected` cell state renders that selection independently from JavaFX's temporary pointer or keyboard focus, so moving focus does not imply that another profile is open. Roster interaction selectors are scoped to `student-roster-list`, preventing hover or selection styling from leaking into session-note cells.
 
@@ -378,7 +378,7 @@ Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying th
   * Pros: Copies nothing for commands that do not change data.
   * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
 
-Restoring the model does not by itself protect the data file from a write that fails partway through. `FileUtil#writeToFile` writes the serialized content to a temporary file in the data file's parent directory, then atomically replaces the target. A failed temporary write or replacement leaves the previous data file intact, and the temporary file is removed.
+Restoring the model does not by itself protect the data file from a write that fails partway through. `FileUtil#writeToFile` rejects an existing target that is not writable before creating a temporary file, then writes the serialized content in the data file's parent directory and atomically replaces the target. A failed permission check, temporary write, or replacement leaves the previous data file and its permissions intact, and the temporary file is removed.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -949,8 +949,8 @@ testers are expected to do more *exploratory* testing.
 
    1. Add students with different names, subjects, and levels.
       Expected: Cards appear in normalized alphabetical order and each card shows its index, name, subject, level, and session-note count.
-   2. Resize the window or add enough students to exceed the panel height.
-      Expected: The roster remains usable through its vertical scrolling.
+   2. Resize the window or drag the roster/profile divider to make the roster pane narrow, or add enough students to exceed the panel height.
+      Expected: Wrapped cards are recalculated and every student remains reachable through vertical scrolling.
    3. Add another student.
       Expected: The displayed roster refreshes and indices match the new alphabetical order.
 
@@ -979,8 +979,14 @@ testers are expected to do more *exploratory* testing.
    Expected: TutorTrack reports `Successfully edited session note [1] for <name of student 1>.` The oldest note's text changes, while its timestamp, `[1]` number, and the student's note count remain unchanged.
 1. Close and relaunch TutorTrack, then enter `view 1`.
    Expected: The corrected note remains saved with the same timestamp and number.
-1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, and `edit note 1 1 nt/`.
+1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, `edit note 99999999999 1 nt/text`, `edit note 1 99999999999 nt/text`, and `edit note 1 1 nt/`.
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
+1. Enter `edit notes 1 1 nt/text`.
+   Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE?` and leaves the note unchanged.
+1. With two students in the roster, enter `edit note 3 1 nt/text`.
+   Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
+1. Enter `edit note 1 nt/text`.
+   Expected: TutorTrack reports the missing NOTE_NUMBER and explains that it is the number shown beside the note in the profile.
 1. Enter `edit note 1 1 nt/first nt/second`.
    Expected: TutorTrack reports a duplicate `nt/` prefix error and leaves the original note unchanged.
 
