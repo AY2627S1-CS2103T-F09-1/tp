@@ -874,7 +874,9 @@ testers are expected to do more *exploratory* testing.
 1. Launch TutorTrack and confirm that the window title is `TutorTrack`, the main surface is light, and teal accents are used for controls and selected roster entries.
 2. Focus the command box, open the Help window with `F1`, and open an error dialog with an invalid command.
    Expected: Focus, hover, error, Help window, and dialog states remain readable and use the same light and teal visual system. The Help window shows the User Guide link `https://ay2627s1-cs2103t-f09-1.github.io/tp/UserGuide.html`.
-3. Repeat the launch and the checks above at 1920x1080 with 100% scaling, 1920x1080 with 125% scaling, and 1280x720 with 150% scaling.
+1. Enter `add n/`.
+   Expected: The complete error message and add-command format wrap within the result display without a horizontal scrollbar.
+1. Repeat the launch and the checks above at 1920x1080 with 100% scaling, 1920x1080 with 125% scaling, and 1280x720 with 150% scaling.
    Expected: The restored window fits within the usable screen area. The command box, result display, roster, profile, status bar, Help window, and standard controls remain reachable without clipped controls.
 
 ### Roster and profile workspace
