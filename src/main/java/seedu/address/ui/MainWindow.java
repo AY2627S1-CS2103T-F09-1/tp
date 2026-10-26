@@ -1,5 +1,8 @@
 package seedu.address.ui;
 
+import java.awt.DisplayMode;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -31,6 +34,7 @@ import seedu.address.model.student.StudentId;
 public class MainWindow extends UiPart<Stage> {
 
     private static final String FXML = "MainWindow.fxml";
+    private static final double SCREEN_SIZE_TOLERANCE = 1;
 
     private final Logger logger = LogsCenter.getLogger(getClass());
 
@@ -146,13 +150,22 @@ public class MainWindow extends UiPart<Stage> {
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
         Rectangle2D visualBounds = getTargetScreenVisualBounds(guiSettings);
+        primaryStage.setMaxWidth(visualBounds.getWidth());
+        primaryStage.setMaxHeight(visualBounds.getHeight());
         primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), visualBounds.getHeight()));
         primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), visualBounds.getWidth()));
         Point windowCoordinates = guiSettings.getWindowCoordinates();
         if (windowCoordinates != null) {
-            primaryStage.setX(windowCoordinates.getX());
-            primaryStage.setY(windowCoordinates.getY());
+            double maximumX = visualBounds.getMaxX() - primaryStage.getWidth();
+            double maximumY = visualBounds.getMaxY() - primaryStage.getHeight();
+            primaryStage.setX(clampCoordinate(windowCoordinates.getX(), visualBounds.getMinX(), maximumX));
+            primaryStage.setY(clampCoordinate(windowCoordinates.getY(), visualBounds.getMinY(), maximumY));
         }
+    }
+
+    private double clampCoordinate(double savedCoordinate, double minimumCoordinate, double maximumCoordinate) {
+        double usableMaximum = Math.max(minimumCoordinate, maximumCoordinate);
+        return Math.max(minimumCoordinate, Math.min(savedCoordinate, usableMaximum));
     }
 
     /**
@@ -161,14 +174,45 @@ public class MainWindow extends UiPart<Stage> {
      */
     private Rectangle2D getTargetScreenVisualBounds(GuiSettings guiSettings) {
         Point windowCoordinates = guiSettings.getWindowCoordinates();
+        Screen targetScreen;
         if (windowCoordinates == null) {
-            return Screen.getPrimary().getVisualBounds();
+            targetScreen = Screen.getPrimary();
+        } else {
+            targetScreen = Screen.getScreensForRectangle(windowCoordinates.getX(), windowCoordinates.getY(), 1, 1)
+                    .stream()
+                    .findFirst()
+                    .orElse(Screen.getPrimary());
         }
-        return Screen.getScreensForRectangle(windowCoordinates.getX(), windowCoordinates.getY(), 1, 1)
-                .stream()
-                .findFirst()
-                .orElse(Screen.getPrimary())
-                .getVisualBounds();
+        return getScaleAdjustedVisualBounds(targetScreen);
+    }
+
+    private Rectangle2D getScaleAdjustedVisualBounds(Screen targetScreen) {
+        GraphicsDevice[] graphicsDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+        if (Screen.getScreens().size() != 1 || graphicsDevices.length != 1) {
+            return targetScreen.getVisualBounds();
+        }
+        DisplayMode displayMode = graphicsDevices[0].getDisplayMode();
+        return adjustVisualBoundsForOutputScale(targetScreen.getBounds(), targetScreen.getVisualBounds(),
+                targetScreen.getOutputScaleX(), targetScreen.getOutputScaleY(),
+                displayMode.getWidth(), displayMode.getHeight());
+    }
+
+    static Rectangle2D adjustVisualBoundsForOutputScale(Rectangle2D screenBounds, Rectangle2D visualBounds,
+            double outputScaleX, double outputScaleY, int physicalWidth, int physicalHeight) {
+        assert outputScaleX > 0 : "Output scale must be positive";
+        assert outputScaleY > 0 : "Output scale must be positive";
+        assert physicalWidth > 0 : "Physical display width must be positive";
+        assert physicalHeight > 0 : "Physical display height must be positive";
+
+        boolean widthExceedsPhysicalDisplay = screenBounds.getWidth() * outputScaleX
+                > physicalWidth + SCREEN_SIZE_TOLERANCE;
+        boolean heightExceedsPhysicalDisplay = screenBounds.getHeight() * outputScaleY
+                > physicalHeight + SCREEN_SIZE_TOLERANCE;
+        if (!widthExceedsPhysicalDisplay && !heightExceedsPhysicalDisplay) {
+            return visualBounds;
+        }
+        return new Rectangle2D(visualBounds.getMinX() / outputScaleX, visualBounds.getMinY() / outputScaleY,
+                visualBounds.getWidth() / outputScaleX, visualBounds.getHeight() / outputScaleY);
     }
 
     /**

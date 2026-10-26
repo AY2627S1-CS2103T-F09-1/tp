@@ -184,6 +184,16 @@
     -fx-background-color: -app-background;
 }
 
+.profile-scroll-pane,
+.profile-scroll-pane > .viewport {
+    -fx-background-color: -app-background;
+    -fx-background-insets: 0;
+}
+
+.profile-scroll-pane {
+    -fx-padding: 0;
+}
+
 .profile-name {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
