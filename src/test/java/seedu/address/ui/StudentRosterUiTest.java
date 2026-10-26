@@ -159,9 +159,21 @@ public class StudentRosterUiTest {
                 stage.getScene().getRoot().layout();
 
                 ListView<StudentRosterEntry> listView = getListView(panel);
+                Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
+                assertNotNull(virtualFlow);
+                ScrollBar verticalScrollBar = virtualFlow.getChildrenUnmodifiable().stream()
+                        .filter(ScrollBar.class::isInstance)
+                        .map(ScrollBar.class::cast)
+                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                        .findFirst()
+                        .orElseThrow();
+                assertTrue(verticalScrollBar.isVisible());
+                verticalScrollBar.setValue(verticalScrollBar.getMin());
+                stage.getScene().getRoot().layout();
+
                 stage.setWidth(180);
                 stage.getScene().getRoot().layout();
-                listView.scrollTo(lastEntry.getRosterIndex() - 1);
+                verticalScrollBar.setValue(verticalScrollBar.getMax());
                 stage.getScene().getRoot().layout();
 
                 assertTrue(listView.lookupAll(".list-cell").stream()
