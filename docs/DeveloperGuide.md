@@ -378,7 +378,7 @@ Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying th
   * Pros: Copies nothing for commands that do not change data.
   * Cons: Every command needs a correct undo step, and a command that lacks one silently keeps its changes.
 
-Restoring the model does not by itself protect the data file from a write that fails partway through. `FileUtil#writeToFile` writes the serialized content to a temporary file in the data file's parent directory, then atomically replaces the target. A failed temporary write or replacement leaves the previous data file intact, and the temporary file is removed.
+Restoring the model does not by itself protect the data file from a write that fails partway through. `FileUtil#writeToFile` rejects an existing target that is not writable before creating a temporary file, then writes the serialized content in the data file's parent directory and atomically replaces the target. A failed permission check, temporary write, or replacement leaves the previous data file and its permissions intact, and the temporary file is removed.
 
 ### \[Proposed\] Undo/redo feature
 
