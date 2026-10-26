@@ -69,6 +69,28 @@ public class StudentRosterTest {
     }
 
     @Test
+    public void constructor_namesWithNumbersAreSortedByNumericValue() {
+        Student studentTen = student("Student 10", ALEX_ID, "Mathematics", "Primary 5");
+        Student studentTwo = student("Student 2", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(studentTen, studentTwo));
+
+        assertEquals(List.of(BEA_ID, ALEX_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void constructor_equalNumericNameParts_areComparedBySuffix() {
+        Student firstStudent = student("Student 02 A", ALEX_ID, "Mathematics", "Primary 5");
+        Student secondStudent = student("Student 2 B", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(secondStudent, firstStudent));
+
+        assertEquals(List.of(ALEX_ID, BEA_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
     public void constructor_nonDecomposingAccentedNamesAreSortedWithBaseLetters() {
         Student lastName = student("Zoe Lim", ZOE_ID, "Mathematics", "Primary 5");
         Student oName = student("Øscar Lim", BEA_ID, "Mathematics", "Primary 5");
@@ -77,6 +99,17 @@ public class StudentRosterTest {
         StudentRoster roster = new StudentRoster(List.of(lastName, oName, lName));
 
         assertEquals(List.of(ALEX_ID, BEA_ID, ZOE_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void constructor_zeroNumericNameParts_areComparedBySuffix() {
+        Student firstStudent = student("Student 0 A", ALEX_ID, "Mathematics", "Primary 5");
+        Student secondStudent = student("Student 00 B", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(secondStudent, firstStudent));
+
+        assertEquals(List.of(ALEX_ID, BEA_ID), roster.getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
     }
 
