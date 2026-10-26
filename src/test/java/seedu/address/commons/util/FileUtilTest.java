@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.DosFileAttributeView;
@@ -68,7 +69,7 @@ public class FileUtilTest {
 
     private void assertReadOnlyFileWriteIsRejected(Path dataFile) throws IOException {
         assertFalse(Files.isWritable(dataFile));
-        assertThrows(IOException.class, () -> FileUtil.writeToFile(dataFile, "new data"));
+        assertThrows(AccessDeniedException.class, () -> FileUtil.writeToFile(dataFile, "new data"));
         assertEquals("old data", Files.readString(dataFile));
     }
 
