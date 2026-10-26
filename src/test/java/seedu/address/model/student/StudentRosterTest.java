@@ -58,6 +58,17 @@ public class StudentRosterTest {
     }
 
     @Test
+    public void constructor_accentedNamesAreSortedWithBaseLetters() {
+        Student accentedName = student("Ålice Tan", ALEX_ID, "Mathematics", "Primary 5");
+        Student laterName = student("Zoe Lim", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(laterName, accentedName));
+
+        assertEquals(List.of(ALEX_ID, BEA_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
     public void constructor_namesWithNumbersAreSortedByNumericValue() {
         Student studentTen = student("Student 10", ALEX_ID, "Mathematics", "Primary 5");
         Student studentTwo = student("Student 2", BEA_ID, "Mathematics", "Primary 5");
@@ -76,6 +87,18 @@ public class StudentRosterTest {
         StudentRoster roster = new StudentRoster(List.of(secondStudent, firstStudent));
 
         assertEquals(List.of(ALEX_ID, BEA_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void constructor_nonDecomposingAccentedNamesAreSortedWithBaseLetters() {
+        Student lastName = student("Zoe Lim", ZOE_ID, "Mathematics", "Primary 5");
+        Student oName = student("Øscar Lim", BEA_ID, "Mathematics", "Primary 5");
+        Student lName = student("Łiam Lim", ALEX_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(lastName, oName, lName));
+
+        assertEquals(List.of(ALEX_ID, BEA_ID, ZOE_ID), roster.getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
     }
 
