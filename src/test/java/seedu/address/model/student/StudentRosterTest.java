@@ -58,6 +58,17 @@ public class StudentRosterTest {
     }
 
     @Test
+    public void constructor_accentedNamesAreSortedWithBaseLetters() {
+        Student accentedName = student("Ålice Tan", ALEX_ID, "Mathematics", "Primary 5");
+        Student laterName = student("Zoe Lim", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(laterName, accentedName));
+
+        assertEquals(List.of(ALEX_ID, BEA_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
     public void constructor_emptyStudents_returnsEmptySnapshot() {
         StudentRoster roster = new StudentRoster(List.of());
 

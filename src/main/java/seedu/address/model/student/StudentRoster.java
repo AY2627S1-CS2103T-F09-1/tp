@@ -4,20 +4,25 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.text.Normalizer;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Represents an immutable, display-ready snapshot of the student's roster.
  */
 public final class StudentRoster {
 
+    private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
     private static final Comparator<Student> BY_NORMALIZED_NAME = Comparator
-            .comparing((Student student) -> student.getName().getValue(), String.CASE_INSENSITIVE_ORDER)
+            .comparing((Student student) -> sortableName(student.getName().getValue()),
+                    String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(student -> student.getName().getValue(), String.CASE_INSENSITIVE_ORDER)
             .thenComparing(student -> student.getParentGuardianContact().getNormalizedPhone())
             .thenComparing(student -> student.getId().getValue());
 
@@ -86,6 +91,11 @@ public final class StudentRoster {
         return java.util.stream.IntStream.range(0, sortedStudents.size())
                 .mapToObj(index -> createEntry(sortedStudents.get(index), index + 1, noteCounts))
                 .toList();
+    }
+
+    private static String sortableName(String name) {
+        String decomposedName = Normalizer.normalize(name, Normalizer.Form.NFD);
+        return DIACRITICS.matcher(decomposedName).replaceAll("");
     }
 
     private static StudentRosterEntry createEntry(Student student, int rosterIndex,
