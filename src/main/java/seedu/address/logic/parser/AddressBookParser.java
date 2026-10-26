@@ -27,11 +27,14 @@ public class AddressBookParser {
 
     /** Placeholder logged in place of a command word that does not name a known command */
     static final String UNKNOWN_COMMAND_WORD = "unknown";
+    static final String MESSAGE_MISTYPED_NOTE_TARGET_FORMAT =
+            "Unknown edit target: %s. Did you mean %s?";
 
     /**
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
+    private static final Pattern NUMERIC_EDIT_TARGET = Pattern.compile("[+-]?\\d+");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     private static final Set<String> COMMAND_WORDS = Set.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
@@ -96,6 +99,10 @@ public class AddressBookParser {
         String editTarget = arguments.stripLeading().split("\\s+", 2)[0];
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
+        }
+        if (!editTarget.isEmpty() && !NUMERIC_EDIT_TARGET.matcher(editTarget).matches()) {
+            throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
+                    editTarget, EditNoteCommand.COMMAND_FORMAT));
         }
         return new EditCommandParser().parse(arguments);
     }

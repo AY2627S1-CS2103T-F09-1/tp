@@ -125,7 +125,7 @@ A successful edit reports the student's updated name, subject, and current level
 
 TutorTrack displays all students in normalized alphabetical order when the application launches and after each successful command. When the roster is empty, TutorTrack shows that there are no students and suggests using the `add` command.
 
-Each student card shows the roster index, student name, subject, current academic level, and number of session notes. Long names, subjects, and levels wrap within their cards, and the roster can be scrolled when it contains more students than fit in the window.
+Each student card shows the roster index, student name, subject, current academic level, and number of session notes. Long names, subjects, and levels wrap within their cards, and the roster can be scrolled when it contains more students than fit in the window. Resizing the roster pane recalculates wrapped cards so every student remains reachable.
 
 ### Adding a session note: `note`
 
@@ -160,7 +160,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 
-If either selector is missing, invalid, or outside the current range, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. A failed save also restores the original note.
+If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a non-numeric edit target by mistake, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. A failed save also restores the original note.
 
 ### Viewing a student profile: `view`
 
