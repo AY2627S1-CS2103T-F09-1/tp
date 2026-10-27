@@ -76,8 +76,8 @@ public class StudentDeletionIntegrationTest {
         String savedData = Files.readString(dataFile);
         List<StudentRosterEntry> originalEntries = model.getStudentRoster().getEntries();
 
-        assertThrows(CommandException.class, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, () ->
-                logic.execute("delete 3"));
+        assertThrows(CommandException.class, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 3, 2), ()
+                -> logic.execute("delete 3"));
         assertThrows(ParseException.class, () -> logic.execute("delete 1 2"));
 
         assertEquals(originalEntries, model.getStudentRoster().getEntries());

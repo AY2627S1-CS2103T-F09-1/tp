@@ -113,7 +113,7 @@ public class EditCommandTest {
         descriptor.setSubject(new Subject("Physics"));
         EditCommand command = new EditCommand(INDEX_SECOND_PERSON, descriptor);
 
-        String expectedMessage = Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
+        String expectedMessage = String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 2, 1);
         assertThrows(CommandException.class, expectedMessage, () -> command.execute(model));
     }
 

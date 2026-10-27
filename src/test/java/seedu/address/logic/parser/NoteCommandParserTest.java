@@ -49,23 +49,36 @@ public class NoteCommandParserTest {
         assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " 1", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " 1 Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " nt/Reviewed factorisation.",
+                Messages.withFormat("Missing INDEX.", NoteCommand.COMMAND_FORMAT));
     }
 
     @Test
     public void parse_invalidIndexValue_throwsInvalidIndexMessage() {
-        String[] invalidIndices = {"abc", "0", "-1", "2147483648", "99999999999"};
+        String[] invalidIndices = {"abc", "0", "-1"};
 
         for (String invalidIndex : invalidIndices) {
             assertParseFailure(parser, " " + invalidIndex + " nt/Reviewed factorisation.",
-                    NoteCommandParser.MESSAGE_INVALID_INDEX);
+                    "INDEX must be a positive whole number, e.g. 1.");
         }
     }
 
     @Test
-    public void parse_severalPreambleWords_throwsInvalidFormat() {
-        assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
+    public void parse_aboveIntegerRange_throwsTooLarge() {
+        String[] oversizedIndices = {"2147483648", "99999999999"};
+
+        for (String oversizedIndex : oversizedIndices) {
+            assertParseFailure(parser, " " + oversizedIndex + " nt/Reviewed factorisation.",
+                    "INDEX is too large. Enter a student index shown in the roster.");
+        }
+    }
+
+    @Test
+    public void parse_severalPreambleWords_throwsOnlyOneIndexWithFormat() {
+        String expectedMessage = Messages.withFormat("note takes only one INDEX.", NoteCommand.COMMAND_FORMAT);
+
+        assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", expectedMessage);
+        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", expectedMessage);
     }
 
     @Test

@@ -34,7 +34,8 @@ public class AddressBookParser {
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
-    private static final Pattern NUMERIC_EDIT_TARGET = Pattern.compile("[+-]?\\d+");
+    /** Largest number of single-character edits from {@code note}, as in {@code nte}, still treated as a typo */
+    private static final int MAX_NOTE_TARGET_TYPO_DISTANCE = 2;
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     private static final Set<String> COMMAND_WORDS = Set.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
@@ -100,11 +101,43 @@ public class AddressBookParser {
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
         }
-        if (!editTarget.isEmpty() && !NUMERIC_EDIT_TARGET.matcher(editTarget).matches()) {
+        if (isMistypedNoteTarget(editTarget)) {
             throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
                     editTarget, EditNoteCommand.COMMAND_FORMAT));
         }
         return new EditCommandParser().parse(arguments);
+    }
+
+    /**
+     * Returns true if {@code editTarget} looks like a typo of {@code note} rather than a student index or a
+     * parameter such as {@code n/NAME}.
+     */
+    private static boolean isMistypedNoteTarget(String editTarget) {
+        boolean isParameter = editTarget.contains("/");
+        return !editTarget.isEmpty() && !isParameter
+                && getEditDistance(editTarget, EditNoteCommand.NOTE_TARGET) <= MAX_NOTE_TARGET_TYPO_DISTANCE;
+    }
+
+    /**
+     * Returns the number of single-character insertions, deletions, or substitutions that turn {@code source}
+     * into {@code target}.
+     */
+    private static int getEditDistance(String source, String target) {
+        int[] previousRow = new int[target.length() + 1];
+        for (int j = 0; j <= target.length(); j++) {
+            previousRow[j] = j;
+        }
+        for (int i = 1; i <= source.length(); i++) {
+            int[] currentRow = new int[target.length() + 1];
+            currentRow[0] = i;
+            for (int j = 1; j <= target.length(); j++) {
+                int substitutionCost = source.charAt(i - 1) == target.charAt(j - 1) ? 0 : 1;
+                currentRow[j] = Math.min(previousRow[j - 1] + substitutionCost,
+                        Math.min(previousRow[j], currentRow[j - 1]) + 1);
+            }
+            previousRow = currentRow;
+        }
+        return previousRow[target.length()];
     }
 
 }

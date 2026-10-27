@@ -4,11 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 
-import java.util.List;
-
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.student.StudentRosterEntry;
@@ -19,6 +16,7 @@ import seedu.address.model.student.StudentRosterEntry;
 public class NoteCommand extends Command {
 
     public static final String COMMAND_WORD = "note";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX " + PREFIX_NOTE + "NOTE";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Adds a session note to the student identified by the index number in the student roster.\n"
@@ -47,13 +45,7 @@ public class NoteCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<StudentRosterEntry> rosterEntries = model.getStudentRoster().getEntries();
-
-        if (targetIndex.getZeroBased() >= rosterEntries.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
-        }
-
-        StudentRosterEntry targetEntry = rosterEntries.get(targetIndex.getZeroBased());
+        StudentRosterEntry targetEntry = getRosterEntry(model, targetIndex);
         model.addSessionNote(targetEntry.getStudentId(), noteText);
         return new CommandResult(String.format(MESSAGE_SUCCESS, targetEntry.getName()));
     }

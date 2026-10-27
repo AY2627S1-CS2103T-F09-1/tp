@@ -2,11 +2,8 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.List;
-
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.session.SessionHistory;
@@ -18,6 +15,8 @@ import seedu.address.model.student.StudentRosterEntry;
 public class DeleteSessionNoteCommand extends Command {
 
     public static final String NOTE_TARGET = "note";
+    public static final String COMMAND_FORMAT = DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET
+            + " STUDENT_INDEX NOTE_NUMBER [" + DeleteCommand.CONFIRMATION_FLAG + "]";
 
     public static final String MESSAGE_USAGE = DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET
             + ": Previews or confirms deletion of one session note identified by its student roster index and "
@@ -93,12 +92,7 @@ public class DeleteSessionNoteCommand extends Command {
             throw new CommandException(MESSAGE_NO_PENDING_DELETION);
         }
 
-        List<StudentRosterEntry> rosterEntries = model.getStudentRoster().getEntries();
-        if (studentIndex.getZeroBased() >= rosterEntries.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
-        }
-
-        StudentRosterEntry student = rosterEntries.get(studentIndex.getZeroBased());
+        StudentRosterEntry student = getRosterEntry(model, studentIndex);
         SessionHistory history = model.getSessionHistory(student.getStudentId());
         if (history.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_SESSION_NOTES, student.getName()));

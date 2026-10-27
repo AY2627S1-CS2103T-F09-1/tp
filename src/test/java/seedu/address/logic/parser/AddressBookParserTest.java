@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
@@ -90,7 +91,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_mistypedEditNoteTarget_suggestsCorrectCommand() {
-        List<String> mistypedTargets = List.of("notes", "nte");
+        List<String> mistypedTargets = List.of("notes", "nte", "nots", "no");
         for (String mistypedTarget : mistypedTargets) {
             String expectedMessage = String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
                     mistypedTarget, EditNoteCommand.COMMAND_FORMAT);
@@ -102,7 +103,23 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_editWithoutTarget_usesStudentEditParser() {
-        assertThrows(ParseException.class, () -> parser.parseCommand("edit"));
+        assertThrows(ParseException.class, Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT), ()
+            -> parser.parseCommand("edit"));
+    }
+
+    @Test
+    public void parseCommand_editStudentWithoutIndex_reportsMissingIndex() {
+        assertThrows(ParseException.class, Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT), ()
+            -> parser.parseCommand("edit n/Bob"));
+    }
+
+    @Test
+    public void parseCommand_editStudentWithMistypedIndex_reportsInvalidIndex() {
+        List<String> mistypedIndices = List.of("a", "abc", "-1", "+1", "1x");
+        for (String mistypedIndex : mistypedIndices) {
+            assertThrows(ParseException.class, "INDEX must be a positive whole number, e.g. 1.", ()
+                -> parser.parseCommand("edit " + mistypedIndex + " n/Bob"));
+        }
     }
 
     @Test

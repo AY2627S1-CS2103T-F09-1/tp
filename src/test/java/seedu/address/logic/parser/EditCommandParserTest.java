@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -22,8 +21,6 @@ import seedu.address.model.student.Subject;
 
 public class EditCommandParserTest {
 
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
     private static final String MESSAGE_SUPPORTED_PARAMETERS = "n/ p/ e/ sub/ l/";
 
     private final EditCommandParser parser = new EditCommandParser();
@@ -81,18 +78,24 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_missingIndexOrFields_failure() {
-        assertParseFailure(parser, " n/Alexis Tan", MESSAGE_INVALID_FORMAT);
+        String missingIndexMessage = Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT);
+
+        assertParseFailure(parser, " n/Alexis Tan", missingIndexMessage);
         assertParseFailure(parser, " 1", withUsage(EditCommand.MESSAGE_NOT_EDITED));
-        assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "", missingIndexMessage);
     }
 
     @Test
     public void parse_invalidIndexOrPreamble_failure() {
-        assertParseFailure(parser, " 0 n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " -1 n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " x n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 extra n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 2147483648 n/Alexis Tan", MESSAGE_INVALID_FORMAT);
+        String invalidIndexMessage = "INDEX must be a positive whole number, e.g. 1.";
+
+        assertParseFailure(parser, " 0 n/Alexis Tan", invalidIndexMessage);
+        assertParseFailure(parser, " -1 n/Alexis Tan", invalidIndexMessage);
+        assertParseFailure(parser, " x n/Alexis Tan", invalidIndexMessage);
+        assertParseFailure(parser, " 1 extra n/Alexis Tan",
+                Messages.withFormat("edit takes only one INDEX.", EditCommand.COMMAND_FORMAT));
+        assertParseFailure(parser, " 2147483648 n/Alexis Tan",
+                "INDEX is too large. Enter a student index shown in the roster.");
     }
 
     @Test

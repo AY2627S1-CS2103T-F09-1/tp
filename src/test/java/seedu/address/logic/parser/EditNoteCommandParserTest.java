@@ -52,24 +52,22 @@ public class EditNoteCommandParserTest {
         String[] invalidStudentIndices = {"0", "-1", "x"};
         for (String invalidIndex : invalidStudentIndices) {
             assertParseFailure(parser, "note " + invalidIndex + " 1 nt/text",
-                    "STUDENT_INDEX must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE);
+                    "STUDENT_INDEX must be a positive whole number, e.g. 1.");
         }
 
         String[] invalidNoteNumbers = {"0", "-1", "x"};
         for (String invalidNumber : invalidNoteNumbers) {
             assertParseFailure(parser, "note 1 " + invalidNumber + " nt/text",
-                    "NOTE_NUMBER must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE);
+                    "NOTE_NUMBER must be a positive whole number, e.g. 1.");
         }
     }
 
     @Test
     public void parse_oversizedIndices_throwsTooLargeParseException() {
         assertParseFailure(parser, "note 2147483648 1 nt/text",
-                "STUDENT_INDEX is too large. Enter a smaller positive integer.\n"
-                        + EditNoteCommand.MESSAGE_USAGE);
+                "STUDENT_INDEX is too large. Enter a student index shown in the roster.");
         assertParseFailure(parser, "note 1 2147483648 nt/text",
-                "NOTE_NUMBER is too large. Enter a smaller positive integer.\n"
-                        + EditNoteCommand.MESSAGE_USAGE);
+                "NOTE_NUMBER is too large. Enter a note number shown in the profile.");
     }
 
     @Test

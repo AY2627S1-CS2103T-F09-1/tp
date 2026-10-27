@@ -55,7 +55,8 @@ public class DeleteCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getStudentRoster().size() + 1);
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);
 
-        assertCommandFailure(deleteCommand, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandFailure(deleteCommand, model, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE,
+                outOfBoundIndex.getOneBased(), model.getStudentRoster().size()));
     }
 
     @Test

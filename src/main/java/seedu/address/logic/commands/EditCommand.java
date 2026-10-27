@@ -8,14 +8,12 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.student.CurrentLevel;
@@ -31,6 +29,12 @@ import seedu.address.model.student.Subject;
 public class EditCommand extends Command {
 
     public static final String COMMAND_WORD = "edit";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX "
+            + "[" + PREFIX_NAME + "NAME] "
+            + "[" + PREFIX_PHONE + "PARENT_PHONE] "
+            + "[" + PREFIX_EMAIL + "PARENT_EMAIL] "
+            + "[" + PREFIX_SUBJECT + "SUBJECT] "
+            + "[" + PREFIX_LEVEL + "CURRENT_LEVEL]";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Edits the student identified by the index number in the student roster. "
@@ -69,12 +73,7 @@ public class EditCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<StudentRosterEntry> rosterEntries = model.getStudentRoster().getEntries();
-        if (targetIndex.getZeroBased() >= rosterEntries.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
-        }
-
-        StudentRosterEntry targetEntry = rosterEntries.get(targetIndex.getZeroBased());
+        StudentRosterEntry targetEntry = getRosterEntry(model, targetIndex);
         Student originalStudent = model.getStudent(targetEntry.getStudentId()).orElseThrow();
         Student editedStudent = createStudent(originalStudent, editStudentDescriptor);
 

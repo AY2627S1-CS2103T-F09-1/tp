@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
@@ -48,22 +47,14 @@ public class EditCommandParser implements Parser<EditCommand> {
                     unknownPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
         }
 
-        Index index = parseIndex(argMultimap.getPreamble());
+        Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), EditCommand.COMMAND_WORD,
+                EditCommand.COMMAND_FORMAT);
         verifyNoDuplicatePrefixes(argMultimap);
         EditStudentDescriptor descriptor = parseDescriptor(argMultimap);
         if (!descriptor.isAnyFieldEdited()) {
             throw new ParseException(withUsage(EditCommand.MESSAGE_NOT_EDITED));
         }
         return new EditCommand(index, descriptor);
-    }
-
-    private static Index parseIndex(String preamble) throws ParseException {
-        try {
-            return ParserUtil.parseIndex(preamble);
-        } catch (ParseException exception) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE),
-                    exception);
-        }
     }
 
     private static void verifyNoDuplicatePrefixes(ArgumentMultimap argMultimap) throws ParseException {
