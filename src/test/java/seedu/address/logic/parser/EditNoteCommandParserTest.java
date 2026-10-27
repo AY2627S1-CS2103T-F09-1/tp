@@ -28,6 +28,12 @@ public class EditNoteCommandParserTest {
     }
 
     @Test
+    public void parse_tabSeparatedSelectors_returnsEditNoteCommand() {
+        assertParseSuccess(parser, "note\t1\t2 nt/Corrected summary.",
+                new EditNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), "Corrected summary."));
+    }
+
+    @Test
     public void parse_missingTarget_throwsMissingTargetWithFormat() {
         String[] invalidArguments = {"", "1 2 nt/text", "notes 1 2 nt/text"};
 

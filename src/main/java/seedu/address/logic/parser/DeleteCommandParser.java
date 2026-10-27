@@ -42,7 +42,7 @@ public class DeleteCommandParser implements Parser<Command> {
             String.format(MESSAGE_TOO_MANY_INDICES, DeleteCommand.COMMAND_WORD, INDEX_LABEL),
             DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
 
-    private static final String WHITESPACE_PATTERN = "\s+";
+    private static final String WHITESPACE_PATTERN = "\\s+";
 
     /**
      * Parses the given {@code String} of arguments in the context of the delete command.

@@ -25,7 +25,7 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
             EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET
                     + " takes only one STUDENT_INDEX and one NOTE_NUMBER.");
 
-    private static final String WHITESPACE_PATTERN = "\s+";
+    private static final String WHITESPACE_PATTERN = "\\s+";
     private static final int TARGET_AND_INDEX_COUNT = 3;
 
     /**

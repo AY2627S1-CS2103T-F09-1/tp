@@ -36,6 +36,15 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_tabSeparatedArgs_returnsDeleteCommands() {
+        assertParseSuccess(parser, "1\t/confirm", new DeleteCommand(INDEX_FIRST_PERSON, true));
+        assertParseSuccess(parser, "note\t1\t2",
+                new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON));
+        assertParseSuccess(parser, " note \t1\t 2\t/confirm ",
+                new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON, true));
+    }
+
+    @Test
     public void parse_missingStudentIndex_throwsMissingIndexWithFormat() {
         String[] invalidArguments = {"", "   ", "/confirm"};
 
