@@ -57,6 +57,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -753,6 +754,71 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void sessionNoteListCell_deletionPreviewMarksOnlyTargetAndClearsOnReuse() throws Exception {
+        SessionNote newestNote = new SessionNote("Newest lesson.",
+                OffsetDateTime.parse("2026-09-19T18:35:00+08:00"));
+        SessionNote oldestNote = new SessionNote("Oldest lesson.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+        ListView<StudentProfilePanel.NumberedSessionNote> listView = getSessionNoteListView(panel);
+        ListCell<StudentProfilePanel.NumberedSessionNote> cell =
+                onFxThread(() -> listView.getCellFactory().call(listView));
+        PseudoClass deletionTarget = PseudoClass.getPseudoClass("deletion-target");
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null, List.of(newestNote, oldestNote)));
+            panel.previewDeletionOf(Index.fromOneBased(1));
+            updateNoteCell(cell, listView.getItems().get(0), false);
+            assertFalse(cell.getPseudoClassStates().contains(deletionTarget));
+            updateNoteCell(cell, listView.getItems().get(1), false);
+            assertTrue(cell.getPseudoClassStates().contains(deletionTarget));
+
+            panel.previewDeletionOf(Index.fromOneBased(3));
+            updateNoteCell(cell, listView.getItems().get(1), false);
+            assertFalse(cell.getPseudoClassStates().contains(deletionTarget));
+
+            panel.previewDeletionOf(Index.fromOneBased(1));
+            panel.clearDeletionPreview();
+            updateNoteCell(cell, listView.getItems().get(1), false);
+            assertFalse(cell.getPseudoClassStates().contains(deletionTarget));
+            updateNoteCell(cell, null, true);
+            assertFalse(cell.getPseudoClassStates().contains(deletionTarget));
+            return null;
+        });
+    }
+
+    @Test
+    public void profilePanel_deletionPreviewScrollsOlderNoteIntoView() throws Exception {
+        List<SessionNote> notes = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            notes.add(new SessionNote("Lesson " + i + ".",
+                    OffsetDateTime.parse("2026-09-18T18:35:00+08:00").minusDays(i)));
+        }
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null, notes));
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 360, 480));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                panel.previewDeletionOf(Index.fromOneBased(1));
+                stage.getScene().getRoot().layout();
+                boolean isTargetVisible = panel.getRoot().lookupAll(".session-note-header").stream()
+                        .filter(SelectableText.class::isInstance)
+                        .map(SelectableText.class::cast)
+                        .anyMatch(header -> header.getText().startsWith("[1]"));
+                assertTrue(isTargetVisible);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void sessionNoteListCell_longNote_wrapsWithinListViewWidth() throws Exception {
         String longNoteText = "Reviewed algebra concepts and planned revision exercises for the next lesson. "
                 .repeat(6);
@@ -991,6 +1057,68 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void executeCommand_noteDeletionPreviewOpensTargetProfileAndClearsMarkerOnExit() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(
+                student("Alex Tan", ALEX_ID), student("Blair Lim", BLAIR_ID)));
+        SessionNote newestNote = new SessionNote("Newest lesson.",
+                OffsetDateTime.parse("2026-09-19T18:35:00+08:00"));
+        SessionNote oldestNote = new SessionNote("Oldest lesson.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfile targetProfile = profile(BLAIR_ID, "Blair Lim", List.of(newestNote, oldestNote));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Confirm note deletion.", BLAIR_ID, Index.fromOneBased(1)));
+            logic.setProfile(Optional.of(targetProfile));
+
+            mainWindow.executeCommand("delete note 2 1");
+
+            StudentProfilePanel profilePanel = mainWindow.getStudentProfilePanel();
+            ListView<StudentProfilePanel.NumberedSessionNote> noteList = getSessionNoteListView(profilePanel);
+            ListCell<StudentProfilePanel.NumberedSessionNote> cell = noteList.getCellFactory().call(noteList);
+            updateNoteCell(cell, noteList.getItems().get(1), false);
+            assertEquals("Blair Lim", ((SelectableText) getProfileContent(profilePanel)
+                    .getChildren().get(0)).getText());
+            assertEquals(BLAIR_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
+            assertTrue(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
+
+            logic.setCommandResult(new CommandResult("Canceled."));
+            mainWindow.executeCommand("view 1");
+            updateNoteCell(cell, noteList.getItems().get(1), false);
+            assertFalse(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
+            assertEquals("Blair Lim", ((SelectableText) getProfileContent(profilePanel)
+                    .getChildren().get(0)).getText());
+            assertEquals(2, noteList.getItems().size());
+
+            logic.setCommandResult(new CommandResult("Confirm note deletion.", BLAIR_ID, Index.fromOneBased(1)));
+            mainWindow.executeCommand("delete note 2 1");
+            updateNoteCell(cell, noteList.getItems().get(1), false);
+            assertTrue(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
+
+            logic.setCommandFailure(new CommandException("Invalid command."));
+            assertThrows(CommandException.class, () -> mainWindow.executeCommand("invalid"));
+            updateNoteCell(cell, noteList.getItems().get(1), false);
+            assertFalse(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
+            assertEquals(2, noteList.getItems().size());
+
+            logic.setCommandFailure(null);
+            mainWindow.executeCommand("delete note 2 1");
+            logic.setCommandResult(new CommandResult("Deleted note."));
+            logic.setProfile(Optional.of(profile(BLAIR_ID, "Blair Lim", List.of(newestNote))));
+            mainWindow.executeCommand("delete note 2 1 /confirm");
+            assertEquals(1, noteList.getItems().size());
+            updateNoteCell(cell, noteList.getItems().get(0), false);
+            assertFalse(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_successAfterView_refreshesOpenProfile() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
         TestLogic logic = new TestLogic(roster, roster,
@@ -1222,6 +1350,12 @@ public class StudentRosterUiTest {
     private StudentProfile profile(String email, List<SessionNote> sessionNotes) {
         ParentGuardianContact contact = new ParentGuardianContact("9123 4567", Optional.ofNullable(email));
         return new StudentProfile(ALEX_ID, new StudentName("Alex Tan"), contact, new Subject("Mathematics"),
+                new CurrentLevel("Secondary 3"), sessionNotes);
+    }
+
+    private StudentProfile profile(StudentId studentId, String name, List<SessionNote> sessionNotes) {
+        ParentGuardianContact contact = new ParentGuardianContact("9123 4567", Optional.empty());
+        return new StudentProfile(studentId, new StudentName(name), contact, new Subject("Mathematics"),
                 new CurrentLevel("Secondary 3"), sessionNotes);
     }
 

@@ -7,12 +7,14 @@ import java.util.List;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
+import seedu.address.commons.core.index.Index;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionNote;
 
@@ -23,8 +25,10 @@ public class StudentProfilePanel extends UiPart<Region> {
 
     private static final String FXML = "StudentProfilePanel.fxml";
     private static final String EMAIL_NOT_PROVIDED = "Not provided";
+    private static final PseudoClass DELETION_TARGET = PseudoClass.getPseudoClass("deletion-target");
 
     private final ObservableList<NumberedSessionNote> sessionNotes = FXCollections.observableArrayList();
+    private Integer previewNoteNumber;
 
     @FXML
     private VBox emptyState;
@@ -68,6 +72,7 @@ public class StudentProfilePanel extends UiPart<Region> {
      */
     public void setProfile(StudentProfile profile) {
         requireNonNull(profile);
+        previewNoteNumber = null;
         studentName.setText(profile.getName().toString());
         parentGuardianPhone.setText(profile.getParentGuardianContact().getPhone());
         parentGuardianEmail.setText(profile.getParentGuardianContact().getEmail().orElse(EMAIL_NOT_PROVIDED));
@@ -82,6 +87,7 @@ public class StudentProfilePanel extends UiPart<Region> {
      * Clears the displayed profile and restores the empty-state prompt.
      */
     public void clearProfile() {
+        previewNoteNumber = null;
         sessionNotes.clear();
         updateNotesEmptyState();
         setProfileVisible(false);
@@ -91,6 +97,32 @@ public class StudentProfilePanel extends UiPart<Region> {
         boolean isEmpty = sessionNotes.isEmpty();
         emptyNotesState.setVisible(isEmpty);
         emptyNotesState.setManaged(isEmpty);
+    }
+
+    /**
+     * Marks and scrolls to the displayed session note selected for a deletion preview.
+     */
+    public void previewDeletionOf(Index noteNumber) {
+        requireNonNull(noteNumber);
+        int listIndex = sessionNotes.size() - noteNumber.getOneBased();
+        if (listIndex < 0 || listIndex >= sessionNotes.size()) {
+            clearDeletionPreview();
+            return;
+        }
+
+        previewNoteNumber = noteNumber.getOneBased();
+        sessionNoteListView.refresh();
+        sessionNoteListView.scrollTo(listIndex);
+    }
+
+    /**
+     * Clears any temporary session-note deletion marker without changing the displayed profile.
+     */
+    public void clearDeletionPreview() {
+        if (previewNoteNumber != null) {
+            previewNoteNumber = null;
+            sessionNoteListView.refresh();
+        }
     }
 
     private void setProfileVisible(boolean isVisible) {
@@ -111,13 +143,16 @@ public class StudentProfilePanel extends UiPart<Region> {
     /**
      * Displays one session note as a timestamped card.
      */
-    static class SessionNoteListViewCell extends ListCell<NumberedSessionNote> {
+    class SessionNoteListViewCell extends ListCell<NumberedSessionNote> {
         private Region sessionNoteCard;
 
         @Override
         protected void updateItem(NumberedSessionNote numberedNote, boolean empty) {
             super.updateItem(numberedNote, empty);
             clearSessionNoteCard();
+            boolean isDeletionTarget = !empty && numberedNote != null
+                    && Integer.valueOf(numberedNote.noteNumber()).equals(previewNoteNumber);
+            pseudoClassStateChanged(DELETION_TARGET, isDeletionTarget);
 
             if (empty || numberedNote == null) {
                 setGraphic(null);

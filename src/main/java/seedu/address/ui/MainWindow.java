@@ -213,12 +213,14 @@ public class MainWindow extends UiPart<Stage> {
      * @see seedu.address.logic.Logic#execute(String)
      */
     CommandResult executeCommand(String commandText) throws CommandException, ParseException {
+        studentProfilePanel.clearDeletionPreview();
         try {
             CommandResult commandResult = logic.execute(commandText);
             studentRosterPanel.setRoster(logic.getStudentRoster());
             commandResult.getProfileStudentId()
                     .ifPresent(studentId -> displayedProfileStudentId = Optional.of(studentId));
             refreshDisplayedProfile();
+            commandResult.getPreviewNoteNumber().ifPresent(studentProfilePanel::previewDeletionOf);
             logger.info("Command executed successfully: " + AddressBookParser.getLoggableCommandWord(commandText));
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
