@@ -2,17 +2,18 @@
 !include style.puml
 skinparam ArrowFontStyle plain
 
-title Delete a session note after confirmation
+title Preview and confirm deletion of one session note
 
 actor User as user USER_COLOR
-participant ":UI" as ui UI_COLOR
-participant ":Logic" as logic LOGIC_COLOR
+participant ":MainWindow" as window UI_COLOR
+participant ":StudentProfilePanel" as profile UI_COLOR
+participant ":LogicManager" as logic LOGIC_COLOR
 participant ":Model" as model MODEL_COLOR
 participant ":Storage" as storage STORAGE_COLOR
 
-user -> ui : "delete note 1 2"
-activate ui
-ui -> logic : execute("delete note 1 2")
+user -> window : "delete note 1 2"
+activate window
+window -> logic : execute("delete note 1 2")
 activate logic
 logic -> model : getStudentRoster()
 activate model
@@ -23,20 +24,41 @@ activate model
 model --> logic : history
 deactivate model
 note over logic
-  Keep the target pending
-  for confirmation.
+  Retain the student ID, note number,
+  and history for confirmation.
 end note
-logic --> ui : confirmation prompt
+logic --> window : CommandResult(studentId, noteNumber, prompt)
 deactivate logic
-ui --> user : preview and confirmation command
-deactivate ui
+window -> logic : getStudentProfile(studentId)
+activate logic
+logic -> model : getStudentProfile(studentId)
+activate model
+model --> logic : studentProfile
+deactivate model
+logic --> window : studentProfile
+deactivate logic
+window -> profile : setProfile(studentProfile)
+activate profile
+profile --> window
+deactivate profile
+window -> profile : previewDeletionOf(noteNumber)
+activate profile
+profile --> window
+deactivate profile
+window --> user : highlighted note and confirmation prompt
+deactivate window
 
-user -> ui : "delete note 1 2 /confirm"
-activate ui
-ui -> logic : execute("delete note 1 2 /confirm")
+user -> window : "delete note 1 2 /confirm"
+activate window
+window -> profile : clearDeletionPreview()
+activate profile
+profile --> window
+deactivate profile
+window -> logic : execute("delete note 1 2 /confirm")
 activate logic
 note over logic
-  Confirm the pending target still matches.
+  Verify the pending target
+  still matches.
 end note
 logic -> model : deleteSessionNote(studentId, noteNumber)
 activate model
@@ -46,8 +68,20 @@ logic -> storage : saveAddressBook(addressBook)
 activate storage
 storage --> logic
 deactivate storage
-logic --> ui : success result
+logic --> window : success result
 deactivate logic
-ui --> user : note deleted
-deactivate ui
+window -> logic : getStudentProfile(studentId)
+activate logic
+logic -> model : getStudentProfile(studentId)
+activate model
+model --> logic : updatedProfile
+deactivate model
+logic --> window : updatedProfile
+deactivate logic
+window -> profile : setProfile(updatedProfile)
+activate profile
+profile --> window
+deactivate profile
+window --> user : refreshed notes and success message
+deactivate window
 @enduml
