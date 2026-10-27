@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
-import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.MESSAGE_EMPTY_ROSTER;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 import static seedu.address.testutil.TypicalSessionNotes.BEA;
@@ -34,6 +33,7 @@ import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddCommandParser;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -73,18 +73,18 @@ public class LogicManagerTest {
     @Test
     public void execute_invalidCommandFormat_throwsParseException() {
         String invalidCommand = "uicfhmowqewca";
-        assertParseException(invalidCommand, MESSAGE_UNKNOWN_COMMAND);
+        assertParseException(invalidCommand, AddressBookParser.getUnknownCommandMessage(invalidCommand));
     }
 
     @Test
     public void execute_commandExecutionError_throwsCommandException() {
         String deleteCommand = "delete 9";
-        assertCommandException(deleteCommand, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandException(deleteCommand, MESSAGE_EMPTY_ROSTER);
     }
 
     @Test
     public void execute_removedListCommand_throwsParseException() {
-        assertParseException("list", MESSAGE_UNKNOWN_COMMAND);
+        assertParseException("list", AddressBookParser.getUnknownCommandMessage("list"));
     }
 
     @Test
@@ -410,10 +410,10 @@ public class LogicManagerTest {
         String legacyAddCommand =
                 "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
-        assertParseException(legacyAddCommand,
+        assertParseException(legacyAddCommand, Messages.withFormat(
                 String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "a/",
-                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
-                        + "\n" + AddCommand.MESSAGE_USAGE);
+                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS),
+                                AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE));
     }
 
     @Test
@@ -422,7 +422,8 @@ public class LogicManagerTest {
         List<String> legacyCommands = List.of("find Alicia", "clear");
 
         for (String legacyCommand : legacyCommands) {
-            assertParseException(legacyCommand, MESSAGE_UNKNOWN_COMMAND);
+            assertParseException(legacyCommand,
+                    AddressBookParser.getUnknownCommandMessage(legacyCommand.split(" ")[0]));
         }
 
         assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()

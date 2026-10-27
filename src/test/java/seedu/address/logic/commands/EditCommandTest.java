@@ -100,8 +100,7 @@ public class EditCommandTest {
         descriptor.setParentPhone(BEA.getParentGuardianContact().getPhone());
         EditCommand command = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT, BEA.getName())
-                + "\n" + EditCommand.MESSAGE_USAGE;
+        String expectedMessage = String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT, BEA.getName());
         assertThrows(CommandException.class, expectedMessage, () -> command.execute(model));
         assertEquals(ALEX.getName(), model.getStudentProfile(ALEX.getId()).orElseThrow().getName());
     }
@@ -113,7 +112,7 @@ public class EditCommandTest {
         descriptor.setSubject(new Subject("Physics"));
         EditCommand command = new EditCommand(INDEX_SECOND_PERSON, descriptor);
 
-        String expectedMessage = Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
+        String expectedMessage = String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 2, 1);
         assertThrows(CommandException.class, expectedMessage, () -> command.execute(model));
     }
 

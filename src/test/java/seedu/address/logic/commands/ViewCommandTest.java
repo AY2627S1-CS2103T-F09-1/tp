@@ -53,7 +53,8 @@ public class ViewCommandTest {
         Index outOfRangeIndex = Index.fromOneBased(model.getStudentRoster().size() + 1);
 
         assertCommandFailure(new ViewCommand(outOfRangeIndex), model,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, outOfRangeIndex.getOneBased(),
+                        model.getStudentRoster().size()));
     }
 
     @Test
@@ -61,7 +62,7 @@ public class ViewCommandTest {
         ModelManager emptyModel = new ModelManager();
 
         assertCommandFailure(new ViewCommand(INDEX_FIRST_PERSON), emptyModel,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                Messages.MESSAGE_EMPTY_ROSTER);
     }
 
     @Test

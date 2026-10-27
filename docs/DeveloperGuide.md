@@ -172,6 +172,22 @@ This section describes some noteworthy details on how certain features are imple
 
 `AddressBookParser` registers the TutorTrack domain commands `add`, `edit`, `edit note`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. TutorTrack's `edit` route dispatches `edit note` to `EditNoteCommandParser` and all other edit arguments to `EditCommandParser`, so it can update either a session note or a student record without exposing the inherited person edit behavior. The student add and edit parsers accept only the fields documented in the User Guide, so inherited person parameters such as `a/ADDRESS` and `t/TAG` are rejected before they can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
+### Command error messages
+
+Each rejected command names one specific problem so that the user can correct it without rereading the User Guide. Errors fall into three groups, and only the first group shows the command format:
+
+* **Structure errors** describe the shape of the command: a missing index or prefix, an unknown or repeated prefix, text before the first prefix, or extra values. Parsers build these with `Messages#withFormat`, which appends a `Format:` line with the command's one-line `COMMAND_FORMAT` and an `Example:` line with its `COMMAND_EXAMPLE`, for example `Format: view INDEX` and `Example: view 1`.
+* **Value errors** describe one value that breaks a rule, such as a short phone number or the index `0`. They show only that rule, so the problem stays visible in the result display.
+* **Model-state errors** describe a well-formed command that does not fit the current data, such as an index past the end of the roster or an empty roster. They say what to do next instead of repeating the format.
+
+Index handling is shared so that every command words index errors the same way:
+
+* `ParserUtil#parseOnlyStudentIndex` checks that the arguments hold exactly one `INDEX`, and reports a missing or repeated value as a structure error. `view`, `note`, and `edit` use it.
+* `ParserUtil#parseStudentIndex` and `ParserUtil#parseNoteNumber` report a value that is not a positive whole number, or that is above `Integer.MAX_VALUE`, as a value error named after the placeholder in the format, such as `STUDENT_INDEX` or `NOTE_NUMBER`.
+* `Command#getRosterEntry` resolves an index against the current roster for every index-based command, and reports an empty roster or the valid range `1` to `N`.
+
+Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. `AddressBookParser` names an unknown command word and lists the available commands. The unknown word is shown to the user but never logged.
+
 ### Adding a student
 
 The following sequence shows only the main successful `add` path. `AddressBookParser` delegates to `AddCommandParser`, which constructs a validated `Student`. `AddCommand` checks duplicate identity through `Model#hasStudent` before calling `Model#addStudent`, and `LogicManager` saves the changed address book. Invalid, missing, repeated, or unsupported parameters produce a parse error; a duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
@@ -258,7 +274,7 @@ The sequence below shows how `view INDEX` resolves a temporary position in the s
 
 <img src="images/ViewCommandSequenceDiagram.png" width="950" />
 
-`ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
+`ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks through `Command#getRosterEntry` that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
 
 #### Profile display and refresh
 
@@ -288,7 +304,7 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 ### Session note command
 
-`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing index or several words before `nt/` are reported as an invalid command format. A single word that is not a positive integer, such as `0`, `x`, or a number too large for an index, is reported as an invalid `INDEX`, as `DeleteCommandParser` does for `delete note`, and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
@@ -911,7 +927,9 @@ testers are expected to do more *exploratory* testing.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
 4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
-   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and neither changes the roster or data file.
+   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
+5. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
+   Expected: The first reports `Unexpected text before the first parameter: aaaaaa` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
 
 ### Editing a student
 
@@ -921,7 +939,9 @@ testers are expected to do more *exploratory* testing.
 1. Enter `edit 2 e/` for a student with an email.
    Expected: The email is removed, every omitted field and session note is unchanged, and an open profile displays `Not provided`.
 1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
-   Expected: Each command reports the applicable error and edit usage without changing the roster, profile, notes, or data file.
+   Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the one-line `edit` format and example, while `edit 1 l/` shows only the level rule.
+1. Enter `edit n/Bob` and `edit a n/Bob`.
+   Expected: The first reports `Missing INDEX.` followed by the `edit` format and example. The second reports `INDEX must be a positive whole number, e.g. 1.` Neither suggests `edit note`.
 1. Try to edit one student so that both the normalized name and parent phone match the other student.
    Expected: TutorTrack reports the duplicate and leaves both students unchanged.
 1. Make the data file unwritable and enter an otherwise valid edit, then restore write access.
@@ -931,13 +951,26 @@ testers are expected to do more *exploratory* testing.
 
 1. Add one student and add a session note for that student.
 1. Enter `list`.
-   Expected: TutorTrack reports `Unknown command.` and leaves the roster, session note, and saved data unchanged.
+   Expected: TutorTrack reports `Unknown command: list. Available commands: add, delete, edit, exit, help, note, view.` and leaves the roster, session note, and saved data unchanged.
 1. Enter each of `find Changed` and `clear`.
-   Expected: Each input reports `Unknown command.` The student, session note, roster display, and saved data remain unchanged.
+   Expected: Each input names its unknown command word and lists the available commands. The student, session note, roster display, and saved data remain unchanged.
 1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
    Expected: TutorTrack reports `a/` as an unknown parameter, lists the supported add parameters, and shows the add format. It does not create a hidden person or change the roster, session notes, or saved data.
 1. Enter `add n/Bea Lim p/9876 5432 sub/English l/JC 1`.
    Expected: The valid student form still adds Bea Lim normally.
+
+### Reporting invalid student indices
+
+1. Start with an empty roster and enter `view 1`.
+   Expected: TutorTrack reports `There are no students in the roster yet. Add a student with add first.` and the profile stays empty.
+1. Add two students, then enter `view 3`.
+   Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.`
+1. Enter each of `view 0`, `view -1`, and `view abc`.
+   Expected: Each reports `INDEX must be a positive whole number, e.g. 1.` without a format line.
+1. Enter `view`, then `view 1 2`.
+   Expected: The first reports `Missing INDEX.` and the second `view takes only one INDEX.`, each followed by `Format: view INDEX` and `Example: view 1`.
+1. Enter `view 99999999999`.
+   Expected: TutorTrack reports `INDEX is too large. Enter a student index shown in the roster.` In every step, the open profile, roster highlight, and data file remain unchanged.
 
 ### Displaying the student roster
 
@@ -964,13 +997,13 @@ testers are expected to do more *exploratory* testing.
 1. Enter `note 1 nt/Next: 3 sub/topics`.
    Expected: The note is added with `sub/topics` as part of its text.
 1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
-   Expected: Each shows an invalid command format error, and no note count changes.
+   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
-   Expected: Each reports that `INDEX` must be a positive integer and shows the `note` format, and no note count changes.
+   Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
    Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that the student index is invalid, and no note count changes.
+   Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 
 ### Editing a session note
 
@@ -1004,9 +1037,9 @@ testers are expected to do more *exploratory* testing.
 1. Close and relaunch TutorTrack.
    Expected: Ari and the notes remain absent, while Bea remains at index 1.
 1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /confirm /confirm`, and `delete 1 /confirm extra`.
-   Expected: Each command reports an invalid command format and leaves the roster, notes, open profile, and data file unchanged.
+   Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` and `delete 1 /Confirm` report that `delete` takes only one `INDEX`; and the remaining inputs report that `/confirm` must appear at most once and at the end. Every error except the invalid-index ones ends with `Format: delete INDEX [/confirm]` and `Example: delete 1`. None changes the roster, notes, open profile, or data file.
 1. Enter `delete N`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that the student index is invalid and makes no changes.
+   Expected: TutorTrack reports that student index `[N]` is outside the roster, gives the valid range, and makes no changes.
 
 ### Deleting one session note
 

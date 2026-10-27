@@ -74,6 +74,16 @@ TutorTrack keeps the latest 100 non-blank commands from the current app session,
 * Press `Down` to move toward newer commands. Moving past the newest command restores any draft that was in the command box before history navigation started.
 * Edit a recalled command and press `Enter` to run it and add the edited command as a new history entry.
 
+### Fixing command errors
+
+When a command cannot run, TutorTrack names the specific problem and does not change the roster, session notes, open profile, or saved data. Recall the command with `Up`, correct it, and press `Enter` again.
+
+* **Missing or extra parts:** if a required part such as an index, `nt/`, or `n/NAME` is missing, an unknown or repeated parameter is entered, text appears before the first parameter, or more values are entered than the command takes, the error ends with a `Format:` line showing the correct command and an `Example:` line you can adapt. For example, `view 1 2` shows `view takes only one INDEX.` followed by `Format: view INDEX` and `Example: view 1`.
+* **Invalid value:** a value that breaks a rule, such as a phone number that is too short, shows only that rule. An index such as `0`, `-1`, or `abc` shows `INDEX must be a positive whole number, e.g. 1.` A number too large to be any index, such as `99999999999`, is reported as too large.
+* **Index outside the roster:** the error gives the valid range, for example `Student index [3] is outside the roster. Enter a student index from 1 to 2.` If the roster is empty, TutorTrack asks you to add a student first.
+* **Note number outside the history:** `edit note` and `delete note` give the valid note-number range for that student.
+* **Unknown command:** a misspelled command word, such as `veiw 1`, is named in the error together with the list of available commands.
+
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
@@ -95,7 +105,7 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
 * **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
 * **After a successful addition:** TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
-* **Invalid input:** Missing values, invalid values, duplicate students, and unknown parameters leave the roster unchanged, explain the problem, and show the command format again.
+* **Invalid input:** Missing values, invalid values, duplicate students, text before the first parameter, and unknown parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
 
 Examples:
 
@@ -120,7 +130,7 @@ Examples:
 * `edit 1 e/`
 * `edit 3 n/Devika Patel sub/English Literature`
 
-A successful edit reports the student's updated name, subject, and current level, refreshes the roster and any open profile, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student. Invalid indices, missing edit fields, repeated or unknown parameters, and invalid values leave the student, session notes, open profile, and saved data unchanged. If saving fails, TutorTrack restores the complete original record.
+A successful edit reports the student's updated name, subject, and current level, refreshes the roster and any open profile, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student. Invalid indices, missing edit fields, repeated or unknown parameters, and invalid values leave the student, session notes, open profile, and saved data unchanged. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original record.
 
 ### Viewing the student roster
 
@@ -146,7 +156,7 @@ Examples:
 * `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.`
 * `note 3 nt/Completed past-year paper 2 (scored 34/40).`
 
-If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note.
+If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note. See [Fixing command errors](#fixing-command-errors) for the messages.
 
 ### Editing a session note: `edit note`
 
@@ -179,7 +189,7 @@ Format: `view INDEX`
 
 Example: `view 2`
 
-If `INDEX` is missing or invalid, TutorTrack shows an error and keeps the current profile unchanged.
+If the index is missing, not a positive whole number, or outside the roster, TutorTrack shows an error and keeps the current display unchanged. See [Fixing command errors](#fixing-command-errors) for the messages.
 
 ### Deleting a student: `delete`
 
@@ -203,7 +213,7 @@ Example:
 1. Check the student name and session-note count in the prompt.
 1. Enter `delete 2 /confirm` as the next command to delete that student, or enter any other command to cancel.
 
-If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
+If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. See [Fixing command errors](#fixing-command-errors) for the messages. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
 
 ### Deleting one session note: `delete note`
 
@@ -227,7 +237,7 @@ Example:
 1. Check the student name and note number in the prompt.
 1. Enter `delete note 1 3 /confirm` as the next command to delete that note, or enter any other command to cancel.
 
-If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and changes nothing. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
+If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and changes nothing. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
 
 ### Exiting the program: `exit`
 

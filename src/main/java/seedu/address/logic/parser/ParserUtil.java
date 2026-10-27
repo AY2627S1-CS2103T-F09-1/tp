@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -30,8 +32,21 @@ import seedu.address.model.tag.Tag;
  */
 public class ParserUtil {
 
-    public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String INDEX_LABEL = "INDEX";
+    public static final String STUDENT_INDEX_LABEL = "STUDENT_INDEX";
+    public static final String NOTE_NUMBER_LABEL = "NOTE_NUMBER";
+
+    public static final String MESSAGE_INVALID_INDEX = "%1$s must be a positive whole number, e.g. 1.";
+    public static final String MESSAGE_STUDENT_INDEX_TOO_LARGE =
+            "%1$s is too large. Enter a student index shown in the roster.";
+    public static final String MESSAGE_NOTE_NUMBER_TOO_LARGE =
+            "%1$s is too large. Enter a note number shown in the profile.";
+    public static final String MESSAGE_MISSING_INDEX = "Missing %1$s.";
+    public static final String MESSAGE_TOO_MANY_INDICES = "%1$s takes only one %2$s.";
+
     private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)([a-z][a-z0-9_-]{0,2})/");
+    private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
+    private static final String WHITESPACE_PATTERN = "\\s+";
 
     /**
      * Returns the first prefix-like token in {@code args} that is not in {@code supportedPrefixes}.
@@ -61,16 +76,70 @@ public class ParserUtil {
     }
 
     /**
-     * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
-     * trimmed.
-     * @throws ParseException if the specified index is invalid (not a non-zero unsigned integer).
+     * Returns the single student index that makes up {@code args}, the whole argument string of
+     * {@code commandWord}.
+     *
+     * @param args Arguments that should contain exactly one {@code INDEX}.
+     * @param commandWord Command word named in the error when more than one value is given.
+     * @param commandFormat One-line command format shown when the index is missing or repeated.
+     * @param commandExample One-line example shown below {@code commandFormat}.
+     * @throws ParseException If the index is missing, repeated, not a positive whole number, or too large.
      */
-    public static Index parseIndex(String oneBasedIndex) throws ParseException {
-        String trimmedIndex = oneBasedIndex.trim();
-        if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
-            throw new ParseException(MESSAGE_INVALID_INDEX);
+    public static Index parseOnlyStudentIndex(String args, String commandWord, String commandFormat,
+            String commandExample) throws ParseException {
+        requireNonNull(args);
+        String trimmedArgs = args.trim();
+        if (trimmedArgs.isEmpty()) {
+            throw new ParseException(Messages.withFormat(
+                    String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL), commandFormat, commandExample));
         }
-        return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        if (trimmedArgs.split(WHITESPACE_PATTERN).length > 1) {
+            throw new ParseException(Messages.withFormat(
+                    String.format(MESSAGE_TOO_MANY_INDICES, commandWord, INDEX_LABEL), commandFormat, commandExample));
+        }
+        return parseStudentIndex(trimmedArgs, INDEX_LABEL);
+    }
+
+    /**
+     * Parses {@code studentIndex} into an {@code Index}. Leading and trailing whitespaces will be trimmed.
+     *
+     * @param studentIndex One-based roster index entered by the user.
+     * @param label Placeholder that names the index in the command format, such as {@code INDEX}.
+     * @throws ParseException If the value is not a positive whole number, or is too large to be an index.
+     */
+    public static Index parseStudentIndex(String studentIndex, String label) throws ParseException {
+        return parseIndex(studentIndex, label, MESSAGE_STUDENT_INDEX_TOO_LARGE);
+    }
+
+    /**
+     * Parses {@code noteNumber} into an {@code Index}. Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException If the value is not a positive whole number, or is too large to be a note number.
+     */
+    public static Index parseNoteNumber(String noteNumber) throws ParseException {
+        return parseIndex(noteNumber, NOTE_NUMBER_LABEL, MESSAGE_NOTE_NUMBER_TOO_LARGE);
+    }
+
+    /**
+     * Parses {@code oneBasedIndex}, reporting a value above {@code Integer.MAX_VALUE} with
+     * {@code tooLargeMessage} and any other invalid value as not a positive whole number.
+     */
+    private static Index parseIndex(String oneBasedIndex, String label, String tooLargeMessage)
+            throws ParseException {
+        requireNonNull(oneBasedIndex);
+        String trimmedIndex = oneBasedIndex.trim();
+        if (StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+            return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+        }
+        if (isWholeNumberAboveIntegerRange(trimmedIndex)) {
+            throw new ParseException(String.format(tooLargeMessage, label));
+        }
+        throw new ParseException(String.format(MESSAGE_INVALID_INDEX, label));
+    }
+
+    private static boolean isWholeNumberAboveIntegerRange(String value) {
+        return WHOLE_NUMBER_PATTERN.matcher(value).matches()
+                && new BigInteger(value).compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0;
     }
 
     /**
