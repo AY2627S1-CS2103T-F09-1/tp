@@ -879,6 +879,8 @@ testers are expected to do more *exploratory* testing.
 
 ### Roster and profile workspace
 
+When manually testing roster resizing, start with a populated roster containing enough long names to require scrolling, resize the main window from a normal width to a narrow supported width, and scroll to the final card. Expected: the cards reflow to the new width, remain readable, and the final card remains reachable. The automated JavaFX test checks the corresponding layout change; the manual step remains useful because virtualized JavaFX layout can vary across headless and desktop environments.
+
 1. Start with an empty data file.
    Expected: The roster displays `No students yet` with an instruction to use `add`, while the profile displays `No student selected` with an instruction to use `view INDEX`.
 1. Enter `add n/Alicia Alexandra Lim Wei Xuan p/8000 0001 e/guardian.with.a.long.address@example.com sub/Additional Mathematics and Mathematical Modelling l/Secondary 4 Express`, followed by `add n/Blair Tan p/8000 0002 sub/English Literature l/JC 1`.
