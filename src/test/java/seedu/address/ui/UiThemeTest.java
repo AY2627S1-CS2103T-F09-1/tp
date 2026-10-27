@@ -74,6 +74,7 @@ public class UiThemeTest {
         assertFalse(theme.contains(".text-area:focused"));
         assertTrue(theme.contains(".result-display:focused"));
         assertTrue(resultDisplay.contains("focusTraversable=\"false\""));
+        assertTrue(resultDisplay.contains("wrapText=\"true\""));
     }
 
     private String readResource(String resourcePath) throws IOException {
