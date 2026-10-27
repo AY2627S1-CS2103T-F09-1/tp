@@ -831,10 +831,17 @@ public class StudentRosterUiTest {
                 assertTrue(scrolledValue > 0);
 
                 pressKey(commandTextField, KeyCode.PAGE_DOWN);
-                assertTrue(verticalScrollBar.getValue() > scrolledValue);
+                double furtherScrolledValue = verticalScrollBar.getValue();
+                assertTrue(furtherScrolledValue > scrolledValue);
 
                 pressKey(commandTextField, KeyCode.PAGE_UP);
-                pressKey(commandTextField, KeyCode.PAGE_UP);
+                assertTrue(verticalScrollBar.getValue() < furtherScrolledValue);
+
+                // Cell heights are re-estimated while scrolling, so paging up need not mirror paging down exactly;
+                // extra presses must still stop at the top.
+                for (int i = 0; i < 5; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
                 assertEquals(0, verticalScrollBar.getValue());
             } finally {
                 stage.hide();
