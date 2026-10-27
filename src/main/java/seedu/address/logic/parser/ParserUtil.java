@@ -82,19 +82,20 @@ public class ParserUtil {
      * @param args Arguments that should contain exactly one {@code INDEX}.
      * @param commandWord Command word named in the error when more than one value is given.
      * @param commandFormat One-line command format shown when the index is missing or repeated.
+     * @param commandExample One-line example shown below {@code commandFormat}.
      * @throws ParseException If the index is missing, repeated, not a positive whole number, or too large.
      */
-    public static Index parseOnlyStudentIndex(String args, String commandWord, String commandFormat)
-            throws ParseException {
+    public static Index parseOnlyStudentIndex(String args, String commandWord, String commandFormat,
+            String commandExample) throws ParseException {
         requireNonNull(args);
         String trimmedArgs = args.trim();
         if (trimmedArgs.isEmpty()) {
             throw new ParseException(Messages.withFormat(
-                    String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL), commandFormat));
+                    String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL), commandFormat, commandExample));
         }
         if (trimmedArgs.split(WHITESPACE_PATTERN).length > 1) {
             throw new ParseException(Messages.withFormat(
-                    String.format(MESSAGE_TOO_MANY_INDICES, commandWord, INDEX_LABEL), commandFormat));
+                    String.format(MESSAGE_TOO_MANY_INDICES, commandWord, INDEX_LABEL), commandFormat, commandExample));
         }
         return parseStudentIndex(trimmedArgs, INDEX_LABEL);
     }

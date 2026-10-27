@@ -42,13 +42,14 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_missingParts_throwsParseException() {
-        String missingNoteMessage = Messages.withFormat("Missing nt/NOTE.", NoteCommand.COMMAND_FORMAT);
+        String missingNoteMessage = Messages.withFormat("Missing nt/NOTE.",
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
 
         assertParseFailure(parser, "", missingNoteMessage);
         assertParseFailure(parser, " 1", missingNoteMessage);
         assertParseFailure(parser, " 1 Reviewed factorisation.", missingNoteMessage);
         assertParseFailure(parser, " nt/Reviewed factorisation.",
-                Messages.withFormat("Missing INDEX.", NoteCommand.COMMAND_FORMAT));
+                Messages.withFormat("Missing INDEX.", NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
     }
 
     @Test
@@ -73,7 +74,8 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_severalPreambleWords_throwsOnlyOneIndexWithFormat() {
-        String expectedMessage = Messages.withFormat("note takes only one INDEX.", NoteCommand.COMMAND_FORMAT);
+        String expectedMessage = Messages.withFormat("note takes only one INDEX.",
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
 
         assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", expectedMessage);
         assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", expectedMessage);
@@ -91,6 +93,6 @@ public class NoteCommandParserTest {
     public void parse_duplicateNotePrefix_throwsParseException() {
         assertParseFailure(parser, " 1 nt/Reviewed indices. nt/Reviewed factorisation.",
                 Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
-                        NoteCommand.COMMAND_FORMAT));
+                        NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
     }
 }

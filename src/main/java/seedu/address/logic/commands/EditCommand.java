@@ -35,6 +35,8 @@ public class EditCommand extends Command {
             + "[" + PREFIX_EMAIL + "PARENT_EMAIL] "
             + "[" + PREFIX_SUBJECT + "SUBJECT] "
             + "[" + PREFIX_LEVEL + "CURRENT_LEVEL]";
+    public static final String COMMAND_EXAMPLE = COMMAND_WORD + " 2 "
+            + PREFIX_PHONE + "9123 4567 " + PREFIX_LEVEL + "Secondary 4";
 
     public static final String MESSAGE_SUCCESS = "Edited student: %1$s (%2$s, %3$s).";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";

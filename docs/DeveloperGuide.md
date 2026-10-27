@@ -176,7 +176,7 @@ This section describes some noteworthy details on how certain features are imple
 
 Each rejected command names one specific problem so that the user can correct it without rereading the User Guide. Errors fall into three groups, and only the first group shows the command format:
 
-* **Structure errors** describe the shape of the command: a missing index or prefix, an unknown or repeated prefix, text before the first prefix, or extra values. Parsers build these with `Messages#withFormat`, which appends `Format: ` and the command's one-line `COMMAND_FORMAT`, for example `Format: view INDEX`.
+* **Structure errors** describe the shape of the command: a missing index or prefix, an unknown or repeated prefix, text before the first prefix, or extra values. Parsers build these with `Messages#withFormat`, which appends a `Format:` line with the command's one-line `COMMAND_FORMAT` and an `Example:` line with its `COMMAND_EXAMPLE`, for example `Format: view INDEX` and `Example: view 1`.
 * **Value errors** describe one value that breaks a rule, such as a short phone number or the index `0`. They show only that rule, so the problem stays visible in the result display.
 * **Model-state errors** describe a well-formed command that does not fit the current data, such as an index past the end of the roster or an empty roster. They say what to do next instead of repeating the format.
 
@@ -925,9 +925,9 @@ testers are expected to do more *exploratory* testing.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
 4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
-   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and neither changes the roster or data file.
+   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
 5. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
-   Expected: The first reports `Unexpected text before the first parameter: aaaaaa` followed by the `add` format. The second reports only the phone-number rule, without the format. Neither changes the roster or data file.
+   Expected: The first reports `Unexpected text before the first parameter: aaaaaa` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
 
 ### Editing a student
 
@@ -937,9 +937,9 @@ testers are expected to do more *exploratory* testing.
 1. Enter `edit 2 e/` for a student with an email.
    Expected: The email is removed, every omitted field and session note is unchanged, and an open profile displays `Not provided`.
 1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
-   Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the one-line `edit` format, while `edit 1 l/` shows only the level rule.
+   Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the one-line `edit` format and example, while `edit 1 l/` shows only the level rule.
 1. Enter `edit n/Bob` and `edit a n/Bob`.
-   Expected: The first reports `Missing INDEX.` followed by the `edit` format. The second reports `INDEX must be a positive whole number, e.g. 1.` Neither suggests `edit note`.
+   Expected: The first reports `Missing INDEX.` followed by the `edit` format and example. The second reports `INDEX must be a positive whole number, e.g. 1.` Neither suggests `edit note`.
 1. Try to edit one student so that both the normalized name and parent phone match the other student.
    Expected: TutorTrack reports the duplicate and leaves both students unchanged.
 1. Make the data file unwritable and enter an otherwise valid edit, then restore write access.
@@ -966,7 +966,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter each of `view 0`, `view -1`, and `view abc`.
    Expected: Each reports `INDEX must be a positive whole number, e.g. 1.` without a format line.
 1. Enter `view`, then `view 1 2`.
-   Expected: The first reports `Missing INDEX.` and the second `view takes only one INDEX.`, each followed by `Format: view INDEX`.
+   Expected: The first reports `Missing INDEX.` and the second `view takes only one INDEX.`, each followed by `Format: view INDEX` and `Example: view 1`.
 1. Enter `view 99999999999`.
    Expected: TutorTrack reports `INDEX is too large. Enter a student index shown in the roster.` In every step, the open profile, roster highlight, and data file remain unchanged.
 
@@ -995,7 +995,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter `note 1 nt/Next: 3 sub/topics`.
    Expected: The note is added with `sub/topics` as part of its text.
 1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
-   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE`, and no note count changes.
+   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
    Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
@@ -1035,7 +1035,7 @@ testers are expected to do more *exploratory* testing.
 1. Close and relaunch TutorTrack.
    Expected: Ari and the notes remain absent, while Bea remains at index 1.
 1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /confirm /confirm`, and `delete 1 /confirm extra`.
-   Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` and `delete 1 /Confirm` report that `delete` takes only one `INDEX`; and the remaining inputs report that `/confirm` must appear at most once and at the end. Every error except the invalid-index ones ends with `Format: delete INDEX [/confirm]`. None changes the roster, notes, open profile, or data file.
+   Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` and `delete 1 /Confirm` report that `delete` takes only one `INDEX`; and the remaining inputs report that `/confirm` must appear at most once and at the end. Every error except the invalid-index ones ends with `Format: delete INDEX [/confirm]` and `Example: delete 1`. None changes the roster, notes, open profile, or data file.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster, gives the valid range, and makes no changes.
 

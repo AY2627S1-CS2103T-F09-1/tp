@@ -49,7 +49,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
 
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), EditCommand.COMMAND_WORD,
-                EditCommand.COMMAND_FORMAT);
+                EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);
         verifyNoDuplicatePrefixes(argMultimap);
         EditStudentDescriptor descriptor = parseDescriptor(argMultimap);
         if (!descriptor.isAnyFieldEdited()) {
@@ -103,6 +103,6 @@ public class EditCommandParser implements Parser<EditCommand> {
      * Appends the one-line student edit format to an error about the shape of the command.
      */
     private static String withEditFormat(String message) {
-        return Messages.withFormat(message, EditCommand.COMMAND_FORMAT);
+        return Messages.withFormat(message, EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);
     }
 }

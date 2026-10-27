@@ -21,24 +21,26 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class DeleteCommandParser implements Parser<Command> {
 
     static final String MESSAGE_MISSING_SESSION_NOTE_ARGUMENTS = withFormat(
-            "Missing STUDENT_INDEX and NOTE_NUMBER.", DeleteSessionNoteCommand.COMMAND_FORMAT);
+            "Missing STUDENT_INDEX and NOTE_NUMBER.",
+                    DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_MISSING_NOTE_NUMBER = withFormat(
             "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile.",
-            DeleteSessionNoteCommand.COMMAND_FORMAT);
+            DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS = withFormat(
             "Unexpected extra arguments after the session-note deletion request.",
-            DeleteSessionNoteCommand.COMMAND_FORMAT);
+            DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG = withFormat(
             DeleteCommand.CONFIRMATION_FLAG + " must appear at most once and at the end of the command.",
-            DeleteSessionNoteCommand.COMMAND_FORMAT);
+            DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_INVALID_STUDENT_CONFIRMATION_FLAG = withFormat(
             DeleteCommand.CONFIRMATION_FLAG + " must appear at most once and at the end of the command.",
-            DeleteCommand.COMMAND_FORMAT);
+            DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_MISSING_STUDENT_INDEX = withFormat(
-            String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL), DeleteCommand.COMMAND_FORMAT);
+            String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL),
+                    DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_TOO_MANY_STUDENT_INDICES = withFormat(
             String.format(MESSAGE_TOO_MANY_INDICES, DeleteCommand.COMMAND_WORD, INDEX_LABEL),
-            DeleteCommand.COMMAND_FORMAT);
+            DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
 
     private static final String WHITESPACE_PATTERN = "\s+";
 

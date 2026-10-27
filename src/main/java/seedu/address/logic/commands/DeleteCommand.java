@@ -16,6 +16,7 @@ public class DeleteCommand extends Command {
     public static final String COMMAND_WORD = "delete";
     public static final String CONFIRMATION_FLAG = "/confirm";
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX [" + CONFIRMATION_FLAG + "]";
+    public static final String COMMAND_EXAMPLE = COMMAND_WORD + " 1";
 
     public static final String MESSAGE_CONFIRM_DELETE =
             "Are you sure you want to delete %1$s and %2$d %3$s?\n"

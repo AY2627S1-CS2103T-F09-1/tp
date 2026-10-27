@@ -92,6 +92,6 @@ public class AddCommandParser implements Parser<AddCommand> {
      * Appends the one-line add-command format to an error message.
      */
     private static String withAddFormat(String message) {
-        return withFormat(message, AddCommand.COMMAND_FORMAT);
+        return withFormat(message, AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE);
     }
 }

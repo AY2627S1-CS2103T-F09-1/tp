@@ -78,7 +78,7 @@ TutorTrack keeps the latest 100 non-blank commands from the current app session,
 
 When a command cannot run, TutorTrack names the specific problem and does not change the roster, session notes, open profile, or saved data. Recall the command with `Up`, correct it, and press `Enter` again.
 
-* **Missing or extra parts:** if a required part such as an index, `nt/`, or `n/NAME` is missing, an unknown or repeated parameter is entered, text appears before the first parameter, or more values are entered than the command takes, the error ends with a `Format:` line showing the correct command. For example, `view 1 2` shows `view takes only one INDEX.` followed by `Format: view INDEX`.
+* **Missing or extra parts:** if a required part such as an index, `nt/`, or `n/NAME` is missing, an unknown or repeated parameter is entered, text appears before the first parameter, or more values are entered than the command takes, the error ends with a `Format:` line showing the correct command and an `Example:` line you can adapt. For example, `view 1 2` shows `view takes only one INDEX.` followed by `Format: view INDEX` and `Example: view 1`.
 * **Invalid value:** a value that breaks a rule, such as a phone number that is too short, shows only that rule. An index such as `0`, `-1`, or `abc` shows `INDEX must be a positive whole number, e.g. 1.` A number too large to be any index, such as `99999999999`, is reported as too large.
 * **Index outside the roster:** the error gives the valid range, for example `Student index [3] is outside the roster. Enter a student index from 1 to 2.` If the roster is empty, TutorTrack asks you to add a student first.
 * **Note number outside the history:** `edit note` and `delete note` give the valid note-number range for that student.

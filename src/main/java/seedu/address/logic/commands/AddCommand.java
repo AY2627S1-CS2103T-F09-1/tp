@@ -25,6 +25,11 @@ public class AddCommand extends Command {
             + PREFIX_SUBJECT + "SUBJECT "
             + PREFIX_LEVEL + "CURRENT_LEVEL "
             + "[" + PREFIX_EMAIL + "PARENT_EMAIL]";
+    public static final String COMMAND_EXAMPLE = COMMAND_WORD + " "
+            + PREFIX_NAME + "Alicia Lim "
+            + PREFIX_PHONE + "9123 4567 "
+            + PREFIX_SUBJECT + "Mathematics "
+            + PREFIX_LEVEL + "Secondary 3";
 
     public static final String MESSAGE_STUDENT_SUCCESS = "Added student: %1$s (%2$s, %3$s).";
     public static final String MESSAGE_DUPLICATE_STUDENT = "Duplicate student: %1$s already has this parent phone.";

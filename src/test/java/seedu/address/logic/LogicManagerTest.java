@@ -412,7 +412,8 @@ public class LogicManagerTest {
 
         assertParseException(legacyAddCommand, Messages.withFormat(
                 String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "a/",
-                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS), AddCommand.COMMAND_FORMAT));
+                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS),
+                                AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE));
     }
 
     @Test

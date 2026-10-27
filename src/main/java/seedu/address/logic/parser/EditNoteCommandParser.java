@@ -79,6 +79,6 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
     }
 
     private static String withEditNoteFormat(String message) {
-        return withFormat(message, EditNoteCommand.COMMAND_FORMAT);
+        return withFormat(message, EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
     }
 }

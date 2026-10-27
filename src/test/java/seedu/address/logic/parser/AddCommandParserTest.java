@@ -119,6 +119,6 @@ public class AddCommandParserTest {
     }
 
     private static String withAddFormat(String message) {
-        return Messages.withFormat(message, AddCommand.COMMAND_FORMAT);
+        return Messages.withFormat(message, AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE);
     }
 }

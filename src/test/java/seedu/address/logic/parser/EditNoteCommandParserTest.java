@@ -48,20 +48,22 @@ public class EditNoteCommandParserTest {
     @Test
     public void parse_missingIndices_throwsMissingIndicesWithFormat() {
         assertParseFailure(parser, "note nt/Corrected summary.", Messages.withFormat(
-                "Missing STUDENT_INDEX and NOTE_NUMBER.", EditNoteCommand.COMMAND_FORMAT));
+                "Missing STUDENT_INDEX and NOTE_NUMBER.",
+                        EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
     }
 
     @Test
     public void parse_missingNoteNumber_throwsSpecificParseException() {
         assertParseFailure(parser, "note 1 nt/Corrected summary.", Messages.withFormat(
                 "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile.",
-                EditNoteCommand.COMMAND_FORMAT));
+                EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
     }
 
     @Test
     public void parse_extraIndices_throwsOnlyOneOfEachWithFormat() {
         assertParseFailure(parser, "note 1 2 extra nt/text", Messages.withFormat(
-                "edit note takes only one STUDENT_INDEX and one NOTE_NUMBER.", EditNoteCommand.COMMAND_FORMAT));
+                "edit note takes only one STUDENT_INDEX and one NOTE_NUMBER.",
+                        EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
     }
 
     @Test
@@ -106,6 +108,6 @@ public class EditNoteCommandParserTest {
     public void parse_duplicateNotePrefix_throwsParseException() {
         assertParseFailure(parser, "note 1 1 nt/First nt/Second",
                 Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
-                        EditNoteCommand.COMMAND_FORMAT));
+                        EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
     }
 }

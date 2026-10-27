@@ -89,19 +89,19 @@ public class ParserUtilTest {
     @Test
     public void parseOnlyStudentIndex_missingOrRepeatedIndex_throwsMessageWithFormat() {
         String missingIndexMessage = Messages.withFormat(
-                String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL), "view INDEX");
+                String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL), "view INDEX", "view 1");
         String repeatedIndexMessage = Messages.withFormat(
-                String.format(MESSAGE_TOO_MANY_INDICES, "view", INDEX_LABEL), "view INDEX");
+                String.format(MESSAGE_TOO_MANY_INDICES, "view", INDEX_LABEL), "view INDEX", "view 1");
 
         assertThrows(ParseException.class, missingIndexMessage, ()
-            -> ParserUtil.parseOnlyStudentIndex(WHITESPACE, "view", "view INDEX"));
+            -> ParserUtil.parseOnlyStudentIndex(WHITESPACE, "view", "view INDEX", "view 1"));
         assertThrows(ParseException.class, repeatedIndexMessage, ()
-            -> ParserUtil.parseOnlyStudentIndex(" 1 2 ", "view", "view INDEX"));
+            -> ParserUtil.parseOnlyStudentIndex(" 1 2 ", "view", "view INDEX", "view 1"));
     }
 
     @Test
     public void parseOnlyStudentIndex_singleIndex_success() throws Exception {
-        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseOnlyStudentIndex(" 1 ", "view", "view INDEX"));
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseOnlyStudentIndex(" 1 ", "view", "view INDEX", "view 1"));
     }
 
     @Test

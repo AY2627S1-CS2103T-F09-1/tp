@@ -78,7 +78,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_missingIndexOrFields_failure() {
-        String missingIndexMessage = Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT);
+        String missingIndexMessage = Messages.withFormat("Missing INDEX.",
+                EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);
 
         assertParseFailure(parser, " n/Alexis Tan", missingIndexMessage);
         assertParseFailure(parser, " 1", withEditFormat(EditCommand.MESSAGE_NOT_EDITED));
@@ -93,7 +94,8 @@ public class EditCommandParserTest {
         assertParseFailure(parser, " -1 n/Alexis Tan", invalidIndexMessage);
         assertParseFailure(parser, " x n/Alexis Tan", invalidIndexMessage);
         assertParseFailure(parser, " 1 extra n/Alexis Tan",
-                Messages.withFormat("edit takes only one INDEX.", EditCommand.COMMAND_FORMAT));
+                Messages.withFormat("edit takes only one INDEX.",
+                        EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE));
         assertParseFailure(parser, " 2147483648 n/Alexis Tan",
                 "INDEX is too large. Enter a student index shown in the roster.");
     }
@@ -125,7 +127,7 @@ public class EditCommandParserTest {
     }
 
     private static String withEditFormat(String message) {
-        return Messages.withFormat(message, EditCommand.COMMAND_FORMAT);
+        return Messages.withFormat(message, EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);
     }
 
     private static String unknownParameterMessage(String prefix) {

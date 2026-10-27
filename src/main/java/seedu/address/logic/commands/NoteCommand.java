@@ -17,6 +17,7 @@ public class NoteCommand extends Command {
 
     public static final String COMMAND_WORD = "note";
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX " + PREFIX_NOTE + "NOTE";
+    public static final String COMMAND_EXAMPLE = COMMAND_WORD + " 1 " + PREFIX_NOTE + "Reviewed factorisation.";
 
     public static final String MESSAGE_SUCCESS = "Added session note for %1$s.";
 

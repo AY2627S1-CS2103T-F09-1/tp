@@ -16,7 +16,7 @@ import seedu.address.model.session.SessionNote;
 public class NoteCommandParser implements Parser<NoteCommand> {
 
     static final String MESSAGE_MISSING_NOTE = withFormat("Missing " + PREFIX_NOTE + "NOTE.",
-            NoteCommand.COMMAND_FORMAT);
+            NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
 
     /**
      * Parses the given {@code String} of arguments in the context of the NoteCommand
@@ -35,11 +35,12 @@ public class NoteCommandParser implements Parser<NoteCommand> {
         }
 
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), NoteCommand.COMMAND_WORD,
-                NoteCommand.COMMAND_FORMAT);
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
         try {
             argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
         } catch (ParseException exception) {
-            throw new ParseException(withFormat(exception.getMessage(), NoteCommand.COMMAND_FORMAT), exception);
+            throw new ParseException(withFormat(exception.getMessage(),
+                    NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE), exception);
         }
         if (!SessionNote.isValidText(noteText.get())) {
             throw new ParseException(SessionNote.MESSAGE_CONSTRAINTS);

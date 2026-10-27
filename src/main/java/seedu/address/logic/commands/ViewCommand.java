@@ -16,6 +16,7 @@ public class ViewCommand extends Command {
     public static final String COMMAND_WORD = "view";
 
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX";
+    public static final String COMMAND_EXAMPLE = COMMAND_WORD + " 1";
 
     public static final String MESSAGE_SUCCESS = "Displaying profile for %1$s.";
 

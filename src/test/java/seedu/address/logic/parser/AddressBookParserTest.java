@@ -101,14 +101,18 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_editWithoutTarget_usesStudentEditParser() {
-        assertThrows(ParseException.class, Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT), ()
-            -> parser.parseCommand("edit"));
+        String expectedMessage = Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT,
+                EditCommand.COMMAND_EXAMPLE);
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("edit"));
     }
 
     @Test
     public void parseCommand_editStudentWithoutIndex_reportsMissingIndex() {
-        assertThrows(ParseException.class, Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT), ()
-            -> parser.parseCommand("edit n/Bob"));
+        String expectedMessage = Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT,
+                EditCommand.COMMAND_EXAMPLE);
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("edit n/Bob"));
     }
 
     @Test

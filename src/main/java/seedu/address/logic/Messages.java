@@ -18,6 +18,7 @@ public class Messages {
     public static final String MESSAGE_STUDENT_INDEX_OUT_OF_RANGE =
             "Student index [%1$d] is outside the roster. Enter a student index from 1 to %2$d.";
     public static final String MESSAGE_FORMAT = "Format: %1$s";
+    public static final String MESSAGE_EXAMPLE = "Example: %1$s";
     public static final String MESSAGE_DUPLICATE_FIELDS =
                 "Multiple values specified for the following single-valued field(s): ";
 
@@ -34,11 +35,13 @@ public class Messages {
     }
 
     /**
-     * Returns {@code message} followed by a line showing the one-line {@code commandFormat}.
+     * Returns {@code message} followed by one line showing {@code commandFormat} and another showing
+     * {@code commandExample}.
      * Structure errors use it because retyping the command in that format fixes them.
      */
-    public static String withFormat(String message, String commandFormat) {
-        return message + "\n" + String.format(MESSAGE_FORMAT, commandFormat);
+    public static String withFormat(String message, String commandFormat, String commandExample) {
+        return message + "\n" + String.format(MESSAGE_FORMAT, commandFormat)
+                + "\n" + String.format(MESSAGE_EXAMPLE, commandExample);
     }
 
 }

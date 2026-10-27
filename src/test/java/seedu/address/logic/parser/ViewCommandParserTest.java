@@ -22,8 +22,10 @@ public class ViewCommandParserTest {
 
     @Test
     public void parse_missingIndex_throwsMissingIndexWithFormat() {
-        assertParseFailure(parser, "", Messages.withFormat("Missing INDEX.", ViewCommand.COMMAND_FORMAT));
-        assertParseFailure(parser, "   ", Messages.withFormat("Missing INDEX.", ViewCommand.COMMAND_FORMAT));
+        assertParseFailure(parser, "", Messages.withFormat("Missing INDEX.",
+                ViewCommand.COMMAND_FORMAT, ViewCommand.COMMAND_EXAMPLE));
+        assertParseFailure(parser, "   ", Messages.withFormat("Missing INDEX.",
+                ViewCommand.COMMAND_FORMAT, ViewCommand.COMMAND_EXAMPLE));
     }
 
     @Test
@@ -38,7 +40,8 @@ public class ViewCommandParserTest {
     @Test
     public void parse_severalValues_throwsOnlyOneIndexWithFormat() {
         assertParseFailure(parser, "1 2",
-                Messages.withFormat("view takes only one INDEX.", ViewCommand.COMMAND_FORMAT));
+                Messages.withFormat("view takes only one INDEX.",
+                        ViewCommand.COMMAND_FORMAT, ViewCommand.COMMAND_EXAMPLE));
     }
 
     @Test

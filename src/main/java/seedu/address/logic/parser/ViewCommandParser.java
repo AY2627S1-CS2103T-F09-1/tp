@@ -16,7 +16,8 @@ public class ViewCommandParser implements Parser<ViewCommand> {
      */
     @Override
     public ViewCommand parse(String args) throws ParseException {
-        Index index = ParserUtil.parseOnlyStudentIndex(args, ViewCommand.COMMAND_WORD, ViewCommand.COMMAND_FORMAT);
+        Index index = ParserUtil.parseOnlyStudentIndex(args, ViewCommand.COMMAND_WORD,
+                ViewCommand.COMMAND_FORMAT, ViewCommand.COMMAND_EXAMPLE);
         return new ViewCommand(index);
     }
 }

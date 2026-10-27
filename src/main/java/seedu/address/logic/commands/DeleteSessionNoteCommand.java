@@ -17,6 +17,7 @@ public class DeleteSessionNoteCommand extends Command {
     public static final String NOTE_TARGET = "note";
     public static final String COMMAND_FORMAT = DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET
             + " STUDENT_INDEX NOTE_NUMBER [" + DeleteCommand.CONFIRMATION_FLAG + "]";
+    public static final String COMMAND_EXAMPLE = DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET + " 1 2";
 
     public static final String MESSAGE_CONFIRM_DELETE =
             "Are you sure you want to delete session note [%1$d] for %2$s?\n"
