@@ -8,9 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditCommand;
@@ -26,12 +24,6 @@ import seedu.address.model.student.Subject;
  */
 public class EditCommandParser implements Parser<EditCommand> {
 
-    private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
-            PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL);
-    private static final String MESSAGE_SUPPORTED_PARAMETERS = SUPPORTED_PREFIXES.stream()
-            .map(Prefix::toString)
-            .collect(Collectors.joining(" "));
-
     /**
      * Parses {@code args} as a student roster index and one or more replacement fields.
      *
@@ -42,10 +34,9 @@ public class EditCommandParser implements Parser<EditCommand> {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
 
-        Optional<String> unknownPrefix = ParserUtil.findUnknownPrefix(args, SUPPORTED_PREFIXES);
-        if (unknownPrefix.isPresent()) {
-            throw new ParseException(withUsage(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
-                    unknownPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
+        Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
+        if (legacyPrefix.isPresent()) {
+            throw new ParseException(getUnknownPrefixMessage(legacyPrefix.get()));
         }
 
         Index index = parseIndex(argMultimap.getPreamble());
@@ -95,6 +86,14 @@ public class EditCommandParser implements Parser<EditCommand> {
             throw new IllegalArgumentException(ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
         }
         return phone.trim();
+    }
+
+    /**
+     * Returns an error message for an unsupported legacy person prefix.
+     */
+    private static String getUnknownPrefixMessage(Prefix prefix) {
+        return withUsage(String.format(ParserUtil.MESSAGE_UNKNOWN_STUDENT_PARAMETER, prefix,
+                ParserUtil.STUDENT_SUPPORTED_PARAMETERS));
     }
 
     private static Optional<String> parseEmail(String email) {

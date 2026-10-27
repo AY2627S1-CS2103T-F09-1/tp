@@ -87,14 +87,11 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_legacyPersonArguments_treatedAsFreeText() {
+    public void parse_legacyPersonArguments_failure() {
         String legacyPersonArguments =
                 " n/Amy Bee p/11111111 e/amy@example.com sub/Mathematics a/Block 312 l/Secondary 1 t/friend";
-        Student student = new Student(new StudentName("Amy Bee"),
-                new ParentGuardianContact("11111111", Optional.of("amy@example.com")),
-                new Subject("Mathematics a/Block 312"), new CurrentLevel("Secondary 1 t/friend"));
 
-        assertParseSuccess(parser, legacyPersonArguments, new AddCommand(student));
+        assertParseFailure(parser, legacyPersonArguments, unknownParameterMessage("a/"));
     }
 
     @Test
@@ -104,5 +101,11 @@ public class AddCommandParserTest {
                 new Subject("Mathematics"), new CurrentLevel("Secondary 3 x/value"));
 
         assertParseSuccess(parser, VALID_REQUIRED_ARGUMENTS + " x/value", new AddCommand(student));
+    }
+
+    private static String unknownParameterMessage(String prefix) {
+        return String.format(ParserUtil.MESSAGE_UNKNOWN_STUDENT_PARAMETER, prefix,
+                ParserUtil.STUDENT_SUPPORTED_PARAMETERS)
+                + "\n" + AddCommand.MESSAGE_USAGE;
     }
 }

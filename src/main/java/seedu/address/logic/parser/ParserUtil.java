@@ -11,10 +11,10 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
@@ -31,24 +31,22 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
-    private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)([a-z][a-z0-9_-]{0,2})/");
+    public static final String MESSAGE_UNKNOWN_STUDENT_PARAMETER =
+            "Unknown parameter: %1$s. Supported parameters: %2$s.";
+    public static final String STUDENT_SUPPORTED_PARAMETERS = List.of(
+            PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL).stream()
+            .map(Prefix::toString)
+            .collect(Collectors.joining(" "));
+    private static final List<Prefix> LEGACY_PERSON_PREFIXES = List.of(PREFIX_ADDRESS, PREFIX_TAG);
 
     /**
-     * Returns the first prefix-like token in {@code args} that is not in {@code supportedPrefixes}.
+     * Returns the first legacy person prefix present in {@code arguments}.
      */
-    public static Optional<String> findUnknownPrefix(String args, Collection<Prefix> supportedPrefixes) {
-        requireNonNull(args);
-        requireNonNull(supportedPrefixes);
-        Matcher matcher = PREFIX_PATTERN.matcher(args);
-        while (matcher.find()) {
-            String prefix = matcher.group(1) + "/";
-            boolean isSupported = supportedPrefixes.stream()
-                    .anyMatch(supportedPrefix -> supportedPrefix.toString().equals(prefix));
-            if (!isSupported) {
-                return Optional.of(prefix);
-            }
-        }
-        return Optional.empty();
+    public static Optional<Prefix> findLegacyPersonPrefix(ArgumentMultimap arguments) {
+        requireNonNull(arguments);
+        return LEGACY_PERSON_PREFIXES.stream()
+                .filter(prefix -> arguments.getValue(prefix).isPresent())
+                .findFirst();
     }
 
     /**

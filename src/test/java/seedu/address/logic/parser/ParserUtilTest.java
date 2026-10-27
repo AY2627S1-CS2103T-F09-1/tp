@@ -56,21 +56,15 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void findUnknownPrefix_supportedAndOrdinarySlashes_returnsEmpty() {
-        assertTrue(ParserUtil.findUnknownPrefix(" n/Alex p/9123 4567 sub/E Math/A Math",
-                List.of(new Prefix("n/"), new Prefix("p/"), new Prefix("sub/"))).isEmpty());
+    public void findLegacyPersonPrefix_legacyPrefixPresent_returnsFirstLegacyPrefix() {
+        ArgumentMultimap arguments = ParserUtil.tokenizeStudentFields(" n/Alex a/Address t/friend");
+
+        assertEquals(Optional.of(CliSyntax.PREFIX_ADDRESS), ParserUtil.findLegacyPersonPrefix(arguments));
     }
 
     @Test
-    public void findUnknownPrefix_unsupportedPrefix_returnsFirstUnsupportedPrefix() {
-        assertEquals(Optional.of("x/"), ParserUtil.findUnknownPrefix(" n/Alex x/value a/address",
-                List.of(new Prefix("n/"))));
-    }
-
-    @Test
-    public void findUnknownPrefix_nullArguments_throwNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ParserUtil.findUnknownPrefix(null, List.of()));
-        assertThrows(NullPointerException.class, () -> ParserUtil.findUnknownPrefix("", null));
+    public void findLegacyPersonPrefix_nullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.findLegacyPersonPrefix(null));
     }
 
     @Test

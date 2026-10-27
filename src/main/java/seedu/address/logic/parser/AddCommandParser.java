@@ -9,7 +9,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -24,21 +23,18 @@ import seedu.address.model.student.Subject;
  */
 public class AddCommandParser implements Parser<AddCommand> {
 
-    public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter: %1$s. Supported parameters: %2$s.";
-    private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
-            PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
-    public static final String MESSAGE_SUPPORTED_PARAMETERS = SUPPORTED_PREFIXES.stream()
-            .map(Prefix::toString)
-            .collect(Collectors.joining(" "));
-
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
      * @throws ParseException if the user input does not conform to the expected format
      */
     public AddCommand parse(String args) throws ParseException {
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
-                PREFIX_SUBJECT, PREFIX_LEVEL);
+        ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
+
+        Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
+        if (legacyPrefix.isPresent()) {
+            throw new ParseException(getUnknownPrefixMessage(legacyPrefix.get()));
+        }
 
         Optional<Prefix> missingPrefix = findMissingRequiredPrefix(argMultimap);
         if (missingPrefix.isPresent()) {
@@ -75,6 +71,14 @@ public class AddCommandParser implements Parser<AddCommand> {
         return List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL).stream()
                 .filter(prefix -> argumentMultimap.getValue(prefix).filter(value -> !value.isEmpty()).isEmpty())
                 .findFirst();
+    }
+
+    /**
+     * Returns an error message for an unsupported legacy person prefix.
+     */
+    private static String getUnknownPrefixMessage(Prefix prefix) {
+        return withUsage(String.format(ParserUtil.MESSAGE_UNKNOWN_STUDENT_PARAMETER, prefix,
+                ParserUtil.STUDENT_SUPPORTED_PARAMETERS));
     }
 
     /**
