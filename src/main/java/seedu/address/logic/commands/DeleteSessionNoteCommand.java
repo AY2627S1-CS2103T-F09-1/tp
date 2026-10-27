@@ -18,15 +18,6 @@ public class DeleteSessionNoteCommand extends Command {
     public static final String COMMAND_FORMAT = DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET
             + " STUDENT_INDEX NOTE_NUMBER [" + DeleteCommand.CONFIRMATION_FLAG + "]";
 
-    public static final String MESSAGE_USAGE = DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET
-            + ": Previews or confirms deletion of one session note identified by its student roster index and "
-            + "displayed note number.\n"
-            + "Parameters: STUDENT_INDEX NOTE_NUMBER (both must be positive integers) "
-            + "[" + DeleteCommand.CONFIRMATION_FLAG + "]\n"
-            + "Preview: " + DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET + " 1 3\n"
-            + "Confirm: " + DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET + " 1 3 "
-            + DeleteCommand.CONFIRMATION_FLAG;
-
     public static final String MESSAGE_CONFIRM_DELETE =
             "Are you sure you want to delete session note [%1$d] for %2$s?\n"
             + "If yes, type: " + DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET + " %3$d %1$d "

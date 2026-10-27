@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -13,9 +12,6 @@ import seedu.address.logic.commands.NoteCommand;
 import seedu.address.model.session.SessionNote;
 
 public class NoteCommandParserTest {
-
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
 
     private final NoteCommandParser parser = new NoteCommandParser();
 
@@ -46,9 +42,11 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_missingParts_throwsParseException() {
-        assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
+        String missingNoteMessage = Messages.withFormat("Missing nt/NOTE.", NoteCommand.COMMAND_FORMAT);
+
+        assertParseFailure(parser, "", missingNoteMessage);
+        assertParseFailure(parser, " 1", missingNoteMessage);
+        assertParseFailure(parser, " 1 Reviewed factorisation.", missingNoteMessage);
         assertParseFailure(parser, " nt/Reviewed factorisation.",
                 Messages.withFormat("Missing INDEX.", NoteCommand.COMMAND_FORMAT));
     }
@@ -92,6 +90,7 @@ public class NoteCommandParserTest {
     @Test
     public void parse_duplicateNotePrefix_throwsParseException() {
         assertParseFailure(parser, " 1 nt/Reviewed indices. nt/Reviewed factorisation.",
-                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE));
+                Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
+                        NoteCommand.COMMAND_FORMAT));
     }
 }

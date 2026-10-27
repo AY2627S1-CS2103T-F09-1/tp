@@ -18,13 +18,6 @@ public class NoteCommand extends Command {
     public static final String COMMAND_WORD = "note";
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX " + PREFIX_NOTE + "NOTE";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Adds a session note to the student identified by the index number in the student roster.\n"
-            + "Parameters: INDEX (must be a positive integer) "
-            + PREFIX_NOTE + "NOTE\n"
-            + "Example: " + COMMAND_WORD + " 1 "
-            + PREFIX_NOTE + "Reviewed factorisation; revise negative coefficients next lesson.";
-
     public static final String MESSAGE_SUCCESS = "Added session note for %1$s.";
 
     private final Index targetIndex;

@@ -17,11 +17,6 @@ public class ViewCommand extends Command {
 
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Displays the profile of the student identified by the index number in the student roster.\n"
-            + "Parameters: INDEX (must be a positive integer)\n"
-            + "Example: " + COMMAND_WORD + " 1";
-
     public static final String MESSAGE_SUCCESS = "Displaying profile for %1$s.";
 
     private final Index targetIndex;

@@ -17,13 +17,6 @@ public class DeleteCommand extends Command {
     public static final String CONFIRMATION_FLAG = "/confirm";
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX [" + CONFIRMATION_FLAG + "]";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Previews or confirms deletion of the student identified by the index number used in the student "
-            + "roster.\n"
-            + "Parameters: INDEX (must be a positive integer) [" + CONFIRMATION_FLAG + "]\n"
-            + "Preview: " + COMMAND_WORD + " 1\n"
-            + "Confirm: " + COMMAND_WORD + " 1 " + CONFIRMATION_FLAG;
-
     public static final String MESSAGE_CONFIRM_DELETE =
             "Are you sure you want to delete %1$s and %2$d %3$s?\n"
             + "If yes, type: " + COMMAND_WORD + " %4$d " + CONFIRMATION_FLAG + "\n"

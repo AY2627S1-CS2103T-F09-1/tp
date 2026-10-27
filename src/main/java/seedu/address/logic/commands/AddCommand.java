@@ -19,19 +19,12 @@ public class AddCommand extends Command {
 
     public static final String COMMAND_WORD = "add";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a student to TutorTrack. "
-            + "Parameters: "
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " "
             + PREFIX_NAME + "NAME "
             + PREFIX_PHONE + "PARENT_PHONE "
             + PREFIX_SUBJECT + "SUBJECT "
             + PREFIX_LEVEL + "CURRENT_LEVEL "
-            + "[" + PREFIX_EMAIL + "PARENT_EMAIL]\n"
-            + "Example: " + COMMAND_WORD + " "
-            + PREFIX_NAME + "Alicia Lim "
-            + PREFIX_PHONE + "+65 9123 4567 "
-            + PREFIX_EMAIL + "mrs.lim@example.com "
-            + PREFIX_SUBJECT + "Mathematics "
-            + PREFIX_LEVEL + "Secondary 3";
+            + "[" + PREFIX_EMAIL + "PARENT_EMAIL]";
 
     public static final String MESSAGE_STUDENT_SUCCESS = "Added student: %1$s (%2$s, %3$s).";
     public static final String MESSAGE_DUPLICATE_STUDENT = "Duplicate student: %1$s already has this parent phone.";
@@ -51,8 +44,7 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasStudent(toAdd)) {
-            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT, toAdd.getName())
-                    + "\n" + MESSAGE_USAGE);
+            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT, toAdd.getName()));
         }
 
         model.addStudent(toAdd);

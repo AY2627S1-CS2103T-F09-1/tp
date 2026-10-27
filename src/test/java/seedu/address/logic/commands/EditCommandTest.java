@@ -100,8 +100,7 @@ public class EditCommandTest {
         descriptor.setParentPhone(BEA.getParentGuardianContact().getPhone());
         EditCommand command = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT, BEA.getName())
-                + "\n" + EditCommand.MESSAGE_USAGE;
+        String expectedMessage = String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT, BEA.getName());
         assertThrows(CommandException.class, expectedMessage, () -> command.execute(model));
         assertEquals(ALEX.getName(), model.getStudentProfile(ALEX.getId()).orElseThrow().getName());
     }

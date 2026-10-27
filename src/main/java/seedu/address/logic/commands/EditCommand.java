@@ -36,20 +36,6 @@ public class EditCommand extends Command {
             + "[" + PREFIX_SUBJECT + "SUBJECT] "
             + "[" + PREFIX_LEVEL + "CURRENT_LEVEL]";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Edits the student identified by the index number in the student roster. "
-            + "Existing values are retained for fields that are not supplied.\n"
-            + "Parameters: INDEX (must be a positive integer) "
-            + "[" + PREFIX_NAME + "NAME] "
-            + "[" + PREFIX_PHONE + "PARENT_PHONE] "
-            + "[" + PREFIX_EMAIL + "PARENT_EMAIL] "
-            + "[" + PREFIX_SUBJECT + "SUBJECT] "
-            + "[" + PREFIX_LEVEL + "CURRENT_LEVEL]\n"
-            + "To remove the parent or guardian email, provide " + PREFIX_EMAIL + " without a value.\n"
-            + "Example: " + COMMAND_WORD + " 2 "
-            + PREFIX_PHONE + "9123 4567 "
-            + PREFIX_LEVEL + "Secondary 4";
-
     public static final String MESSAGE_SUCCESS = "Edited student: %1$s (%2$s, %3$s).";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_STUDENT =
@@ -79,8 +65,7 @@ public class EditCommand extends Command {
 
         Optional<Student> conflictingStudent = model.findConflictingStudent(targetEntry.getStudentId(), editedStudent);
         if (conflictingStudent.isPresent()) {
-            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT, conflictingStudent.get().getName())
-                    + "\n" + MESSAGE_USAGE);
+            throw new CommandException(String.format(MESSAGE_DUPLICATE_STUDENT, conflictingStudent.get().getName()));
         }
 
         model.setStudent(targetEntry.getStudentId(), editedStudent);

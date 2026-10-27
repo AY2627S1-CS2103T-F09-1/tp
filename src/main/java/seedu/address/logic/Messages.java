@@ -11,8 +11,8 @@ import seedu.address.logic.parser.Prefix;
  */
 public class Messages {
 
-    public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command.";
-    public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
+    public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command: %1$s. Available commands: %2$s.";
+    public static final String MESSAGE_EMPTY_COMMAND = "Enter a command. Available commands: %1$s.";
     public static final String MESSAGE_EMPTY_ROSTER =
             "There are no students in the roster yet. Add a student with add first.";
     public static final String MESSAGE_STUDENT_INDEX_OUT_OF_RANGE =

@@ -1,6 +1,6 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.withFormat;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
@@ -25,6 +25,8 @@ import seedu.address.model.student.Subject;
 public class AddCommandParser implements Parser<AddCommand> {
 
     public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter: %1$s. Supported parameters: %2$s.";
+    public static final String MESSAGE_UNEXPECTED_PREAMBLE = "Unexpected text before the first parameter: %1$s";
+    public static final String MESSAGE_MISSING_VALUE = "Value missing for parameter: %1$s";
 
     private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
             PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
@@ -35,30 +37,34 @@ public class AddCommandParser implements Parser<AddCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
-     * @throws ParseException if the user input does not conform to the expected format
+     * Errors about the shape of the command end with the add format; errors about one value do not.
+     *
+     * @throws ParseException If the user input does not conform to the expected format or has an invalid value.
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
 
         Optional<String> unknownPrefix = ParserUtil.findUnknownPrefix(args, SUPPORTED_PREFIXES);
         if (unknownPrefix.isPresent()) {
-            throw new ParseException(getUnknownPrefixMessage(unknownPrefix.get()));
+            throw new ParseException(withAddFormat(
+                    String.format(MESSAGE_UNKNOWN_PARAMETER, unknownPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
+        }
+
+        if (!argMultimap.getPreamble().isEmpty()) {
+            throw new ParseException(withAddFormat(
+                    String.format(MESSAGE_UNEXPECTED_PREAMBLE, argMultimap.getPreamble())));
         }
 
         Optional<Prefix> missingPrefix = findMissingRequiredPrefix(argMultimap);
         if (missingPrefix.isPresent()) {
-            throw new ParseException(getMissingValueMessage(missingPrefix.get()));
-        }
-
-        if (!argMultimap.getPreamble().isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+            throw new ParseException(withAddFormat(String.format(MESSAGE_MISSING_VALUE, missingPrefix.get())));
         }
 
         try {
             argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT,
                     PREFIX_LEVEL);
         } catch (ParseException exception) {
-            throw new ParseException(withUsage(exception.getMessage()), exception);
+            throw new ParseException(withAddFormat(exception.getMessage()), exception);
         }
 
         try {
@@ -69,7 +75,7 @@ public class AddCommandParser implements Parser<AddCommand> {
                     new CurrentLevel(argMultimap.getValue(PREFIX_LEVEL).get()));
             return new AddCommand(student);
         } catch (IllegalArgumentException exception) {
-            throw new ParseException(withUsage(exception.getMessage()), exception);
+            throw new ParseException(exception.getMessage(), exception);
         }
     }
 
@@ -83,23 +89,9 @@ public class AddCommandParser implements Parser<AddCommand> {
     }
 
     /**
-     * Returns an error message for an unsupported prefix.
+     * Appends the one-line add-command format to an error message.
      */
-    private static String getUnknownPrefixMessage(String prefix) {
-        return withUsage(String.format(MESSAGE_UNKNOWN_PARAMETER, prefix, MESSAGE_SUPPORTED_PARAMETERS));
-    }
-
-    /**
-     * Returns an error message for a required prefix without a value.
-     */
-    private static String getMissingValueMessage(Prefix prefix) {
-        return withUsage("Value missing for parameter: " + prefix);
-    }
-
-    /**
-     * Appends the add-command usage to an error message.
-     */
-    private static String withUsage(String message) {
-        return message + "\n" + AddCommand.MESSAGE_USAGE;
+    private static String withAddFormat(String message) {
+        return withFormat(message, AddCommand.COMMAND_FORMAT);
     }
 }

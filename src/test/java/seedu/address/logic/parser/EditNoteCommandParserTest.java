@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -13,9 +12,6 @@ import seedu.address.logic.commands.EditNoteCommand;
 import seedu.address.model.session.SessionNote;
 
 public class EditNoteCommandParserTest {
-
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditNoteCommand.MESSAGE_USAGE);
 
     private final EditNoteCommandParser parser = new EditNoteCommandParser();
 
@@ -32,19 +28,40 @@ public class EditNoteCommandParserTest {
     }
 
     @Test
-    public void parse_missingOrExtraArguments_throwsParseException() {
-        String[] invalidArguments = {"", "note", "note 1", "note 1 2", "1 2 nt/text", "note 1 2 extra nt/text"};
+    public void parse_missingTarget_throwsMissingTargetWithFormat() {
+        String[] invalidArguments = {"", "1 2 nt/text", "notes 1 2 nt/text"};
 
         for (String invalidArgument : invalidArguments) {
-            assertParseFailure(parser, invalidArgument, MESSAGE_INVALID_FORMAT);
+            assertParseFailure(parser, invalidArgument, EditNoteCommandParser.MESSAGE_MISSING_NOTE_TARGET);
         }
     }
 
     @Test
+    public void parse_missingNewNote_throwsMissingNewNoteWithFormat() {
+        String[] invalidArguments = {"note", "note 1", "note 1 2", "note 1 2 Corrected summary."};
+
+        for (String invalidArgument : invalidArguments) {
+            assertParseFailure(parser, invalidArgument, EditNoteCommandParser.MESSAGE_MISSING_NEW_NOTE);
+        }
+    }
+
+    @Test
+    public void parse_missingIndices_throwsMissingIndicesWithFormat() {
+        assertParseFailure(parser, "note nt/Corrected summary.", Messages.withFormat(
+                "Missing STUDENT_INDEX and NOTE_NUMBER.", EditNoteCommand.COMMAND_FORMAT));
+    }
+
+    @Test
     public void parse_missingNoteNumber_throwsSpecificParseException() {
-        assertParseFailure(parser, "note 1 nt/Corrected summary.",
-                "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile, "
-                        + "e.g. edit note 1 2 nt/...\n" + EditNoteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "note 1 nt/Corrected summary.", Messages.withFormat(
+                "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile.",
+                EditNoteCommand.COMMAND_FORMAT));
+    }
+
+    @Test
+    public void parse_extraIndices_throwsOnlyOneOfEachWithFormat() {
+        assertParseFailure(parser, "note 1 2 extra nt/text", Messages.withFormat(
+                "edit note takes only one STUDENT_INDEX and one NOTE_NUMBER.", EditNoteCommand.COMMAND_FORMAT));
     }
 
     @Test
@@ -88,6 +105,7 @@ public class EditNoteCommandParserTest {
     @Test
     public void parse_duplicateNotePrefix_throwsParseException() {
         assertParseFailure(parser, "note 1 1 nt/First nt/Second",
-                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE));
+                Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
+                        EditNoteCommand.COMMAND_FORMAT));
     }
 }

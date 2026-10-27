@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -55,25 +54,42 @@ public class AddCommandParserTest {
     @Test
     public void parse_missingLevel_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics",
-                "Value missing for parameter: l/\n" + AddCommand.MESSAGE_USAGE);
+                withAddFormat("Value missing for parameter: l/"));
     }
 
     @Test
     public void parse_emptyRequiredValue_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics l/",
-                "Value missing for parameter: l/\n" + AddCommand.MESSAGE_USAGE);
+                withAddFormat("Value missing for parameter: l/"));
     }
 
     @Test
     public void parse_nonEmptyPreamble_failure() {
         assertParseFailure(parser, " unexpected" + VALID_REQUIRED_ARGUMENTS,
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+                withAddFormat("Unexpected text before the first parameter: unexpected"));
+    }
+
+    @Test
+    public void parse_noPrefixes_reportsUnexpectedTextNotMissingValue() {
+        assertParseFailure(parser, " aaaaaa", withAddFormat("Unexpected text before the first parameter: aaaaaa"));
+    }
+
+    @Test
+    public void parse_missingName_failure() {
+        assertParseFailure(parser, " p/91234567 sub/Mathematics l/Secondary 3",
+                withAddFormat("Value missing for parameter: n/"));
+    }
+
+    @Test
+    public void parse_invalidValue_failureWithoutFormat() {
+        assertParseFailure(parser, " n/Alicia Lim p/12 sub/Mathematics l/Secondary 3",
+                ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
     }
 
     @Test
     public void parse_repeatedName_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " n/Bea Lim",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME) + "\n" + AddCommand.MESSAGE_USAGE);
+                withAddFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME)));
     }
 
     @Test
@@ -98,8 +114,11 @@ public class AddCommandParserTest {
     }
 
     private static String getUnknownParameterMessage(String prefix) {
-        return String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, prefix,
-                AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
-                + "\n" + AddCommand.MESSAGE_USAGE;
+        return withAddFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, prefix,
+                AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS));
+    }
+
+    private static String withAddFormat(String message) {
+        return Messages.withFormat(message, AddCommand.COMMAND_FORMAT);
     }
 }

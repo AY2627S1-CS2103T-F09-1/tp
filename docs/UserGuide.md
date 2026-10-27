@@ -78,10 +78,11 @@ TutorTrack keeps the latest 100 non-blank commands from the current app session,
 
 When a command cannot run, TutorTrack names the specific problem and does not change the roster, session notes, open profile, or saved data. Recall the command with `Up`, correct it, and press `Enter` again.
 
-* **Missing or extra parts:** if an index is missing or more values are entered than the command takes, the error ends with a `Format:` line showing the correct command. For example, `view 1 2` shows `view takes only one INDEX.` followed by `Format: view INDEX`.
-* **Invalid index:** an index such as `0`, `-1`, or `abc` shows `INDEX must be a positive whole number, e.g. 1.` A number too large to be any index, such as `99999999999`, is reported as too large.
+* **Missing or extra parts:** if a required part such as an index, `nt/`, or `n/NAME` is missing, an unknown or repeated parameter is entered, text appears before the first parameter, or more values are entered than the command takes, the error ends with a `Format:` line showing the correct command. For example, `view 1 2` shows `view takes only one INDEX.` followed by `Format: view INDEX`.
+* **Invalid value:** a value that breaks a rule, such as a phone number that is too short, shows only that rule. An index such as `0`, `-1`, or `abc` shows `INDEX must be a positive whole number, e.g. 1.` A number too large to be any index, such as `99999999999`, is reported as too large.
 * **Index outside the roster:** the error gives the valid range, for example `Student index [3] is outside the roster. Enter a student index from 1 to 2.` If the roster is empty, TutorTrack asks you to add a student first.
 * **Note number outside the history:** `edit note` and `delete note` give the valid note-number range for that student.
+* **Unknown command:** a misspelled command word, such as `veiw 1`, is named in the error together with the list of available commands.
 
 ### Viewing help: `help`
 
@@ -103,7 +104,7 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
 * **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
 * **After a successful addition:** TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
-* **Invalid input:** Missing values, invalid values, duplicate students, and unknown parameters leave the roster unchanged, explain the problem, and show the command format again.
+* **Invalid input:** Missing values, invalid values, duplicate students, text before the first parameter, and unknown parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
 
 Examples:
 
