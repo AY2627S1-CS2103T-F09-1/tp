@@ -1084,6 +1084,57 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void adjustVisualBoundsForOutputScale_onlyHeightExceedsPhysicalDisplay_correctsBounds() {
+        Rectangle2D partlyPhysicalBounds = new Rectangle2D(0, 0, 1280 / 1.5, 720);
+
+        Rectangle2D adjustedBounds = MainWindow.adjustVisualBoundsForOutputScale(
+                partlyPhysicalBounds, partlyPhysicalBounds, 1.5, 1.5, 1280, 720);
+
+        assertEquals(new Rectangle2D(0, 0, 1280 / 1.5 / 1.5, 720 / 1.5), adjustedBounds);
+    }
+
+    @Test
+    public void adjustVisualBoundsForOutputScale_invalidScaleOrDisplaySize_throwsAssertionError() {
+        Rectangle2D bounds = new Rectangle2D(0, 0, 1280, 720);
+
+        assertThrows(AssertionError.class, () ->
+                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 0, 1, 1280, 720));
+        assertThrows(AssertionError.class, () ->
+                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 1, 0, 1280, 720));
+        assertThrows(AssertionError.class, () ->
+                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 1, 1, 0, 720));
+        assertThrows(AssertionError.class, () ->
+                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 1, 1, 1280, 0));
+    }
+
+    @Test
+    public void findLargestOverlapIndex_windowSpansScreens_returnsScreenWithLargestOverlap() {
+        Rectangle2D leftScreen = new Rectangle2D(0, 0, 1920, 1080);
+        Rectangle2D rightScreen = new Rectangle2D(1920, 0, 1920, 1080);
+        Rectangle2D mostlyRightWindow = new Rectangle2D(1800, 100, 800, 600);
+
+        assertEquals(1, MainWindow.findLargestOverlapIndex(mostlyRightWindow, List.of(leftScreen, rightScreen)));
+        assertEquals(0, MainWindow.findLargestOverlapIndex(mostlyRightWindow, List.of(rightScreen, leftScreen)));
+    }
+
+    @Test
+    public void findLargestOverlapIndex_equalOrNoOverlap_returnsFirstScreen() {
+        Rectangle2D leftScreen = new Rectangle2D(0, 0, 1920, 1080);
+        Rectangle2D rightScreen = new Rectangle2D(1920, 0, 1920, 1080);
+        Rectangle2D evenlySplitWindow = new Rectangle2D(1520, 100, 800, 600);
+        Rectangle2D offScreenWindow = new Rectangle2D(5000, 5000, 800, 600);
+
+        assertEquals(0, MainWindow.findLargestOverlapIndex(evenlySplitWindow, List.of(leftScreen, rightScreen)));
+        assertEquals(0, MainWindow.findLargestOverlapIndex(offScreenWindow, List.of(leftScreen, rightScreen)));
+    }
+
+    @Test
+    public void findLargestOverlapIndex_noScreens_throwsAssertionError() {
+        assertThrows(AssertionError.class, () ->
+                MainWindow.findLargestOverlapIndex(new Rectangle2D(0, 0, 800, 600), List.of()));
+    }
+
+    @Test
     public void mainWindow_minimumSize_keepsPrimaryWorkspaceAreasVisible() throws Exception {
         TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
 

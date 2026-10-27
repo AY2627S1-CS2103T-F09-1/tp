@@ -5,7 +5,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.nio.file.Path;
-import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -191,13 +191,33 @@ public class MainWindow extends UiPart<Stage> {
     private Screen getCurrentScreen() {
         Rectangle2D windowBounds = new Rectangle2D(primaryStage.getX(), primaryStage.getY(),
                 primaryStage.getWidth(), primaryStage.getHeight());
-        return Screen.getScreensForRectangle(windowBounds).stream()
-                .max(Comparator.comparingDouble(screen -> calculateIntersectionArea(
-                        windowBounds, screen.getBounds())))
-                .orElse(Screen.getPrimary());
+        List<Screen> screens = Screen.getScreensForRectangle(windowBounds);
+        if (screens.isEmpty()) {
+            return Screen.getPrimary();
+        }
+        List<Rectangle2D> screenBounds = screens.stream().map(Screen::getBounds).toList();
+        return screens.get(findLargestOverlapIndex(windowBounds, screenBounds));
     }
 
-    private double calculateIntersectionArea(Rectangle2D firstBounds, Rectangle2D secondBounds) {
+    /**
+     * Returns the index of the screen bounds that overlap {@code windowBounds} the most.
+     * Ties keep the earliest screen.
+     */
+    static int findLargestOverlapIndex(Rectangle2D windowBounds, List<Rectangle2D> screenBounds) {
+        assert !screenBounds.isEmpty() : "At least one screen must be available";
+        int largestOverlapIndex = 0;
+        double largestOverlapArea = calculateIntersectionArea(windowBounds, screenBounds.get(0));
+        for (int i = 1; i < screenBounds.size(); i++) {
+            double overlapArea = calculateIntersectionArea(windowBounds, screenBounds.get(i));
+            if (overlapArea > largestOverlapArea) {
+                largestOverlapIndex = i;
+                largestOverlapArea = overlapArea;
+            }
+        }
+        return largestOverlapIndex;
+    }
+
+    private static double calculateIntersectionArea(Rectangle2D firstBounds, Rectangle2D secondBounds) {
         double intersectionWidth = Math.max(0,
                 Math.min(firstBounds.getMaxX(), secondBounds.getMaxX())
                         - Math.max(firstBounds.getMinX(), secondBounds.getMinX()));
