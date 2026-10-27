@@ -261,6 +261,10 @@ public class MainWindow extends UiPart<Stage> {
                 displayMode.getWidth(), displayMode.getHeight());
     }
 
+    /**
+     * Returns {@code visualBounds} with the output scale removed from each axis whose screen size exceeds the
+     * physical display, which indicates that the axis was reported in physical rather than logical pixels.
+     */
     static Rectangle2D adjustVisualBoundsForOutputScale(Rectangle2D screenBounds, Rectangle2D visualBounds,
             double outputScaleX, double outputScaleY, int physicalWidth, int physicalHeight) {
         assert outputScaleX > 0 : "Output scale must be positive";
@@ -272,11 +276,10 @@ public class MainWindow extends UiPart<Stage> {
                 > physicalWidth + SCREEN_SIZE_TOLERANCE;
         boolean heightExceedsPhysicalDisplay = screenBounds.getHeight() * outputScaleY
                 > physicalHeight + SCREEN_SIZE_TOLERANCE;
-        if (!widthExceedsPhysicalDisplay && !heightExceedsPhysicalDisplay) {
-            return visualBounds;
-        }
-        return new Rectangle2D(visualBounds.getMinX() / outputScaleX, visualBounds.getMinY() / outputScaleY,
-                visualBounds.getWidth() / outputScaleX, visualBounds.getHeight() / outputScaleY);
+        double correctionX = widthExceedsPhysicalDisplay ? outputScaleX : 1;
+        double correctionY = heightExceedsPhysicalDisplay ? outputScaleY : 1;
+        return new Rectangle2D(visualBounds.getMinX() / correctionX, visualBounds.getMinY() / correctionY,
+                visualBounds.getWidth() / correctionX, visualBounds.getHeight() / correctionY);
     }
 
     /**

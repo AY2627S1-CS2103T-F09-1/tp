@@ -1084,13 +1084,23 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void adjustVisualBoundsForOutputScale_onlyHeightExceedsPhysicalDisplay_correctsBounds() {
+    public void adjustVisualBoundsForOutputScale_onlyHeightExceedsPhysicalDisplay_correctsHeightOnly() {
         Rectangle2D partlyPhysicalBounds = new Rectangle2D(0, 0, 1280 / 1.5, 720);
 
         Rectangle2D adjustedBounds = MainWindow.adjustVisualBoundsForOutputScale(
                 partlyPhysicalBounds, partlyPhysicalBounds, 1.5, 1.5, 1280, 720);
 
-        assertEquals(new Rectangle2D(0, 0, 1280 / 1.5 / 1.5, 720 / 1.5), adjustedBounds);
+        assertEquals(new Rectangle2D(0, 0, 1280 / 1.5, 720 / 1.5), adjustedBounds);
+    }
+
+    @Test
+    public void adjustVisualBoundsForOutputScale_onlyWidthExceedsPhysicalDisplay_correctsWidthOnly() {
+        Rectangle2D partlyPhysicalBounds = new Rectangle2D(0, 0, 1280, 720 / 1.5);
+
+        Rectangle2D adjustedBounds = MainWindow.adjustVisualBoundsForOutputScale(
+                partlyPhysicalBounds, partlyPhysicalBounds, 1.5, 1.5, 1280, 720);
+
+        assertEquals(new Rectangle2D(0, 0, 1280 / 1.5, 720 / 1.5), adjustedBounds);
     }
 
     @Test
