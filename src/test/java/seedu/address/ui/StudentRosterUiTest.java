@@ -54,8 +54,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import seedu.address.MainApp;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
@@ -780,6 +782,46 @@ public class StudentRosterUiTest {
                 assertTrue(card.getWidth() <= listView.getWidth());
                 assertEquals("[1] 18 Sep 2026, 6:35 PM (UTC+08:00)", header.getText());
                 assertTrue(noteText.getHeight() > noteText.getFont().getSize() * 2);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void sessionNoteListCell_nearLimitNote_showsEveryWrappedLine() throws Exception {
+        StringBuilder noteText = new StringBuilder("w001");
+        for (int i = 2; i <= 100; i++) {
+            noteText.append(String.format(" w%03d", i));
+        }
+        SessionNote note = new SessionNote(noteText.toString(),
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                panel.setProfile(profile(null, List.of(note)));
+                Scene scene = new Scene(panel.getRoot(), 360, 600);
+                scene.getStylesheets().add(MainApp.class.getResource("/view/TutorTrackTheme.css").toExternalForm());
+                stage.setScene(scene);
+                stage.show();
+
+                for (double width : new double[] {360, 500, 900}) {
+                    stage.setWidth(width);
+                    scene.getRoot().applyCss();
+                    scene.getRoot().layout();
+
+                    ListCell<?> cell = (ListCell<?>) getSessionNoteListView(panel).lookup(".list-cell");
+                    assertNotNull(cell);
+                    SelectableText displayedNote = (SelectableText) ((VBox) cell.getGraphic()).getChildren().get(1);
+                    Text renderedText = (Text) displayedNote.lookup(".text");
+                    assertNotNull(renderedText);
+
+                    assertTrue(displayedNote.getHeight() >= renderedText.getLayoutBounds().getHeight(),
+                            "Note text is clipped at panel width " + width);
+                }
             } finally {
                 stage.hide();
             }
