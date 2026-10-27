@@ -97,6 +97,7 @@ public class LogicManagerTest {
         assertEquals("Are you sure you want to delete " + ALEX.getName() + " and 1 session note?\n"
                 + "If yes, type: delete 1 /confirm\n"
                 + "To cancel, enter any other command.", result.getFeedbackToUser());
+        assertEquals(Optional.of(ALEX.getId()), result.getProfileStudentId());
         assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
         assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
