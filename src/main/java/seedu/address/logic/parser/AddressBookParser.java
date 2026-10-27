@@ -35,6 +35,7 @@ public class AddressBookParser {
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
     private static final Pattern NUMERIC_EDIT_TARGET = Pattern.compile("[+-]?\\d+");
+    private static final Set<String> MISTYPED_NOTE_TARGETS = Set.of("notes", "nte");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     private static final Set<String> COMMAND_WORDS = Set.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
@@ -100,7 +101,7 @@ public class AddressBookParser {
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
         }
-        if (!editTarget.isEmpty() && !NUMERIC_EDIT_TARGET.matcher(editTarget).matches()) {
+        if (MISTYPED_NOTE_TARGETS.contains(editTarget)) {
             throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
                     editTarget, EditNoteCommand.COMMAND_FORMAT));
         }

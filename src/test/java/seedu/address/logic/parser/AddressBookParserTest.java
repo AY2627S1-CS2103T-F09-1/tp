@@ -101,6 +101,14 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_studentEditWithoutIndex_usesStudentEditFormat() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("edit n/Bob"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("edit a n/Bob"));
+    }
+
+    @Test
     public void parseCommand_editWithoutTarget_usesStudentEditParser() {
         assertThrows(ParseException.class, () -> parser.parseCommand("edit"));
     }
