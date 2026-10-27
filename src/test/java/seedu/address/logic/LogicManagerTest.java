@@ -219,6 +219,8 @@ public class LogicManagerTest {
         assertEquals("Are you sure you want to delete session note [2] for " + ALEX.getName() + "?\n"
                 + "If yes, type: delete note 1 2 /confirm\n"
                 + "To cancel, enter any other command.", result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
+        assertEquals(Index.fromOneBased(2), result.getPreviewNoteNumber().orElseThrow());
         assertEquals(2, model.getSessionHistory(ALEX.getId()).size());
         assertFalse(Files.exists(addressBookFile));
     }

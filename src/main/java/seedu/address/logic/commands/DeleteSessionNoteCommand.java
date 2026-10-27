@@ -109,7 +109,8 @@ public class DeleteSessionNoteCommand extends Command {
         }
 
         return new CommandResult(String.format(MESSAGE_CONFIRM_DELETE,
-                noteNumber.getOneBased(), student.getName(), studentIndex.getOneBased()));
+                noteNumber.getOneBased(), student.getName(), studentIndex.getOneBased()),
+                student.getStudentId(), noteNumber);
     }
 
     @Override
