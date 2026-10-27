@@ -78,6 +78,8 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
+
+`CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which scrolls the session-note list by the list's visible height. Keyboard focus and any draft stay in the command box, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
 `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
 
 The `UI` component,
@@ -1044,6 +1046,19 @@ testers are expected to do more *exploratory* testing.
    Expected: `help` opens the help window and is recalled as the newest history entry.
 1. Close and relaunch TutorTrack, then press `Up` in an empty command box.
    Expected: No command is recalled because history is kept only for the app session.
+
+### Scrolling session notes with the keyboard
+
+1. Add notes to the first student with `note 1 nt/Reviewed algebra.` until the session-note history is taller than the profile panel, then run `view 1`.
+   Expected: The newest note is at the top and the history shows a vertical scroll bar.
+1. Type `note 1 nt/draft` without pressing `Enter`, then press `PageUp`.
+   Expected: The history stays at the top and the draft remains in the command box.
+1. Press `PageDown` repeatedly.
+   Expected: Each press scrolls the history down by about one visible page until the oldest note `[1]` is shown; the command box keeps focus and the draft is unchanged.
+1. Press `PageUp` repeatedly.
+   Expected: The history scrolls back to the newest note and stops at the top.
+1. Restart TutorTrack and press `PageDown` before opening any profile.
+   Expected: Nothing scrolls and no error is shown.
 
 ### Saving data
 
