@@ -910,7 +910,7 @@ testers are expected to do more *exploratory* testing.
 1. Click the command box and type `view 2` without submitting it.
    Expected: The command box regains focus and accepts the text. The profile remains contained within the right pane and does not cover the command box or result display.
 1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
-   Expected: The timestamp and note wrap inside one session-note card, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
+   Expected: The timestamp and note wrap inside one session-note card, the last wrapped line is fully visible above the bottom edge of the card at narrow and wide window widths, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
 1. Enter `delete 1`.
    Expected: TutorTrack displays Alicia's name, note count, `delete 1 /confirm`, and `To cancel, enter any other command.` Alicia's profile and roster remain unchanged.
 1. Enter `delete 1 /confirm`.

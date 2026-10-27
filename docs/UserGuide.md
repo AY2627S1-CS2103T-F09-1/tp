@@ -175,16 +175,17 @@ If either selector is missing, invalid, outside the current range, or too large 
 
 ### Viewing a student profile: `view`
 
-Displays one student's profile beside the roster. The profile shows the student's name, parent or guardian phone and email, subject, current academic level, and session notes. If no email was recorded, TutorTrack displays `Not provided`.
+Displays one student's profile beside the roster: name, parent or guardian contact, subject, current level, and session notes. TutorTrack displays `Not provided` when no email was recorded.
 
-Session notes are shown newest first with the saved date, time, and UTC offset. Each note also has a number in square brackets. The oldest note is `[1]`, and each newer note has the next number, so the newest note appears at the top with the largest number. These numbers are selectors for the current display; they are not saved with the notes and are reassigned consecutively after a deletion. Long profile fields and notes wrap within the panel, and the history can be scrolled. You can select profile values, session-note headers, and note text and copy them with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS; the displayed text remains read-only. A student without notes displays `No session notes yet` and the command for recording the first note.
+Notes appear newest first with their date and time. Use the number in square brackets, such as `[2]`, when editing or deleting a note.
 
-The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command and closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
+Long text wraps and the note history can be scrolled. Profile text is read-only, but you can select and copy it with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
+
+The open student's roster card is highlighted. Their profile refreshes after successful changes and closes if they are deleted.
 
 Format: `view INDEX`
 
-* `INDEX` is the student's number in the currently displayed roster.
-* `INDEX` must be a positive whole number and must refer to a student currently in the roster.
+* `INDEX` must be the positive whole number of a student in the displayed roster.
 
 Example: `view 2`
 

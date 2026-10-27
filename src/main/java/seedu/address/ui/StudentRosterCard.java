@@ -33,7 +33,7 @@ public class StudentRosterCard extends UiPart<Region> {
      */
     public StudentRosterCard(StudentRosterEntry entry) {
         super(FXML);
-        rosterIndex.setText(entry.getRosterIndex() + ". ");
+        rosterIndex.setText(String.valueOf(entry.getRosterIndex()));
         name.setText(entry.getName().getValue());
         subject.setText("Subject: " + entry.getSubject().getValue());
         currentLevel.setText("Level: " + entry.getCurrentLevel().getValue());
