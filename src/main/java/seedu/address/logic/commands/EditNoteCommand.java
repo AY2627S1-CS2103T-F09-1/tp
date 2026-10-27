@@ -91,7 +91,7 @@ public class EditNoteCommand extends Command {
 
         model.editSessionNote(student.getStudentId(), noteNumber, text);
         return new CommandResult(String.format(MESSAGE_SUCCESS,
-                noteNumber.getOneBased(), student.getName()));
+                noteNumber.getOneBased(), student.getName()), student.getStudentId());
     }
 
     @Override

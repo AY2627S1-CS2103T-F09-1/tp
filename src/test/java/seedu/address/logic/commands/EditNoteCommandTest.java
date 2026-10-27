@@ -27,6 +27,7 @@ public class EditNoteCommandTest {
         CommandResult result = command.execute(model);
 
         assertEquals(String.format(EditNoteCommand.MESSAGE_SUCCESS, 1, ALEX.getName()), result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
         SessionNote editedNote = model.getSessionHistory(ALEX.getId()).getNote(Index.fromOneBased(1));
         assertEquals("Corrected summary.", editedNote.getText());
         assertEquals(originalNote.getRecordedAt(), editedNote.getRecordedAt());
