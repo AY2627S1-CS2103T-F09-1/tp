@@ -34,15 +34,28 @@ public class SessionNoteCard extends UiPart<Region> {
         if (noteNumber < 1) {
             throw new IllegalArgumentException("Session note number must be positive");
         }
-        header.setText("[" + noteNumber + "] " + formatRecordedAt(sessionNote.getRecordedAt()));
+        header.setText("[" + noteNumber + "] " + formatRecordedAt(sessionNote));
         noteText.setText(sessionNote.getText());
     }
 
     /**
      * Returns a friendly timestamp that preserves the recorded UTC offset.
      */
-    static String formatRecordedAt(OffsetDateTime recordedAt) {
+    static String formatRecordedAt(SessionNote sessionNote) {
+        requireNonNull(sessionNote);
+        String recordedAt = formatDateTime(sessionNote.getRecordedAt(), true);
+        return sessionNote.getLastEditedAt()
+                .map(lastEditedAt -> recordedAt + " · edited "
+                        + formatDateTime(lastEditedAt, !lastEditedAt.getOffset()
+                                .equals(sessionNote.getRecordedAt().getOffset())))
+                .orElse(recordedAt);
+    }
+
+    private static String formatDateTime(OffsetDateTime recordedAt, boolean includeOffset) {
         requireNonNull(recordedAt);
+        if (!includeOffset) {
+            return TIMESTAMP_FORMATTER.format(recordedAt);
+        }
         ZoneOffset offset = recordedAt.getOffset();
         String offsetText = offset.equals(ZoneOffset.UTC) ? "+00:00" : offset.getId();
         return TIMESTAMP_FORMATTER.format(recordedAt) + " (UTC" + offsetText + ")";

@@ -483,8 +483,8 @@ public class StudentRosterUiTest {
         assertFalse(header.isEditable());
         assertFalse(noteText.isEditable());
         assertEquals(2, noteText.getLineSpacing());
-        assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
-                OffsetDateTime.parse("2026-09-18T10:35:00Z")));
+        assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(new SessionNote(
+                "Recorded in UTC.", OffsetDateTime.parse("2026-09-18T10:35:00Z"))));
         assertThrows(IllegalArgumentException.class, () -> new SessionNoteCard(note, 0));
         assertThrows(NullPointerException.class, () -> SessionNoteCard.formatRecordedAt(null));
     }

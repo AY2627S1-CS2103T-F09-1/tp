@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 public class SessionNoteTest {
 
     private static final OffsetDateTime RECORDED_AT = OffsetDateTime.parse("2026-09-18T18:35:00+08:00");
+    private static final OffsetDateTime EDITED_AT = OffsetDateTime.parse("2026-10-23T14:10:00+08:00");
     private static final String VALID_TEXT = "Reviewed factorisation.";
 
     @Test
@@ -33,6 +34,20 @@ public class SessionNoteTest {
 
         assertEquals("Paper 2:  Q3 & Q5 (50%)", note.getText());
         assertEquals(RECORDED_AT, note.getRecordedAt());
+    }
+
+    @Test
+    public void constructor_editedNote_keepsRecordedAndEditedTimes() {
+        SessionNote note = new SessionNote(VALID_TEXT, RECORDED_AT, EDITED_AT);
+
+        assertEquals(RECORDED_AT, note.getRecordedAt());
+        assertEquals(EDITED_AT, note.getLastEditedAt().orElseThrow());
+    }
+
+    @Test
+    public void constructor_lastEditedBeforeRecorded_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, SessionNote.EDITED_AT_CONSTRAINTS, () -> new SessionNote(
+                VALID_TEXT, RECORDED_AT, RECORDED_AT.minusSeconds(1)));
     }
 
     @Test
@@ -92,6 +107,7 @@ public class SessionNoteTest {
         assertFalse(note.equals(VALID_TEXT));
         assertFalse(note.equals(new SessionNote("Reviewed indices.", RECORDED_AT)));
         assertFalse(note.equals(new SessionNote(VALID_TEXT, RECORDED_AT.plusMinutes(1))));
+        assertFalse(note.equals(new SessionNote(VALID_TEXT, RECORDED_AT, EDITED_AT)));
     }
 
     @Test
@@ -100,5 +116,6 @@ public class SessionNoteTest {
 
         assertEquals(note.hashCode(), new SessionNote(VALID_TEXT, RECORDED_AT).hashCode());
         assertNotEquals(note.hashCode(), new SessionNote("Reviewed indices.", RECORDED_AT).hashCode());
+        assertNotEquals(note.hashCode(), new SessionNote(VALID_TEXT, RECORDED_AT, EDITED_AT).hashCode());
     }
 }

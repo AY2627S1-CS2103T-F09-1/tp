@@ -13,6 +13,7 @@ import static seedu.address.testutil.TypicalSessionNotes.BEA;
 import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
 import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,8 @@ import seedu.address.model.student.Subject;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddressBookTest {
+
+    private static final OffsetDateTime EDITED_AT = OffsetDateTime.parse("2026-10-23T14:10:00+08:00");
 
     private final AddressBook addressBook = new AddressBook();
 
@@ -253,10 +256,12 @@ public class AddressBookTest {
         addressBook.addStudent(ALEX);
         addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
 
-        SessionNote editedNote = addressBook.editSessionNote(ALEX.getId(), Index.fromOneBased(1), "Corrected summary.");
+        SessionNote editedNote = addressBook.editSessionNote(ALEX.getId(), Index.fromOneBased(1),
+                "Corrected summary.", EDITED_AT);
 
         assertEquals("Corrected summary.", editedNote.getText());
         assertEquals(INDICES_NOTE.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(EDITED_AT, editedNote.getLastEditedAt().orElseThrow());
         assertEquals(List.of(editedNote), addressBook.getSessionHistory(ALEX.getId()).getNotes());
     }
 
@@ -265,7 +270,7 @@ public class AddressBookTest {
         addressBook.addStudent(ALEX);
 
         assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_UNKNOWN_STUDENT, () -> addressBook
-                .editSessionNote(BEA.getId(), Index.fromOneBased(1), "Corrected summary."));
+                .editSessionNote(BEA.getId(), Index.fromOneBased(1), "Corrected summary.", EDITED_AT));
     }
 
     @Test
@@ -277,10 +282,13 @@ public class AddressBookTest {
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(null, Index.fromOneBased(1)));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(ALEX.getId(), null));
         assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(null,
-                Index.fromOneBased(1), "text"));
-        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(), null, "text"));
+                Index.fromOneBased(1), "text", EDITED_AT));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(), null, "text",
+                EDITED_AT));
         assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(),
-                Index.fromOneBased(1), null));
+                Index.fromOneBased(1), null, EDITED_AT));
+        assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(),
+                Index.fromOneBased(1), "text", null));
         assertThrows(NullPointerException.class, () -> addressBook.getSessionHistory(null));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionHistory(null));
     }
