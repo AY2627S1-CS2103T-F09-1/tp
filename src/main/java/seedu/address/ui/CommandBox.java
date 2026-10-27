@@ -23,6 +23,7 @@ public class CommandBox extends UiPart<Region> {
     private static final int MAX_HISTORY_SIZE = 100;
 
     private final CommandExecutor commandExecutor;
+    private final PageScroller pageScroller;
     private final List<String> commandHistory = new ArrayList<>();
 
     private int historyIndex;
@@ -35,11 +36,20 @@ public class CommandBox extends UiPart<Region> {
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
      */
     public CommandBox(CommandExecutor commandExecutor) {
+        this(commandExecutor, pageCount -> { });
+    }
+
+    /**
+     * Creates a {@code CommandBox} that sends PageUp and PageDown presses to {@code pageScroller}.
+     */
+    public CommandBox(CommandExecutor commandExecutor, PageScroller pageScroller) {
         super(FXML);
         this.commandExecutor = commandExecutor;
+        this.pageScroller = pageScroller;
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryNavigation);
+        commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handlePageScroll);
     }
 
     /**
@@ -71,6 +81,16 @@ public class CommandBox extends UiPart<Region> {
             event.consume();
         } else if (event.getCode() == KeyCode.DOWN) {
             showNextCommand();
+            event.consume();
+        }
+    }
+
+    private void handlePageScroll(KeyEvent event) {
+        if (event.getCode() == KeyCode.PAGE_UP) {
+            pageScroller.scrollPages(-1);
+            event.consume();
+        } else if (event.getCode() == KeyCode.PAGE_DOWN) {
+            pageScroller.scrollPages(1);
             event.consume();
         }
     }
@@ -147,6 +167,17 @@ public class CommandBox extends UiPart<Region> {
          * @see seedu.address.logic.Logic#execute(String)
          */
         CommandResult execute(String commandText) throws CommandException, ParseException;
+    }
+
+    /**
+     * Represents a view that can scroll by whole pages.
+     */
+    @FunctionalInterface
+    public interface PageScroller {
+        /**
+         * Scrolls by {@code pageCount} pages; a negative count scrolls upward.
+         */
+        void scrollPages(int pageCount);
     }
 
 }

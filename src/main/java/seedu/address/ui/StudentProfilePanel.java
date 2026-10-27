@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -85,6 +86,16 @@ public class StudentProfilePanel extends UiPart<Region> {
         sessionNotes.clear();
         updateNotesEmptyState();
         setProfileVisible(false);
+    }
+
+    /**
+     * Scrolls the session-note history by {@code pageCount} visible pages; a negative count scrolls upward.
+     * Does nothing when the history has not been laid out yet.
+     */
+    public void scrollSessionNotes(int pageCount) {
+        if (sessionNoteListView.lookup(".virtual-flow") instanceof VirtualFlow<?> virtualFlow) {
+            virtualFlow.scrollPixels(pageCount * virtualFlow.getHeight());
+        }
     }
 
     private void updateNotesEmptyState() {
