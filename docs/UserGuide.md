@@ -100,6 +100,7 @@ Adds a student with the responsible parent or guardian's contact details, subjec
 Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 
 * **Required details:** Name, parent or guardian phone number, subject, and current level must be provided.
+* **Student name:** Names must begin with a letter or number and may contain only letters, numbers, spaces, apostrophes, periods, and hyphens.
 * **Optional detail:** Parent or guardian email may be included with `e/`.
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
 * **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
