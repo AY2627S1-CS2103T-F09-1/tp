@@ -39,8 +39,6 @@ public class StudentRosterPanel extends UiPart<Region> {
         super(FXML);
         studentRosterListView.setItems(rosterEntries);
         studentRosterListView.setCellFactory(listView -> new StudentRosterListViewCell());
-        studentRosterListView.widthProperty().addListener((observable, oldWidth, newWidth) ->
-                studentRosterListView.refresh());
         setRoster(roster);
     }
 

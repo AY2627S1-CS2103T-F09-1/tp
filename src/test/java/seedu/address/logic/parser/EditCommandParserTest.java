@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -22,8 +21,6 @@ import seedu.address.model.student.Subject;
 
 public class EditCommandParserTest {
 
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
     private static final String MESSAGE_SUPPORTED_PARAMETERS = "n/ p/ e/ sub/ l/";
 
     private final EditCommandParser parser = new EditCommandParser();
@@ -72,6 +69,16 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_prefixLikeTextInSubjectAndLevel_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Mathematics nt/Science"));
+        descriptor.setCurrentLevel(new CurrentLevel("Secondary nt/4"));
+
+        assertParseSuccess(parser, " 1 sub/Mathematics nt/Science l/Secondary nt/4",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_emptyEmail_success() {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         descriptor.setParentEmail(Optional.empty());
@@ -81,52 +88,60 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_missingIndexOrFields_failure() {
-        assertParseFailure(parser, " n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1", withUsage(EditCommand.MESSAGE_NOT_EDITED));
-        assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
+        String missingIndexMessage = Messages.withFormat("Missing INDEX.",
+                EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);
+
+        assertParseFailure(parser, " n/Alexis Tan", missingIndexMessage);
+        assertParseFailure(parser, " 1", withEditFormat(EditCommand.MESSAGE_NOT_EDITED));
+        assertParseFailure(parser, "", missingIndexMessage);
     }
 
     @Test
     public void parse_invalidIndexOrPreamble_failure() {
-        assertParseFailure(parser, " 0 n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " -1 n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " x n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 extra n/Alexis Tan", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 2147483648 n/Alexis Tan", MESSAGE_INVALID_FORMAT);
+        String invalidIndexMessage = "INDEX must be a positive whole number, e.g. 1.";
+
+        assertParseFailure(parser, " 0 n/Alexis Tan", invalidIndexMessage);
+        assertParseFailure(parser, " -1 n/Alexis Tan", invalidIndexMessage);
+        assertParseFailure(parser, " x n/Alexis Tan", invalidIndexMessage);
+        assertParseFailure(parser, " 1 extra n/Alexis Tan",
+                Messages.withFormat("edit takes only one INDEX.",
+                        EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE));
+        assertParseFailure(parser, " 2147483648 n/Alexis Tan",
+                "INDEX is too large. Enter a student index shown in the roster.");
     }
 
     @Test
     public void parse_invalidValues_failure() {
-        assertParseFailure(parser, " 1 n/", withUsage(StudentName.MESSAGE_CONSTRAINTS));
-        assertParseFailure(parser, " 1 p/12", withUsage(ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS));
+        assertParseFailure(parser, " 1 n/", StudentName.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 p/12", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 e/example.com",
-                withUsage(ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS));
-        assertParseFailure(parser, " 1 sub/", withUsage(Subject.MESSAGE_CONSTRAINTS));
-        assertParseFailure(parser, " 1 l/", withUsage(CurrentLevel.MESSAGE_CONSTRAINTS));
+                ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 sub/", Subject.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 l/", CurrentLevel.MESSAGE_CONSTRAINTS);
     }
 
     @Test
     public void parse_duplicatePrefix_failure() {
-        String expectedMessage = withUsage(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_EMAIL));
+        String expectedMessage =
+                withEditFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_EMAIL));
 
         assertParseFailure(parser, " 1 n/Alexis Tan n/Blair Tan e/a@example.com e/b@example.com",
                 expectedMessage);
     }
 
     @Test
-    public void parse_unknownOrLegacyPrefix_failure() {
-        assertParseFailure(parser, " 1 n/Alexis Tan x/value", unknownParameterMessage("x/"));
+    public void parse_legacyPrefix_failure() {
         assertParseFailure(parser, " 1 a/Block 1", unknownParameterMessage("a/"));
         assertParseFailure(parser, " 1 t/friend", unknownParameterMessage("t/"));
     }
 
-    private static String withUsage(String message) {
-        return message + "\n" + EditCommand.MESSAGE_USAGE;
+    private static String withEditFormat(String message) {
+        return Messages.withFormat(message, EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);
     }
 
     private static String unknownParameterMessage(String prefix) {
-        return withUsage(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
-                prefix, MESSAGE_SUPPORTED_PARAMETERS));
+        return withEditFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
+                prefix, AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS));
     }
 
     private static EditStudentDescriptor descriptor(String name, String phone, Optional<String> email,
