@@ -138,6 +138,14 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseNoteText_aboveMaximumLengthWithTab_reportsLengthFirst() {
+        String overlongNoteWithTab = "a\t" + "a".repeat(SessionNote.MAX_TEXT_LENGTH);
+
+        assertThrows(ParseException.class, String.format(MESSAGE_NOTE_TOO_LONG, SessionNote.MAX_TEXT_LENGTH + 2), ()
+                -> ParserUtil.parseNoteText(overlongNoteWithTab));
+    }
+
+    @Test
     public void parseNoteText_nonPrintableCharacter_throwsNonPrintableMessage() {
         assertThrows(ParseException.class, MESSAGE_NOTE_NON_PRINTABLE, ()
                 -> ParserUtil.parseNoteText("Column\tvalue"));

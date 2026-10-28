@@ -140,6 +140,8 @@ public class ParserUtil {
     /**
      * Returns {@code noteText} unchanged after checking that it is valid session-note text.
      * Surrounding whitespace is kept because {@code SessionNote} removes it when the note is created.
+     * The rules are checked in the order the User Guide states them (empty, too long, then not on one line), and
+     * only the first broken rule is reported, so an overlong note with a tab reports its length.
      *
      * @throws ParseException If the text is empty, longer than {@link SessionNote#MAX_TEXT_LENGTH} characters, or
      *         contains a non-printable character; the message names the rule that was broken.

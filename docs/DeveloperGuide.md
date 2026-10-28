@@ -1007,7 +1007,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
    Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
-   Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
+   Expected: The first reports `Session note is empty. Enter the note text after nt/.` and the second a duplicate prefix error; no note count changes.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 

@@ -71,8 +71,8 @@ public class SessionNoteTest {
         assertFalse(SessionNote.isValidText("Line one\nLine two"));
         assertFalse(SessionNote.isValidText("Line one\rLine two"));
         assertFalse(SessionNote.isValidText("Column\tvalue"));
-        assertFalse(SessionNote.isValidText("Line one Line two"));
-        assertFalse(SessionNote.isValidText("Para one Para two"));
+        assertFalse(SessionNote.isValidText("Line one\u2028Line two"));
+        assertFalse(SessionNote.isValidText("Para one\u2029Para two"));
         assertFalse(SessionNote.isValidText("Bell\u0007"));
     }
 
@@ -86,7 +86,7 @@ public class SessionNoteTest {
     @Test
     public void hasNonPrintableCharacter_internalControlCharacter_returnsTrue() {
         assertTrue(SessionNote.hasNonPrintableCharacter("Column\tvalue"));
-        assertTrue(SessionNote.hasNonPrintableCharacter("Line one Line two"));
+        assertTrue(SessionNote.hasNonPrintableCharacter("Line one\u2028Line two"));
     }
 
     @Test
