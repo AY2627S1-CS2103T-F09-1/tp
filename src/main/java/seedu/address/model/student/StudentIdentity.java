@@ -10,6 +10,14 @@ import java.util.Objects;
  */
 public final class StudentIdentity {
 
+    /**
+     * Separator between the normalized name and phone in the stable identity value.
+     * This control character cannot appear in a validated name or phone, so it keeps the
+     * two parts unambiguous. Its value must not change, because legacy student IDs are
+     * derived from {@link #getStableValue()}.
+     */
+    private static final String STABLE_VALUE_SEPARATOR = "\u0000";
+
     private final String normalizedName;
     private final String normalizedParentPhone;
 
@@ -38,7 +46,7 @@ public final class StudentIdentity {
      * Returns the canonical value used to derive a legacy student's stable identifier.
      */
     public String getStableValue() {
-        return normalizedName + "\u0000" + normalizedParentPhone;
+        return normalizedName + STABLE_VALUE_SEPARATOR + normalizedParentPhone;
     }
 
     @Override

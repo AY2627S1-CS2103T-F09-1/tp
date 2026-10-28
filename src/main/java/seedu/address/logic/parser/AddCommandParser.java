@@ -30,6 +30,8 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
             PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
+    private static final List<Prefix> REQUIRED_PREFIXES = List.of(
+            PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL);
     public static final String MESSAGE_SUPPORTED_PARAMETERS = SUPPORTED_PREFIXES.stream()
             .map(Prefix::toString)
             .collect(Collectors.joining(" "));
@@ -43,7 +45,17 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
+        verifyCommandShape(argMultimap);
+        return new AddCommand(createStudent(argMultimap));
+    }
 
+    /**
+     * Verifies that {@code argMultimap} has no legacy prefix, no preamble, every required value,
+     * and no duplicated prefix, in that order.
+     *
+     * @throws ParseException If any shape rule is violated, with the add format appended.
+     */
+    private static void verifyCommandShape(ArgumentMultimap argMultimap) throws ParseException {
         Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
         if (legacyPrefix.isPresent()) {
             throw new ParseException(withAddFormat(
@@ -66,24 +78,38 @@ public class AddCommandParser implements Parser<AddCommand> {
         } catch (ParseException exception) {
             throw new ParseException(withAddFormat(exception.getMessage()), exception);
         }
+    }
 
+    /**
+     * Returns the student described by {@code argMultimap}, whose required values are present.
+     *
+     * @throws ParseException If a present value violates its domain constraints.
+     */
+    private static Student createStudent(ArgumentMultimap argMultimap) throws ParseException {
         try {
-            Student student = new Student(new StudentName(argMultimap.getValue(PREFIX_NAME).get()),
-                    new ParentGuardianContact(argMultimap.getValue(PREFIX_PHONE).get(),
+            return new Student(new StudentName(getVerifiedValue(argMultimap, PREFIX_NAME)),
+                    new ParentGuardianContact(getVerifiedValue(argMultimap, PREFIX_PHONE),
                             argMultimap.getValue(PREFIX_EMAIL)),
-                    new Subject(argMultimap.getValue(PREFIX_SUBJECT).get()),
-                    new CurrentLevel(argMultimap.getValue(PREFIX_LEVEL).get()));
-            return new AddCommand(student);
+                    new Subject(getVerifiedValue(argMultimap, PREFIX_SUBJECT)),
+                    new CurrentLevel(getVerifiedValue(argMultimap, PREFIX_LEVEL)));
         } catch (IllegalArgumentException exception) {
             throw new ParseException(exception.getMessage(), exception);
         }
     }
 
     /**
+     * Returns the value of a required {@code prefix} that {@link #verifyCommandShape} has already checked.
+     * Fails fast with {@link java.util.NoSuchElementException} if that precondition is ever broken.
+     */
+    private static String getVerifiedValue(ArgumentMultimap argMultimap, Prefix prefix) {
+        return argMultimap.getValue(prefix).orElseThrow();
+    }
+
+    /**
      * Returns the first required prefix that has no value, if present.
      */
     private static Optional<Prefix> findMissingRequiredPrefix(ArgumentMultimap argumentMultimap) {
-        return List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL).stream()
+        return REQUIRED_PREFIXES.stream()
                 .filter(prefix -> argumentMultimap.getValue(prefix).filter(value -> !value.isEmpty()).isEmpty())
                 .findFirst();
     }

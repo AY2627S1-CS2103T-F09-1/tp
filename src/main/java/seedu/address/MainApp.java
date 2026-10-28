@@ -36,6 +36,12 @@ public class MainApp extends Application {
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
     private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "tutortrack.json");
+    private static final String MESSAGE_DATA_LOAD_FAILED_WITH_BACKUP =
+            "TutorTrack could not load your data file. A copy was kept at %1$s. "
+            + "Correct the original file, then restart TutorTrack.";
+    private static final String MESSAGE_DATA_LOAD_AND_BACKUP_FAILED =
+            "TutorTrack could not load or back up your data file. "
+            + "Correct the original file before running a command that saves data.";
 
     protected Ui ui;
     protected Logic logic;
@@ -105,12 +111,10 @@ public class MainApp extends Application {
     private String createDataLoadErrorMessage(Storage storage) {
         try {
             Path backupFilePath = storage.backupAddressBookFile();
-            return "TutorTrack could not load your data file. A copy was kept at " + backupFilePath
-                    + ". Correct the original file, then restart TutorTrack.";
+            return String.format(MESSAGE_DATA_LOAD_FAILED_WITH_BACKUP, backupFilePath);
         } catch (IOException e) {
             logger.warning("Failed to back up data file " + StringUtil.getDetails(e));
-            return "TutorTrack could not load or back up your data file. Correct the original file before "
-                    + "running a command that saves data.";
+            return MESSAGE_DATA_LOAD_AND_BACKUP_FAILED;
         }
     }
 

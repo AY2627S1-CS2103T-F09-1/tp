@@ -1,6 +1,9 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
@@ -91,15 +94,57 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_missingPhone_failure() {
+        assertParseFailure(parser, " n/Alicia Lim sub/Mathematics l/Secondary 3",
+                withAddFormat("Value missing for parameter: p/"));
+    }
+
+    @Test
+    public void parse_missingSubject_failure() {
+        assertParseFailure(parser, " n/Alicia Lim p/91234567 l/Secondary 3",
+                withAddFormat("Value missing for parameter: sub/"));
+    }
+
+    @Test
     public void parse_invalidValue_failureWithoutFormat() {
         assertParseFailure(parser, " n/Alicia Lim p/12 sub/Mathematics l/Secondary 3",
                 ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
     }
 
     @Test
+    public void parse_invalidName_failureWithoutFormat() {
+        assertParseFailure(parser, " n/@lex p/91234567 sub/Mathematics l/Secondary 3",
+                StudentName.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_invalidEmail_failureWithoutFormat() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " e/not-an-email",
+                ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_repeatedName_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " n/Bea Lim",
                 withAddFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME)));
+    }
+
+    @Test
+    public void parse_repeatedPhone_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " p/98765432",
+                withAddFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE)));
+    }
+
+    @Test
+    public void parse_repeatedSubject_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " sub/English",
+                withAddFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_SUBJECT)));
+    }
+
+    @Test
+    public void parse_repeatedLevel_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " l/JC 1",
+                withAddFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_LEVEL)));
     }
 
     @Test
