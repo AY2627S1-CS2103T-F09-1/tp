@@ -36,7 +36,7 @@ import seedu.address.model.student.StudentId;
 public class MainWindow extends UiPart<Stage> {
 
     private static final String FXML = "MainWindow.fxml";
-    private static final double SCREEN_SIZE_TOLERANCE = 1;
+    private static final double SAVED_ORIGIN_PROBE_SIZE = 1;
 
     private final Logger logger = LogsCenter.getLogger(getClass());
     private final ListChangeListener<Screen> screenConfigurationListener = change -> updateWindowMaximumSize();
@@ -161,8 +161,10 @@ public class MainWindow extends UiPart<Stage> {
         if (windowCoordinates != null) {
             double maximumX = visualBounds.getMaxX() - primaryStage.getWidth();
             double maximumY = visualBounds.getMaxY() - primaryStage.getHeight();
-            primaryStage.setX(clampCoordinate(windowCoordinates.getX(), visualBounds.getMinX(), maximumX));
-            primaryStage.setY(clampCoordinate(windowCoordinates.getY(), visualBounds.getMinY(), maximumY));
+            primaryStage.setX(ScreenBoundsCalculator.clampCoordinate(
+                    windowCoordinates.getX(), visualBounds.getMinX(), maximumX));
+            primaryStage.setY(ScreenBoundsCalculator.clampCoordinate(
+                    windowCoordinates.getY(), visualBounds.getMinY(), maximumY));
         }
     }
 
@@ -196,40 +198,7 @@ public class MainWindow extends UiPart<Stage> {
             return Screen.getPrimary();
         }
         List<Rectangle2D> screenBounds = screens.stream().map(Screen::getBounds).toList();
-        return screens.get(findLargestOverlapIndex(windowBounds, screenBounds));
-    }
-
-    /**
-     * Returns the index of the screen bounds that overlap {@code windowBounds} the most.
-     * Ties keep the earliest screen.
-     */
-    static int findLargestOverlapIndex(Rectangle2D windowBounds, List<Rectangle2D> screenBounds) {
-        assert !screenBounds.isEmpty() : "At least one screen must be available";
-        int largestOverlapIndex = 0;
-        double largestOverlapArea = calculateIntersectionArea(windowBounds, screenBounds.get(0));
-        for (int i = 1; i < screenBounds.size(); i++) {
-            double overlapArea = calculateIntersectionArea(windowBounds, screenBounds.get(i));
-            if (overlapArea > largestOverlapArea) {
-                largestOverlapIndex = i;
-                largestOverlapArea = overlapArea;
-            }
-        }
-        return largestOverlapIndex;
-    }
-
-    private static double calculateIntersectionArea(Rectangle2D firstBounds, Rectangle2D secondBounds) {
-        double intersectionWidth = Math.max(0,
-                Math.min(firstBounds.getMaxX(), secondBounds.getMaxX())
-                        - Math.max(firstBounds.getMinX(), secondBounds.getMinX()));
-        double intersectionHeight = Math.max(0,
-                Math.min(firstBounds.getMaxY(), secondBounds.getMaxY())
-                        - Math.max(firstBounds.getMinY(), secondBounds.getMinY()));
-        return intersectionWidth * intersectionHeight;
-    }
-
-    private double clampCoordinate(double savedCoordinate, double minimumCoordinate, double maximumCoordinate) {
-        double usableMaximum = Math.max(minimumCoordinate, maximumCoordinate);
-        return Math.max(minimumCoordinate, Math.min(savedCoordinate, usableMaximum));
+        return screens.get(ScreenBoundsCalculator.findLargestOverlapIndex(windowBounds, screenBounds));
     }
 
     /**
@@ -242,7 +211,8 @@ public class MainWindow extends UiPart<Stage> {
         if (windowCoordinates == null) {
             targetScreen = Screen.getPrimary();
         } else {
-            targetScreen = Screen.getScreensForRectangle(windowCoordinates.getX(), windowCoordinates.getY(), 1, 1)
+            targetScreen = Screen.getScreensForRectangle(windowCoordinates.getX(), windowCoordinates.getY(),
+                    SAVED_ORIGIN_PROBE_SIZE, SAVED_ORIGIN_PROBE_SIZE)
                     .stream()
                     .findFirst()
                     .orElse(Screen.getPrimary());
@@ -252,34 +222,15 @@ public class MainWindow extends UiPart<Stage> {
 
     private Rectangle2D getScaleAdjustedVisualBounds(Screen targetScreen) {
         GraphicsDevice[] graphicsDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-        if (Screen.getScreens().size() != 1 || graphicsDevices.length != 1) {
+        int screenCount = Screen.getScreens().size();
+        if (!ScreenBoundsCalculator.canCorrectOutputScale(screenCount, graphicsDevices.length)) {
             return targetScreen.getVisualBounds();
         }
         DisplayMode displayMode = graphicsDevices[0].getDisplayMode();
-        return adjustVisualBoundsForOutputScale(targetScreen.getBounds(), targetScreen.getVisualBounds(),
+        return ScreenBoundsCalculator.adjustVisualBoundsForOutputScale(
+                targetScreen.getBounds(), targetScreen.getVisualBounds(),
                 targetScreen.getOutputScaleX(), targetScreen.getOutputScaleY(),
                 displayMode.getWidth(), displayMode.getHeight());
-    }
-
-    /**
-     * Returns {@code visualBounds} with the output scale removed from each axis whose screen size exceeds the
-     * physical display, which indicates that the axis was reported in physical rather than logical pixels.
-     */
-    static Rectangle2D adjustVisualBoundsForOutputScale(Rectangle2D screenBounds, Rectangle2D visualBounds,
-            double outputScaleX, double outputScaleY, int physicalWidth, int physicalHeight) {
-        assert outputScaleX > 0 : "Output scale must be positive";
-        assert outputScaleY > 0 : "Output scale must be positive";
-        assert physicalWidth > 0 : "Physical display width must be positive";
-        assert physicalHeight > 0 : "Physical display height must be positive";
-
-        boolean widthExceedsPhysicalDisplay = screenBounds.getWidth() * outputScaleX
-                > physicalWidth + SCREEN_SIZE_TOLERANCE;
-        boolean heightExceedsPhysicalDisplay = screenBounds.getHeight() * outputScaleY
-                > physicalHeight + SCREEN_SIZE_TOLERANCE;
-        double correctionX = widthExceedsPhysicalDisplay ? outputScaleX : 1;
-        double correctionY = heightExceedsPhysicalDisplay ? outputScaleY : 1;
-        return new Rectangle2D(visualBounds.getMinX() / correctionX, visualBounds.getMinY() / correctionY,
-                visualBounds.getWidth() / correctionX, visualBounds.getHeight() / correctionY);
     }
 
     /**
@@ -356,6 +307,7 @@ public class MainWindow extends UiPart<Stage> {
                     studentProfilePanel.setProfile(studentProfile);
                     studentRosterPanel.selectStudent(studentId);
                 }, () -> {
+                    logger.fine("Displayed student profile no longer exists; clearing it.");
                     studentProfilePanel.clearProfile();
                     studentRosterPanel.clearSelection();
                     displayedProfileStudentId = Optional.empty();

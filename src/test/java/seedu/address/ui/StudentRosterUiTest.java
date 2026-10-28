@@ -59,6 +59,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import seedu.address.MainApp;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
@@ -1297,87 +1298,6 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void adjustVisualBoundsForOutputScale_physicalBoundsReportedAsLogical_correctsBounds() {
-        Rectangle2D physicalBoundsReportedAsLogical = new Rectangle2D(0, 0, 1280, 720);
-
-        Rectangle2D adjustedBounds = MainWindow.adjustVisualBoundsForOutputScale(
-                physicalBoundsReportedAsLogical, physicalBoundsReportedAsLogical, 1.5, 1.5, 1280, 720);
-
-        assertEquals(new Rectangle2D(0, 0, 1280 / 1.5, 720 / 1.5), adjustedBounds);
-    }
-
-    @Test
-    public void adjustVisualBoundsForOutputScale_logicalBoundsAlreadyScaled_keepsBounds() {
-        Rectangle2D logicalBounds = new Rectangle2D(0, 0, 1280 / 1.5, 720 / 1.5);
-
-        Rectangle2D adjustedBounds = MainWindow.adjustVisualBoundsForOutputScale(
-                logicalBounds, logicalBounds, 1.5, 1.5, 1280, 720);
-
-        assertEquals(logicalBounds, adjustedBounds);
-    }
-
-    @Test
-    public void adjustVisualBoundsForOutputScale_onlyHeightExceedsPhysicalDisplay_correctsHeightOnly() {
-        Rectangle2D partlyPhysicalBounds = new Rectangle2D(0, 0, 1280 / 1.5, 720);
-
-        Rectangle2D adjustedBounds = MainWindow.adjustVisualBoundsForOutputScale(
-                partlyPhysicalBounds, partlyPhysicalBounds, 1.5, 1.5, 1280, 720);
-
-        assertEquals(new Rectangle2D(0, 0, 1280 / 1.5, 720 / 1.5), adjustedBounds);
-    }
-
-    @Test
-    public void adjustVisualBoundsForOutputScale_onlyWidthExceedsPhysicalDisplay_correctsWidthOnly() {
-        Rectangle2D partlyPhysicalBounds = new Rectangle2D(0, 0, 1280, 720 / 1.5);
-
-        Rectangle2D adjustedBounds = MainWindow.adjustVisualBoundsForOutputScale(
-                partlyPhysicalBounds, partlyPhysicalBounds, 1.5, 1.5, 1280, 720);
-
-        assertEquals(new Rectangle2D(0, 0, 1280 / 1.5, 720 / 1.5), adjustedBounds);
-    }
-
-    @Test
-    public void adjustVisualBoundsForOutputScale_invalidScaleOrDisplaySize_throwsAssertionError() {
-        Rectangle2D bounds = new Rectangle2D(0, 0, 1280, 720);
-
-        assertThrows(AssertionError.class, () ->
-                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 0, 1, 1280, 720));
-        assertThrows(AssertionError.class, () ->
-                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 1, 0, 1280, 720));
-        assertThrows(AssertionError.class, () ->
-                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 1, 1, 0, 720));
-        assertThrows(AssertionError.class, () ->
-                MainWindow.adjustVisualBoundsForOutputScale(bounds, bounds, 1, 1, 1280, 0));
-    }
-
-    @Test
-    public void findLargestOverlapIndex_windowSpansScreens_returnsScreenWithLargestOverlap() {
-        Rectangle2D leftScreen = new Rectangle2D(0, 0, 1920, 1080);
-        Rectangle2D rightScreen = new Rectangle2D(1920, 0, 1920, 1080);
-        Rectangle2D mostlyRightWindow = new Rectangle2D(1800, 100, 800, 600);
-
-        assertEquals(1, MainWindow.findLargestOverlapIndex(mostlyRightWindow, List.of(leftScreen, rightScreen)));
-        assertEquals(0, MainWindow.findLargestOverlapIndex(mostlyRightWindow, List.of(rightScreen, leftScreen)));
-    }
-
-    @Test
-    public void findLargestOverlapIndex_equalOrNoOverlap_returnsFirstScreen() {
-        Rectangle2D leftScreen = new Rectangle2D(0, 0, 1920, 1080);
-        Rectangle2D rightScreen = new Rectangle2D(1920, 0, 1920, 1080);
-        Rectangle2D evenlySplitWindow = new Rectangle2D(1520, 100, 800, 600);
-        Rectangle2D offScreenWindow = new Rectangle2D(5000, 5000, 800, 600);
-
-        assertEquals(0, MainWindow.findLargestOverlapIndex(evenlySplitWindow, List.of(leftScreen, rightScreen)));
-        assertEquals(0, MainWindow.findLargestOverlapIndex(offScreenWindow, List.of(leftScreen, rightScreen)));
-    }
-
-    @Test
-    public void findLargestOverlapIndex_noScreens_throwsAssertionError() {
-        assertThrows(AssertionError.class, () ->
-                MainWindow.findLargestOverlapIndex(new Rectangle2D(0, 0, 800, 600), List.of()));
-    }
-
-    @Test
     public void mainWindow_minimumSize_keepsPrimaryWorkspaceAreasVisible() throws Exception {
         TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
 
@@ -1552,6 +1472,129 @@ public class StudentRosterUiTest {
             assertTrue(getListView(mainWindow.getStudentRosterPanel()).getItems().isEmpty());
             assertTrue(getListView(mainWindow.getStudentRosterPanel()).getSelectionModel().isEmpty());
             return null;
+        });
+    }
+
+    // Branch coverage of MainWindow command-result handling: help requested versus not, window already open.
+    @Test
+    public void executeCommand_helpResult_opensHelpWindowOnce() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()),
+                new CommandResult("Help shown.", true, false), Optional.empty());
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            long windowsBeforeHelp = countShowingWindows();
+
+            mainWindow.executeCommand("help");
+            long windowsAfterFirstHelp = countShowingWindows();
+            mainWindow.executeCommand("help");
+            long windowsAfterSecondHelp = countShowingWindows();
+
+            try {
+                assertEquals(windowsBeforeHelp + 1, windowsAfterFirstHelp);
+                assertEquals(windowsAfterFirstHelp, windowsAfterSecondHelp);
+            } finally {
+                mainWindow.handleHelp();
+                closeShowingWindows();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_exitResult_savesWindowSettingsAndHidesWindow() throws Exception {
+        RecordingLogic logic = new RecordingLogic(new CommandResult("Exiting.", false, true));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.show();
+
+            mainWindow.executeCommand("exit");
+
+            assertFalse(stage.isShowing());
+            assertEquals(stage.getWidth(), logic.savedGuiSettings.getWindowWidth());
+            assertEquals(stage.getHeight(), logic.savedGuiSettings.getWindowHeight());
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_ordinaryResult_keepsWindowOpenAndHelpClosed() throws Exception {
+        RecordingLogic logic = new RecordingLogic(new CommandResult("Done."));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.show();
+            long windowsBeforeCommand = countShowingWindows();
+
+            mainWindow.executeCommand("list");
+
+            try {
+                assertTrue(stage.isShowing());
+                assertEquals(windowsBeforeCommand, countShowingWindows());
+                assertNull(logic.savedGuiSettings);
+                assertSame(stage, mainWindow.getPrimaryStage());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_helpAcceleratorPressedInCommandBox_opensHelpWindow() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            TextField commandTextField = (TextField) mainWindow.getPrimaryStage().getScene()
+                    .lookup("#commandTextField");
+            long windowsBeforeHelp = countShowingWindows();
+
+            pressKey(commandTextField, KeyCode.F1);
+
+            try {
+                assertEquals(windowsBeforeHelp + 1, countShowingWindows());
+            } finally {
+                closeShowingWindows();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_otherKeyPressedInCommandBox_doesNotOpenHelpWindow() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            TextField commandTextField = (TextField) mainWindow.getPrimaryStage().getScene()
+                    .lookup("#commandTextField");
+            long windowsBeforeKey = countShowingWindows();
+
+            pressKey(commandTextField, KeyCode.F2);
+
+            assertEquals(windowsBeforeKey, countShowingWindows());
+            return null;
+        });
+    }
+
+    private long countShowingWindows() {
+        return Window.getWindows().stream().filter(Window::isShowing).count();
+    }
+
+    private void closeShowingWindows() {
+        new ArrayList<>(Window.getWindows()).forEach(window -> {
+            if (window instanceof Stage stage) {
+                stage.hide();
+            }
         });
     }
 
@@ -1782,6 +1825,20 @@ public class StudentRosterUiTest {
         @Override
         public void setGuiSettings(GuiSettings guiSettings) {
             throw new AssertionError("This method should not be called.");
+        }
+    }
+
+    /** A {@code TestLogic} that records the GUI settings saved when the window closes. */
+    private static class RecordingLogic extends TestLogic {
+        private GuiSettings savedGuiSettings;
+
+        RecordingLogic(CommandResult commandResult) {
+            super(new StudentRoster(List.of()), new StudentRoster(List.of()), commandResult, Optional.empty());
+        }
+
+        @Override
+        public void setGuiSettings(GuiSettings guiSettings) {
+            savedGuiSettings = guiSettings;
         }
     }
 }
