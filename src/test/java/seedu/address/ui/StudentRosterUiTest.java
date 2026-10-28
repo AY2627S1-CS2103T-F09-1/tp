@@ -1057,6 +1057,7 @@ public class StudentRosterUiTest {
             return null;
         });
     }
+
     @Test
     public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
         List<String> executedCommands = new ArrayList<>();
