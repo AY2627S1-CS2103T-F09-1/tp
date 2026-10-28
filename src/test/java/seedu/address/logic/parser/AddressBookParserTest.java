@@ -91,8 +91,10 @@ public class AddressBookParserTest {
     public void parseCommand_mistypedEditNoteTarget_suggestsCorrectCommand() {
         List<String> mistypedTargets = List.of("notes", "nte", "nots", "no");
         for (String mistypedTarget : mistypedTargets) {
-            String expectedMessage = String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
-                    mistypedTarget, EditNoteCommand.COMMAND_FORMAT);
+            String expectedMessage = Messages.withFormat(
+                    String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
+                            mistypedTarget, "edit note"),
+                    EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
             Executable parseMistypedCommand = () -> parser.parseCommand(
                     "edit " + mistypedTarget + " 1 2 nt/Corrected summary.");
             assertThrows(ParseException.class, expectedMessage, parseMistypedCommand);

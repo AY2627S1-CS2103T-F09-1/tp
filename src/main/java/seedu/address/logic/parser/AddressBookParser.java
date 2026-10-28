@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.withFormat;
 
 import java.util.Set;
 import java.util.logging.Logger;
@@ -120,8 +121,10 @@ public class AddressBookParser {
             return new EditNoteCommandParser().parse(arguments);
         }
         if (isMistypedNoteTarget(editTarget)) {
-            throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
-                    editTarget, EditNoteCommand.COMMAND_FORMAT));
+            String suggestion = EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET;
+            throw new ParseException(withFormat(
+                    String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, editTarget, suggestion),
+                    EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
         }
         return new EditCommandParser().parse(arguments);
     }
