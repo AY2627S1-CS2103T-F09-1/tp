@@ -116,4 +116,10 @@ public class EditNoteCommandParserTest {
                 Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
                         EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
     }
+
+    @Test
+    public void parse_notePrefixWithoutLeadingSpace_keptAsText() {
+        assertParseSuccess(parser, "note 1 1 nt/Remember (nt/) notation",
+                new EditNoteCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, "Remember (nt/) notation"));
+    }
 }

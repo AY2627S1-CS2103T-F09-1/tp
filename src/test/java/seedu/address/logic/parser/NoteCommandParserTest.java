@@ -95,4 +95,10 @@ public class NoteCommandParserTest {
                 Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
                         NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
     }
+
+    @Test
+    public void parse_notePrefixWithoutLeadingSpace_keptAsText() {
+        assertParseSuccess(parser, " 1 nt/Remember (nt/) and \"nt/\" notation",
+                new NoteCommand(INDEX_FIRST_PERSON, "Remember (nt/) and \"nt/\" notation"));
+    }
 }
