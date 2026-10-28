@@ -133,4 +133,40 @@ public class DeleteCommandParserTest {
         assertParseFailure(parser, "note 1 2147483648",
                 "NOTE_NUMBER is too large. Enter a note number shown in the profile.");
     }
+
+    // Boundary value analysis on argument count (1 to 5) crossed with the position of the confirmation flag.
+    @Test
+    public void parse_flagInEachPositionOfFourArguments_throwsInvalidFlag() {
+        String[] misplacedFlags = {"note /confirm 1 2", "note 1 /confirm 2"};
+
+        for (String misplacedFlag : misplacedFlags) {
+            assertParseFailure(parser, misplacedFlag,
+                    DeleteCommandParser.MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
+        }
+    }
+
+    @Test
+    public void parse_fiveArgumentsWithMisplacedFlag_reportsExtraArgumentsFirst() {
+        assertParseFailure(parser, "note /confirm 1 2 extra",
+                DeleteCommandParser.MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
+    }
+
+    // Error precedence: the argument count is checked before any index is parsed.
+    @Test
+    public void parse_missingNoteNumberAndInvalidStudentIndex_reportsMissingNoteNumber() {
+        assertParseFailure(parser, "note abc", DeleteCommandParser.MESSAGE_MISSING_NOTE_NUMBER);
+    }
+
+    @Test
+    public void parse_confirmationFlagAloneOrRepeatedForStudent_throwsSpecificParseException() {
+        assertParseFailure(parser, "/confirm", DeleteCommandParser.MESSAGE_MISSING_STUDENT_INDEX);
+        assertParseFailure(parser, "/confirm /confirm",
+                DeleteCommandParser.MESSAGE_INVALID_STUDENT_CONFIRMATION_FLAG);
+    }
+
+    @Test
+    public void parse_noteTargetAfterStudentIndex_isTreatedAsSecondStudentIndex() {
+        assertParseFailure(parser, "1 note", DeleteCommandParser.MESSAGE_TOO_MANY_STUDENT_INDICES);
+    }
+
 }
