@@ -62,6 +62,7 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import seedu.address.MainApp;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -1223,6 +1224,24 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void statusBarFooter_dataFileInHomeFolder_showsPathRelativeToHomeFolder() throws Exception {
+        Path dataFile = HomeFolder.resolve("data", "tutortrack.json");
+
+        String shownLocation = onFxThread(() -> getSaveLocationText(new StatusBarFooter(dataFile)));
+
+        assertEquals(Path.of(".", "data", "tutortrack.json").toString(), shownLocation);
+    }
+
+    @Test
+    public void statusBarFooter_dataFileOutsideHomeFolder_showsFullPath() throws Exception {
+        Path dataFile = Path.of("").toAbsolutePath().getRoot().resolve("other-folder").resolve("tutortrack.json");
+
+        String shownLocation = onFxThread(() -> getSaveLocationText(new StatusBarFooter(dataFile)));
+
+        assertEquals(dataFile.toString(), shownLocation);
+    }
+
+    @Test
     public void mainWindow_largeSavedSize_clampsToTargetScreenAndKeepsResponsiveMinimums() throws Exception {
         TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
 
@@ -1802,6 +1821,10 @@ public class StudentRosterUiTest {
                     OffsetDateTime.parse("2026-09-18T18:35:00+08:00").minusDays(i)));
         }
         return notes;
+    }
+
+    private String getSaveLocationText(StatusBarFooter statusBarFooter) {
+        return ((Label) statusBarFooter.getRoot().lookup("#saveLocationStatus")).getText();
     }
 
     private ScrollEvent scrollEvent() {
