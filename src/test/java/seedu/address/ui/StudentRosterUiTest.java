@@ -967,7 +967,7 @@ public class StudentRosterUiTest {
             mainWindow.fillInnerParts();
             mainWindow.executeCommand("view 1");
             stage.setWidth(900);
-            stage.setHeight(700);
+            stage.setHeight(800);
             stage.show();
             try {
                 stage.getScene().getRoot().applyCss();
