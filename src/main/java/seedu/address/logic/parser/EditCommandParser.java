@@ -57,13 +57,17 @@ public class EditCommandParser implements Parser<EditCommand> {
     }
 
     /**
-     * Verifies that every word after the first one in {@code preamble} is a number, so that stray text is
-     * reported as such instead of as a second index.
+     * Verifies that the first word of {@code preamble} is a valid index and that every word after it is a
+     * number, so that stray text is reported as such instead of as a second index.
      *
-     * @throws ParseException If the preamble has a non-numeric word after its first word.
+     * @throws ParseException If the first word is not a valid index when more words follow it, or a later word
+     *         is not a number.
      */
     private static void verifyNoStrayText(String preamble) throws ParseException {
         String[] words = preamble.split(WHITESPACE_PATTERN);
+        if (words.length > 1) {
+            ParserUtil.parseStudentIndex(words[0], ParserUtil.INDEX_LABEL);
+        }
         for (int i = 1; i < words.length; i++) {
             if (!WHOLE_NUMBER_PATTERN.matcher(words[i]).matches()) {
                 String strayText = String.join(" ", Arrays.copyOfRange(words, i, words.length));

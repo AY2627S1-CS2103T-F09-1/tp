@@ -44,6 +44,8 @@ public class DeleteCommandParser implements Parser<Command> {
             DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
 
     private static final String WHITESPACE_PATTERN = "\\s+";
+    /** Number of words before an optional {@code /confirm}: the {@code note} target and two indices */
+    private static final int SESSION_NOTE_VALUE_COUNT = 3;
 
     /**
      * Parses the given {@code String} of arguments in the context of the delete command.
@@ -92,26 +94,32 @@ public class DeleteCommandParser implements Parser<Command> {
                     ? MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG
                     : MESSAGE_MISSING_NOTE_NUMBER);
         }
-        if (arguments.size() > 4) {
-            throw new ParseException(MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
-        }
-        boolean hasFourthArgument = arguments.size() == 4;
-        boolean isFourthArgumentFlag = hasFourthArgument
-                && DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(3));
-        boolean isFourthArgumentMistypedFlag = hasFourthArgument && !isFourthArgumentFlag
-                && DeleteCommand.CONFIRMATION_FLAG.equalsIgnoreCase(arguments.get(3));
-        boolean isFlagMisplaced = DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(1))
-                || DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(2))
-                || isFourthArgumentMistypedFlag;
-        if (isFlagMisplaced) {
+        if (isConfirmationFlagMisplaced(arguments)) {
             throw new ParseException(MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
         }
-        if (hasFourthArgument && !isFourthArgumentFlag) {
+        boolean hasFlag = DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(arguments.size() - 1));
+        int valueCount = hasFlag ? arguments.size() - 1 : arguments.size();
+        if (valueCount > SESSION_NOTE_VALUE_COUNT) {
             throw new ParseException(MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
         }
 
         Index studentIndex = ParserUtil.parseStudentIndex(arguments.get(1), STUDENT_INDEX_LABEL);
         Index noteNumber = ParserUtil.parseNoteNumber(arguments.get(2));
-        return new DeleteSessionNoteCommand(studentIndex, noteNumber, isFourthArgumentFlag);
+        return new DeleteSessionNoteCommand(studentIndex, noteNumber, hasFlag);
+    }
+
+    /**
+     * Returns true if {@code /confirm} appears anywhere but the last word, takes the place of the note number,
+     * or is mistyped as in {@code /Confirm} after both indices.
+     */
+    private static boolean isConfirmationFlagMisplaced(List<String> arguments) {
+        int lastPosition = arguments.size() - 1;
+        boolean isFlagBeforeLast = arguments.subList(0, lastPosition).contains(DeleteCommand.CONFIRMATION_FLAG);
+        String lastArgument = arguments.get(lastPosition);
+        boolean isLastArgumentMistypedFlag = arguments.size() == SESSION_NOTE_VALUE_COUNT + 1
+                && !DeleteCommand.CONFIRMATION_FLAG.equals(lastArgument)
+                && DeleteCommand.CONFIRMATION_FLAG.equalsIgnoreCase(lastArgument);
+        boolean isFlagInNoteNumberSlot = DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(2));
+        return isFlagBeforeLast || isFlagInNoteNumberSlot || isLastArgumentMistypedFlag;
     }
 }

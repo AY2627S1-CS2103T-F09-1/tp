@@ -1,7 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -118,6 +116,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, " 1 2 hello n/Alexis Tan", expectedMessage);
         assertParseFailure(parser, " 1 hello world n/Alexis Tan",
                 withEditFormat("Unexpected text before the first parameter: hello world."));
+        assertParseFailure(parser, " x hello n/Alexis Tan", "INDEX must be a positive whole number, e.g. 1.");
     }
 
     @Test
@@ -132,8 +131,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_duplicatePrefix_failure() {
-        String expectedMessage =
-                withEditFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME, PREFIX_EMAIL));
+        String expectedMessage = withEditFormat("n/ and e/ must each appear at most once.");
 
         assertParseFailure(parser, " 1 n/Alexis Tan n/Blair Tan e/a@example.com e/b@example.com",
                 expectedMessage);

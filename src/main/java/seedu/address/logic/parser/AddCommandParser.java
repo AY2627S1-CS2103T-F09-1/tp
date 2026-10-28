@@ -73,8 +73,10 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         Optional<Prefix> missingPrefix = findMissingRequiredPrefix(argMultimap);
         if (missingPrefix.isPresent()) {
-            throw new ParseException(withAddFormat(String.format(MESSAGE_MISSING_VALUE, missingPrefix.get(),
-                    REQUIRED_PLACEHOLDERS.get(missingPrefix.get()))));
+            String placeholder = REQUIRED_PLACEHOLDERS.get(missingPrefix.get());
+            assert placeholder != null : "Every required prefix needs a placeholder in REQUIRED_PLACEHOLDERS";
+            throw new ParseException(withAddFormat(
+                    String.format(MESSAGE_MISSING_VALUE, missingPrefix.get(), placeholder)));
         }
 
         try {

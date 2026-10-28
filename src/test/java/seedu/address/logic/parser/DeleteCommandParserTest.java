@@ -94,8 +94,7 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_extraSessionNoteArgs_throwsSpecificParseException() {
-        String[] invalidArguments = {"note 1 2 3", "note 1 2 3 4", "note 1 2 extra extra",
-            "note 1 2 /confirm /confirm"};
+        String[] invalidArguments = {"note 1 2 3", "note 1 2 3 4", "note 1 2 extra extra", "note 1 2 3 /confirm"};
 
         for (String invalidArgument : invalidArguments) {
             assertParseFailure(parser, invalidArgument, DeleteCommandParser.MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
@@ -115,7 +114,7 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_misplacedOrInvalidConfirmationFlag_throwsSpecificParseException() {
         String[] invalidArguments = {"note /confirm", "note /confirm 2", "note 1 /confirm", "note 1 /confirm 2",
-            "note 1 2 /Confirm"};
+            "note 1 2 /Confirm", "note 1 2 /confirm /confirm", "note 1 2 /confirm extra"};
 
         for (String invalidArgument : invalidArguments) {
             assertParseFailure(parser, invalidArgument,

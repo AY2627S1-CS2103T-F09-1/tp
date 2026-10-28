@@ -1,6 +1,6 @@
 package seedu.address.logic;
 
-import java.util.stream.Collectors;
+import java.util.List;
 import java.util.stream.Stream;
 
 import seedu.address.logic.parser.Prefix;
@@ -18,7 +18,8 @@ public class Messages {
             "Student index [%1$d] is outside the roster. Enter a student index from 1 to %2$d.";
     public static final String MESSAGE_FORMAT = "Format: %1$s";
     public static final String MESSAGE_EXAMPLE = "Example: %1$s";
-    public static final String MESSAGE_DUPLICATE_FIELDS = "%1$s must appear at most once.";
+    public static final String MESSAGE_DUPLICATE_FIELD = "%1$s must appear at most once.";
+    public static final String MESSAGE_DUPLICATE_FIELDS = "%1$s and %2$s must each appear at most once.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -26,10 +27,14 @@ public class Messages {
     public static String getErrorMessageForDuplicatePrefixes(Prefix... duplicatePrefixes) {
         assert duplicatePrefixes.length > 0;
 
-        String duplicateFields = Stream.of(duplicatePrefixes).map(Prefix::toString).distinct()
-                .collect(Collectors.joining(" "));
+        List<String> duplicateFields = Stream.of(duplicatePrefixes).map(Prefix::toString).distinct().toList();
+        if (duplicateFields.size() == 1) {
+            return String.format(MESSAGE_DUPLICATE_FIELD, duplicateFields.get(0));
+        }
 
-        return String.format(MESSAGE_DUPLICATE_FIELDS, duplicateFields);
+        int lastPosition = duplicateFields.size() - 1;
+        String leadingFields = String.join(", ", duplicateFields.subList(0, lastPosition));
+        return String.format(MESSAGE_DUPLICATE_FIELDS, leadingFields, duplicateFields.get(lastPosition));
     }
 
     /**
