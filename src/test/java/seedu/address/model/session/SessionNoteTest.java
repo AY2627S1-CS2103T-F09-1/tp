@@ -77,6 +77,24 @@ public class SessionNoteTest {
     }
 
     @Test
+    public void countTextLength_surroundingWhitespaceAndSurrogatePairs_countsStrippedCodePoints() {
+        assertEquals(0, SessionNote.countTextLength("   "));
+        assertEquals(3, SessionNote.countTextLength("  a b  "));
+        assertEquals(2, SessionNote.countTextLength("😀😀"));
+    }
+
+    @Test
+    public void hasNonPrintableCharacter_internalControlCharacter_returnsTrue() {
+        assertTrue(SessionNote.hasNonPrintableCharacter("Column\tvalue"));
+        assertTrue(SessionNote.hasNonPrintableCharacter("Line one Line two"));
+    }
+
+    @Test
+    public void hasNonPrintableCharacter_surroundingWhitespaceOnly_returnsFalse() {
+        assertFalse(SessionNote.hasNonPrintableCharacter("\tReviewed indices.\n"));
+    }
+
+    @Test
     public void isValidText_ordinarySymbolsAndUnicode_returnsTrue() {
         assertTrue(SessionNote.isValidText("Next: try x^2 - 4x + 4 = 0; HW p.12 #3-7 @ 50% / 2 hrs"));
         assertTrue(SessionNote.isValidText("Revised 分数 and café vocabulary"));

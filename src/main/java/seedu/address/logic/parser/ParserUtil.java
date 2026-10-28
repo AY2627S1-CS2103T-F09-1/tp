@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
@@ -25,6 +26,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -43,6 +45,13 @@ public class ParserUtil {
             "%1$s is too large. Enter a note number shown in the profile.";
     public static final String MESSAGE_MISSING_INDEX = "Missing %1$s.";
     public static final String MESSAGE_TOO_MANY_INDICES = "%1$s takes only one %2$s.";
+    public static final String MESSAGE_EMPTY_NOTE = "Session note is empty. Enter the note text after " + PREFIX_NOTE
+            + ".";
+    public static final String MESSAGE_NOTE_TOO_LONG = "Session note has %1$d characters, more than the "
+            + SessionNote.MAX_TEXT_LENGTH + "-character limit. Shorten it to " + SessionNote.MAX_TEXT_LENGTH
+            + " characters or fewer.";
+    public static final String MESSAGE_NOTE_NON_PRINTABLE = "Session note contains a tab, line break or other"
+            + " non-printable character. Enter the note on one line without them.";
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final List<Prefix> LEGACY_PERSON_PREFIXES = List.of(PREFIX_ADDRESS, PREFIX_TAG);
@@ -126,6 +135,29 @@ public class ParserUtil {
             throw new ParseException(String.format(tooLargeMessage, label));
         }
         throw new ParseException(String.format(MESSAGE_INVALID_INDEX, label));
+    }
+
+    /**
+     * Returns {@code noteText} unchanged after checking that it is valid session-note text.
+     * Surrounding whitespace is kept because {@code SessionNote} removes it when the note is created.
+     *
+     * @throws ParseException If the text is empty, longer than {@link SessionNote#MAX_TEXT_LENGTH} characters, or
+     *         contains a non-printable character; the message names the rule that was broken.
+     */
+    public static String parseNoteText(String noteText) throws ParseException {
+        requireNonNull(noteText);
+        int length = SessionNote.countTextLength(noteText);
+        if (length == 0) {
+            throw new ParseException(MESSAGE_EMPTY_NOTE);
+        }
+        if (length > SessionNote.MAX_TEXT_LENGTH) {
+            throw new ParseException(String.format(MESSAGE_NOTE_TOO_LONG, length));
+        }
+        if (SessionNote.hasNonPrintableCharacter(noteText)) {
+            throw new ParseException(MESSAGE_NOTE_NON_PRINTABLE);
+        }
+        assert SessionNote.isValidText(noteText) : "Note text passed every rule but is still invalid";
+        return noteText;
     }
 
     private static boolean isWholeNumberAboveIntegerRange(String value) {
