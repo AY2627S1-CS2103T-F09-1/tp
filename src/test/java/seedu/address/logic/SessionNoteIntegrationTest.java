@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.ParserUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -79,8 +80,11 @@ public class SessionNoteIntegrationTest {
 
         assertThrows(CommandException.class, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 3, 2), ()
                 -> logic.execute("note 3 nt/Reviewed indices."));
-        assertThrows(ParseException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> logic
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_EMPTY_NOTE, () -> logic
                 .execute("note 1 nt/   "));
+        int overLimit = SessionNote.MAX_TEXT_LENGTH + 1;
+        assertThrows(ParseException.class, String.format(ParserUtil.MESSAGE_NOTE_TOO_LONG, overLimit), () -> logic
+                .execute("edit note 2 1 nt/" + "a".repeat(overLimit)));
 
         assertEquals(savedData, Files.readString(dataFile));
         assertEquals(List.of(0, 1), model.getStudentRoster().getEntries().stream()

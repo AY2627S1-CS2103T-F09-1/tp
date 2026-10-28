@@ -8,7 +8,6 @@ import java.util.Optional;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditNoteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.session.SessionNote;
 
 /**
  * Parses input arguments and creates an {@link EditNoteCommand} object.
@@ -56,10 +55,7 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
                 preamble[STUDENT_INDEX_POSITION], ParserUtil.STUDENT_INDEX_LABEL);
         Index noteNumber = ParserUtil.parseNoteNumber(preamble[NOTE_NUMBER_POSITION]);
         verifyNoDuplicateNotePrefix(argMultimap);
-        if (!SessionNote.isValidText(noteText.get())) {
-            throw new ParseException(SessionNote.MESSAGE_CONSTRAINTS);
-        }
-        return new EditNoteCommand(studentIndex, noteNumber, noteText.get());
+        return new EditNoteCommand(studentIndex, noteNumber, ParserUtil.parseNoteText(noteText.get()));
     }
 
     /**
