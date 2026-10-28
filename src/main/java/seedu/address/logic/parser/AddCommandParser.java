@@ -44,10 +44,10 @@ public class AddCommandParser implements Parser<AddCommand> {
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
 
-        Optional<String> unknownPrefix = ParserUtil.findUnknownPrefix(args, SUPPORTED_PREFIXES);
-        if (unknownPrefix.isPresent()) {
+        Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
+        if (legacyPrefix.isPresent()) {
             throw new ParseException(withAddFormat(
-                    String.format(MESSAGE_UNKNOWN_PARAMETER, unknownPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
+                    String.format(MESSAGE_UNKNOWN_PARAMETER, legacyPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
         }
 
         if (!argMultimap.getPreamble().isEmpty()) {

@@ -12,9 +12,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
@@ -43,27 +43,18 @@ public class ParserUtil {
             "%1$s is too large. Enter a note number shown in the profile.";
     public static final String MESSAGE_MISSING_INDEX = "Missing %1$s.";
     public static final String MESSAGE_TOO_MANY_INDICES = "%1$s takes only one %2$s.";
-
-    private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)([a-z][a-z0-9_-]{0,2})/");
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
     private static final String WHITESPACE_PATTERN = "\\s+";
+    private static final List<Prefix> LEGACY_PERSON_PREFIXES = List.of(PREFIX_ADDRESS, PREFIX_TAG);
 
     /**
-     * Returns the first prefix-like token in {@code args} that is not in {@code supportedPrefixes}.
+     * Returns the first legacy person prefix present in {@code arguments}.
      */
-    public static Optional<String> findUnknownPrefix(String args, Collection<Prefix> supportedPrefixes) {
-        requireNonNull(args);
-        requireNonNull(supportedPrefixes);
-        Matcher matcher = PREFIX_PATTERN.matcher(args);
-        while (matcher.find()) {
-            String prefix = matcher.group(1) + "/";
-            boolean isSupported = supportedPrefixes.stream()
-                    .anyMatch(supportedPrefix -> supportedPrefix.toString().equals(prefix));
-            if (!isSupported) {
-                return Optional.of(prefix);
-            }
-        }
-        return Optional.empty();
+    public static Optional<Prefix> findLegacyPersonPrefix(ArgumentMultimap arguments) {
+        requireNonNull(arguments);
+        return LEGACY_PERSON_PREFIXES.stream()
+                .filter(prefix -> arguments.getValue(prefix).isPresent())
+                .findFirst();
     }
 
     /**

@@ -7,9 +7,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
@@ -26,12 +24,6 @@ import seedu.address.model.student.Subject;
  */
 public class EditCommandParser implements Parser<EditCommand> {
 
-    private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
-            PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL);
-    private static final String MESSAGE_SUPPORTED_PARAMETERS = SUPPORTED_PREFIXES.stream()
-            .map(Prefix::toString)
-            .collect(Collectors.joining(" "));
-
     /**
      * Parses {@code args} as a student roster index and one or more replacement fields.
      *
@@ -42,10 +34,10 @@ public class EditCommandParser implements Parser<EditCommand> {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
 
-        Optional<String> unknownPrefix = ParserUtil.findUnknownPrefix(args, SUPPORTED_PREFIXES);
-        if (unknownPrefix.isPresent()) {
+        Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
+        if (legacyPrefix.isPresent()) {
             throw new ParseException(withEditFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
-                    unknownPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
+                    legacyPrefix.get(), AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)));
         }
 
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), EditCommand.COMMAND_WORD,

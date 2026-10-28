@@ -69,6 +69,16 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_prefixLikeTextInSubjectAndLevel_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Mathematics nt/Science"));
+        descriptor.setCurrentLevel(new CurrentLevel("Secondary nt/4"));
+
+        assertParseSuccess(parser, " 1 sub/Mathematics nt/Science l/Secondary nt/4",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_emptyEmail_success() {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         descriptor.setParentEmail(Optional.empty());
@@ -120,8 +130,7 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_unknownOrLegacyPrefix_failure() {
-        assertParseFailure(parser, " 1 n/Alexis Tan x/value", unknownParameterMessage("x/"));
+    public void parse_legacyPrefix_failure() {
         assertParseFailure(parser, " 1 a/Block 1", unknownParameterMessage("a/"));
         assertParseFailure(parser, " 1 t/friend", unknownParameterMessage("t/"));
     }
@@ -132,7 +141,7 @@ public class EditCommandParserTest {
 
     private static String unknownParameterMessage(String prefix) {
         return withEditFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
-                prefix, MESSAGE_SUPPORTED_PARAMETERS));
+                prefix, AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS));
     }
 
     private static EditStudentDescriptor descriptor(String name, String phone, Optional<String> email,

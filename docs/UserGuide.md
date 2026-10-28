@@ -103,9 +103,10 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * **Student name:** Names must begin with a letter or number and may contain only letters, numbers, spaces, apostrophes, periods, and hyphens.
 * **Optional detail:** Parent or guardian email may be included with `e/`.
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
+* **Subject and level text:** Text that looks like a prefix other than a command parameter or obsolete AddressBook `a/` or `t/` parameter is kept as part of a subject or current level. The obsolete `a/` and `t/` parameters are rejected with an error instead.
 * **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
 * **After a successful addition:** TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
-* **Invalid input:** Missing values, invalid values, duplicate students, text before the first parameter, and unknown parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
+* **Invalid input:** Missing values, invalid values, duplicate students, text before the first parameter, and obsolete AddressBook parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
 
 Examples:
 
@@ -122,6 +123,7 @@ Format: `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/
 * Supply at least one field. Details you omit keep their existing values.
 * Use `e/` without a value to remove the parent or guardian email. Other supplied fields cannot be empty.
 * The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order.
+* Text that looks like a prefix other than a command parameter or obsolete AddressBook `a/` or `t/` parameter is kept as part of a supplied subject or current level. The obsolete `a/` and `t/` parameters are rejected with an error instead.
 * Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts, preserves that student's internal identity and session notes, and keeps an open profile selected on that student.
 
 Examples:
@@ -130,7 +132,7 @@ Examples:
 * `edit 1 e/`
 * `edit 3 n/Devika Patel sub/English Literature`
 
-A successful edit reports the student's updated name, subject, and current level, refreshes the roster and any open profile, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student. Invalid indices, missing edit fields, repeated or unknown parameters, and invalid values leave the student, session notes, open profile, and saved data unchanged. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original record.
+A successful edit reports the student's updated name, subject, and current level, refreshes the roster and any open profile, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student. Invalid indices, missing edit fields, repeated or obsolete AddressBook parameters, and invalid values leave the student, session notes, open profile, and saved data unchanged. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original record.
 
 ### Viewing the student roster
 

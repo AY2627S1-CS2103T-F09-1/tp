@@ -190,7 +190,7 @@ Because every parser finishes before `LogicManager` executes the command, a synt
 
 ### Adding a student
 
-The following sequence shows only the main successful `add` path. `AddressBookParser` delegates to `AddCommandParser`, which constructs a validated `Student`. `AddCommand` checks duplicate identity through `Model#hasStudent` before calling `Model#addStudent`, and `LogicManager` saves the changed address book. Invalid, missing, repeated, or unsupported parameters produce a parse error; a duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
+The following sequence shows only the main successful `add` path. `AddressBookParser` delegates to `AddCommandParser`, which constructs a validated `Student`. `AddCommand` checks duplicate identity through `Model#hasStudent` before calling `Model#addStudent`, and `LogicManager` saves the changed address book. Invalid, missing, repeated, or obsolete AddressBook `a/` or `t/` parameters produce a parse error; other prefix-like text remains in a subject or level value. A duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
 
 ![Student add sequence diagram](images/AddStudentSequenceDiagram.png)
 
@@ -206,7 +206,7 @@ Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `s
 
 ### Student editing
 
-`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated or unknown prefixes, and applies the same student value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization set, including legacy person prefixes that must be recognized and rejected consistently. An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
+`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated fields and obsolete AddressBook `a/` or `t/` parameters, and applies the same student value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization set: it recognizes student fields and those obsolete prefixes, while other prefix-like text remains in its field value. An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
 
 The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile.
 
