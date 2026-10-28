@@ -163,14 +163,7 @@ public class StudentRosterUiTest {
                 stage.getScene().getRoot().layout();
 
                 ListView<StudentRosterEntry> listView = getListView(panel);
-                Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
-                assertNotNull(virtualFlow);
-                ScrollBar verticalScrollBar = virtualFlow.getChildrenUnmodifiable().stream()
-                        .filter(ScrollBar.class::isInstance)
-                        .map(ScrollBar.class::cast)
-                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
-                        .findFirst()
-                        .orElseThrow();
+                ScrollBar verticalScrollBar = getVerticalScrollBar(listView);
                 assertTrue(verticalScrollBar.isVisible());
                 verticalScrollBar.setValue(verticalScrollBar.getMin());
                 stage.getScene().getRoot().layout();
@@ -811,15 +804,10 @@ public class StudentRosterUiTest {
 
     @Test
     public void selectableText_scrollEvent_scrollsSessionHistoryList() throws Exception {
-        List<SessionNote> notes = new ArrayList<>();
-        for (int i = 0; i < 12; i++) {
-            notes.add(new SessionNote("Reviewed algebra concepts in lesson " + i + ".",
-                    OffsetDateTime.parse("2026-09-18T18:35:00+08:00").minusDays(i)));
-        }
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
 
         onFxThread(() -> {
-            panel.setProfile(profile(null, notes));
+            panel.setProfile(profile(null, sessionNotes(12)));
             Stage stage = new Stage();
             try {
                 stage.setScene(new Scene(panel.getRoot(), 360, 480));
@@ -830,14 +818,7 @@ public class StudentRosterUiTest {
                 ListView<StudentProfilePanel.NumberedSessionNote> listView = getSessionNoteListView(panel);
                 SelectableText noteText = (SelectableText) listView.lookup(".session-note-text");
                 assertNotNull(noteText);
-                Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
-                assertNotNull(virtualFlow);
-                ScrollBar verticalScrollBar = virtualFlow.getChildrenUnmodifiable().stream()
-                        .filter(ScrollBar.class::isInstance)
-                        .map(ScrollBar.class::cast)
-                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
-                        .findFirst()
-                        .orElseThrow();
+                ScrollBar verticalScrollBar = getVerticalScrollBar(listView);
                 assertTrue(verticalScrollBar.isVisible());
                 double initialScrollValue = verticalScrollBar.getValue();
                 ScrollEvent downwardScrollEvent = scrollEvent();
@@ -973,6 +954,140 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void commandBox_pageKeys_requestPageScrollWithoutChangingText() throws Exception {
+        List<Integer> scrolledPages = new ArrayList<>();
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed."), scrolledPages::add));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            commandTextField.setText("note 1 nt/draft");
+            pressKey(commandTextField, KeyCode.PAGE_DOWN);
+            pressKey(commandTextField, KeyCode.PAGE_UP);
+            pressKey(commandTextField, KeyCode.LEFT);
+            assertEquals("note 1 nt/draft", commandTextField.getText());
+            return null;
+        });
+
+        assertEquals(List.of(1, -1), scrolledPages);
+    }
+
+    @Test
+    public void scrollSessionNotes_beforeLayout_doesNothing() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null, sessionNotes(12)));
+            panel.scrollSessionNotes(1);
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_pageKeysInCommandBox_scrollSessionNotes() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, sessionNotes(12))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            stage.setWidth(900);
+            stage.setHeight(800);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                stage.getScene().getRoot().layout();
+                TextField commandTextField = (TextField) stage.getScene().lookup("#commandTextField");
+                ScrollBar verticalScrollBar = getVerticalScrollBar(
+                        getSessionNoteListView(mainWindow.getStudentProfilePanel()));
+                assertTrue(verticalScrollBar.isVisible());
+                assertEquals(0, verticalScrollBar.getValue());
+
+                pressKey(commandTextField, KeyCode.PAGE_UP);
+                assertEquals(0, verticalScrollBar.getValue());
+
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                double scrolledValue = verticalScrollBar.getValue();
+                assertTrue(scrolledValue > 0);
+
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                double furtherScrolledValue = verticalScrollBar.getValue();
+                assertTrue(furtherScrolledValue > scrolledValue);
+
+                pressKey(commandTextField, KeyCode.PAGE_UP);
+                assertTrue(verticalScrollBar.getValue() < furtherScrolledValue);
+
+                // Cell heights are re-estimated while scrolling, so paging up need not mirror paging down exactly;
+                // extra presses must still stop at the top.
+                for (int i = 0; i < 5; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
+                assertEquals(0, verticalScrollBar.getValue());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+
+    @Test
+    public void mainWindow_pageKeysInCompactWindow_scrollProfilePaneBeforeSessionNotes() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, sessionNotes(12))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            stage.setWidth(900);
+            stage.setHeight(360);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                stage.getScene().getRoot().layout();
+                TextField commandTextField = (TextField) stage.getScene().lookup("#commandTextField");
+                ScrollPane profileScrollPane = (ScrollPane) stage.getScene().lookup("#profileScrollPane");
+                ScrollBar notesScrollBar = getVerticalScrollBar(
+                        getSessionNoteListView(mainWindow.getStudentProfilePanel()));
+                assertTrue(profileScrollPane.getVmax() > profileScrollPane.getVmin());
+                assertEquals(0, profileScrollPane.getVvalue());
+                assertEquals(0, notesScrollBar.getValue());
+
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                assertTrue(profileScrollPane.getVvalue() > 0);
+                assertEquals(0, notesScrollBar.getValue());
+
+                for (int i = 0; i < 10 && notesScrollBar.getValue() == 0; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                }
+                assertTrue(notesScrollBar.getValue() > 0);
+                double notesValue = notesScrollBar.getValue();
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                assertTrue(notesScrollBar.getValue() > notesValue);
+
+                for (int i = 0; i < 10; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
+                assertEquals(0, notesScrollBar.getValue());
+                assertEquals(0, profileScrollPane.getVvalue());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
         List<String> executedCommands = new ArrayList<>();
         CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
@@ -988,9 +1103,9 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "list");
             submitCommand(commandTextField, "invalid");
             commandTextField.setText("draft");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("invalid", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
             return null;
         });
@@ -1008,19 +1123,19 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "list");
             submitCommand(commandTextField, "view 1");
             submitCommand(commandTextField, "view 1");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
 
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             commandTextField.setText("view 2");
             submitCommand(commandTextField, "view 2");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 2", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
             return null;
         });
@@ -1037,18 +1152,18 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "view 1");
             commandTextField.setText("unfinished command");
 
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
 
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             assertEquals("unfinished command", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             assertEquals("unfinished command", commandTextField.getText());
             return null;
         });
@@ -1067,7 +1182,7 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "");
             submitCommand(commandTextField, "   ");
             commandTextField.setText("draft");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("draft", commandTextField.getText());
 
             for (int i = 0; i <= 100; i++) {
@@ -1075,13 +1190,13 @@ public class StudentRosterUiTest {
             }
             commandTextField.setText("new draft");
             for (int i = 0; i < 100; i++) {
-                pressHistoryKey(commandTextField, KeyCode.UP);
+                pressKey(commandTextField, KeyCode.UP);
             }
             assertEquals("command 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("command 1", commandTextField.getText());
             for (int i = 0; i < 100; i++) {
-                pressHistoryKey(commandTextField, KeyCode.DOWN);
+                pressKey(commandTextField, KeyCode.DOWN);
             }
             assertEquals("new draft", commandTextField.getText());
             return null;
@@ -1501,9 +1616,29 @@ public class StudentRosterUiTest {
         commandTextField.fireEvent(new ActionEvent());
     }
 
-    private void pressHistoryKey(TextField commandTextField, KeyCode keyCode) {
+    private void pressKey(TextField commandTextField, KeyCode keyCode) {
         commandTextField.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode,
                 false, false, false, false));
+    }
+
+    private ScrollBar getVerticalScrollBar(ListView<?> listView) {
+        Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
+        assertNotNull(virtualFlow);
+        return virtualFlow.getChildrenUnmodifiable().stream()
+                .filter(ScrollBar.class::isInstance)
+                .map(ScrollBar.class::cast)
+                .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private List<SessionNote> sessionNotes(int count) {
+        List<SessionNote> notes = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            notes.add(new SessionNote("Reviewed algebra concepts in lesson " + i + ".",
+                    OffsetDateTime.parse("2026-09-18T18:35:00+08:00").minusDays(i)));
+        }
+        return notes;
     }
 
     private ScrollEvent scrollEvent() {

@@ -47,7 +47,7 @@
       </GridPane>
       <Label text="Session notes" styleClass="profile-section-heading" />
       <StackPane minWidth="0" VBox.vgrow="ALWAYS">
-        <ListView fx:id="sessionNoteListView" styleClass="session-note-list" />
+        <ListView fx:id="sessionNoteListView" minHeight="150" styleClass="session-note-list" />
         <VBox fx:id="emptyNotesState" alignment="CENTER" maxWidth="Infinity" spacing="5"
               styleClass="empty-notes-state" visible="false" managed="false">
           <SelectableText text="No session notes yet" styleClass="empty-notes-title" />

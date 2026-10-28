@@ -145,7 +145,7 @@ public class MainWindow extends UiPart<Stage> {
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
 
-        CommandBox commandBox = new CommandBox(this::executeCommand);
+        CommandBox commandBox = new CommandBox(this::executeCommand, studentProfilePanel::scrollSessionNotes);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
     }
 

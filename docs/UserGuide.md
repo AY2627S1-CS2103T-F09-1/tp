@@ -181,7 +181,7 @@ Displays one student's profile beside the roster: name, parent or guardian conta
 
 Notes appear newest first with their date and time. Use the number in square brackets, such as `[2]`, when editing or deleting a note.
 
-Long text wraps and the note history can be scrolled. Profile text is read-only, but you can select and copy it with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
+Long text wraps and the note history can be scrolled. Press `PageDown` or `PageUp` in the command box to scroll the profile and notes by one page (in a short window, the profile scrolls first so the notes come into view) without losing what you have typed. Profile text is read-only, but you can select and copy it with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
 
 The open student's roster card is highlighted. Their profile refreshes after successful changes and closes if they are deleted.
 
