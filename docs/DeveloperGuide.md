@@ -154,7 +154,7 @@ The `Storage` component,
 
 #### Data-file format and recovery
 
-TutorTrack stores application data in `data/tutortrack.json` relative to the application's working directory. Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
+TutorTrack stores application data in `data/tutortrack.json` inside the _home folder_, the folder containing the JAR file, so the data stays with the JAR wherever TutorTrack is launched from. `HomeFolder` locates that folder and also places `preferences.json` and the `tutortrack.log` files there; when TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, it uses the working directory instead. Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
 
 The storage adapter validates manually edited records by rebuilding the corresponding domain value types. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`.
 
@@ -885,7 +885,14 @@ testers are expected to do more *exploratory* testing.
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
    2. Relaunch the app by double-clicking the JAR file.
       Expected: The most recent window size and location are retained.
-3. _{ more test cases … }_
+3. Launching from another folder
+
+   1. Copy the JAR file into an empty folder A. Open a terminal in a different folder B.
+   1. Run `java -jar "<path to folder A>/tutortrack.jar"`, enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`, and close the window.
+      Expected: Folder A contains `preferences.json`, `tutortrack.log.0`, and `data/tutortrack.json`. Folder B contains no new files. The status bar shows `./data/tutortrack.json`.
+   1. Launch TutorTrack again from folder B with the same command.
+      Expected: Dev Patel is still in the roster.
+4. _{ more test cases … }_
 
 ### UI theme and scaling
 
