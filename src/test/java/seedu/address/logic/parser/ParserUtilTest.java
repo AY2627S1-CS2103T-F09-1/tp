@@ -3,9 +3,12 @@ package seedu.address.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.parser.ParserUtil.INDEX_LABEL;
+import static seedu.address.logic.parser.ParserUtil.MESSAGE_EMPTY_NOTE;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_MISSING_INDEX;
+import static seedu.address.logic.parser.ParserUtil.MESSAGE_NOTE_NON_PRINTABLE;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_NOTE_NUMBER_TOO_LARGE;
+import static seedu.address.logic.parser.ParserUtil.MESSAGE_NOTE_TOO_LONG;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_STUDENT_INDEX_TOO_LARGE;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_TOO_MANY_INDICES;
 import static seedu.address.logic.parser.ParserUtil.NOTE_NUMBER_LABEL;
@@ -26,6 +29,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.session.SessionNote;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -102,6 +106,51 @@ public class ParserUtilTest {
     @Test
     public void parseOnlyStudentIndex_singleIndex_success() throws Exception {
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseOnlyStudentIndex(" 1 ", "view", "view INDEX", "view 1"));
+    }
+
+    @Test
+    public void parseNoteText_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseNoteText(null));
+    }
+
+    @Test
+    public void parseNoteText_validText_returnsTextUnchanged() throws Exception {
+        String maximumLengthNote = "a".repeat(SessionNote.MAX_TEXT_LENGTH);
+
+        assertEquals("  Reviewed  indices.  ", ParserUtil.parseNoteText("  Reviewed  indices.  "));
+        assertEquals(maximumLengthNote, ParserUtil.parseNoteText(maximumLengthNote));
+    }
+
+    @Test
+    public void parseNoteText_blankText_throwsEmptyNoteMessage() {
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText(""));
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText(WHITESPACE));
+    }
+
+    @Test
+    public void parseNoteText_aboveMaximumLength_throwsMessageWithEnteredLength() {
+        int overLimit = SessionNote.MAX_TEXT_LENGTH + 1;
+
+        assertThrows(ParseException.class, String.format(MESSAGE_NOTE_TOO_LONG, overLimit), ()
+                -> ParserUtil.parseNoteText("a".repeat(overLimit)));
+        assertThrows(ParseException.class, String.format(MESSAGE_NOTE_TOO_LONG, 800), ()
+                -> ParserUtil.parseNoteText("😀".repeat(800)));
+    }
+
+    @Test
+    public void parseNoteText_aboveMaximumLengthWithTab_reportsLengthFirst() {
+        String overlongNoteWithTab = "a\t" + "a".repeat(SessionNote.MAX_TEXT_LENGTH);
+
+        assertThrows(ParseException.class, String.format(MESSAGE_NOTE_TOO_LONG, SessionNote.MAX_TEXT_LENGTH + 2), ()
+                -> ParserUtil.parseNoteText(overlongNoteWithTab));
+    }
+
+    @Test
+    public void parseNoteText_nonPrintableCharacter_throwsNonPrintableMessage() {
+        assertThrows(ParseException.class, MESSAGE_NOTE_NON_PRINTABLE, ()
+                -> ParserUtil.parseNoteText("Column\tvalue"));
+        assertThrows(ParseException.class, MESSAGE_NOTE_NON_PRINTABLE, ()
+                -> ParserUtil.parseNoteText("Line one\nLine two"));
     }
 
     @Test
@@ -273,4 +322,31 @@ public class ParserUtilTest {
 
         assertEquals(expectedTagSet, actualTagSet);
     }
+
+    // Equivalence partition: leading zeros are a plausible typing mistake, not a different number.
+    @Test
+    public void parseStudentIndex_leadingZeros_parsedAsPlainNumber() throws Exception {
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseStudentIndex("01", INDEX_LABEL));
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseStudentIndex("0002147483647", INDEX_LABEL));
+    }
+
+    // Boundary: a number just above the integer range stays "too large" even when padded with zeros.
+    @Test
+    public void parseNoteNumber_paddedAboveIntegerRange_throwsTooLargeMessage() {
+        String expectedMessage = String.format(MESSAGE_NOTE_NUMBER_TOO_LARGE, NOTE_NUMBER_LABEL);
+
+        assertThrows(ParseException.class, expectedMessage, ()
+            -> ParserUtil.parseNoteNumber("0002147483648"));
+    }
+
+    @Test
+    public void parseOnlyStudentIndex_tabSeparatedIndices_throwsMessageWithFormat() {
+        String repeatedIndexMessage = Messages.withFormat(
+                String.format(MESSAGE_TOO_MANY_INDICES, "view", INDEX_LABEL), "view INDEX", "view 1");
+
+        assertThrows(ParseException.class, repeatedIndexMessage, ()
+            -> ParserUtil.parseOnlyStudentIndex("1\t2", "view", "view INDEX", "view 1"));
+    }
+
 }

@@ -83,4 +83,21 @@ public class ViewCommandTest {
         assertEquals(ViewCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON + "}",
                 viewCommand.toString());
     }
+
+    // Boundary value analysis: the first index is covered above; size is the last valid index, size + 1 invalid.
+    @Test
+    public void execute_lastRosterIndex_returnsLastStudent() throws Exception {
+        Index lastIndex = Index.fromOneBased(model.getStudentRoster().size());
+
+        CommandResult result = new ViewCommand(lastIndex).execute(model);
+
+        assertEquals(BEA.getId(), result.getProfileStudentId().orElseThrow());
+        assertEquals(String.format(ViewCommand.MESSAGE_SUCCESS, BEA.getName()), result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_nullModel_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new ViewCommand(INDEX_FIRST_PERSON).execute(null));
+    }
+
 }

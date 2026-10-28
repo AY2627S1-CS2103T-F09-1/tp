@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -8,6 +9,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
@@ -91,8 +93,10 @@ public class AddressBookParserTest {
     public void parseCommand_mistypedEditNoteTarget_suggestsCorrectCommand() {
         List<String> mistypedTargets = List.of("notes", "nte", "nots", "no");
         for (String mistypedTarget : mistypedTargets) {
-            String expectedMessage = String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
-                    mistypedTarget, EditNoteCommand.COMMAND_FORMAT);
+            String expectedMessage = Messages.withFormat(
+                    String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
+                            mistypedTarget, "edit note"),
+                    EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
             Executable parseMistypedCommand = () -> parser.parseCommand(
                     "edit " + mistypedTarget + " 1 2 nt/Corrected summary.");
             assertThrows(ParseException.class, expectedMessage, parseMistypedCommand);
@@ -240,4 +244,24 @@ public class AddressBookParserTest {
     public void getLoggableCommandWord_blankInput_returnsUnknown() {
         assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD, AddressBookParser.getLoggableCommandWord("   "));
     }
+
+    // Boundary values of the typo threshold (edit distance 2): distances 3 and 4 are ordinary edit input.
+    @Test
+    public void parseCommand_editTargetBeyondTypoDistance_isNotTreatedAsNoteTypo() {
+        List<String> distantTargets = List.of("n", "abcd", "0");
+        for (String distantTarget : distantTargets) {
+            Executable parseDistantCommand = () -> parser.parseCommand("edit " + distantTarget + " 1");
+            ParseException exception = Assertions.assertThrows(
+                    ParseException.class, parseDistantCommand);
+            assertFalse(exception.getMessage().contains("Unknown edit target"));
+        }
+    }
+
+    @Test
+    public void parseCommand_editWithoutTarget_isNotTreatedAsNoteTypo() {
+        ParseException exception = Assertions.assertThrows(
+                ParseException.class, () -> parser.parseCommand("edit"));
+        assertFalse(exception.getMessage().contains("Unknown edit target"));
+    }
+
 }

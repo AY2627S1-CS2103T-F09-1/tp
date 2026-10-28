@@ -32,7 +32,8 @@ public class DeleteSessionNoteCommand extends Command {
     public static final String MESSAGE_CONFIRMATION_MISMATCH =
             "This confirmation does not match the pending session-note deletion.\n"
             + "No data was deleted. Enter the delete command again to start over.";
-    public static final String MESSAGE_NO_SESSION_NOTES = "%1$s has no session notes to delete.";
+    public static final String MESSAGE_NO_SESSION_NOTES =
+            "%1$s has no session notes to delete. Add one with " + NoteCommand.COMMAND_FORMAT + " first.";
     public static final String MESSAGE_INVALID_NOTE_NUMBER =
             "Session note [%1$d] does not exist for %2$s. Enter a note number from 1 to %3$d.";
 

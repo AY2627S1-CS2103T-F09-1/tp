@@ -82,11 +82,14 @@ public class NoteCommandParserTest {
     }
 
     @Test
-    public void parse_invalidNoteText_throwsParseException() {
-        assertParseFailure(parser, " 1 nt/", SessionNote.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 nt/    ", SessionNote.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 nt/" + "a".repeat(SessionNote.MAX_TEXT_LENGTH + 1),
-                SessionNote.MESSAGE_CONSTRAINTS);
+    public void parse_invalidNoteText_throwsSpecificRuleMessage() {
+        int overLimit = SessionNote.MAX_TEXT_LENGTH + 1;
+
+        assertParseFailure(parser, " 1 nt/", ParserUtil.MESSAGE_EMPTY_NOTE);
+        assertParseFailure(parser, " 1 nt/    ", ParserUtil.MESSAGE_EMPTY_NOTE);
+        assertParseFailure(parser, " 1 nt/" + "a".repeat(overLimit),
+                String.format(ParserUtil.MESSAGE_NOTE_TOO_LONG, overLimit));
+        assertParseFailure(parser, " 1 nt/Column\tvalue", ParserUtil.MESSAGE_NOTE_NON_PRINTABLE);
     }
 
     @Test

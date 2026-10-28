@@ -94,7 +94,7 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_extraSessionNoteArgs_throwsSpecificParseException() {
-        String[] invalidArguments = {"note 1 2 extra extra", "note 1 2 /confirm /confirm"};
+        String[] invalidArguments = {"note 1 2 3", "note 1 2 3 4", "note 1 2 extra extra", "note 1 2 3 /confirm"};
 
         for (String invalidArgument : invalidArguments) {
             assertParseFailure(parser, invalidArgument, DeleteCommandParser.MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
@@ -102,9 +102,19 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_extraSessionNoteValues_throwsTakesOnlyOneMessage() {
+        String expectedMessage = "delete note takes only one STUDENT_INDEX and one NOTE_NUMBER.\n"
+                + "Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]\n"
+                + "Example: delete note 1 2";
+
+        assertParseFailure(parser, "note 1 2 3", expectedMessage);
+        assertParseFailure(parser, "note 1 2 3 4", expectedMessage);
+    }
+
+    @Test
     public void parse_misplacedOrInvalidConfirmationFlag_throwsSpecificParseException() {
-        String[] invalidArguments = {"note /confirm", "note /confirm 2", "note 1 /confirm", "note 1 2 extra",
-            "note 1 2 /Confirm"};
+        String[] invalidArguments = {"note /confirm", "note /confirm 2", "note 1 /confirm", "note 1 /confirm 2",
+            "note 1 2 /Confirm", "note 1 2 /confirm /confirm", "note 1 2 /confirm extra"};
 
         for (String invalidArgument : invalidArguments) {
             assertParseFailure(parser, invalidArgument,
@@ -133,4 +143,40 @@ public class DeleteCommandParserTest {
         assertParseFailure(parser, "note 1 2147483648",
                 "NOTE_NUMBER is too large. Enter a note number shown in the profile.");
     }
+
+    // Boundary value analysis on argument count (1 to 5) crossed with the position of the confirmation flag.
+    @Test
+    public void parse_flagInEachPositionOfFourArguments_throwsInvalidFlag() {
+        String[] misplacedFlags = {"note /confirm 1 2", "note 1 /confirm 2"};
+
+        for (String misplacedFlag : misplacedFlags) {
+            assertParseFailure(parser, misplacedFlag,
+                    DeleteCommandParser.MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
+        }
+    }
+
+    @Test
+    public void parse_fiveArgumentsWithMisplacedFlag_reportsMisplacedFlagFirst() {
+        assertParseFailure(parser, "note /confirm 1 2 extra",
+                DeleteCommandParser.MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
+    }
+
+    // Error precedence: the argument count is checked before any index is parsed.
+    @Test
+    public void parse_missingNoteNumberAndInvalidStudentIndex_reportsMissingNoteNumber() {
+        assertParseFailure(parser, "note abc", DeleteCommandParser.MESSAGE_MISSING_NOTE_NUMBER);
+    }
+
+    @Test
+    public void parse_confirmationFlagAloneOrRepeatedForStudent_throwsSpecificParseException() {
+        assertParseFailure(parser, "/confirm", DeleteCommandParser.MESSAGE_MISSING_STUDENT_INDEX);
+        assertParseFailure(parser, "/confirm /confirm",
+                DeleteCommandParser.MESSAGE_INVALID_STUDENT_CONFIRMATION_FLAG);
+    }
+
+    @Test
+    public void parse_noteTargetAfterStudentIndex_isTreatedAsSecondStudentIndex() {
+        assertParseFailure(parser, "1 note", DeleteCommandParser.MESSAGE_TOO_MANY_STUDENT_INDICES);
+    }
+
 }

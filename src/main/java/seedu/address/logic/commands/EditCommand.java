@@ -40,8 +40,7 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "Edited student: %1$s (%2$s, %3$s).";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_STUDENT =
-            "Duplicate student: %1$s already has this parent phone.";
+    public static final String MESSAGE_DUPLICATE_STUDENT = AddCommand.MESSAGE_DUPLICATE_STUDENT;
 
     private final Index targetIndex;
     private final EditStudentDescriptor editStudentDescriptor;

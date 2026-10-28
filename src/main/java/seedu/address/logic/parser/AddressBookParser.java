@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.withFormat;
 
 import java.util.Set;
 import java.util.logging.Logger;
@@ -37,6 +38,8 @@ public class AddressBookParser {
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
     /** Largest number of single-character edits from {@code note}, as in {@code nte}, still treated as a typo */
     private static final int MAX_NOTE_TARGET_TYPO_DISTANCE = 2;
+    /** Separates a parameter prefix from its value, as in {@code n/NAME} */
+    private static final String PARAMETER_PREFIX_SEPARATOR = "/";
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     private static final Set<String> COMMAND_WORDS = Set.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
@@ -120,8 +123,10 @@ public class AddressBookParser {
             return new EditNoteCommandParser().parse(arguments);
         }
         if (isMistypedNoteTarget(editTarget)) {
-            throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
-                    editTarget, EditNoteCommand.COMMAND_FORMAT));
+            String suggestion = EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET;
+            throw new ParseException(withFormat(
+                    String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, editTarget, suggestion),
+                    EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
         }
         return new EditCommandParser().parse(arguments);
     }
@@ -131,31 +136,9 @@ public class AddressBookParser {
      * parameter such as {@code n/NAME}.
      */
     private static boolean isMistypedNoteTarget(String editTarget) {
-        boolean isParameter = editTarget.contains("/");
-        return !editTarget.isEmpty() && !isParameter
-                && getEditDistance(editTarget, EditNoteCommand.NOTE_TARGET) <= MAX_NOTE_TARGET_TYPO_DISTANCE;
+        boolean isParameter = editTarget.contains(PARAMETER_PREFIX_SEPARATOR);
+        boolean isCloseToNoteTarget = EditDistance.between(editTarget, EditNoteCommand.NOTE_TARGET)
+                <= MAX_NOTE_TARGET_TYPO_DISTANCE;
+        return !editTarget.isEmpty() && !isParameter && isCloseToNoteTarget;
     }
-
-    /**
-     * Returns the number of single-character insertions, deletions, or substitutions that turn {@code source}
-     * into {@code target}.
-     */
-    private static int getEditDistance(String source, String target) {
-        int[] previousRow = new int[target.length() + 1];
-        for (int j = 0; j <= target.length(); j++) {
-            previousRow[j] = j;
-        }
-        for (int i = 1; i <= source.length(); i++) {
-            int[] currentRow = new int[target.length() + 1];
-            currentRow[0] = i;
-            for (int j = 1; j <= target.length(); j++) {
-                int substitutionCost = source.charAt(i - 1) == target.charAt(j - 1) ? 0 : 1;
-                currentRow[j] = Math.min(previousRow[j - 1] + substitutionCost,
-                        Math.min(previousRow[j], currentRow[j - 1]) + 1);
-            }
-            previousRow = currentRow;
-        }
-        return previousRow[target.length()];
-    }
-
 }

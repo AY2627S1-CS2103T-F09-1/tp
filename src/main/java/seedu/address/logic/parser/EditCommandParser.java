@@ -7,7 +7,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
@@ -23,6 +25,9 @@ import seedu.address.model.student.Subject;
  * Parses arguments for editing a student.
  */
 public class EditCommandParser implements Parser<EditCommand> {
+
+    private static final String WHITESPACE_PATTERN = "\\s+";
+    private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
 
     /**
      * Parses {@code args} as a student roster index and one or more replacement fields.
@@ -40,6 +45,7 @@ public class EditCommandParser implements Parser<EditCommand> {
                     legacyPrefix.get(), AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)));
         }
 
+        verifyNoStrayText(argMultimap.getPreamble());
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), EditCommand.COMMAND_WORD,
                 EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);
         verifyNoDuplicatePrefixes(argMultimap);
@@ -48,6 +54,27 @@ public class EditCommandParser implements Parser<EditCommand> {
             throw new ParseException(withEditFormat(EditCommand.MESSAGE_NOT_EDITED));
         }
         return new EditCommand(index, descriptor);
+    }
+
+    /**
+     * Verifies that the first word of {@code preamble} is a valid index and that every word after it is a
+     * number, so that stray text is reported as such instead of as a second index.
+     *
+     * @throws ParseException If the first word is not a valid index when more words follow it, or a later word
+     *         is not a number.
+     */
+    private static void verifyNoStrayText(String preamble) throws ParseException {
+        String[] words = preamble.split(WHITESPACE_PATTERN);
+        if (words.length > 1) {
+            ParserUtil.parseStudentIndex(words[0], ParserUtil.INDEX_LABEL);
+        }
+        for (int i = 1; i < words.length; i++) {
+            if (!WHOLE_NUMBER_PATTERN.matcher(words[i]).matches()) {
+                String strayText = String.join(" ", Arrays.copyOfRange(words, i, words.length));
+                throw new ParseException(withEditFormat(
+                        String.format(AddCommandParser.MESSAGE_UNEXPECTED_PREAMBLE, strayText)));
+            }
+        }
     }
 
     private static void verifyNoDuplicatePrefixes(ArgumentMultimap argMultimap) throws ParseException {
