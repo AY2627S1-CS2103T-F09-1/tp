@@ -927,13 +927,13 @@ testers are expected to do more *exploratory* testing.
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
    Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
 2. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
-   Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone.` and preserves the existing record.
+   Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone. Use a different name or phone, or edit the existing student.` and preserves the existing record.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
 4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
-   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
+   Expected: The first reports `Missing l/CURRENT_LEVEL.` and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
 5. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
-   Expected: The first reports `Unexpected text before the first parameter: aaaaaa` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
+   Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
 
 ### Editing a student
 
@@ -944,6 +944,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The email is removed, every omitted field and session note is unchanged, and an open profile displays `Not provided`.
 1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
    Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the one-line `edit` format and example, while `edit 1 l/` shows only the level rule.
+1. Enter `edit 1 hello n/Zara Lim`, `edit 1 2 n/Zara Lim`, and `edit x hello n/Zara Lim`.
+   Expected: The first reports `Unexpected text before the first parameter: hello.` the second reports `edit takes only one INDEX.`, and the third reports that `INDEX` must be a positive whole number. All but the last are followed by the one-line `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
 1. Enter `edit n/Bob` and `edit a n/Bob`.
    Expected: The first reports `Missing INDEX.` followed by the `edit` format and example. The second reports `INDEX must be a positive whole number, e.g. 1.` Neither suggests `edit note`.
 1. Try to edit one student so that both the normalized name and parent phone match the other student.
@@ -1019,7 +1021,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, `edit note 99999999999 1 nt/text`, `edit note 1 99999999999 nt/text`, and `edit note 1 1 nt/`.
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
 1. Enter `edit notes 1 1 nt/text`.
-   Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE?` and leaves the note unchanged.
+   Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note?`, followed by `Format: edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE` and `Example: edit note 1 2 nt/Corrected lesson summary.`, and leaves the note unchanged.
 1. With two students in the roster, enter `edit note 3 1 nt/text`.
    Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
 1. Enter `edit note 1 nt/text`.
@@ -1063,9 +1065,11 @@ testers are expected to do more *exploratory* testing.
 1. Close and relaunch TutorTrack, and enter `view 1`.
    Expected: Ari still has exactly the two remaining notes in newest-first order as `[2]` and `[1]`. Ari's `sessionNotes` entries in `data/tutortrack.json` do not contain `noteNumber` fields.
 1. Enter `delete note 2 1`.
-   Expected: TutorTrack reports that Bea Tan has no session notes to delete and makes no changes.
+   Expected: TutorTrack reports `Bea Tan has no session notes to delete. Add one with note INDEX nt/NOTE first.` and makes no changes.
 1. Enter `delete note 1 3`.
    Expected: TutorTrack reports that session note `[3]` does not exist for Ari Tan and gives the current range from 1 to 2. No note is deleted.
+1. Enter `delete note 1 2 3`, `delete note 1 /confirm 2`, and `delete note 1 2 /confirm extra`.
+   Expected: The first reports `delete note takes only one STUDENT_INDEX and one NOTE_NUMBER.` and the others report that `/confirm` must appear at most once and at the end. Each is followed by `Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` and `Example: delete note 1 2`, and no note is deleted.
 1. Enter each of `delete note`, `delete note 1`, `delete note 0 1`, `delete note 1 0`, `delete note x 1`, `delete note 1 x`, `delete note 1 1 /Confirm`, `delete note /confirm 1 1`, `delete note 1 1 /confirm /confirm`, and `delete note 1 1 /confirm extra`.
    Expected: Each command reports the applicable session-note deletion format or validation error and leaves both students, both remaining notes, the open profile, and the data file unchanged.
 

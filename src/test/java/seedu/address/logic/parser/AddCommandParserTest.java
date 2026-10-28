@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -67,42 +66,42 @@ public class AddCommandParserTest {
     @Test
     public void parse_missingLevel_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics",
-                withAddFormat("Value missing for parameter: l/"));
+                withAddFormat("Missing l/CURRENT_LEVEL."));
     }
 
     @Test
     public void parse_emptyRequiredValue_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics l/",
-                withAddFormat("Value missing for parameter: l/"));
+                withAddFormat("Missing l/CURRENT_LEVEL."));
     }
 
     @Test
     public void parse_nonEmptyPreamble_failure() {
         assertParseFailure(parser, " unexpected" + VALID_REQUIRED_ARGUMENTS,
-                withAddFormat("Unexpected text before the first parameter: unexpected"));
+                withAddFormat("Unexpected text before the first parameter: unexpected."));
     }
 
     @Test
     public void parse_noPrefixes_reportsUnexpectedTextNotMissingValue() {
-        assertParseFailure(parser, " aaaaaa", withAddFormat("Unexpected text before the first parameter: aaaaaa"));
+        assertParseFailure(parser, " aaaaaa", withAddFormat("Unexpected text before the first parameter: aaaaaa."));
     }
 
     @Test
     public void parse_missingName_failure() {
         assertParseFailure(parser, " p/91234567 sub/Mathematics l/Secondary 3",
-                withAddFormat("Value missing for parameter: n/"));
+                withAddFormat("Missing n/NAME."));
     }
 
     @Test
     public void parse_missingPhone_failure() {
         assertParseFailure(parser, " n/Alicia Lim sub/Mathematics l/Secondary 3",
-                withAddFormat("Value missing for parameter: p/"));
+                withAddFormat("Missing p/PARENT_PHONE."));
     }
 
     @Test
     public void parse_missingSubject_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 l/Secondary 3",
-                withAddFormat("Value missing for parameter: sub/"));
+                withAddFormat("Missing sub/SUBJECT."));
     }
 
     @Test
@@ -126,7 +125,7 @@ public class AddCommandParserTest {
     @Test
     public void parse_repeatedName_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " n/Bea Lim",
-                withAddFormat(Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NAME)));
+                withAddFormat("n/ must appear at most once."));
     }
 
     @Test
