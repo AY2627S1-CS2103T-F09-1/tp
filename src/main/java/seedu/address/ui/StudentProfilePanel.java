@@ -8,6 +8,7 @@ import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
@@ -25,6 +26,7 @@ public class StudentProfilePanel extends UiPart<Region> {
 
     private static final String FXML = "StudentProfilePanel.fxml";
     private static final String EMAIL_NOT_PROVIDED = "Not provided";
+    private static final double VISIBLE_EDGE_TOLERANCE_PIXELS = 1;
 
     private final ObservableList<NumberedSessionNote> sessionNotes = FXCollections.observableArrayList();
 
@@ -100,7 +102,7 @@ public class StudentProfilePanel extends UiPart<Region> {
         if (!(sessionNoteListView.lookup(".virtual-flow") instanceof VirtualFlow<?> virtualFlow)) {
             return;
         }
-        boolean shouldPageNotes = pageCount > 0 ? isProfilePaneAtBottom() : virtualFlow.getPosition() > 0;
+        boolean shouldPageNotes = pageCount > 0 ? isSessionNoteListBottomVisible() : virtualFlow.getPosition() > 0;
         if (shouldPageNotes) {
             virtualFlow.scrollPixels(pageCount * virtualFlow.getHeight());
         } else {
@@ -113,8 +115,23 @@ public class StudentProfilePanel extends UiPart<Region> {
                 - profileScrollPane.getViewportBounds().getHeight();
     }
 
-    private boolean isProfilePaneAtBottom() {
-        return getScrollableProfilePixels() <= 0 || profileScrollPane.getVvalue() >= profileScrollPane.getVmax();
+    /**
+     * Returns true if the profile pane needs no further scrolling for the end of the session-note list to be
+     * visible. Compares edges instead of scroll values because the pane keeps its pixel offset, not its
+     * {@code vvalue}, when the list re-estimates its cell heights while scrolling.
+     */
+    private boolean isSessionNoteListBottomVisible() {
+        double scrollablePixels = getScrollableProfilePixels();
+        if (scrollablePixels <= 0) {
+            return true;
+        }
+        double valueRange = profileScrollPane.getVmax() - profileScrollPane.getVmin();
+        double scrolledFraction = (profileScrollPane.getVvalue() - profileScrollPane.getVmin()) / valueRange;
+        double visibleBottom = scrolledFraction * scrollablePixels + profileScrollPane.getViewportBounds().getHeight();
+        Node content = profileScrollPane.getContent();
+        double listBottom = content.sceneToLocal(
+                sessionNoteListView.localToScene(sessionNoteListView.getLayoutBounds())).getMaxY();
+        return listBottom <= visibleBottom + VISIBLE_EDGE_TOLERANCE_PIXELS;
     }
 
     private void scrollProfilePane(int pageCount) {

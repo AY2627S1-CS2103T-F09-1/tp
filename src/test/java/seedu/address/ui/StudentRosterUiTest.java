@@ -1038,13 +1038,13 @@ public class StudentRosterUiTest {
                 assertTrue(profileScrollPane.getVvalue() > 0);
                 assertEquals(0, notesScrollBar.getValue());
 
-                for (int i = 0; i < 10 && profileScrollPane.getVvalue() < profileScrollPane.getVmax(); i++) {
+                for (int i = 0; i < 10 && notesScrollBar.getValue() == 0; i++) {
                     pressKey(commandTextField, KeyCode.PAGE_DOWN);
                 }
-                assertEquals(profileScrollPane.getVmax(), profileScrollPane.getVvalue());
-                pressKey(commandTextField, KeyCode.PAGE_DOWN);
                 assertTrue(notesScrollBar.getValue() > 0);
-                assertEquals(profileScrollPane.getVmax(), profileScrollPane.getVvalue());
+                double notesValue = notesScrollBar.getValue();
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                assertTrue(notesScrollBar.getValue() > notesValue);
 
                 for (int i = 0; i < 10; i++) {
                     pressKey(commandTextField, KeyCode.PAGE_UP);
