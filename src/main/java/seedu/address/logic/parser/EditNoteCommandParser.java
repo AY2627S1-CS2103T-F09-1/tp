@@ -30,13 +30,14 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
 
     /**
      * Parses the given {@code String} of arguments in the context of the edit note command.
+     * Everything after the first {@code nt/} is the new note, so a later {@code nt/} is kept as part of its text.
      *
-     * @throws ParseException If a part of the command is missing or repeated, an index is invalid, or the note
-     *         text is invalid.
+     * @throws ParseException If a part of the command is missing, an index is invalid, or the note text is
+     *         invalid.
      */
     @Override
     public EditNoteCommand parse(String args) throws ParseException {
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTE);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithTrailingText(args, PREFIX_NOTE);
         Optional<String> noteText = argMultimap.getValue(PREFIX_NOTE);
         String[] preamble = argMultimap.getPreamble().split(WHITESPACE_PATTERN);
 
@@ -50,11 +51,6 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
 
         Index studentIndex = ParserUtil.parseStudentIndex(preamble[1], ParserUtil.STUDENT_INDEX_LABEL);
         Index noteNumber = ParserUtil.parseNoteNumber(preamble[2]);
-        try {
-            argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
-        } catch (ParseException exception) {
-            throw new ParseException(withEditNoteFormat(exception.getMessage()), exception);
-        }
         if (!SessionNote.isValidText(noteText.get())) {
             throw new ParseException(SessionNote.MESSAGE_CONSTRAINTS);
         }

@@ -1,9 +1,14 @@
 package seedu.address.logic.parser;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import seedu.address.commons.core.LogsCenter;
 
 /**
  * Tokenizes arguments string of the form: {@code preamble <prefix>value <prefix>value ...}<br>
@@ -14,6 +19,8 @@ import java.util.stream.Collectors;
  *    in the above example.<br>
  */
 public class ArgumentTokenizer {
+
+    private static final Logger logger = LogsCenter.getLogger(ArgumentTokenizer.class);
 
     /**
      * Tokenizes an arguments string and returns an {@code ArgumentMultimap} object that maps prefixes to their
@@ -26,6 +33,41 @@ public class ArgumentTokenizer {
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
         return extractArguments(argsString, positions);
+    }
+
+    /**
+     * Tokenizes an arguments string whose only parameter is free text that runs to the end of the command.
+     * The first occurrence of {@code textPrefix} ends the preamble; everything after it, including any later
+     * occurrences of {@code textPrefix}, becomes that prefix's single value, so the text can contain the prefix.
+     *
+     * @param argsString Arguments string of the form: {@code preamble <textPrefix>text}.
+     * @param textPrefix Prefix that introduces the free text.
+     * @return ArgumentMultimap holding the preamble and at most one value for {@code textPrefix}.
+     */
+    public static ArgumentMultimap tokenizeWithTrailingText(String argsString, Prefix textPrefix) {
+        requireNonNull(argsString);
+        requireNonNull(textPrefix);
+        List<PrefixPosition> positions = new ArrayList<>();
+        int textPosition = findPrefixPosition(argsString, textPrefix.getPrefix(), 0);
+        if (textPosition != -1) {
+            positions.add(new PrefixPosition(textPrefix, textPosition));
+            logIfPrefixKeptAsText(argsString, textPrefix, textPosition);
+        }
+
+        ArgumentMultimap argMultimap = extractArguments(argsString, positions);
+        assert argMultimap.getAllValues(textPrefix).size() <= 1 : "Trailing text must form a single value";
+        return argMultimap;
+    }
+
+    /**
+     * Logs that a later occurrence of {@code textPrefix} after {@code textPosition} was kept as text.
+     * Only the prefix is logged, because the text itself may hold private lesson details.
+     */
+    private static void logIfPrefixKeptAsText(String argsString, Prefix textPrefix, int textPosition) {
+        boolean hasLaterPrefix = findPrefixPosition(argsString, textPrefix.getPrefix(), textPosition) != -1;
+        if (hasLaterPrefix) {
+            logger.fine("Kept a later " + textPrefix + " as part of the trailing text.");
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -134,6 +135,38 @@ public class ArgumentTokenizerTest {
         assertArgumentAbsent(argMultimap, pSlash);
         assertArgumentPresent(argMultimap, dashT, "not joined^Qjoined");
         assertArgumentAbsent(argMultimap, hatQ);
+    }
+
+    @Test
+    public void tokenizeWithTrailingText_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ArgumentTokenizer.tokenizeWithTrailingText(null, pSlash));
+        assertThrows(NullPointerException.class, () -> ArgumentTokenizer.tokenizeWithTrailingText("1 p/x", null));
+    }
+
+    @Test
+    public void tokenizeWithTrailingText_prefixAbsent_allTakenAsPreamble() {
+        String argsString = " 1 some textp/joined";
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithTrailingText(argsString, pSlash);
+
+        assertPreamblePresent(argMultimap, "1 some textp/joined");
+        assertArgumentAbsent(argMultimap, pSlash);
+    }
+
+    @Test
+    public void tokenizeWithTrailingText_repeatedPrefix_laterOccurrencesKeptInValue() {
+        String argsString = " 1 p/ Remember p/ notation and p/x ";
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithTrailingText(argsString, pSlash);
+
+        assertPreamblePresent(argMultimap, "1");
+        assertArgumentPresent(argMultimap, pSlash, "Remember p/ notation and p/x");
+    }
+
+    @Test
+    public void tokenizeWithTrailingText_emptyValue_returnsEmptyValue() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithTrailingText(" 1 p/", pSlash);
+
+        assertPreamblePresent(argMultimap, "1");
+        assertArgumentPresent(argMultimap, pSlash, "");
     }
 
     @Test

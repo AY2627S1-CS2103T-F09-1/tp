@@ -21,14 +21,15 @@ public class NoteCommandParser implements Parser<NoteCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the NoteCommand
      * and returns a NoteCommand object for execution.
-     * Only {@code nt/} is recognized, so other prefixes in the note are kept as part of its text.
+     * Everything after the first {@code nt/} is the note, so other prefixes in the note, including a later
+     * {@code nt/}, are kept as part of its text.
      *
-     * @throws ParseException If the index or {@code nt/} is missing or repeated, the index is invalid, or the
-     *         note text is invalid.
+     * @throws ParseException If the index or {@code nt/} is missing, the index is invalid, or the note text is
+     *         invalid.
      */
     @Override
     public NoteCommand parse(String args) throws ParseException {
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTE);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithTrailingText(args, PREFIX_NOTE);
         Optional<String> noteText = argMultimap.getValue(PREFIX_NOTE);
         if (noteText.isEmpty()) {
             throw new ParseException(MESSAGE_MISSING_NOTE);
@@ -36,12 +37,6 @@ public class NoteCommandParser implements Parser<NoteCommand> {
 
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), NoteCommand.COMMAND_WORD,
                 NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
-        try {
-            argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
-        } catch (ParseException exception) {
-            throw new ParseException(withFormat(exception.getMessage(),
-                    NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE), exception);
-        }
         if (!SessionNote.isValidText(noteText.get())) {
             throw new ParseException(SessionNote.MESSAGE_CONSTRAINTS);
         }

@@ -90,9 +90,8 @@ public class NoteCommandParserTest {
     }
 
     @Test
-    public void parse_duplicateNotePrefix_throwsParseException() {
-        assertParseFailure(parser, " 1 nt/Reviewed indices. nt/Reviewed factorisation.",
-                Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
-                        NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
+    public void parse_notePrefixInNote_keptAsText() {
+        assertParseSuccess(parser, " 1 nt/Remember nt/ notation and nt/x",
+                new NoteCommand(INDEX_FIRST_PERSON, "Remember nt/ notation and nt/x"));
     }
 }

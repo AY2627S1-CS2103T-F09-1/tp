@@ -111,9 +111,8 @@ public class EditNoteCommandParserTest {
     }
 
     @Test
-    public void parse_duplicateNotePrefix_throwsParseException() {
-        assertParseFailure(parser, "note 1 1 nt/First nt/Second",
-                Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
-                        EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
+    public void parse_notePrefixInNewNote_keptAsText() {
+        assertParseSuccess(parser, "note 1 1 nt/Remember nt/ notation",
+                new EditNoteCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, "Remember nt/ notation"));
     }
 }

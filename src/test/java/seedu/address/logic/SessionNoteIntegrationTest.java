@@ -73,6 +73,19 @@ public class SessionNoteIntegrationTest {
     }
 
     @Test
+    public void notePrefixInNoteText_savedAndReloadedAsText() throws Exception {
+        logic.execute("note 1 nt/Remember nt/ notation");
+        logic.execute("note 1 nt/Draft");
+        logic.execute("edit note 1 2 nt/Use nt/ for notes");
+
+        ModelManager reloadedModel = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        StudentId ariId = reloadedModel.getStudentRoster().getEntries().get(0).getStudentId();
+        List<String> reloadedTexts = reloadedModel.getSessionHistory(ariId).getNotes().stream()
+                .map(SessionNote::getText).toList();
+        assertEquals(List.of("Use nt/ for notes", "Remember nt/ notation"), reloadedTexts);
+    }
+
+    @Test
     public void invalidNoteCommands_leaveDataFileUnchanged() throws Exception {
         logic.execute("note 2 nt/Reviewed essay structure.");
         String savedData = Files.readString(dataFile);
