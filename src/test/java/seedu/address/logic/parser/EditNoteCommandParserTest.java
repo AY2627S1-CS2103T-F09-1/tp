@@ -116,4 +116,33 @@ public class EditNoteCommandParserTest {
                 Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
                         EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
     }
+
+    // Error precedence: target, then new note, then index count, then indices, then duplicate prefix.
+    @Test
+    public void parse_wrongTargetAndMissingNewNote_reportsMissingTargetFirst() {
+        assertParseFailure(parser, "1 2", EditNoteCommandParser.MESSAGE_MISSING_NOTE_TARGET);
+    }
+
+    @Test
+    public void parse_missingNewNoteAndIndices_reportsMissingNewNoteFirst() {
+        assertParseFailure(parser, "note", EditNoteCommandParser.MESSAGE_MISSING_NEW_NOTE);
+        assertParseFailure(parser, "note 1 2 3", EditNoteCommandParser.MESSAGE_MISSING_NEW_NOTE);
+    }
+
+    @Test
+    public void parse_invalidIndexAndDuplicateNotePrefix_reportsInvalidIndexFirst() {
+        assertParseFailure(parser, "note x 1 nt/first nt/second",
+                String.format(ParserUtil.MESSAGE_INVALID_INDEX, ParserUtil.STUDENT_INDEX_LABEL));
+    }
+
+    // Boundary values of the preamble word count: 1 and 2 are too few, 3 is exact, 4 is too many.
+    @Test
+    public void parse_preambleWordCountAroundExactCount_acceptsOnlyExactCount() {
+        assertParseFailure(parser, "note nt/x", EditNoteCommandParser.MESSAGE_MISSING_INDICES);
+        assertParseFailure(parser, "note 1 nt/x", EditNoteCommandParser.MESSAGE_MISSING_NOTE_NUMBER);
+        assertParseSuccess(parser, "note 1 2 nt/x",
+                new EditNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), "x"));
+        assertParseFailure(parser, "note 1 2 3 nt/x", EditNoteCommandParser.MESSAGE_TOO_MANY_INDICES);
+    }
+
 }

@@ -1,5 +1,6 @@
 package seedu.address.logic.commands;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_EMPTY_ROSTER;
 import static seedu.address.logic.Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE;
 
@@ -31,6 +32,8 @@ public abstract class Command {
      *         valid range.
      */
     protected static StudentRosterEntry getRosterEntry(Model model, Index index) throws CommandException {
+        requireNonNull(model);
+        requireNonNull(index);
         List<StudentRosterEntry> rosterEntries = model.getStudentRoster().getEntries();
         if (rosterEntries.isEmpty()) {
             throw new CommandException(MESSAGE_EMPTY_ROSTER);
