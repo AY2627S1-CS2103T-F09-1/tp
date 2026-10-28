@@ -62,7 +62,8 @@ public class DeleteSessionNoteCommandTest {
         Index outOfRangeStudent = Index.fromOneBased(model.getStudentRoster().size() + 1);
         DeleteSessionNoteCommand command = new DeleteSessionNoteCommand(outOfRangeStudent, NOTE_ONE);
 
-        assertCommandFailure(command, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandFailure(command, model, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE,
+                outOfRangeStudent.getOneBased(), model.getStudentRoster().size()));
     }
 
     @Test

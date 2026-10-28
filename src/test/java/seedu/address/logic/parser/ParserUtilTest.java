@@ -2,7 +2,14 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.parser.ParserUtil.INDEX_LABEL;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
+import static seedu.address.logic.parser.ParserUtil.MESSAGE_MISSING_INDEX;
+import static seedu.address.logic.parser.ParserUtil.MESSAGE_NOTE_NUMBER_TOO_LARGE;
+import static seedu.address.logic.parser.ParserUtil.MESSAGE_STUDENT_INDEX_TOO_LARGE;
+import static seedu.address.logic.parser.ParserUtil.MESSAGE_TOO_MANY_INDICES;
+import static seedu.address.logic.parser.ParserUtil.NOTE_NUMBER_LABEL;
+import static seedu.address.logic.parser.ParserUtil.STUDENT_INDEX_LABEL;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
@@ -12,6 +19,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -36,41 +45,75 @@ public class ParserUtilTest {
     private static final String WHITESPACE = " \t\r\n";
 
     @Test
-    public void parseIndex_invalidInput_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
+    public void parseStudentIndex_notPositiveWholeNumber_throwsInvalidIndexMessage() {
+        String expectedMessage = String.format(MESSAGE_INVALID_INDEX, INDEX_LABEL);
+        String[] invalidIndices = {"", "0", "00", "-1", "+1", "1.5", "abc", "10 a", "-99999999999"};
+
+        for (String invalidIndex : invalidIndices) {
+            assertThrows(ParseException.class, expectedMessage, ()
+                -> ParserUtil.parseStudentIndex(invalidIndex, INDEX_LABEL));
+        }
     }
 
     @Test
-    public void parseIndex_outOfRangeInput_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, ()
-            -> ParserUtil.parseIndex(Long.toString(Integer.MAX_VALUE + 1)));
+    public void parseStudentIndex_aboveIntegerRange_throwsTooLargeMessage() {
+        String expectedMessage = String.format(MESSAGE_STUDENT_INDEX_TOO_LARGE, STUDENT_INDEX_LABEL);
+
+        assertThrows(ParseException.class, expectedMessage, ()
+            -> ParserUtil.parseStudentIndex(Long.toString(Integer.MAX_VALUE + 1L), STUDENT_INDEX_LABEL));
+        assertThrows(ParseException.class, expectedMessage, ()
+            -> ParserUtil.parseStudentIndex("99999999999", STUDENT_INDEX_LABEL));
     }
 
     @Test
-    public void parseIndex_validInput_success() throws Exception {
+    public void parseStudentIndex_validInput_success() throws Exception {
         // No whitespaces
-        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("1"));
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseStudentIndex("1", INDEX_LABEL));
 
         // Leading and trailing whitespaces
-        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseStudentIndex("  1  ", INDEX_LABEL));
+
+        // Largest supported index
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseStudentIndex(Integer.toString(Integer.MAX_VALUE), INDEX_LABEL));
     }
 
     @Test
-    public void findUnknownPrefix_supportedAndOrdinarySlashes_returnsEmpty() {
-        assertTrue(ParserUtil.findUnknownPrefix(" n/Alex p/9123 4567 sub/E Math/A Math",
-                List.of(new Prefix("n/"), new Prefix("p/"), new Prefix("sub/"))).isEmpty());
+    public void parseNoteNumber_invalidInput_throwsNoteNumberMessages() {
+        assertThrows(ParseException.class, String.format(MESSAGE_INVALID_INDEX, NOTE_NUMBER_LABEL), ()
+            -> ParserUtil.parseNoteNumber("0"));
+        assertThrows(ParseException.class, String.format(MESSAGE_NOTE_NUMBER_TOO_LARGE, NOTE_NUMBER_LABEL), ()
+            -> ParserUtil.parseNoteNumber("2147483648"));
     }
 
     @Test
-    public void findUnknownPrefix_unsupportedPrefix_returnsFirstUnsupportedPrefix() {
-        assertEquals(Optional.of("x/"), ParserUtil.findUnknownPrefix(" n/Alex x/value a/address",
-                List.of(new Prefix("n/"))));
+    public void parseOnlyStudentIndex_missingOrRepeatedIndex_throwsMessageWithFormat() {
+        String missingIndexMessage = Messages.withFormat(
+                String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL), "view INDEX", "view 1");
+        String repeatedIndexMessage = Messages.withFormat(
+                String.format(MESSAGE_TOO_MANY_INDICES, "view", INDEX_LABEL), "view INDEX", "view 1");
+
+        assertThrows(ParseException.class, missingIndexMessage, ()
+            -> ParserUtil.parseOnlyStudentIndex(WHITESPACE, "view", "view INDEX", "view 1"));
+        assertThrows(ParseException.class, repeatedIndexMessage, ()
+            -> ParserUtil.parseOnlyStudentIndex(" 1 2 ", "view", "view INDEX", "view 1"));
     }
 
     @Test
-    public void findUnknownPrefix_nullArguments_throwNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ParserUtil.findUnknownPrefix(null, List.of()));
-        assertThrows(NullPointerException.class, () -> ParserUtil.findUnknownPrefix("", null));
+    public void parseOnlyStudentIndex_singleIndex_success() throws Exception {
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseOnlyStudentIndex(" 1 ", "view", "view INDEX", "view 1"));
+    }
+
+    @Test
+    public void findLegacyPersonPrefix_legacyPrefixPresent_returnsFirstLegacyPrefix() {
+        ArgumentMultimap arguments = ParserUtil.tokenizeStudentFields(" n/Alex a/Address t/friend");
+
+        assertEquals(Optional.of(CliSyntax.PREFIX_ADDRESS), ParserUtil.findLegacyPersonPrefix(arguments));
+    }
+
+    @Test
+    public void findLegacyPersonPrefix_nullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.findLegacyPersonPrefix(null));
     }
 
     @Test

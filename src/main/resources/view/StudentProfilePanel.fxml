@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.StackPane?>
@@ -17,44 +18,46 @@
                     styleClass="empty-state-guidance" />
   </VBox>
 
-  <VBox fx:id="profileContent" maxWidth="Infinity" minWidth="0" spacing="18"
-        styleClass="profile-content" visible="false" managed="false">
-    <SelectableText fx:id="studentName" maxWidth="Infinity" styleClass="profile-name" />
-    <GridPane hgap="14" maxWidth="Infinity" minWidth="0"
-              styleClass="profile-details" vgap="12" VBox.vgrow="NEVER">
-      <columnConstraints>
-        <ColumnConstraints minWidth="112" prefWidth="145" maxWidth="170" />
-        <ColumnConstraints hgrow="ALWAYS" minWidth="0" />
-      </columnConstraints>
-      <Label text="Parent/guardian phone" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
-             GridPane.columnIndex="0" GridPane.rowIndex="0" />
-      <SelectableText fx:id="parentGuardianPhone" maxWidth="Infinity" styleClass="profile-field-value"
-                      GridPane.columnIndex="1" GridPane.rowIndex="0" />
-      <Label text="Parent/guardian email" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
-             GridPane.columnIndex="0" GridPane.rowIndex="1" />
-      <SelectableText fx:id="parentGuardianEmail" maxWidth="Infinity" styleClass="profile-field-value"
-                      GridPane.columnIndex="1" GridPane.rowIndex="1" />
-      <Label text="Subject" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
-             GridPane.columnIndex="0" GridPane.rowIndex="2" />
-      <SelectableText fx:id="subject" maxWidth="Infinity" styleClass="profile-field-value"
-                      GridPane.columnIndex="1" GridPane.rowIndex="2" />
-      <Label text="Current level" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
-             GridPane.columnIndex="0" GridPane.rowIndex="3" />
-      <SelectableText fx:id="currentLevel" maxWidth="Infinity" styleClass="profile-field-value"
-                      GridPane.columnIndex="1" GridPane.rowIndex="3" />
-    </GridPane>
-    <Label text="Session notes" styleClass="profile-section-heading" />
-    <StackPane minWidth="0" VBox.vgrow="ALWAYS">
-      <ListView fx:id="sessionNoteListView" styleClass="session-note-list" />
-      <VBox fx:id="emptyNotesState" alignment="CENTER" maxWidth="Infinity" spacing="5"
-            styleClass="empty-notes-state" visible="false" managed="false">
-        <SelectableText text="No session notes yet" styleClass="empty-notes-title" />
-        <SelectableText text="Use note INDEX nt/NOTE to record the first lesson update."
-                        styleClass="empty-state-guidance" />
-      </VBox>
-    </StackPane>
-    <padding>
-      <Insets top="20" right="20" bottom="20" left="20" />
-    </padding>
-  </VBox>
+  <ScrollPane fx:id="profileScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER"
+              managed="false" minWidth="0" styleClass="profile-scroll-pane" visible="false">
+    <VBox fx:id="profileContent" maxWidth="Infinity" minWidth="0" spacing="18" styleClass="profile-content">
+      <SelectableText fx:id="studentName" maxWidth="Infinity" styleClass="profile-name" />
+      <GridPane hgap="14" maxWidth="Infinity" minWidth="0"
+                styleClass="profile-details" vgap="12" VBox.vgrow="NEVER">
+        <columnConstraints>
+          <ColumnConstraints minWidth="112" prefWidth="145" maxWidth="170" />
+          <ColumnConstraints hgrow="ALWAYS" minWidth="0" />
+        </columnConstraints>
+        <Label text="Parent/guardian phone" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+               GridPane.columnIndex="0" GridPane.rowIndex="0" />
+        <SelectableText fx:id="parentGuardianPhone" maxWidth="Infinity" styleClass="profile-field-value"
+                        GridPane.columnIndex="1" GridPane.rowIndex="0" />
+        <Label text="Parent/guardian email" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+               GridPane.columnIndex="0" GridPane.rowIndex="1" />
+        <SelectableText fx:id="parentGuardianEmail" maxWidth="Infinity" styleClass="profile-field-value"
+                        GridPane.columnIndex="1" GridPane.rowIndex="1" />
+        <Label text="Subject" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+               GridPane.columnIndex="0" GridPane.rowIndex="2" />
+        <SelectableText fx:id="subject" maxWidth="Infinity" styleClass="profile-field-value"
+                        GridPane.columnIndex="1" GridPane.rowIndex="2" />
+        <Label text="Current level" maxWidth="Infinity" styleClass="profile-field-label" wrapText="true"
+               GridPane.columnIndex="0" GridPane.rowIndex="3" />
+        <SelectableText fx:id="currentLevel" maxWidth="Infinity" styleClass="profile-field-value"
+                        GridPane.columnIndex="1" GridPane.rowIndex="3" />
+      </GridPane>
+      <Label text="Session notes" styleClass="profile-section-heading" />
+      <StackPane minWidth="0" VBox.vgrow="ALWAYS">
+        <ListView fx:id="sessionNoteListView" styleClass="session-note-list" />
+        <VBox fx:id="emptyNotesState" alignment="CENTER" maxWidth="Infinity" spacing="5"
+              styleClass="empty-notes-state" visible="false" managed="false">
+          <SelectableText text="No session notes yet" styleClass="empty-notes-title" />
+          <SelectableText text="Use note INDEX nt/NOTE to record the first lesson update."
+                          styleClass="empty-state-guidance" />
+        </VBox>
+      </StackPane>
+      <padding>
+        <Insets top="20" right="20" bottom="20" left="20" />
+      </padding>
+    </VBox>
+  </ScrollPane>
 </StackPane>

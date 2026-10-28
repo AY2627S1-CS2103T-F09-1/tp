@@ -77,8 +77,8 @@ public class SessionNoteIntegrationTest {
         logic.execute("note 2 nt/Reviewed essay structure.");
         String savedData = Files.readString(dataFile);
 
-        assertThrows(CommandException.class, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, () -> logic
-                .execute("note 3 nt/Reviewed indices."));
+        assertThrows(CommandException.class, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 3, 2), ()
+                -> logic.execute("note 3 nt/Reviewed indices."));
         assertThrows(ParseException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> logic
                 .execute("note 1 nt/   "));
 

@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -30,7 +31,7 @@ public class StudentProfilePanel extends UiPart<Region> {
     @FXML
     private VBox emptyState;
     @FXML
-    private VBox profileContent;
+    private ScrollPane profileScrollPane;
     @FXML
     private SelectableText studentName;
     @FXML
@@ -77,6 +78,7 @@ public class StudentProfilePanel extends UiPart<Region> {
         sessionNotes.setAll(numberSessionNotes(profile.getSessionNotes()));
         updateNotesEmptyState();
         setProfileVisible(true);
+        profileScrollPane.setVvalue(profileScrollPane.getVmin());
     }
 
     /**
@@ -105,8 +107,8 @@ public class StudentProfilePanel extends UiPart<Region> {
     }
 
     private void setProfileVisible(boolean isVisible) {
-        profileContent.setVisible(isVisible);
-        profileContent.setManaged(isVisible);
+        profileScrollPane.setVisible(isVisible);
+        profileScrollPane.setManaged(isVisible);
         emptyState.setVisible(!isVisible);
         emptyState.setManaged(!isVisible);
     }
