@@ -204,8 +204,8 @@ Confirmation format: `delete INDEX /confirm`
 * `INDEX` is the student's number in the currently displayed sorted roster.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
 * The preview identifies the student, shows how many session notes would be removed, and displays the exact confirmation command. It does not delete or save anything.
-* To complete the deletion, enter the displayed `delete INDEX /confirm` command immediately after the preview. `/confirm` is case-sensitive and must appear once, after the index.
-* To cancel, enter any other command. The pending deletion is cleared before that command is processed. Starting another `delete INDEX` preview replaces the earlier pending deletion.
+* To complete the deletion, enter the displayed `delete INDEX /confirm` command as the next correctly formatted command. `/confirm` is case-sensitive and must appear once, after the index.
+* A typing error does not cancel the preview; correct it and enter the displayed confirmation command. Another correctly formatted command cancels the preview. Starting another `delete INDEX` preview replaces it.
 * A direct, repeated, or mismatched `/confirm` command is rejected without deleting data.
 * After a matching confirmation, TutorTrack reports `Successfully deleted STUDENT_NAME.` The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes and its roster highlight is cleared.
 
@@ -213,7 +213,7 @@ Example:
 
 1. Enter `delete 2`.
 1. Check the student name and session-note count in the prompt.
-1. Enter `delete 2 /confirm` as the next command to delete that student, or enter any other command to cancel.
+1. Enter `delete 2 /confirm` as the next correctly formatted command to delete that student, or enter another correctly formatted command to cancel.
 
 If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. See [Fixing command errors](#fixing-command-errors) for the messages. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
 
@@ -228,7 +228,7 @@ Confirmation format: `delete note STUDENT_INDEX NOTE_NUMBER /confirm`
 * `STUDENT_INDEX` is the student's positive whole-number index in the displayed roster.
 * `NOTE_NUMBER` is the positive number in square brackets beside the note in that student's profile.
 * The preview identifies the student and note number and displays the exact confirmation command. It does not delete or save anything.
-* Enter the displayed confirmation command immediately after the preview. To cancel, enter any other command; starting another deletion preview replaces the earlier pending deletion.
+* Enter the displayed confirmation command as the next correctly formatted command. A typing error keeps the preview active; another correctly formatted command cancels it. Starting another deletion preview replaces it.
 * Direct, repeated, stale, or mismatched confirmations are rejected. This includes a student or session-history change between the preview and confirmation.
 * After a matching confirmation, TutorTrack removes only that note, reports `Successfully deleted session note [NOTE_NUMBER] for STUDENT_NAME.`, refreshes an open profile, and numbers the remaining notes consecutively.
 
@@ -237,7 +237,7 @@ Example:
 1. Enter `view 1` and check the displayed note numbers.
 1. Enter `delete note 1 3`.
 1. Check the student name and note number in the prompt.
-1. Enter `delete note 1 3 /confirm` as the next command to delete that note, or enter any other command to cancel.
+1. Enter `delete note 1 3 /confirm` as the next correctly formatted command to delete that note, or enter another correctly formatted command to cancel.
 
 If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and changes nothing. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
 
