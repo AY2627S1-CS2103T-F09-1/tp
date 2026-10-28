@@ -99,20 +99,35 @@ public class StudentProfilePanel extends UiPart<Region> {
      * Does nothing when the profile has not been laid out yet.
      */
     public void scrollSessionNotes(int pageCount) {
-        if (!(sessionNoteListView.lookup(".virtual-flow") instanceof VirtualFlow<?> virtualFlow)) {
+        Node flowNode = sessionNoteListView.lookup(UiPart.VIRTUAL_FLOW_SELECTOR);
+        if (!(flowNode instanceof VirtualFlow<?> virtualFlow)) {
             return;
         }
-        boolean shouldPageNotes = pageCount > 0 ? isSessionNoteListBottomVisible() : virtualFlow.getPosition() > 0;
-        if (shouldPageNotes) {
+        if (shouldPageSessionNotes(pageCount, virtualFlow)) {
             virtualFlow.scrollPixels(pageCount * virtualFlow.getHeight());
         } else {
             scrollProfilePane(pageCount);
         }
     }
 
+    /**
+     * Returns true if a page request should move the session-note list rather than the outer profile pane.
+     */
+    private boolean shouldPageSessionNotes(int pageCount, VirtualFlow<?> sessionNoteFlow) {
+        boolean isPagingDown = pageCount > 0;
+        return isPagingDown ? isSessionNoteListBottomVisible() : sessionNoteFlow.getPosition() > 0;
+    }
+
+    private double getViewportHeight() {
+        return profileScrollPane.getViewportBounds().getHeight();
+    }
+
+    private double getScrollValueRange() {
+        return profileScrollPane.getVmax() - profileScrollPane.getVmin();
+    }
+
     private double getScrollableProfilePixels() {
-        return profileScrollPane.getContent().getLayoutBounds().getHeight()
-                - profileScrollPane.getViewportBounds().getHeight();
+        return profileScrollPane.getContent().getLayoutBounds().getHeight() - getViewportHeight();
     }
 
     /**
@@ -125,13 +140,19 @@ public class StudentProfilePanel extends UiPart<Region> {
         if (scrollablePixels <= 0) {
             return true;
         }
-        double valueRange = profileScrollPane.getVmax() - profileScrollPane.getVmin();
-        double scrolledFraction = (profileScrollPane.getVvalue() - profileScrollPane.getVmin()) / valueRange;
-        double visibleBottom = scrolledFraction * scrollablePixels + profileScrollPane.getViewportBounds().getHeight();
+        double scrolledValue = profileScrollPane.getVvalue() - profileScrollPane.getVmin();
+        double scrolledFraction = scrolledValue / getScrollValueRange();
+        double visibleBottom = scrolledFraction * scrollablePixels + getViewportHeight();
+        return getSessionNoteListBottom() <= visibleBottom + VISIBLE_EDGE_TOLERANCE_PIXELS;
+    }
+
+    /**
+     * Returns the bottom edge of the session-note list in the coordinates of the scrolled profile content.
+     */
+    private double getSessionNoteListBottom() {
         Node content = profileScrollPane.getContent();
-        double listBottom = content.sceneToLocal(
-                sessionNoteListView.localToScene(sessionNoteListView.getLayoutBounds())).getMaxY();
-        return listBottom <= visibleBottom + VISIBLE_EDGE_TOLERANCE_PIXELS;
+        return content.sceneToLocal(sessionNoteListView.localToScene(sessionNoteListView.getLayoutBounds()))
+                .getMaxY();
     }
 
     private void scrollProfilePane(int pageCount) {
@@ -139,9 +160,8 @@ public class StudentProfilePanel extends UiPart<Region> {
         if (scrollablePixels <= 0) {
             return;
         }
-        double valueRange = profileScrollPane.getVmax() - profileScrollPane.getVmin();
-        double pageFraction = profileScrollPane.getViewportBounds().getHeight() / scrollablePixels;
-        double newValue = profileScrollPane.getVvalue() + pageCount * pageFraction * valueRange;
+        double pageFraction = getViewportHeight() / scrollablePixels;
+        double newValue = profileScrollPane.getVvalue() + pageCount * pageFraction * getScrollValueRange();
         profileScrollPane.setVvalue(Math.max(profileScrollPane.getVmin(),
                 Math.min(profileScrollPane.getVmax(), newValue)));
     }

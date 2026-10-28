@@ -42,6 +42,15 @@ public class DeleteCommandParser implements Parser<Command> {
             String.format(MESSAGE_TOO_MANY_INDICES, DeleteCommand.COMMAND_WORD, INDEX_LABEL),
             DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
 
+    // Positions and sizes of "note STUDENT_INDEX NOTE_NUMBER [/confirm]" once split on whitespace.
+    private static final int NOTE_TARGET_POSITION = 0;
+    private static final int STUDENT_INDEX_POSITION = 1;
+    private static final int NOTE_NUMBER_POSITION = 2;
+    private static final int CONFIRMATION_FLAG_POSITION = 3;
+    private static final int ARGUMENT_COUNT_TARGET_ONLY = 1;
+    private static final int ARGUMENT_COUNT_WITHOUT_NOTE_NUMBER = 2;
+    private static final int ARGUMENT_COUNT_CONFIRMED = 4;
+
     private static final String WHITESPACE_PATTERN = "\\s+";
 
     /**
@@ -54,10 +63,15 @@ public class DeleteCommandParser implements Parser<Command> {
         List<String> arguments = trimmedArgs.isEmpty()
                 ? List.of()
                 : Arrays.asList(trimmedArgs.split(WHITESPACE_PATTERN));
-        if (!arguments.isEmpty() && DeleteSessionNoteCommand.NOTE_TARGET.equals(arguments.get(0))) {
+        if (isSessionNoteDeletion(arguments)) {
             return parseSessionNoteDeletion(arguments);
         }
         return parseStudentDeletion(arguments);
+    }
+
+    private boolean isSessionNoteDeletion(List<String> arguments) {
+        return !arguments.isEmpty()
+                && DeleteSessionNoteCommand.NOTE_TARGET.equals(arguments.get(NOTE_TARGET_POSITION));
     }
 
     private DeleteCommand parseStudentDeletion(List<String> arguments) throws ParseException {
@@ -83,26 +97,52 @@ public class DeleteCommandParser implements Parser<Command> {
      * Parses {@code arguments}, which start with the {@code note} target, as a session-note deletion.
      */
     private DeleteSessionNoteCommand parseSessionNoteDeletion(List<String> arguments) throws ParseException {
-        if (arguments.size() == 1) {
+        verifyArgumentCount(arguments);
+        verifyConfirmationFlagPlacement(arguments);
+
+        Index studentIndex = ParserUtil.parseStudentIndex(
+                arguments.get(STUDENT_INDEX_POSITION), STUDENT_INDEX_LABEL);
+        Index noteNumber = ParserUtil.parseNoteNumber(arguments.get(NOTE_NUMBER_POSITION));
+        boolean isConfirmed = arguments.size() == ARGUMENT_COUNT_CONFIRMED;
+        return new DeleteSessionNoteCommand(studentIndex, noteNumber, isConfirmed);
+    }
+
+    /**
+     * Checks that {@code arguments} hold the {@code note} target, both indices, and at most one flag.
+     *
+     * @throws ParseException If an index is missing or extra arguments are present.
+     */
+    private static void verifyArgumentCount(List<String> arguments) throws ParseException {
+        if (arguments.size() == ARGUMENT_COUNT_TARGET_ONLY) {
             throw new ParseException(MESSAGE_MISSING_SESSION_NOTE_ARGUMENTS);
         }
-        if (arguments.size() == 2) {
-            throw new ParseException(DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(1))
+        if (arguments.size() == ARGUMENT_COUNT_WITHOUT_NOTE_NUMBER) {
+            boolean isFlagInStudentIndexPosition = isConfirmationFlag(arguments.get(STUDENT_INDEX_POSITION));
+            throw new ParseException(isFlagInStudentIndexPosition
                     ? MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG
                     : MESSAGE_MISSING_NOTE_NUMBER);
         }
-        if (arguments.size() > 4) {
+        if (arguments.size() > ARGUMENT_COUNT_CONFIRMED) {
             throw new ParseException(MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
         }
-        boolean isFlagMisplaced = DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(1))
-                || DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(2))
-                || arguments.size() == 4 && !DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(3));
-        if (isFlagMisplaced) {
+    }
+
+    /**
+     * Checks that the confirmation flag, if any, is the last argument and not in place of an index.
+     *
+     * @throws ParseException If the flag is misplaced or the last of four arguments is not the flag.
+     */
+    private static void verifyConfirmationFlagPlacement(List<String> arguments) throws ParseException {
+        boolean isFlagInIndexPosition = isConfirmationFlag(arguments.get(STUDENT_INDEX_POSITION))
+                || isConfirmationFlag(arguments.get(NOTE_NUMBER_POSITION));
+        boolean isLastArgumentNotFlag = arguments.size() == ARGUMENT_COUNT_CONFIRMED
+                && !isConfirmationFlag(arguments.get(CONFIRMATION_FLAG_POSITION));
+        if (isFlagInIndexPosition || isLastArgumentNotFlag) {
             throw new ParseException(MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
         }
+    }
 
-        Index studentIndex = ParserUtil.parseStudentIndex(arguments.get(1), STUDENT_INDEX_LABEL);
-        Index noteNumber = ParserUtil.parseNoteNumber(arguments.get(2));
-        return new DeleteSessionNoteCommand(studentIndex, noteNumber, arguments.size() == 4);
+    private static boolean isConfirmationFlag(String argument) {
+        return DeleteCommand.CONFIRMATION_FLAG.equals(argument);
     }
 }

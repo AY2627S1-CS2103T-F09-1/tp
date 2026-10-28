@@ -25,7 +25,11 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
                     + " takes only one STUDENT_INDEX and one NOTE_NUMBER.");
 
     private static final String WHITESPACE_PATTERN = "\\s+";
-    private static final int TARGET_AND_INDEX_COUNT = 3;
+    private static final int STUDENT_INDEX_POSITION = 1;
+    private static final int NOTE_NUMBER_POSITION = 2;
+    private static final int ARGUMENT_COUNT_TARGET_ONLY = 1;
+    private static final int ARGUMENT_COUNT_WITHOUT_NOTE_NUMBER = 2;
+    private static final int ARGUMENT_COUNT_COMPLETE = 3;
 
     /**
      * Parses the given {@code String} of arguments in the context of the edit note command.
@@ -47,13 +51,10 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
         }
         verifyIndexCount(preamble.length);
 
-        Index studentIndex = ParserUtil.parseStudentIndex(preamble[1], ParserUtil.STUDENT_INDEX_LABEL);
-        Index noteNumber = ParserUtil.parseNoteNumber(preamble[2]);
-        try {
-            argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
-        } catch (ParseException exception) {
-            throw new ParseException(withEditNoteFormat(exception.getMessage()), exception);
-        }
+        Index studentIndex = ParserUtil.parseStudentIndex(
+                preamble[STUDENT_INDEX_POSITION], ParserUtil.STUDENT_INDEX_LABEL);
+        Index noteNumber = ParserUtil.parseNoteNumber(preamble[NOTE_NUMBER_POSITION]);
+        verifyNoDuplicateNotePrefix(argMultimap);
         return new EditNoteCommand(studentIndex, noteNumber, ParserUtil.parseNoteText(noteText.get()));
     }
 
@@ -63,14 +64,27 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
      * @throws ParseException If an index is missing or extra values are present.
      */
     private static void verifyIndexCount(int preambleWordCount) throws ParseException {
-        if (preambleWordCount == 1) {
+        if (preambleWordCount == ARGUMENT_COUNT_TARGET_ONLY) {
             throw new ParseException(MESSAGE_MISSING_INDICES);
         }
-        if (preambleWordCount == 2) {
+        if (preambleWordCount == ARGUMENT_COUNT_WITHOUT_NOTE_NUMBER) {
             throw new ParseException(MESSAGE_MISSING_NOTE_NUMBER);
         }
-        if (preambleWordCount > TARGET_AND_INDEX_COUNT) {
+        if (preambleWordCount > ARGUMENT_COUNT_COMPLETE) {
             throw new ParseException(MESSAGE_TOO_MANY_INDICES);
+        }
+    }
+
+    /**
+     * Checks that the note text prefix appears once, adding the command format to the error otherwise.
+     *
+     * @throws ParseException If the prefix is repeated.
+     */
+    private static void verifyNoDuplicateNotePrefix(ArgumentMultimap argMultimap) throws ParseException {
+        try {
+            argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
+        } catch (ParseException exception) {
+            throw new ParseException(withEditNoteFormat(exception.getMessage()), exception);
         }
     }
 

@@ -314,4 +314,31 @@ public class ParserUtilTest {
 
         assertEquals(expectedTagSet, actualTagSet);
     }
+
+    // Equivalence partition: leading zeros are a plausible typing mistake, not a different number.
+    @Test
+    public void parseStudentIndex_leadingZeros_parsedAsPlainNumber() throws Exception {
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseStudentIndex("01", INDEX_LABEL));
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseStudentIndex("0002147483647", INDEX_LABEL));
+    }
+
+    // Boundary: a number just above the integer range stays "too large" even when padded with zeros.
+    @Test
+    public void parseNoteNumber_paddedAboveIntegerRange_throwsTooLargeMessage() {
+        String expectedMessage = String.format(MESSAGE_NOTE_NUMBER_TOO_LARGE, NOTE_NUMBER_LABEL);
+
+        assertThrows(ParseException.class, expectedMessage, ()
+            -> ParserUtil.parseNoteNumber("0002147483648"));
+    }
+
+    @Test
+    public void parseOnlyStudentIndex_tabSeparatedIndices_throwsMessageWithFormat() {
+        String repeatedIndexMessage = Messages.withFormat(
+                String.format(MESSAGE_TOO_MANY_INDICES, "view", INDEX_LABEL), "view INDEX", "view 1");
+
+        assertThrows(ParseException.class, repeatedIndexMessage, ()
+            -> ParserUtil.parseOnlyStudentIndex("1\t2", "view", "view INDEX", "view 1"));
+    }
+
 }

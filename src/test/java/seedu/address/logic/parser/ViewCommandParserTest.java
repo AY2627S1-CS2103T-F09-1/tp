@@ -51,4 +51,13 @@ public class ViewCommandParserTest {
         assertParseFailure(parser, "2147483648", expectedMessage);
         assertParseFailure(parser, "99999999999", expectedMessage);
     }
+
+    // Equivalence partition: any whitespace character may surround or separate arguments.
+    @Test
+    public void parse_tabAndNewlineWhitespace_isTrimmedOrCountedAsSeparator() {
+        assertParseSuccess(parser, "\t1\n", new ViewCommand(INDEX_FIRST_PERSON));
+        assertParseFailure(parser, "1\t2", Messages.withFormat("view takes only one INDEX.",
+                ViewCommand.COMMAND_FORMAT, ViewCommand.COMMAND_EXAMPLE));
+    }
+
 }
