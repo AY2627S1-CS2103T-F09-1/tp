@@ -2,11 +2,8 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.List;
-
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.session.SessionHistory;
@@ -19,12 +16,13 @@ public class EditNoteCommand extends Command {
 
     public static final String COMMAND_WORD = "edit";
     public static final String NOTE_TARGET = "note";
-    public static final String MESSAGE_USAGE = COMMAND_WORD + " " + NOTE_TARGET
-            + ": Edits one session note without changing when it was recorded.\n"
-            + "Parameters: STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE\n"
-            + "Example: " + COMMAND_WORD + " " + NOTE_TARGET + " 1 2 nt/Corrected lesson summary.";
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " " + NOTE_TARGET
+            + " STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE";
+    public static final String COMMAND_EXAMPLE = COMMAND_WORD + " " + NOTE_TARGET
+            + " 1 2 nt/Corrected lesson summary.";
     public static final String MESSAGE_SUCCESS = "Successfully edited session note [%1$d] for %2$s.";
-    public static final String MESSAGE_NO_SESSION_NOTES = "%1$s has no session notes to edit.";
+    public static final String MESSAGE_NO_SESSION_NOTES =
+            "%1$s has no session notes to edit. Add one with " + NoteCommand.COMMAND_FORMAT + " first.";
     public static final String MESSAGE_INVALID_NOTE_NUMBER =
             "Session note [%1$d] does not exist for %2$s. Enter a note number from 1 to %3$d.";
 
@@ -65,12 +63,7 @@ public class EditNoteCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<StudentRosterEntry> rosterEntries = model.getStudentRoster().getEntries();
-        if (studentIndex.getZeroBased() >= rosterEntries.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
-        }
-
-        StudentRosterEntry student = rosterEntries.get(studentIndex.getZeroBased());
+        StudentRosterEntry student = getRosterEntry(model, studentIndex);
         SessionHistory history = model.getSessionHistory(student.getStudentId());
         if (history.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_SESSION_NOTES, student.getName()));

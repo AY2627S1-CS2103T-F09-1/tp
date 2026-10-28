@@ -1,9 +1,8 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.withFormat;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 
-import java.math.BigInteger;
 import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
@@ -16,66 +15,70 @@ import seedu.address.model.session.SessionNote;
  */
 public class EditNoteCommandParser implements Parser<EditNoteCommand> {
 
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditNoteCommand.MESSAGE_USAGE);
-    private static final String MESSAGE_INVALID_STUDENT_INDEX =
-            "STUDENT_INDEX must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE;
-    private static final String MESSAGE_INVALID_NOTE_NUMBER =
-            "NOTE_NUMBER must be a positive integer.\n" + EditNoteCommand.MESSAGE_USAGE;
-    private static final String MESSAGE_STUDENT_INDEX_TOO_LARGE =
-            "STUDENT_INDEX is too large. Enter a smaller positive integer.\n" + EditNoteCommand.MESSAGE_USAGE;
-    private static final String MESSAGE_NOTE_NUMBER_TOO_LARGE =
-            "NOTE_NUMBER is too large. Enter a smaller positive integer.\n" + EditNoteCommand.MESSAGE_USAGE;
-    private static final String MESSAGE_MISSING_NOTE_NUMBER =
-            "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile, "
-                    + "e.g. edit note 1 2 nt/...\n" + EditNoteCommand.MESSAGE_USAGE;
+    static final String MESSAGE_MISSING_NOTE_TARGET = withEditNoteFormat(
+            "Start the command with " + EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET + ".");
+    static final String MESSAGE_MISSING_NEW_NOTE = withEditNoteFormat("Missing " + PREFIX_NOTE + "NEW_NOTE.");
+    static final String MESSAGE_MISSING_INDICES = withEditNoteFormat("Missing STUDENT_INDEX and NOTE_NUMBER.");
+    static final String MESSAGE_MISSING_NOTE_NUMBER = withEditNoteFormat(
+            "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile.");
+    static final String MESSAGE_TOO_MANY_INDICES = withEditNoteFormat(
+            EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET
+                    + " takes only one STUDENT_INDEX and one NOTE_NUMBER.");
+
+    private static final String WHITESPACE_PATTERN = "\\s+";
+    private static final int TARGET_AND_INDEX_COUNT = 3;
 
     /**
      * Parses the given {@code String} of arguments in the context of the edit note command.
      *
-     * @throws ParseException If the arguments do not conform to the expected format or contain invalid note text.
+     * @throws ParseException If a part of the command is missing or repeated, an index is invalid, or the note
+     *         text is invalid.
      */
     @Override
     public EditNoteCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTE);
         Optional<String> noteText = argMultimap.getValue(PREFIX_NOTE);
-        String[] preamble = argMultimap.getPreamble().split("\\s+");
+        String[] preamble = argMultimap.getPreamble().split(WHITESPACE_PATTERN);
 
-        if (noteText.isPresent() && preamble.length == 2
-                && EditNoteCommand.NOTE_TARGET.equals(preamble[0])) {
-            throw new ParseException(MESSAGE_MISSING_NOTE_NUMBER);
+        if (!EditNoteCommand.NOTE_TARGET.equals(preamble[0])) {
+            throw new ParseException(MESSAGE_MISSING_NOTE_TARGET);
         }
-        if (noteText.isEmpty() || preamble.length != 3
-                || !EditNoteCommand.NOTE_TARGET.equals(preamble[0])) {
-            throw new ParseException(MESSAGE_INVALID_FORMAT);
+        if (noteText.isEmpty()) {
+            throw new ParseException(MESSAGE_MISSING_NEW_NOTE);
         }
+        verifyIndexCount(preamble.length);
 
-        Index studentIndex = parseIndex(preamble[1], MESSAGE_INVALID_STUDENT_INDEX,
-                MESSAGE_STUDENT_INDEX_TOO_LARGE);
-        Index noteNumber = parseIndex(preamble[2], MESSAGE_INVALID_NOTE_NUMBER, MESSAGE_NOTE_NUMBER_TOO_LARGE);
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
+        Index studentIndex = ParserUtil.parseStudentIndex(preamble[1], ParserUtil.STUDENT_INDEX_LABEL);
+        Index noteNumber = ParserUtil.parseNoteNumber(preamble[2]);
+        try {
+            argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
+        } catch (ParseException exception) {
+            throw new ParseException(withEditNoteFormat(exception.getMessage()), exception);
+        }
         if (!SessionNote.isValidText(noteText.get())) {
             throw new ParseException(SessionNote.MESSAGE_CONSTRAINTS);
         }
         return new EditNoteCommand(studentIndex, noteNumber, noteText.get());
     }
 
-    private Index parseIndex(String argument, String errorMessage, String tooLargeErrorMessage) throws ParseException {
-        try {
-            return ParserUtil.parseIndex(argument);
-        } catch (ParseException exception) {
-            if (isTooLargePositiveInteger(argument)) {
-                throw new ParseException(tooLargeErrorMessage, exception);
-            }
-            throw new ParseException(errorMessage, exception);
+    /**
+     * Checks that the preamble holds the {@code note} target followed by exactly two indices.
+     *
+     * @throws ParseException If an index is missing or extra values are present.
+     */
+    private static void verifyIndexCount(int preambleWordCount) throws ParseException {
+        if (preambleWordCount == 1) {
+            throw new ParseException(MESSAGE_MISSING_INDICES);
+        }
+        if (preambleWordCount == 2) {
+            throw new ParseException(MESSAGE_MISSING_NOTE_NUMBER);
+        }
+        if (preambleWordCount > TARGET_AND_INDEX_COUNT) {
+            throw new ParseException(MESSAGE_TOO_MANY_INDICES);
         }
     }
 
-    private boolean isTooLargePositiveInteger(String argument) {
-        try {
-            return new BigInteger(argument).compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0;
-        } catch (NumberFormatException exception) {
-            return false;
-        }
+    private static String withEditNoteFormat(String message) {
+        return withFormat(message, EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
     }
 }

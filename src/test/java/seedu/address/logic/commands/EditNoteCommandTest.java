@@ -3,8 +3,10 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
+import static seedu.address.testutil.TypicalSessionNotes.BEA;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
@@ -34,12 +36,22 @@ public class EditNoteCommandTest {
     @Test
     public void execute_invalidStudentIndex_throwsCommandException() {
         model.addStudent(ALEX);
+        model.addStudent(BEA);
         model.addSessionNote(ALEX.getId(), "Original summary.");
-        EditNoteCommand command = new EditNoteCommand(Index.fromOneBased(2), Index.fromOneBased(1),
+        EditNoteCommand command = new EditNoteCommand(Index.fromOneBased(3), Index.fromOneBased(1),
                 "Corrected summary.");
 
-        assertThrows(CommandException.class, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, () -> command.execute(
-                model));
+        Executable executeInvalidCommand = () -> command.execute(model);
+        assertThrows(CommandException.class, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 3, 2),
+                executeInvalidCommand);
+    }
+
+    @Test
+    public void execute_emptyRoster_throwsCommandException() {
+        EditNoteCommand command = new EditNoteCommand(Index.fromOneBased(1), Index.fromOneBased(1),
+                "Corrected summary.");
+
+        assertThrows(CommandException.class, Messages.MESSAGE_EMPTY_ROSTER, () -> command.execute(model));
     }
 
     @Test

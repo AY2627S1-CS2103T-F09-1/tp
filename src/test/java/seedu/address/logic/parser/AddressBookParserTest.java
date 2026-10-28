@@ -2,8 +2,6 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
@@ -11,8 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteSessionNoteCommand;
@@ -88,6 +88,43 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_mistypedEditNoteTarget_suggestsCorrectCommand() {
+        List<String> mistypedTargets = List.of("notes", "nte", "nots", "no");
+        for (String mistypedTarget : mistypedTargets) {
+            String expectedMessage = String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
+                    mistypedTarget, EditNoteCommand.COMMAND_FORMAT);
+            Executable parseMistypedCommand = () -> parser.parseCommand(
+                    "edit " + mistypedTarget + " 1 2 nt/Corrected summary.");
+            assertThrows(ParseException.class, expectedMessage, parseMistypedCommand);
+        }
+    }
+
+    @Test
+    public void parseCommand_editWithoutTarget_usesStudentEditParser() {
+        String expectedMessage = Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT,
+                EditCommand.COMMAND_EXAMPLE);
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("edit"));
+    }
+
+    @Test
+    public void parseCommand_editStudentWithoutIndex_reportsMissingIndex() {
+        String expectedMessage = Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT,
+                EditCommand.COMMAND_EXAMPLE);
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("edit n/Bob"));
+    }
+
+    @Test
+    public void parseCommand_editStudentWithMistypedIndex_reportsInvalidIndex() {
+        List<String> mistypedIndices = List.of("a", "abc", "-1", "+1", "1x");
+        for (String mistypedIndex : mistypedIndices) {
+            assertThrows(ParseException.class, "INDEX must be a positive whole number, e.g. 1.", ()
+                -> parser.parseCommand("edit " + mistypedIndex + " n/Bob"));
+        }
+    }
+
+    @Test
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
@@ -116,19 +153,25 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_removedListCommand_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("list"));
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("list 3"));
+        String expectedMessage = AddressBookParser.getUnknownCommandMessage("list");
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("list"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("list 3"));
     }
 
     @Test
     public void parseCommand_unrecognisedInput_throwsParseException() {
-        assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE), ()
-            -> parser.parseCommand(""));
+        String expectedMessage = "Enter a command. Available commands: add, delete, edit, exit, help, note, view.";
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("   "));
     }
 
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
+        String expectedMessage =
+                "Unknown command: unknownCommand. Available commands: add, delete, edit, exit, help, note, view.";
+
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("unknownCommand"));
     }
 
     @Test
@@ -136,7 +179,8 @@ public class AddressBookParserTest {
         List<String> legacyCommands = List.of("find Alicia", "clear");
 
         for (String legacyCommand : legacyCommands) {
-            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(legacyCommand));
+            String expectedMessage = AddressBookParser.getUnknownCommandMessage(legacyCommand.split(" ")[0]);
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(legacyCommand));
         }
     }
 

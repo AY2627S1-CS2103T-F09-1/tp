@@ -7,6 +7,7 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextBoundsType;
 
 /**
  * Displays read-only text that users can select and copy.
@@ -30,6 +31,8 @@ public class SelectableText extends TextArea {
         setMaxWidth(Double.MAX_VALUE);
         setPrefColumnCount(PREFERRED_COLUMN_COUNT);
         setPrefRowCount(1);
+        // Matches the TextArea skin so each measured line is as tall as the rendered line.
+        measuringText.setBoundsType(TextBoundsType.LOGICAL_VERTICAL_CENTER);
         setMinHeight(USE_PREF_SIZE);
         setMaxHeight(USE_PREF_SIZE);
         getStyleClass().add("selectable-text");

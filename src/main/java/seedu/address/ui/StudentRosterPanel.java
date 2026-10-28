@@ -39,6 +39,8 @@ public class StudentRosterPanel extends UiPart<Region> {
         super(FXML);
         studentRosterListView.setItems(rosterEntries);
         studentRosterListView.setCellFactory(listView -> new StudentRosterListViewCell());
+        studentRosterListView.widthProperty().addListener((observable, oldWidth, newWidth) ->
+                studentRosterListView.refresh());
         setRoster(roster);
     }
 
@@ -90,6 +92,12 @@ public class StudentRosterPanel extends UiPart<Region> {
      * Displays one roster entry as a student card.
      */
     class StudentRosterListViewCell extends ListCell<StudentRosterEntry> {
+
+        StudentRosterListViewCell() {
+            setMinWidth(0);
+            setPrefWidth(0);
+        }
+
         @Override
         protected void updateItem(StudentRosterEntry entry, boolean empty) {
             super.updateItem(entry, empty);

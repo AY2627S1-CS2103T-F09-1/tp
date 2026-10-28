@@ -54,8 +54,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import seedu.address.MainApp;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
@@ -137,6 +139,54 @@ public class StudentRosterUiTest {
         assertEquals(roster.getEntries(), getListView(panel).getItems());
         assertFalse(getEmptyRosterState(panel).isVisible());
         assertFalse(getEmptyRosterState(panel).isManaged());
+    }
+
+    @Test
+    public void roster_resizedNarrowly_keepsLastCardReachable() throws Exception {
+        List<Student> students = new ArrayList<>();
+        for (int index = 0; index < 20; index++) {
+            students.add(student("Student " + "LongName ".repeat(5) + index, StudentId.fromString(String.format(
+                    "123e4567-e89b-12d3-a456-%012d", index))));
+        }
+        StudentRoster roster = new StudentRoster(students);
+        StudentRosterEntry lastEntry = roster.getEntries().get(roster.size() - 1);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(roster));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 420, 500));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListView<StudentRosterEntry> listView = getListView(panel);
+                Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
+                assertNotNull(virtualFlow);
+                ScrollBar verticalScrollBar = virtualFlow.getChildrenUnmodifiable().stream()
+                        .filter(ScrollBar.class::isInstance)
+                        .map(ScrollBar.class::cast)
+                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                        .findFirst()
+                        .orElseThrow();
+                assertTrue(verticalScrollBar.isVisible());
+                verticalScrollBar.setValue(verticalScrollBar.getMin());
+                stage.getScene().getRoot().layout();
+
+                stage.setWidth(180);
+                stage.getScene().getRoot().layout();
+                verticalScrollBar.setValue(verticalScrollBar.getMax());
+                stage.getScene().getRoot().layout();
+
+                assertTrue(listView.lookupAll(".list-cell").stream()
+                        .filter(ListCell.class::isInstance)
+                        .map(ListCell.class::cast)
+                        .anyMatch(cell -> cell.getItem() == lastEntry));
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
     }
 
     @Test
@@ -255,7 +305,7 @@ public class StudentRosterUiTest {
         VBox details = (VBox) grid.getChildren().get(0);
         HBox heading = (HBox) details.getChildren().get(0);
 
-        assertEquals("2. ", ((Label) heading.getChildren().get(0)).getText());
+        assertEquals("2", ((Label) heading.getChildren().get(0)).getText());
         assertEquals("Alex Tan", ((Label) heading.getChildren().get(1)).getText());
         assertEquals("Subject: Mathematics", ((Label) details.getChildren().get(1)).getText());
         assertEquals("Level: Secondary 3", ((Label) details.getChildren().get(2)).getText());
@@ -264,6 +314,53 @@ public class StudentRosterUiTest {
         assertTrue(((Label) details.getChildren().get(1)).isWrapText());
         assertTrue(((Label) details.getChildren().get(2)).isWrapText());
         assertTrue(((Label) details.getChildren().get(3)).isWrapText());
+    }
+
+    @Test
+    public void rosterPanel_narrowWidthWithLongFields_wrapsWithoutHorizontalScroll() throws Exception {
+        Student student = new Student(new StudentName("Alicia Alexandra Catherine Elizabeth Lim Wei Xuan"),
+                new ParentGuardianContact("8000 0001",
+                        Optional.of("guardian.with.a.long.address@example.com")),
+                new Subject("Additional Mathematics and Mathematical Modelling"),
+                new CurrentLevel("Secondary Four Express Integrated Academic Programme"), ALEX_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of(student))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 260, 500));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListView<StudentRosterEntry> listView = getListView(panel);
+                ScrollBar horizontalScrollBar = findDescendants(listView, ScrollBar.class).stream()
+                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.HORIZONTAL)
+                        .findFirst()
+                        .orElseThrow();
+                assertFalse(horizontalScrollBar.isVisible());
+
+                @SuppressWarnings("rawtypes")
+                ListCell cell = findDescendants(listView, ListCell.class).stream()
+                        .filter(listCell -> listCell.getGraphic() != null)
+                        .findFirst()
+                        .orElseThrow();
+                HBox card = (HBox) cell.getGraphic();
+                VBox details = (VBox) ((GridPane) card.getChildren().get(0)).getChildren().get(0);
+                Label name = (Label) ((HBox) details.getChildren().get(0)).getChildren().get(1);
+                Label subject = (Label) details.getChildren().get(1);
+                Label currentLevel = (Label) details.getChildren().get(2);
+                Label noteCount = (Label) details.getChildren().get(3);
+                assertTrue(card.getWidth() <= listView.getWidth());
+                assertTrue(name.getHeight() > name.getFont().getSize() * 1.5);
+                assertTrue(subject.getHeight() > subject.getFont().getSize() * 2);
+                assertTrue(currentLevel.getHeight() > currentLevel.getFont().getSize() * 1.5);
+                assertTrue(noteCount.getWidth() <= noteCount.prefWidth(-1) + 1);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
     }
 
     @Test
@@ -732,6 +829,46 @@ public class StudentRosterUiTest {
                 assertTrue(card.getWidth() <= listView.getWidth());
                 assertEquals("[1] 18 Sep 2026, 6:35 PM (UTC+08:00)", header.getText());
                 assertTrue(noteText.getHeight() > noteText.getFont().getSize() * 2);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void sessionNoteListCell_nearLimitNote_showsEveryWrappedLine() throws Exception {
+        StringBuilder noteText = new StringBuilder("w001");
+        for (int i = 2; i <= 100; i++) {
+            noteText.append(String.format(" w%03d", i));
+        }
+        SessionNote note = new SessionNote(noteText.toString(),
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                panel.setProfile(profile(null, List.of(note)));
+                Scene scene = new Scene(panel.getRoot(), 360, 600);
+                scene.getStylesheets().add(MainApp.class.getResource("/view/TutorTrackTheme.css").toExternalForm());
+                stage.setScene(scene);
+                stage.show();
+
+                for (double width : new double[] {360, 500, 900}) {
+                    stage.setWidth(width);
+                    scene.getRoot().applyCss();
+                    scene.getRoot().layout();
+
+                    ListCell<?> cell = (ListCell<?>) getSessionNoteListView(panel).lookup(".list-cell");
+                    assertNotNull(cell);
+                    SelectableText displayedNote = (SelectableText) ((VBox) cell.getGraphic()).getChildren().get(1);
+                    Text renderedText = (Text) displayedNote.lookup(".text");
+                    assertNotNull(renderedText);
+
+                    assertTrue(displayedNote.getHeight() >= renderedText.getLayoutBounds().getHeight(),
+                            "Note text is clipped at panel width " + width);
+                }
             } finally {
                 stage.hide();
             }
