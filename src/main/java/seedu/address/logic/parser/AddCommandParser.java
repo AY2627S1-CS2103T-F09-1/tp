@@ -86,19 +86,23 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException If a present value violates its domain constraints.
      */
     private static Student createStudent(ArgumentMultimap argMultimap) throws ParseException {
-        assert argMultimap.getValue(PREFIX_NAME).isPresent() : "Name must be verified before building a student";
-        assert argMultimap.getValue(PREFIX_PHONE).isPresent() : "Phone must be verified before building a student";
-        assert argMultimap.getValue(PREFIX_SUBJECT).isPresent() : "Subject must be verified before building a student";
-        assert argMultimap.getValue(PREFIX_LEVEL).isPresent() : "Level must be verified before building a student";
         try {
-            return new Student(new StudentName(argMultimap.getValue(PREFIX_NAME).get()),
-                    new ParentGuardianContact(argMultimap.getValue(PREFIX_PHONE).get(),
+            return new Student(new StudentName(getVerifiedValue(argMultimap, PREFIX_NAME)),
+                    new ParentGuardianContact(getVerifiedValue(argMultimap, PREFIX_PHONE),
                             argMultimap.getValue(PREFIX_EMAIL)),
-                    new Subject(argMultimap.getValue(PREFIX_SUBJECT).get()),
-                    new CurrentLevel(argMultimap.getValue(PREFIX_LEVEL).get()));
+                    new Subject(getVerifiedValue(argMultimap, PREFIX_SUBJECT)),
+                    new CurrentLevel(getVerifiedValue(argMultimap, PREFIX_LEVEL)));
         } catch (IllegalArgumentException exception) {
             throw new ParseException(exception.getMessage(), exception);
         }
+    }
+
+    /**
+     * Returns the value of a required {@code prefix} that {@link #verifyCommandShape} has already checked.
+     * Fails fast with {@link java.util.NoSuchElementException} if that precondition is ever broken.
+     */
+    private static String getVerifiedValue(ArgumentMultimap argMultimap, Prefix prefix) {
+        return argMultimap.getValue(prefix).orElseThrow();
     }
 
     /**

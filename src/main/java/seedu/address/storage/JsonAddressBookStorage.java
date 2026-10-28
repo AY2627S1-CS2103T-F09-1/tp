@@ -56,8 +56,9 @@ public class JsonAddressBookStorage {
     /**
      * Deletes the reserved backup file after a failed copy.
      * A failure to delete is attached to {@code copyException} so the original cause is preserved.
+     * Package-private so that the delete-failure path can be tested without a failing file system.
      */
-    private static void deleteIncompleteBackup(Path backupFilePath, IOException copyException) {
+    static void deleteIncompleteBackup(Path backupFilePath, IOException copyException) {
         try {
             Files.deleteIfExists(backupFilePath);
         } catch (IOException deleteException) {

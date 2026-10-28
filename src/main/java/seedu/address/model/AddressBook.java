@@ -140,7 +140,6 @@ public class AddressBook implements ReadOnlyAddressBook {
             throw new IllegalArgumentException(MESSAGE_DUPLICATE_STUDENT);
         }
         students.add(student);
-        assert hasStudent(student) : "Student must be present after being added";
     }
 
     /**
