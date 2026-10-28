@@ -32,7 +32,8 @@ public class AddCommand extends Command {
             + PREFIX_LEVEL + "Secondary 3";
 
     public static final String MESSAGE_STUDENT_SUCCESS = "Added student: %1$s (%2$s, %3$s).";
-    public static final String MESSAGE_DUPLICATE_STUDENT = "Duplicate student: %1$s already has this parent phone.";
+    public static final String MESSAGE_DUPLICATE_STUDENT = "Duplicate student: %1$s already has this parent phone."
+            + " Use a different name or phone, or edit the existing student.";
 
     private final Student toAdd;
 

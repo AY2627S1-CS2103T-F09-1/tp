@@ -43,7 +43,7 @@ public class DeleteSessionNoteCommandTest {
         DeleteSessionNoteCommand command = new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, NOTE_ONE);
 
         assertCommandFailure(command, model,
-                String.format(DeleteSessionNoteCommand.MESSAGE_NO_SESSION_NOTES, ALEX.getName()));
+                ALEX.getName() + " has no session notes to delete. Add one with note INDEX nt/NOTE first.");
     }
 
     @Test
