@@ -16,9 +16,6 @@ import javafx.scene.text.TextBoundsType;
  */
 public class SelectableText extends TextArea {
 
-    /** Selector of the virtualized flow that a {@code ListView} uses to lay out and scroll its cells. */
-    static final String VIRTUAL_FLOW_SELECTOR = ".virtual-flow";
-
     private static final String STYLE_CLASS = "selectable-text";
     private static final double HEIGHT_BUFFER = 2;
     private static final int PREFERRED_COLUMN_COUNT = 20;
@@ -121,7 +118,7 @@ public class SelectableText extends TextArea {
     }
 
     private static Optional<ScrollBar> findVisibleVerticalScrollBar(ListView<?> listView) {
-        if (!(listView.lookup(VIRTUAL_FLOW_SELECTOR) instanceof Parent virtualFlow)) {
+        if (!(listView.lookup(UiPart.VIRTUAL_FLOW_SELECTOR) instanceof Parent virtualFlow)) {
             return Optional.empty();
         }
         return virtualFlow.getChildrenUnmodifiable().stream()

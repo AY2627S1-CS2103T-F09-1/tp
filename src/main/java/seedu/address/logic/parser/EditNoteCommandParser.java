@@ -28,9 +28,9 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final int STUDENT_INDEX_POSITION = 1;
     private static final int NOTE_NUMBER_POSITION = 2;
-    private static final int TARGET_ONLY_COUNT = 1;
-    private static final int TARGET_AND_STUDENT_INDEX_COUNT = 2;
-    private static final int TARGET_AND_INDEX_COUNT = 3;
+    private static final int ARGUMENT_COUNT_TARGET_ONLY = 1;
+    private static final int ARGUMENT_COUNT_WITHOUT_NOTE_NUMBER = 2;
+    private static final int ARGUMENT_COUNT_COMPLETE = 3;
 
     /**
      * Parses the given {@code String} of arguments in the context of the edit note command.
@@ -68,13 +68,13 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
      * @throws ParseException If an index is missing or extra values are present.
      */
     private static void verifyIndexCount(int preambleWordCount) throws ParseException {
-        if (preambleWordCount == TARGET_ONLY_COUNT) {
+        if (preambleWordCount == ARGUMENT_COUNT_TARGET_ONLY) {
             throw new ParseException(MESSAGE_MISSING_INDICES);
         }
-        if (preambleWordCount == TARGET_AND_STUDENT_INDEX_COUNT) {
+        if (preambleWordCount == ARGUMENT_COUNT_WITHOUT_NOTE_NUMBER) {
             throw new ParseException(MESSAGE_MISSING_NOTE_NUMBER);
         }
-        if (preambleWordCount > TARGET_AND_INDEX_COUNT) {
+        if (preambleWordCount > ARGUMENT_COUNT_COMPLETE) {
             throw new ParseException(MESSAGE_TOO_MANY_INDICES);
         }
     }

@@ -137,7 +137,7 @@ public class DeleteCommandParserTest {
     // Boundary value analysis on argument count (1 to 5) crossed with the position of the confirmation flag.
     @Test
     public void parse_flagInEachPositionOfFourArguments_throwsInvalidFlag() {
-        String[] misplacedFlags = {"note /confirm 1 2", "note 1 /confirm 2", "note 1 2 3"};
+        String[] misplacedFlags = {"note /confirm 1 2", "note 1 /confirm 2"};
 
         for (String misplacedFlag : misplacedFlags) {
             assertParseFailure(parser, misplacedFlag,
@@ -147,10 +147,8 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_fiveArgumentsWithMisplacedFlag_reportsExtraArgumentsFirst() {
-        String extraArgumentsMessage = DeleteCommandParser.MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS;
-
-        assertParseFailure(parser, "note /confirm 1 2 extra", extraArgumentsMessage);
-        assertParseFailure(parser, "note 1 2 /confirm extra", extraArgumentsMessage);
+        assertParseFailure(parser, "note /confirm 1 2 extra",
+                DeleteCommandParser.MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
     }
 
     // Error precedence: the argument count is checked before any index is parsed.

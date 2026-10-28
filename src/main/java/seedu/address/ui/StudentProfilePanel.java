@@ -99,7 +99,7 @@ public class StudentProfilePanel extends UiPart<Region> {
      * Does nothing when the profile has not been laid out yet.
      */
     public void scrollSessionNotes(int pageCount) {
-        Node flowNode = sessionNoteListView.lookup(SelectableText.VIRTUAL_FLOW_SELECTOR);
+        Node flowNode = sessionNoteListView.lookup(UiPart.VIRTUAL_FLOW_SELECTOR);
         if (!(flowNode instanceof VirtualFlow<?> virtualFlow)) {
             return;
         }
