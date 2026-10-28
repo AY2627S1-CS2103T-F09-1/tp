@@ -91,13 +91,42 @@ public class StudentProfilePanel extends UiPart<Region> {
     }
 
     /**
-     * Scrolls the session-note history by {@code pageCount} visible pages; a negative count scrolls upward.
-     * Does nothing when the history has not been laid out yet.
+     * Scrolls the profile by {@code pageCount} visible pages; a negative count scrolls upward.
+     * Paging down first moves the outer profile pane until its end is visible, then pages the session-note
+     * history; paging up first pages the history back to its top, then moves the outer pane.
+     * Does nothing when the profile has not been laid out yet.
      */
     public void scrollSessionNotes(int pageCount) {
-        if (sessionNoteListView.lookup(".virtual-flow") instanceof VirtualFlow<?> virtualFlow) {
-            virtualFlow.scrollPixels(pageCount * virtualFlow.getHeight());
+        if (!(sessionNoteListView.lookup(".virtual-flow") instanceof VirtualFlow<?> virtualFlow)) {
+            return;
         }
+        boolean shouldPageNotes = pageCount > 0 ? isProfilePaneAtBottom() : virtualFlow.getPosition() > 0;
+        if (shouldPageNotes) {
+            virtualFlow.scrollPixels(pageCount * virtualFlow.getHeight());
+        } else {
+            scrollProfilePane(pageCount);
+        }
+    }
+
+    private double getScrollableProfilePixels() {
+        return profileScrollPane.getContent().getLayoutBounds().getHeight()
+                - profileScrollPane.getViewportBounds().getHeight();
+    }
+
+    private boolean isProfilePaneAtBottom() {
+        return getScrollableProfilePixels() <= 0 || profileScrollPane.getVvalue() >= profileScrollPane.getVmax();
+    }
+
+    private void scrollProfilePane(int pageCount) {
+        double scrollablePixels = getScrollableProfilePixels();
+        if (scrollablePixels <= 0) {
+            return;
+        }
+        double valueRange = profileScrollPane.getVmax() - profileScrollPane.getVmin();
+        double pageFraction = profileScrollPane.getViewportBounds().getHeight() / scrollablePixels;
+        double newValue = profileScrollPane.getVvalue() + pageCount * pageFraction * valueRange;
+        profileScrollPane.setVvalue(Math.max(profileScrollPane.getVmin(),
+                Math.min(profileScrollPane.getVmax(), newValue)));
     }
 
     private void updateNotesEmptyState() {

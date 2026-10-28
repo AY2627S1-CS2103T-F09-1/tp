@@ -79,7 +79,7 @@ The `UI` component uses the JavaFX UI framework. The layouts of these UI parts a
 
 `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
 
-`CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which scrolls the session-note list by the list's visible height. Keyboard focus and any draft stay in the command box, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
+`CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which pages the profile: while the outer profile pane (added for short windows) can still scroll down, `PageDown` moves that pane, and only once its end is visible does it page the session-note list by the list's visible height. `PageUp` pages the list back to its top first, then moves the outer pane back up. Keyboard focus and any draft stay in the command box, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
 `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
 
 The `UI` component,
@@ -1094,6 +1094,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The history scrolls back to the newest note and stops at the top.
 1. Restart TutorTrack and press `PageDown` before opening any profile.
    Expected: Nothing scrolls and no error is shown.
+1. Shrink the window until the profile fields push the session-note history below the visible area, then press `PageDown` repeatedly.
+   Expected: The profile pane scrolls down first until the history is fully visible, then the history pages; `PageUp` reverses this and returns to the top of the profile.
 
 ### Saving data
 

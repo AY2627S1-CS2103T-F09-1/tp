@@ -1006,6 +1006,57 @@ public class StudentRosterUiTest {
         });
     }
 
+
+    @Test
+    public void mainWindow_pageKeysInCompactWindow_scrollProfilePaneBeforeSessionNotes() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, sessionNotes(12))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            stage.setWidth(900);
+            stage.setHeight(360);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                stage.getScene().getRoot().layout();
+                TextField commandTextField = (TextField) stage.getScene().lookup("#commandTextField");
+                ScrollPane profileScrollPane = (ScrollPane) stage.getScene().lookup("#profileScrollPane");
+                ScrollBar notesScrollBar = getVerticalScrollBar(
+                        getSessionNoteListView(mainWindow.getStudentProfilePanel()));
+                assertTrue(profileScrollPane.getVmax() > profileScrollPane.getVmin());
+                assertEquals(0, profileScrollPane.getVvalue());
+                assertEquals(0, notesScrollBar.getValue());
+
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                assertTrue(profileScrollPane.getVvalue() > 0);
+                assertEquals(0, notesScrollBar.getValue());
+
+                for (int i = 0; i < 10 && profileScrollPane.getVvalue() < profileScrollPane.getVmax(); i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                }
+                assertEquals(profileScrollPane.getVmax(), profileScrollPane.getVvalue());
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                assertTrue(notesScrollBar.getValue() > 0);
+                assertEquals(profileScrollPane.getVmax(), profileScrollPane.getVvalue());
+
+                for (int i = 0; i < 10; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
+                assertEquals(0, notesScrollBar.getValue());
+                assertEquals(0, profileScrollPane.getVvalue());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
     @Test
     public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
         List<String> executedCommands = new ArrayList<>();
