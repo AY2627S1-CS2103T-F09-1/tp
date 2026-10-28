@@ -27,7 +27,8 @@ public class DeleteCommandParser implements Parser<Command> {
             "Missing NOTE_NUMBER. Enter the number shown beside the note in the profile.",
             DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS = withFormat(
-            "Unexpected extra arguments after the session-note deletion request.",
+            DeleteCommand.COMMAND_WORD + " " + DeleteSessionNoteCommand.NOTE_TARGET
+                    + " takes only one STUDENT_INDEX and one NOTE_NUMBER.",
             DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG = withFormat(
             DeleteCommand.CONFIRMATION_FLAG + " must appear at most once and at the end of the command.",
@@ -94,15 +95,23 @@ public class DeleteCommandParser implements Parser<Command> {
         if (arguments.size() > 4) {
             throw new ParseException(MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
         }
+        boolean hasFourthArgument = arguments.size() == 4;
+        boolean isFourthArgumentFlag = hasFourthArgument
+                && DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(3));
+        boolean isFourthArgumentMistypedFlag = hasFourthArgument && !isFourthArgumentFlag
+                && DeleteCommand.CONFIRMATION_FLAG.equalsIgnoreCase(arguments.get(3));
         boolean isFlagMisplaced = DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(1))
                 || DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(2))
-                || arguments.size() == 4 && !DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(3));
+                || isFourthArgumentMistypedFlag;
         if (isFlagMisplaced) {
             throw new ParseException(MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
+        }
+        if (hasFourthArgument && !isFourthArgumentFlag) {
+            throw new ParseException(MESSAGE_EXTRA_SESSION_NOTE_ARGUMENTS);
         }
 
         Index studentIndex = ParserUtil.parseStudentIndex(arguments.get(1), STUDENT_INDEX_LABEL);
         Index noteNumber = ParserUtil.parseNoteNumber(arguments.get(2));
-        return new DeleteSessionNoteCommand(studentIndex, noteNumber, arguments.size() == 4);
+        return new DeleteSessionNoteCommand(studentIndex, noteNumber, isFourthArgumentFlag);
     }
 }

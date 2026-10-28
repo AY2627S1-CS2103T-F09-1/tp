@@ -1,6 +1,5 @@
 package seedu.address.logic;
 
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,8 +18,7 @@ public class Messages {
             "Student index [%1$d] is outside the roster. Enter a student index from 1 to %2$d.";
     public static final String MESSAGE_FORMAT = "Format: %1$s";
     public static final String MESSAGE_EXAMPLE = "Example: %1$s";
-    public static final String MESSAGE_DUPLICATE_FIELDS =
-                "Multiple values specified for the following single-valued field(s): ";
+    public static final String MESSAGE_DUPLICATE_FIELDS = "%1$s must appear at most once.";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -28,10 +26,10 @@ public class Messages {
     public static String getErrorMessageForDuplicatePrefixes(Prefix... duplicatePrefixes) {
         assert duplicatePrefixes.length > 0;
 
-        Set<String> duplicateFields =
-                Stream.of(duplicatePrefixes).map(Prefix::toString).collect(Collectors.toSet());
+        String duplicateFields = Stream.of(duplicatePrefixes).map(Prefix::toString).distinct()
+                .collect(Collectors.joining(" "));
 
-        return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
+        return String.format(MESSAGE_DUPLICATE_FIELDS, duplicateFields);
     }
 
     /**

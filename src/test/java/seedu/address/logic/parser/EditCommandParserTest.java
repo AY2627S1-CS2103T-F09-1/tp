@@ -103,11 +103,21 @@ public class EditCommandParserTest {
         assertParseFailure(parser, " 0 n/Alexis Tan", invalidIndexMessage);
         assertParseFailure(parser, " -1 n/Alexis Tan", invalidIndexMessage);
         assertParseFailure(parser, " x n/Alexis Tan", invalidIndexMessage);
-        assertParseFailure(parser, " 1 extra n/Alexis Tan",
+        assertParseFailure(parser, " 1 2 n/Alexis Tan",
                 Messages.withFormat("edit takes only one INDEX.",
                         EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE));
         assertParseFailure(parser, " 2147483648 n/Alexis Tan",
                 "INDEX is too large. Enter a student index shown in the roster.");
+    }
+
+    @Test
+    public void parse_strayTextAfterIndex_reportsUnexpectedText() {
+        String expectedMessage = withEditFormat("Unexpected text before the first parameter: hello.");
+
+        assertParseFailure(parser, " 1 hello n/Alexis Tan", expectedMessage);
+        assertParseFailure(parser, " 1 2 hello n/Alexis Tan", expectedMessage);
+        assertParseFailure(parser, " 1 hello world n/Alexis Tan",
+                withEditFormat("Unexpected text before the first parameter: hello world."));
     }
 
     @Test

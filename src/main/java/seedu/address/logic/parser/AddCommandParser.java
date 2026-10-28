@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -25,13 +26,16 @@ import seedu.address.model.student.Subject;
 public class AddCommandParser implements Parser<AddCommand> {
 
     public static final String MESSAGE_UNKNOWN_PARAMETER = "Unknown parameter: %1$s. Supported parameters: %2$s.";
-    public static final String MESSAGE_UNEXPECTED_PREAMBLE = "Unexpected text before the first parameter: %1$s";
-    public static final String MESSAGE_MISSING_VALUE = "Value missing for parameter: %1$s";
+    public static final String MESSAGE_UNEXPECTED_PREAMBLE = "Unexpected text before the first parameter: %1$s.";
+    public static final String MESSAGE_MISSING_VALUE = "Missing %1$s%2$s.";
 
     private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
             PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
     private static final List<Prefix> REQUIRED_PREFIXES = List.of(
             PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL);
+    /** Placeholder that follows each required prefix in the add format, such as {@code SUBJECT} */
+    private static final Map<Prefix, String> REQUIRED_PLACEHOLDERS = Map.of(PREFIX_NAME, "NAME",
+            PREFIX_PHONE, "PARENT_PHONE", PREFIX_SUBJECT, "SUBJECT", PREFIX_LEVEL, "CURRENT_LEVEL");
     public static final String MESSAGE_SUPPORTED_PARAMETERS = SUPPORTED_PREFIXES.stream()
             .map(Prefix::toString)
             .collect(Collectors.joining(" "));
@@ -69,7 +73,8 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         Optional<Prefix> missingPrefix = findMissingRequiredPrefix(argMultimap);
         if (missingPrefix.isPresent()) {
-            throw new ParseException(withAddFormat(String.format(MESSAGE_MISSING_VALUE, missingPrefix.get())));
+            throw new ParseException(withAddFormat(String.format(MESSAGE_MISSING_VALUE, missingPrefix.get(),
+                    REQUIRED_PLACEHOLDERS.get(missingPrefix.get()))));
         }
 
         try {
