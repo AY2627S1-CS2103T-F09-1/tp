@@ -587,6 +587,35 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void profilePanel_widerPlatformFont_fieldLabelsRemainFullyVisible() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile("alex.parent@example.com"));
+            List<Label> fieldLabels = findDescendants(panel.getRoot(), Label.class).stream()
+                    .filter(label -> label.getStyleClass().contains("profile-field-label"))
+                    .toList();
+            fieldLabels.forEach(label -> label.setStyle("-fx-font-size: 18px;"));
+
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 700, 480));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                assertEquals(4, fieldLabels.size());
+                fieldLabels.forEach(label -> assertTrue(label.getWidth() + 1 >= label.prefWidth(-1), () ->
+                        String.format("%s was allocated %.1f px but needs %.1f px",
+                                label.getText(), label.getWidth(), label.prefWidth(-1))));
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void profilePanel_tallWindow_detailsGridCanResize() throws Exception {
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
 
