@@ -931,7 +931,7 @@ testers are expected to do more *exploratory* testing.
 3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
 4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
-   Expected: The first reports that `l/` is missing a value and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
+   Expected: The first reports `Missing l/CURRENT_LEVEL.` and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
 5. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
    Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
 
