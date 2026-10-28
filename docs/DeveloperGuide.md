@@ -944,8 +944,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The email is removed, every omitted field and session note is unchanged, and an open profile displays `Not provided`.
 1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
    Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the one-line `edit` format and example, while `edit 1 l/` shows only the level rule.
-1. Enter `edit 1 hello n/Zara Lim` and `edit 1 2 n/Zara Lim`.
-   Expected: The first reports `Unexpected text before the first parameter: hello.` and the second reports `edit takes only one INDEX.` Each is followed by the one-line `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
+1. Enter `edit 1 hello n/Zara Lim`, `edit 1 2 n/Zara Lim`, and `edit x hello n/Zara Lim`.
+   Expected: The first reports `Unexpected text before the first parameter: hello.` the second reports `edit takes only one INDEX.`, and the third reports that `INDEX` must be a positive whole number. All but the last are followed by the one-line `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
 1. Enter `edit n/Bob` and `edit a n/Bob`.
    Expected: The first reports `Missing INDEX.` followed by the `edit` format and example. The second reports `INDEX must be a positive whole number, e.g. 1.` Neither suggests `edit note`.
 1. Try to edit one student so that both the normalized name and parent phone match the other student.
@@ -1068,8 +1068,8 @@ testers are expected to do more *exploratory* testing.
    Expected: TutorTrack reports `Bea Tan has no session notes to delete. Add one with note INDEX nt/NOTE first.` and makes no changes.
 1. Enter `delete note 1 3`.
    Expected: TutorTrack reports that session note `[3]` does not exist for Ari Tan and gives the current range from 1 to 2. No note is deleted.
-1. Enter `delete note 1 2 3` and `delete note 1 /confirm 2`.
-   Expected: The first reports `delete note takes only one STUDENT_INDEX and one NOTE_NUMBER.` and the second reports that `/confirm` must appear at most once and at the end. Each is followed by `Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` and `Example: delete note 1 2`, and no note is deleted.
+1. Enter `delete note 1 2 3`, `delete note 1 /confirm 2`, and `delete note 1 2 /confirm extra`.
+   Expected: The first reports `delete note takes only one STUDENT_INDEX and one NOTE_NUMBER.` and the others report that `/confirm` must appear at most once and at the end. Each is followed by `Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` and `Example: delete note 1 2`, and no note is deleted.
 1. Enter each of `delete note`, `delete note 1`, `delete note 0 1`, `delete note 1 0`, `delete note x 1`, `delete note 1 x`, `delete note 1 1 /Confirm`, `delete note /confirm 1 1`, `delete note 1 1 /confirm /confirm`, and `delete note 1 1 /confirm extra`.
    Expected: Each command reports the applicable session-note deletion format or validation error and leaves both students, both remaining notes, the open profile, and the data file unchanged.
 
