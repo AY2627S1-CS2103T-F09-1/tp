@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +23,8 @@ public class CommandBox extends UiPart<Region> {
     public static final String ERROR_STYLE_CLASS = "error";
     private static final String FXML = "CommandBox.fxml";
     private static final int MAX_HISTORY_SIZE = 100;
+    private static final int PAGE_UP_COUNT = -1;
+    private static final int PAGE_DOWN_COUNT = 1;
 
     private final CommandExecutor commandExecutor;
     private final PageScroller pageScroller;
@@ -45,7 +49,7 @@ public class CommandBox extends UiPart<Region> {
     public CommandBox(CommandExecutor commandExecutor, PageScroller pageScroller) {
         super(FXML);
         this.commandExecutor = commandExecutor;
-        this.pageScroller = pageScroller;
+        this.pageScroller = requireNonNull(pageScroller);
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryNavigation);
@@ -87,10 +91,10 @@ public class CommandBox extends UiPart<Region> {
 
     private void handlePageScroll(KeyEvent event) {
         if (event.getCode() == KeyCode.PAGE_UP) {
-            pageScroller.scrollPages(-1);
+            pageScroller.scrollPages(PAGE_UP_COUNT);
             event.consume();
         } else if (event.getCode() == KeyCode.PAGE_DOWN) {
-            pageScroller.scrollPages(1);
+            pageScroller.scrollPages(PAGE_DOWN_COUNT);
             event.consume();
         }
     }

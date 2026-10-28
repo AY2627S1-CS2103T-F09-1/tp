@@ -1586,6 +1586,126 @@ public class StudentRosterUiTest {
         });
     }
 
+    // Equivalence partitions of the timestamp offset: UTC, positive, negative and fractional-hour offsets.
+    @Test
+    public void formatRecordedAt_differentOffsets_preservesRecordedOffset() {
+        assertEquals("5 Jan 2026, 9:30 AM (UTC+05:30)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T09:30:00+05:30")));
+        assertEquals("5 Jan 2026, 9:30 AM (UTC-08:00)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T09:30:00-08:00")));
+    }
+
+    // Boundary values of the 12-hour clock: midnight and noon.
+    @Test
+    public void formatRecordedAt_midnightAndNoon_usesTwelveHourClock() {
+        assertEquals("5 Jan 2026, 12:00 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T00:00:00Z")));
+        assertEquals("5 Jan 2026, 12:00 PM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T12:00:00Z")));
+    }
+
+    // Boundary value analysis for the note number: 1 is the smallest valid number, 0 and below are invalid.
+    @Test
+    public void sessionNoteCard_noteNumberBoundary_acceptsOneAndRejectsZeroAndNegative() throws Exception {
+        SessionNote note = new SessionNote("Boundary note.", OffsetDateTime.parse("2026-01-05T09:30:00Z"));
+
+        VBox card = (VBox) onFxThread(() -> new SessionNoteCard(note, 1).getRoot());
+
+        assertEquals("[1] 5 Jan 2026, 9:30 AM (UTC+00:00)", ((SelectableText) card.getChildren().get(0)).getText());
+        assertThrows(IllegalArgumentException.class, () -> new SessionNoteCard(note, -1));
+        assertThrows(NullPointerException.class, () -> new SessionNoteCard(null, 1));
+    }
+
+    @Test
+    public void commandBox_nullPageScroller_throwsNullPointerException() throws Exception {
+        onFxThread(() -> {
+            assertThrows(NullPointerException.class, () -> new CommandBox(
+                    commandText -> new CommandResult("Command executed."), null));
+            return null;
+        });
+    }
+
+    // Repeated use: a second failure while the error style is already shown must not stack the style class.
+    @Test
+    public void commandBox_repeatedFailures_showErrorStyleOnceUntilTextChanges() throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
+            throw new CommandException("Rejected.");
+        }));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            submitCommand(commandTextField, "bad");
+            submitCommand(commandTextField, "bad");
+            assertEquals(1, commandTextField.getStyleClass().stream()
+                    .filter(CommandBox.ERROR_STYLE_CLASS::equals).count());
+
+            commandTextField.setText("good");
+            assertFalse(commandTextField.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+            return null;
+        });
+    }
+
+    @Test
+    public void selectableText_negativeLineSpacing_throwsAssertionError() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            assertThrows(AssertionError.class, () -> text.setLineSpacing(-1));
+            text.setLineSpacing(0);
+            assertEquals(0, text.getLineSpacing());
+            return null;
+        });
+    }
+
+    // Equivalence partitions of the layout width: unusable widths disable wrapping, a narrow width wraps.
+    @Test
+    public void selectableText_unusableOrNarrowWidth_wrapsOnlyWhenWidthIsUsable() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            text.setText("Selectable text wraps only when a usable width is available. ".repeat(3));
+
+            double unwrappedHeight = text.prefHeight(10_000);
+
+            assertEquals(unwrappedHeight, text.prefHeight(-1));
+            assertEquals(unwrappedHeight, text.prefHeight(0));
+            assertEquals(unwrappedHeight, text.prefHeight(Double.POSITIVE_INFINITY));
+            assertTrue(text.prefHeight(120) > unwrappedHeight);
+            return null;
+        });
+    }
+
+    @Test
+    public void selectableText_scrollEventWithoutListView_isNotConsumed() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            new VBox(text);
+            ScrollEvent scroll = scrollEvent(-40);
+
+            text.fireEvent(scroll);
+
+            assertFalse(scroll.isConsumed());
+            return null;
+        });
+    }
+
+    // Branch: an ancestor ListView that has not been skinned has no virtual flow, so there is nothing to scroll.
+    @Test
+    public void selectableText_scrollEventInUnrenderedListView_isNotConsumed() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            new ListView<String>() {
+                {
+                    getChildren().add(text);
+                }
+            };
+            ScrollEvent scroll = scrollEvent(-40);
+
+            text.fireEvent(scroll);
+
+            assertFalse(scroll.isConsumed());
+            return null;
+        });
+    }
+
     private long countShowingWindows() {
         return Window.getWindows().stream().filter(Window::isShowing).count();
     }
