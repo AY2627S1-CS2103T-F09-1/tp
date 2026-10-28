@@ -150,7 +150,7 @@ Format: `note INDEX nt/NOTE`
 
 * `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number, such as 1, 2, or 3.
 * `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed.
-* Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
+* Everything after the first `nt/` is the note, so text such as `sub/`, `n/`, or another `nt/` inside a note is saved as part of the note. For example, `note 1 nt/Remember nt/ notation` saves `Remember nt/ notation`.
 * You can add the same note text more than once, because each note records a separate lesson.
 
 Examples:
@@ -169,7 +169,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 * `STUDENT_INDEX` is the student's number in the currently displayed roster.
 * `NOTE_NUMBER` is the number shown beside the note in the student's profile. The oldest note is `[1]`.
 * `NEW_NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed.
-* Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside the replacement is saved as part of the note.
+* Everything after the first `nt/` is the replacement, so text such as `sub/`, `n/`, or another `nt/` inside it is saved as part of the note.
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 

@@ -306,7 +306,7 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 ### Session note command
 
-`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which tokenizes with `ArgumentTokenizer#tokenizeWithTrailingText`. The first `nt/` ends the preamble and everything after it is the note, so other prefix-like text, including a later `nt/`, stays part of the note. This is the one exception to the rule that a repeated prefix is a structure error: the note is free text and always the last parameter, so treating a later `nt/` as text is unambiguous and lets users record notes such as `Remember nt/ notation`. `EditNoteCommandParser` uses the same method for `edit note`. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `SessionNote#isValidText` before a `NoteCommand` is created.
 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
@@ -356,7 +356,7 @@ The sequence below shows how the command preserves the selected note's timestamp
 
 ![Session-note edit sequence diagram](images/EditNoteSequenceDiagram.png)
 
-`EditNoteCommandParser` validates the student index, note number, `nt/` prefix, and new note text before creating an `EditNoteCommand`. The parser rejects a missing or malformed selector, an empty or overlong replacement, control characters, and duplicate `nt/` prefixes without changing the model. The command resolves the roster index to the student's stable `StudentId`, just as the existing note and deletion commands do.
+`EditNoteCommandParser` validates the student index, note number, `nt/` prefix, and new note text before creating an `EditNoteCommand`. The parser rejects a missing or malformed selector, an empty or overlong replacement, and control characters without changing the model. As with `note`, everything after the first `nt/` is the replacement text, so a later `nt/` is kept as text. The command resolves the roster index to the student's stable `StudentId`, just as the existing note and deletion commands do.
 
 The model operation creates a new immutable `SessionNote` with the replacement text and the original note's `recordedAt` value, then replaces the selected entry in the student's immutable `SessionHistory`. Keeping the original timestamp preserves the note's chronological position and means that editing does not renumber the remaining notes or alter the roster's note count. The operation crosses the model boundary through the student's `StudentId`; command code does not mutate a history or a storage DTO directly.
 
@@ -822,7 +822,7 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the applicable selector error and makes no changes.
 
     Use case ends.
-* 1b. The `nt/` prefix is missing, duplicated, or followed by invalid note text.
+* 1b. The `nt/` prefix is missing or followed by invalid note text.
 
   * 1b1. TutorTrack reports the note validation error and makes no changes.
 
@@ -1004,8 +1004,10 @@ testers are expected to do more *exploratory* testing.
    Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
    Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
-1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
-   Expected: The first shows the note length rule and the second a duplicate prefix error; no note count changes.
+1. Enter `note 1 nt/`.
+   Expected: TutorTrack shows the note length rule and no note count changes.
+1. Enter `note 1 nt/Remember nt/ notation`, then `view 1`.
+   Expected: The note is added with the text `Remember nt/ notation`, including the second `nt/`.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 
@@ -1025,7 +1027,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter `edit note 1 nt/text`.
    Expected: TutorTrack reports the missing NOTE_NUMBER and explains that it is the number shown beside the note in the profile.
 1. Enter `edit note 1 1 nt/first nt/second`.
-   Expected: TutorTrack reports a duplicate `nt/` prefix error and leaves the original note unchanged.
+   Expected: TutorTrack reports `Successfully edited session note [1] for <name of student 1>.` and the note's text becomes `first nt/second`.
 
 ### Deleting a student
 
