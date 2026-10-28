@@ -21,6 +21,8 @@ import seedu.address.model.ReadOnlyAddressBook;
 public class JsonAddressBookStorage {
 
     private static final Logger logger = LogsCenter.getLogger(JsonAddressBookStorage.class);
+    private static final String BACKUP_PREFIX_SUFFIX = ".backup-";
+    private static final String BACKUP_FILE_SUFFIX = ".bak";
 
     private Path filePath;
 
@@ -40,18 +42,26 @@ public class JsonAddressBookStorage {
      */
     public Path backupAddressBookFile() throws IOException {
         Path parentDirectory = filePath.toAbsolutePath().getParent();
-        String backupPrefix = filePath.getFileName() + ".backup-";
-        Path backupFilePath = Files.createTempFile(parentDirectory, backupPrefix, ".bak");
+        String backupPrefix = filePath.getFileName() + BACKUP_PREFIX_SUFFIX;
+        Path backupFilePath = Files.createTempFile(parentDirectory, backupPrefix, BACKUP_FILE_SUFFIX);
 
         try {
             return Files.copy(filePath, backupFilePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException copyException) {
-            try {
-                Files.deleteIfExists(backupFilePath);
-            } catch (IOException deleteException) {
-                copyException.addSuppressed(deleteException);
-            }
+            deleteIncompleteBackup(backupFilePath, copyException);
             throw copyException;
+        }
+    }
+
+    /**
+     * Deletes the reserved backup file after a failed copy.
+     * A failure to delete is attached to {@code copyException} so the original cause is preserved.
+     */
+    private static void deleteIncompleteBackup(Path backupFilePath, IOException copyException) {
+        try {
+            Files.deleteIfExists(backupFilePath);
+        } catch (IOException deleteException) {
+            copyException.addSuppressed(deleteException);
         }
     }
 
