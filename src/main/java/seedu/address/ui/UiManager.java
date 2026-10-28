@@ -22,6 +22,8 @@ public class UiManager implements Ui {
 
     private static final Logger logger = LogsCenter.getLogger(UiManager.class);
     private static final String ICON_APPLICATION = "/images/address_book_32.png";
+    private static final String DATA_LOAD_ERROR_TITLE = "Data file could not be loaded";
+    private static final String DATA_LOAD_ERROR_HEADER = "Data recovery action required";
 
     private Logic logic;
     private Path dataFilePath;
@@ -49,8 +51,8 @@ public class UiManager implements Ui {
             mainWindow.show(); //This should be called before creating other UI parts
             mainWindow.fillInnerParts();
             if (dataLoadErrorMessage != null) {
-                showAlertDialogAndWait(AlertType.ERROR, "Data file could not be loaded",
-                        "Data recovery action required",
+                showAlertDialogAndWait(AlertType.ERROR, DATA_LOAD_ERROR_TITLE,
+                        DATA_LOAD_ERROR_HEADER,
                         dataLoadErrorMessage);
             }
 
