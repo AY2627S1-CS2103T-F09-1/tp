@@ -34,9 +34,11 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `edit note 1 1 nt/Corrected lesson summary.` : Replaces the first student's first session note without changing its timestamp.
 
-   * `delete 1` : Shows a confirmation prompt for deleting the first student and all of that student's session notes. Enter `delete 1 /confirm` next to complete the deletion.
+   * `note 1 nt/Practice algebra next session.` : Adds a second session note, numbered `[2]`, to the first student.
 
    * `delete note 1 2` : Shows a confirmation prompt for deleting session note `[2]` from the first student. Enter `delete note 1 2 /confirm` next to complete the deletion.
+
+   * `delete 1` : Shows a confirmation prompt for deleting the first student and the remaining session note. Enter `delete 1 /confirm` next to complete the deletion.
 
    * `exit` : Exits the app.
 
