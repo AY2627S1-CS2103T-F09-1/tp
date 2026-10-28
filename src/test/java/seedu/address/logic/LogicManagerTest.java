@@ -98,7 +98,8 @@ public class LogicManagerTest {
 
         assertEquals("Are you sure you want to delete " + ALEX.getName() + " and 1 session note?\n"
                 + "If yes, type: delete 1 /confirm\n"
-                + "To cancel, enter any other command.", result.getFeedbackToUser());
+                + "To cancel, enter another valid command. Typos keep this preview.",
+                result.getFeedbackToUser());
         assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
         assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
@@ -175,15 +176,40 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_malformedCommandAfterDeletePreview_cancelsPendingDeletion() throws Exception {
+    public void execute_malformedConfirmationAfterDeletePreview_preservesPendingDeletion() throws Exception {
         model.addStudent(ALEX);
         logic.execute("delete 1");
 
-        assertThrows(ParseException.class, () -> logic.execute("delete 1 /Confirm"));
+        assertThrows(ParseException.class, () -> logic.execute("delete 1 /confir"));
+        assertFalse(Files.exists(addressBookFile));
+
+        CommandResult result = logic.execute("delete 1 /confirm");
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName()),
+                result.getFeedbackToUser());
+        assertEquals(0, logic.getStudentRoster().size());
+    }
+
+    @Test
+    public void execute_malformedOtherCommandAfterDeletePreview_preservesPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+
+        assertThrows(ParseException.class, () -> logic.execute("add 123"));
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName()),
+                logic.execute("delete 1 /confirm").getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_parsedCommandErrorAfterDeletePreview_cancelsPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+
+        assertThrows(CommandException.class, () -> logic.execute("view 2"));
 
         assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
-        assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
-                .map(StudentRosterEntry::getStudentId).toList());
+        assertEquals(1, logic.getStudentRoster().size());
     }
 
     @Test
@@ -220,7 +246,8 @@ public class LogicManagerTest {
 
         assertEquals("Are you sure you want to delete session note [2] for " + ALEX.getName() + "?\n"
                 + "If yes, type: delete note 1 2 /confirm\n"
-                + "To cancel, enter any other command.", result.getFeedbackToUser());
+                + "To cancel, enter another valid command. Typos keep this preview.",
+                result.getFeedbackToUser());
         assertEquals(2, model.getSessionHistory(ALEX.getId()).size());
         assertFalse(Files.exists(addressBookFile));
     }
@@ -325,6 +352,23 @@ public class LogicManagerTest {
         assertCommandException("delete note 1 1 /confirm",
                 DeleteSessionNoteCommand.MESSAGE_NO_PENDING_DELETION);
         assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
+    }
+
+    @Test
+    public void execute_malformedCommandAfterDeleteSessionNotePreview_preservesPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        model.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        logic.execute("delete note 1 1");
+
+        assertThrows(ParseException.class, () -> logic.execute("delete note 1 1 /confir"));
+        assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
+        assertFalse(Files.exists(addressBookFile));
+
+        CommandResult result = logic.execute("delete note 1 1 /confirm");
+
+        assertEquals(String.format(DeleteSessionNoteCommand.MESSAGE_DELETE_SESSION_NOTE_SUCCESS,
+                1, ALEX.getName()), result.getFeedbackToUser());
+        assertTrue(model.getSessionHistory(ALEX.getId()).isEmpty());
     }
 
     @Test

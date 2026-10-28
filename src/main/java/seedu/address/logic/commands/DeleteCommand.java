@@ -17,11 +17,13 @@ public class DeleteCommand extends Command {
     public static final String CONFIRMATION_FLAG = "/confirm";
     public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX [" + CONFIRMATION_FLAG + "]";
     public static final String COMMAND_EXAMPLE = COMMAND_WORD + " 1";
+    public static final String MESSAGE_CANCEL_PREVIEW =
+            "To cancel, enter another valid command. Typos keep this preview.";
 
     public static final String MESSAGE_CONFIRM_DELETE =
             "Are you sure you want to delete %1$s and %2$d %3$s?\n"
             + "If yes, type: " + COMMAND_WORD + " %4$d " + CONFIRMATION_FLAG + "\n"
-            + "To cancel, enter any other command.";
+            + MESSAGE_CANCEL_PREVIEW;
     public static final String MESSAGE_DELETE_STUDENT_SUCCESS =
             "Successfully deleted %1$s.";
     public static final String MESSAGE_NO_PENDING_DELETION =
