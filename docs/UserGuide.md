@@ -34,7 +34,7 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `edit note 1 1 nt/Corrected lesson summary.` : Replaces the first student's first session note without changing its timestamp.
 
-   * `delete 1` : Shows a confirmation prompt for deleting the first student and all of that student's session notes. Enter `delete 1 /confirm` next to complete the deletion.
+   * `delete 1` : Opens the first student's profile and shows a confirmation prompt for deleting that student and all of their session notes. Enter `delete 1 /confirm` next to complete the deletion.
 
    * `delete note 1 2` : Shows a confirmation prompt for deleting session note `[2]` from the first student. Enter `delete note 1 2 /confirm` next to complete the deletion.
 
@@ -203,16 +203,16 @@ Confirmation format: `delete INDEX /confirm`
 
 * `INDEX` is the student's number in the currently displayed sorted roster.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
-* The preview identifies the student, shows how many session notes would be removed, and displays the exact confirmation command. It does not delete or save anything.
+* A valid preview opens the target student's profile, highlights that student's roster card, shows how many session notes would be removed, and displays the exact confirmation command. It does not delete or save anything.
 * To complete the deletion, enter the displayed `delete INDEX /confirm` command immediately after the preview. `/confirm` is case-sensitive and must appear once, after the index.
 * To cancel, enter any other command. The pending deletion is cleared before that command is processed. Starting another `delete INDEX` preview replaces the earlier pending deletion.
 * A direct, repeated, or mismatched `/confirm` command is rejected without deleting data.
-* After a matching confirmation, TutorTrack reports `Successfully deleted STUDENT_NAME.` The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes and its roster highlight is cleared.
+* After a matching confirmation, TutorTrack reports `Successfully deleted STUDENT_NAME.` The roster is redrawn with new consecutive indices, and the deleted student's profile and roster highlight close.
 
 Example:
 
 1. Enter `delete 2`.
-1. Check the student name and session-note count in the prompt.
+1. Check that the target student's profile is open and their roster card is highlighted, then verify the name and session-note count in the prompt.
 1. Enter `delete 2 /confirm` as the next command to delete that student, or enter any other command to cancel.
 
 If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. See [Fixing command errors](#fixing-command-errors) for the messages. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
