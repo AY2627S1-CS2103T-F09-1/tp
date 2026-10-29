@@ -177,6 +177,8 @@ public class StudentRosterUiTest {
                 verticalScrollBar.setValue(verticalScrollBar.getMax());
                 stage.getScene().getRoot().layout();
 
+                // Headless JavaFX does not expose the card width change reliably; the desktop manual step in the
+                // Developer Guide verifies the resize listener's reflow behaviour.
                 assertTrue(listView.lookupAll(".list-cell").stream()
                         .filter(ListCell.class::isInstance)
                         .map(ListCell.class::cast)
