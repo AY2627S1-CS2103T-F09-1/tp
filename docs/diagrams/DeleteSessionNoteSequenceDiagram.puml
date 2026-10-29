@@ -50,10 +50,6 @@ deactivate window
 
 user -> window : "delete note 1 2 /confirm"
 activate window
-window -> profile : clearDeletionPreview()
-activate profile
-profile --> window
-deactivate profile
 window -> logic : execute("delete note 1 2 /confirm")
 activate logic
 note over logic
@@ -70,6 +66,10 @@ storage --> logic
 deactivate storage
 logic --> window : success result
 deactivate logic
+window -> profile : clearDeletionPreview()
+activate profile
+profile --> window
+deactivate profile
 window -> logic : getStudentProfile(studentId)
 activate logic
 logic -> model : getStudentProfile(studentId)

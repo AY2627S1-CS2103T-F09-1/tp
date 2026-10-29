@@ -67,6 +67,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionNote;
@@ -1464,7 +1465,7 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void executeCommand_noteDeletionPreviewOpensTargetProfileAndClearsMarkerOnExit() throws Exception {
+    public void executeCommand_noteDeletionPreviewKeepsMarkerUntilParsedCommand() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(
                 student("Alex Tan", ALEX_ID), student("Blair Lim", BLAIR_ID)));
         SessionNote newestNote = new SessionNote("Newest lesson.",
@@ -1507,8 +1508,15 @@ public class StudentRosterUiTest {
             updateNoteCell(cell, noteList.getItems().get(1), false);
             assertTrue(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
 
-            logic.setCommandFailure(new CommandException("Invalid command."));
-            assertThrows(CommandException.class, () -> mainWindow.executeCommand("invalid"));
+            logic.setParseFailure(new ParseException("Invalid format."));
+            assertThrows(ParseException.class, () -> mainWindow.executeCommand("delete note 2 1 /confir"));
+            updateNoteCell(cell, noteList.getItems().get(1), false);
+            assertTrue(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
+            assertEquals(2, noteList.getItems().size());
+
+            logic.setParseFailure(null);
+            logic.setCommandFailure(new CommandException("Session note [9] does not exist."));
+            assertThrows(CommandException.class, () -> mainWindow.executeCommand("delete note 2 9"));
             updateNoteCell(cell, noteList.getItems().get(1), false);
             assertFalse(cell.getPseudoClassStates().contains(PseudoClass.getPseudoClass("deletion-target")));
             assertEquals(2, noteList.getItems().size());
@@ -2076,6 +2084,7 @@ public class StudentRosterUiTest {
         private CommandResult commandResult;
         private Optional<StudentProfile> profile;
         private CommandException commandFailure;
+        private ParseException parseFailure;
         private StudentRoster roster;
         private GuiSettings initialGuiSettings = new GuiSettings();
 
@@ -2092,7 +2101,10 @@ public class StudentRosterUiTest {
         }
 
         @Override
-        public CommandResult execute(String commandText) throws CommandException {
+        public CommandResult execute(String commandText) throws CommandException, ParseException {
+            if (parseFailure != null) {
+                throw parseFailure;
+            }
             if (commandFailure != null) {
                 throw commandFailure;
             }
@@ -2110,6 +2122,10 @@ public class StudentRosterUiTest {
 
         void setCommandFailure(CommandException commandFailure) {
             this.commandFailure = commandFailure;
+        }
+
+        void setParseFailure(ParseException parseFailure) {
+            this.parseFailure = parseFailure;
         }
 
         void setInitialGuiSettings(GuiSettings guiSettings) {

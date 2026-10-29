@@ -104,7 +104,7 @@ How the `Logic` component works:
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand` or `DeleteSessionNoteCommand`) which is coordinated by the `LogicManager`.
 1. An unconfirmed deletion command resolves its student or session-note target and returns a preview. `LogicManager` retains at most one pending deletion in memory and returns without saving because no model data changed.
-1. At the start of the next command, `LogicManager` consumes and clears the pending deletion. A matching confirmed command must still resolve to the same stable student and, for a session note, the same immutable history snapshot before the applicable model deletion operation can run.
+1. `LogicManager` parses the next input before consuming the pending deletion, so malformed input leaves the preview active. A correctly formatted command consumes it. A matching confirmed command must still resolve to the same stable student and, for a session note, the same immutable history snapshot before the applicable model deletion operation can run.
 1. Commands that enter the persistence path and change the address book are saved by `LogicManager`; commands that leave it unchanged, such as `view`, `help`, and `exit`, are not saved. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
@@ -324,7 +324,7 @@ The [architecture sequence diagram](#architecture) illustrates student deletion.
 
 #### Preview and pending target
 
-For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. Its `CommandResult` contains the student's stable `StudentId` alongside the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter any other command.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`. `MainWindow` uses the result's ID to load the target profile and select the matching roster card through the [profile display flow](#profile-display-and-refresh), even if another profile was previously open. An invalid preview returns no result, leaving the displayed profile and selection unchanged.
+For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. Its `CommandResult` contains the student's stable `StudentId` alongside the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter another valid command. Typos keep this preview.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`. `MainWindow` uses the result's ID to load the target profile and select the matching roster card through the [profile display flow](#profile-display-and-refresh), even if another profile was previously open. An invalid preview returns no result, leaving the displayed profile and selection unchanged.
 
 For `delete note STUDENT_INDEX NOTE_NUMBER`, `DeleteSessionNoteCommand#execute` resolves the same sorted roster and checks that the selected student has the displayed note number. Its `CommandResult` carries the student's stable `StudentId` and the previewed `NOTE_NUMBER` alongside the prompt and exact confirmation command. `MainWindow` uses that result to open the student's profile; `StudentProfilePanel` marks and scrolls to the numbered note. After returning the preview, `LogicManager` retains a `PendingSessionNoteDeletion` containing the student index, stable `StudentId`, chronological note number, and exact immutable `SessionHistory` snapshot. The note number maps to the internal newest-first list position with `history size - NOTE_NUMBER`; because it is a display selector rather than a stored note ID, the remaining notes are numbered consecutively after deletion.
 
@@ -332,7 +332,7 @@ Both pending types occupy the same single `PendingDeletion` slot in `LogicManage
 
 #### Confirmation, cancellation, and mutation
 
-At the start of the next `LogicManager#execute` call, the pending deletion is copied locally and cleared before the new input is parsed. `MainWindow` also clears the temporary note highlight before passing that input to logic. Any other submitted command, including malformed input, therefore cancels the pending deletion and removes the highlight before that input is processed. The selected profile remains open unless the new command itself changes it. A direct or repeated confirmation has no pending target and is rejected. A confirmation for the wrong deletion type or different selectors is a mismatch and is also rejected without mutation.
+`LogicManager#execute` parses the new input before copying and clearing the pending deletion. A `ParseException` therefore leaves the preview active; `MainWindow` keeps the temporary note highlight so the tutor can correct the input and confirm the same target. Any input that parses into a command consumes the pending deletion before execution, even if the command later fails validation; `MainWindow` then clears the highlight. The selected profile remains open unless a successful new command changes it. A direct or repeated confirmation has no pending target and is rejected. A confirmation for the wrong deletion type or different selectors is a mismatch and is also rejected without mutation.
 
 A student confirmation must use the pending index, and that index must still resolve to the pending stable `StudentId`. A session-note confirmation must additionally use the pending note number and find the same immutable history object for that student. These checks prevent a roster reorder or session-history change from redirecting confirmation to a different target even when the displayed numbers are reused.
 
@@ -343,7 +343,7 @@ After a successful student deletion, `MainWindow` requests a fresh roster snapsh
 **Design considerations:**
 
 * **Trailing `/confirm` flag (current choice):** The confirmation repeats the complete destructive command and target in the same `word /clause` style as other TutorTrack commands. It remains keyboard-first, requires no extra command vocabulary, and lets the parser reject malformed confirmation placement. The cost is that the user must retype or recall the command exactly.
-* **Standalone `confirm` and `cancel` commands:** Separate commands would require `ConfirmCommand`, `CancelCommand`, parser routes, help text, and another way to show which target `confirm` means. TutorTrack instead treats any other submitted command as cancellation and keeps the exact target visible in the confirmation command.
+* **Standalone `confirm` and `cancel` commands:** Separate commands would require `ConfirmCommand`, `CancelCommand`, parser routes, help text, and another way to show which target `confirm` means. TutorTrack instead treats another correctly formatted command as cancellation and keeps the exact target visible in the confirmation command.
 * **JavaFX confirmation dialog:** A modal dialog would duplicate the command path, introduce mouse-oriented UI state, and make parser and end-to-end testing less representative of the fast-typing workflow.
 * **Persistent session-note IDs:** A stored ID would require a schema and migration change. Chronological display numbers are sufficient because the pending deletion also binds the immutable history snapshot, making a stale number fail safely.
 * **Separate student and note coordinators:** Both operations have the same preview, pending match, save, and rollback lifecycle. One pending-deletion slot prevents simultaneous ambiguous confirmations while the two model operations retain their distinct domain responsibilities.
@@ -759,8 +759,8 @@ history and saved locally. No other student record is changed.
 **MSS**
 
 1. Tutor requests deletion using a student's roster index and, for one session note, its displayed note number.
-1. TutorTrack displays the target, exact confirmation command, and instruction that any other command cancels the deletion. For a note, it also opens the selected student's profile and highlights the targeted note.
-1. Tutor submits the matching confirmation command next.
+1. TutorTrack displays the target, exact confirmation command, and instruction that another correctly formatted command cancels the deletion. For a note, it also opens the selected student's profile and highlights the targeted note.
+1. Tutor submits the matching confirmation as the next correctly formatted command.
 1. TutorTrack verifies that the index still identifies the same stable student ID and, for a note, that the displayed history is unchanged.
 1. TutorTrack removes the previewed student and complete history, or removes only the previewed note, and saves the updated data.
 1. TutorTrack reports the deleted target and refreshes the roster and any open profile.
@@ -774,9 +774,9 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the applicable validation error and makes no changes.
 
     Use case ends.
-* 3a. Tutor enters any other command.
+* 3a. Tutor enters a different correctly formatted command.
 
-  * 3a1. TutorTrack cancels the pending deletion, clears any note highlight, and processes the new command normally.
+  * 3a1. TutorTrack cancels the pending deletion, clears any note highlight, and processes the new command, which may report its own execution error.
 
     Use case ends.
 * 3b. Tutor enters a direct, repeated, or mismatched confirmation.
@@ -786,7 +786,7 @@ history and saved locally. No other student record is changed.
     Use case ends.
 * 3c. Tutor duplicates or misplaces `/confirm` or adds extra arguments.
 
-  * 3c1. TutorTrack reports the command-format error and makes no deletion.
+  * 3c1. TutorTrack reports the command-format error, makes no deletion, and keeps the preview pending so the tutor can correct the command.
 
     Use case ends.
 * 4a. The roster or selected session history changes before confirmation.
@@ -933,7 +933,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter the same `note 1 nt/NOTE` command with one more character, then `edit note 1 1 nt/NOTE` with that 501-character text.
    Expected: Both commands show `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.` No note is added or changed.
 1. Enter `delete 1`.
-   Expected: TutorTrack displays Alicia's name, note count, `delete 1 /confirm`, and `To cancel, enter any other command.` Alicia's profile and roster remain unchanged.
+   Expected: TutorTrack displays Alicia's name, note count, `delete 1 /confirm`, and `To cancel, enter another valid command. Typos keep this preview.` Alicia's profile and roster remain unchanged.
 1. Enter `delete 1 /confirm`.
    Expected: Alicia's profile and profile-selection treatment both clear. Blair is reindexed to 1 and remains usable.
 1. Repeat the populated-workspace checks at 1920x1080 with 100% and 125% scaling and at 1280x720 with 150% scaling.
@@ -1058,7 +1058,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter `view 1`.
    Expected: Ari's profile and roster highlight return.
 1. Enter `delete 1`.
-   Expected: TutorTrack reports `Are you sure you want to delete Ari Tan and 2 session notes?`, shows `If yes, type: delete 1 /confirm`, and states `To cancel, enter any other command.` Ari's profile and roster highlight remain visible; the roster, notes, and data file remain unchanged.
+   Expected: TutorTrack reports `Are you sure you want to delete Ari Tan and 2 session notes?`, shows `If yes, type: delete 1 /confirm`, and states `To cancel, enter another valid command. Typos keep this preview.` Ari's profile and roster highlight remain visible; the roster, notes, and data file remain unchanged.
 1. Enter `help`, followed by `delete 1 /confirm`.
    Expected: `help` cancels the pending deletion and opens the help window. The confirmation is then rejected because no matching deletion is pending; Ari and the notes remain unchanged.
 1. Enter `delete 1`, followed immediately by `delete 1 /confirm`.
@@ -1071,6 +1071,8 @@ testers are expected to do more *exploratory* testing.
    Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` and `delete 1 /Confirm` report that `delete` takes only one `INDEX`; and the remaining inputs report that `/confirm` must appear at most once and at the end. Every error except the invalid-index ones ends with `Format: delete INDEX [/confirm]` and `Example: delete 1`. None changes the roster, notes, open profile, or data file.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster, gives the valid range, and makes no changes.
+1. Enter `delete 1`, then `delete 1 /confir`, then `delete 1 /confirm`.
+   Expected: The misspelled flag reports a format error and does not delete Bea or cancel the preview. The corrected confirmation then deletes Bea without another preview.
 
 ### Deleting one session note
 
@@ -1080,7 +1082,7 @@ testers are expected to do more *exploratory* testing.
 1. Enter `view 2`.
    Expected: Bea's profile is open and shows no session notes.
 1. Enter `delete note 1 2`.
-   Expected: Ari's profile is open with note `[2]` scrolled into view and highlighted. TutorTrack asks whether to delete session note `[2]` for Ari Tan, shows `If yes, type: delete note 1 2 /confirm`, and states `To cancel, enter any other command.` All three notes, the roster, and the data file remain unchanged.
+   Expected: Ari's profile is open with note `[2]` scrolled into view and highlighted. TutorTrack asks whether to delete session note `[2]` for Ari Tan, shows `If yes, type: delete note 1 2 /confirm`, and states `To cancel, enter another valid command. Typos keep this preview.` All three notes, the roster, and the data file remain unchanged.
 1. Enter `help`, followed by `delete note 1 2 /confirm`.
    Expected: `help` cancels the pending deletion, removes the note highlight while Ari's profile remains open, and opens the help window. The confirmation is then rejected because no matching session-note deletion is pending, and all three notes remain.
 1. Enter `delete note 1 2`, followed immediately by `delete 2 /confirm`.
@@ -1099,6 +1101,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The first reports `delete note takes only one STUDENT_INDEX and one NOTE_NUMBER.` and the others report that `/confirm` must appear at most once and at the end. Each is followed by `Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` and `Example: delete note 1 2`, and no note is deleted.
 1. Enter each of `delete note`, `delete note 1`, `delete note 0 1`, `delete note 1 0`, `delete note x 1`, `delete note 1 x`, `delete note 1 1 /Confirm`, `delete note /confirm 1 1`, `delete note 1 1 /confirm /confirm`, and `delete note 1 1 /confirm extra`.
    Expected: Each command reports the applicable session-note deletion format or validation error and leaves both students, both remaining notes, the open profile, and the data file unchanged.
+1. Enter `delete note 1 2`, then `delete note 1 2 /confir`, then `delete note 1 2 /confirm`.
+   Expected: The misspelled flag reports a format error and keeps the preview pending with note `[2]` highlighted. The corrected confirmation deletes only note `[2]`, clears the highlight, and leaves Ari and note `[1]` intact.
 
 ### Navigating command history
 
