@@ -123,6 +123,7 @@ public class JsonAdaptedSessionNoteTest {
     @Test
     public void toModelType_invalidText_throwsIllegalValueException() {
         assertInvalidText("   ");
+        assertInvalidText(" ​");
         assertInvalidText("Line one\nLine two");
         assertInvalidText("a".repeat(SessionNote.MAX_TEXT_LENGTH + 1));
     }

@@ -63,7 +63,21 @@ public final class SessionNote {
     public static boolean isValidText(String text) {
         int length = countTextLength(text);
         boolean hasValidLength = length >= MIN_TEXT_LENGTH && length <= MAX_TEXT_LENGTH;
-        return hasValidLength && !hasNonPrintableCharacter(text);
+        return hasValidLength && hasVisibleCharacter(text) && !hasNonPrintableCharacter(text);
+    }
+
+    /**
+     * Returns whether {@code text} has at least one character that is not whitespace, a space separator
+     * (such as a non-breaking space) or an invisible format character (such as a zero-width space).
+     */
+    public static boolean hasVisibleCharacter(String text) {
+        requireNonNull(text);
+        return text.codePoints().anyMatch(codePoint -> !isInvisible(codePoint));
+    }
+
+    private static boolean isInvisible(int codePoint) {
+        return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)
+                || Character.getType(codePoint) == Character.FORMAT;
     }
 
     /**
