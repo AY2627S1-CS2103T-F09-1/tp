@@ -55,7 +55,8 @@ public class StudentDeletionIntegrationTest {
         CommandResult previewResult = logic.execute("delete 1");
         assertEquals("Are you sure you want to delete Ari Tan and 2 session notes?\n"
                 + "If yes, type: delete 1 /confirm\n"
-                + "To cancel, enter any other command.", previewResult.getFeedbackToUser());
+                + "To cancel, enter another valid command. Typos keep this preview.",
+                previewResult.getFeedbackToUser());
         assertTrue(model.getStudentProfile(deletedStudentId).isPresent());
 
         CommandResult deleteResult = logic.execute("delete 1 /confirm");
