@@ -1361,6 +1361,41 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void executeCommand_deletePreview_opensTargetProfileAndKeepsRoster() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Tan", BLAIR_ID);
+        StudentRoster roster = new StudentRoster(List.of(alex, blair));
+        StudentProfile blairProfile = new StudentProfile(BLAIR_ID, blair.getName(),
+                blair.getParentGuardianContact(), blair.getSubject(), blair.getCurrentLevel(), List.of());
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("If yes, type: delete 2 /confirm", BLAIR_ID));
+            logic.setProfile(Optional.of(blairProfile));
+
+            mainWindow.executeCommand("delete 2");
+
+            assertEquals("Blair Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            ListView<StudentRosterEntry> rosterList = getListView(mainWindow.getStudentRosterPanel());
+            assertEquals(BLAIR_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
+            assertEquals(List.of(ALEX_ID, BLAIR_ID), rosterList.getItems().stream()
+                    .map(StudentRosterEntry::getStudentId).toList());
+
+            logic.setCommandFailure(new CommandException("Invalid student index."));
+            assertThrows(CommandException.class, () -> mainWindow.executeCommand("delete 9"));
+            assertEquals("Blair Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            assertEquals(BLAIR_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_successAfterView_refreshesOpenProfile() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
         TestLogic logic = new TestLogic(roster, roster,
