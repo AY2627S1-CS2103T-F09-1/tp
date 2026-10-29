@@ -253,6 +253,8 @@ Format: `exit`
 
 TutorTrack automatically saves data-changing commands. You do not need to save manually. Student and session-note deletion previews do not save because they do not change any data.
 
+TutorTrack saves your students and session notes in `data/tutortrack.json` inside your TutorTrack home folder, the folder containing `tutortrack.jar`. It creates this file the first time you run a command that changes data, such as `add`. To back up your roster, copy this file while TutorTrack is closed.
+
 If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command.
 
 ### Archiving data files `[coming in v2.0]`
@@ -265,9 +267,6 @@ _Details coming soon ..._
 
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorTrack home folder.
-
-**Q**: I upgraded from v1.3 and my roster is empty. How do I get my students back?<br>
-**A**: From v1.4, TutorTrack saves its data in `data/tutortrack.json` instead of `data/addressbook.json`. Close TutorTrack, then in the `data` folder of your TutorTrack home folder, delete `tutortrack.json` if it exists and rename `addressbook.json` to `tutortrack.json`. Your students and session notes appear the next time you start TutorTrack.
 
 --------------------------------------------------------------------------------------------------------------------
 
