@@ -294,7 +294,7 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorTrack home folder.
+**A**: Copy `tutortrack.jar` to a folder on the other computer. Then, while TutorTrack is closed, copy the `data` folder from your previous TutorTrack home folder into that folder.
 
 --------------------------------------------------------------------------------------------------------------------
 
