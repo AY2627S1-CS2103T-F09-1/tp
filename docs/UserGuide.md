@@ -157,6 +157,7 @@ Format: `note INDEX nt/NOTE`
 * `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number, such as 1, 2, or 3.
 * `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed. A note made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty.
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
+* `nt/` must be typed in lowercase. If it is typed in another case, as in `note 1 NT/Reviewed factorisation.`, TutorTrack shows `Parameter prefixes must be typed in lowercase: NT/ should be nt/.` and does not add the note.
 * `nt/` may appear only once. A second `nt/` after a space, as in `note 1 nt/Remember nt/ notation`, is reported as a repeated parameter and the note is not added. To mention `nt/` in a note, write it without a space before it, such as `(nt/)` or `"nt/"`.
 * You can add the same note text more than once, because each note records a separate lesson.
 * The date and time are recorded to the second, together with your computer's time zone, such as `18 Sep 2026, 6:35 PM (UTC+08:00)`.
