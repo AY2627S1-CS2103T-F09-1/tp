@@ -1179,7 +1179,7 @@ When manually testing roster resizing, start with a populated roster containing 
    1. Prerequisites: at least one student in the roster, so that `data/tutortrack.json` exists. Run the `chmod` or `attrib` commands below in a terminal opened in the folder containing the JAR file.
    1. With TutorTrack still running, make the data file read-only. On Linux or macOS, run `chmod a-w data/tutortrack.json`. On Windows, run `attrib +r data\tutortrack.json`.
    1. Enter `note 1 nt/Reviewed factorisation.`
-      Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Student 1's session-note count is unchanged.
+      Expected: TutorTrack reports `Could not save data to file ./data/tutortrack.json because TutorTrack cannot write to the file or its folder. The command was cancelled and no data was changed.` Student 1's session-note count is unchanged.
    1. Enter `view 1`.
       Expected: Student 1's profile is shown without the rejected note and without a save error, because commands that change no data are not saved.
    1. Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.
