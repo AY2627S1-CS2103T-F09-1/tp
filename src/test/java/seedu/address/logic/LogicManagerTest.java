@@ -470,10 +470,10 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addStudentWithPrefixLikeText_success() throws Exception {
-        String addCommand = "add n/Amy Bee p/11111111 e/amy@example.com "
+        String addCommand = "add n/Amy Bee p/91234567 e/amy@example.com "
                 + "sub/Mathematics nt/Science l/Secondary nt/1";
         Student student = new Student(new StudentName("Amy Bee"),
-                new ParentGuardianContact("11111111", Optional.of("amy@example.com")),
+                new ParentGuardianContact("91234567", Optional.of("amy@example.com")),
                 new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/1"));
         Model expectedModel = new ModelManager();
         expectedModel.addStudent(student);
