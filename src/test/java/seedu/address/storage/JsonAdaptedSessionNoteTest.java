@@ -99,6 +99,16 @@ public class JsonAdaptedSessionNoteTest {
     }
 
     @Test
+    public void toModelType_invalidLastEditedAt_keepsParseFailureAsCause() {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, "yesterday");
+
+        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class,
+                note::toModelType);
+
+        assertInstanceOf(DateTimeParseException.class, exception.getCause());
+    }
+
+    @Test
     public void constructor_nullSource_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new JsonAdaptedSessionNote(null));
     }

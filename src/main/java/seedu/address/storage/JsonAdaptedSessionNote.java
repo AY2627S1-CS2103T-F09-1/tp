@@ -102,7 +102,7 @@ class JsonAdaptedSessionNote {
             }
             return parsedLastEditedAt;
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException(INVALID_LAST_EDITED_AT_MESSAGE);
+            throw new IllegalValueException(INVALID_LAST_EDITED_AT_MESSAGE, exception);
         }
     }
 
