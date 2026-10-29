@@ -13,9 +13,11 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -559,6 +561,25 @@ public class LogicManagerTest {
 
         assertTrue(studentModel.getSessionHistory(ALEX.getId()).isEmpty());
         assertEquals(0, failingLogic.getStudentRoster().getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void execute_storageFailureInsideTutorTrackFolder_namesDataFileRelativeToFolder() {
+        // The storage fails before writing, so nothing is created in the TutorTrack folder.
+        Path dataFile = Paths.get("data", "saveFailure.json");
+        JsonUserPrefsStorage userPrefsStorage =
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
+        Logic failingLogic = new LogicManager(createModelWithAlex(),
+                new StorageManager(new FailingAddressBookStorage(dataFile, 1), userPrefsStorage));
+        String expectedMessage = String.format(LogicManager.FILE_OPS_ERROR_FORMAT,
+                Paths.get(".", "data", "saveFailure.json"), DUMMY_IO_EXCEPTION.getMessage());
+
+        CommandException exception = Assertions.assertThrows(CommandException.class, () ->
+                failingLogic.execute(NOTE_FIRST_STUDENT_COMMAND));
+
+        assertEquals(expectedMessage, exception.getMessage());
+        assertFalse(exception.getMessage().contains(dataFile.toAbsolutePath().toString()));
+        assertFalse(Files.exists(dataFile));
     }
 
     @Test
