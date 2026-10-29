@@ -49,8 +49,8 @@ public final class SessionNote {
     }
 
     /**
-     * Returns the length of {@code text} once surrounding whitespace is removed, counted in Unicode code points
-     * so that an emoji counts as one character.
+     * Returns the length of {@code text} once surrounding whitespace is removed, counted in Unicode code
+     * points so that an emoji counts as one character.
      */
     public static int countTextLength(String text) {
         requireNonNull(text);
@@ -59,8 +59,8 @@ public final class SessionNote {
     }
 
     /**
-     * Returns whether {@code text} contains a control character (such as a tab or line break) or a Unicode line
-     * or paragraph separator once surrounding whitespace is removed.
+     * Returns whether {@code text} contains a control character (such as a tab or line break) or a Unicode
+     * line or paragraph separator once surrounding whitespace is removed.
      */
     public static boolean hasNonPrintableCharacter(String text) {
         requireNonNull(text);

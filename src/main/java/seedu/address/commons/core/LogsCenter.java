@@ -114,12 +114,12 @@ public class LogsCenter {
 
     /**
      * Returns a {@code FileHandler} pattern that names {@code logFile} literally.
-     * {@code FileHandler} treats {@code %} as the start of a placeholder, so a folder name containing it is escaped.
+     * {@code FileHandler} treats {@code %} as the start of a placeholder, so a folder name containing it is
+     * escaped.
      */
     static String toFileHandlerPattern(Path logFile) {
         requireNonNull(logFile);
         return logFile.toString().replace(FILE_HANDLER_PLACEHOLDER, ESCAPED_FILE_HANDLER_PLACEHOLDER);
     }
-
 
 }

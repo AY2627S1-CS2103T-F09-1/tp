@@ -83,7 +83,8 @@ public class HomeFolderTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation") // Only the deprecated constructor can build a URL that is not a valid URI.
+    // Only the deprecated constructor can build a URL that is not a valid URI.
+    @SuppressWarnings("deprecation")
     public void findHomeFolder_unparsableLocation_returnsWorkingDirectory() throws IOException {
         URL unparsableLocation = new URL("file:/tutor track/tutortrack.jar");
 
@@ -111,7 +112,8 @@ public class HomeFolderTest {
     public void toDisplayPath_pathInsideHomeFolder_returnsPathRelativeToHomeFolder() {
         Path dataFile = testFolder.resolve("data").resolve("tutortrack.json");
 
-        assertEquals(Paths.get(".", "data", "tutortrack.json"), HomeFolder.toDisplayPath(testFolder, dataFile));
+        assertEquals(Paths.get(".", "data", "tutortrack.json"),
+                HomeFolder.toDisplayPath(testFolder, dataFile));
     }
 
     @Test

@@ -83,8 +83,8 @@ public class SessionNoteIntegrationTest {
         assertThrows(ParseException.class, ParserUtil.MESSAGE_EMPTY_NOTE, () -> logic
                 .execute("note 1 nt/   "));
         int overLimit = SessionNote.MAX_TEXT_LENGTH + 1;
-        assertThrows(ParseException.class, String.format(ParserUtil.MESSAGE_NOTE_TOO_LONG, overLimit), () -> logic
-                .execute("edit note 2 1 nt/" + "a".repeat(overLimit)));
+        assertThrows(ParseException.class, String.format(ParserUtil.MESSAGE_NOTE_TOO_LONG, overLimit), () ->
+                logic.execute("edit note 2 1 nt/" + "a".repeat(overLimit)));
 
         assertEquals(savedData, Files.readString(dataFile));
         assertEquals(List.of(0, 1), model.getStudentRoster().getEntries().stream()

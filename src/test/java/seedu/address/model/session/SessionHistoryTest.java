@@ -46,7 +46,8 @@ public class SessionHistoryTest {
     public void of_notesOutOfOrder_sortsNewestFirstKeepingOrderOfEqualTimestamps() {
         List<SessionNote> notes = List.of(EARLIER_NOTE, SECOND_TIED_NOTE, FIRST_TIED_NOTE);
 
-        assertEquals(List.of(SECOND_TIED_NOTE, FIRST_TIED_NOTE, EARLIER_NOTE), SessionHistory.of(notes).getNotes());
+        assertEquals(List.of(SECOND_TIED_NOTE, FIRST_TIED_NOTE, EARLIER_NOTE),
+                SessionHistory.of(notes).getNotes());
     }
 
     @Test
