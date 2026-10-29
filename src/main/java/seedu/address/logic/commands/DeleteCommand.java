@@ -79,7 +79,8 @@ public class DeleteCommand extends Command {
         int noteCount = studentToDelete.getNoteCount();
         String noteLabel = noteCount == 1 ? "session note" : "session notes";
         return new CommandResult(String.format(MESSAGE_CONFIRM_DELETE,
-                studentToDelete.getName(), noteCount, noteLabel, targetIndex.getOneBased()));
+                studentToDelete.getName(), noteCount, noteLabel, targetIndex.getOneBased()),
+                studentToDelete.getStudentId());
     }
 
     @Override

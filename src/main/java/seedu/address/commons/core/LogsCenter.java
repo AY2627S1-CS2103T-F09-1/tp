@@ -89,14 +89,26 @@ public class LogsCenter {
         baseLogger.addHandler(consoleHandler);
 
         // add a FileHandler to log to a file
+        addFileHandler(baseLogger, HomeFolder.resolve(LOG_FILE));
+    }
+
+    /**
+     * Adds a {@code FileHandler} that writes to {@code logFile} to {@code target}.
+     * If the file cannot be created, such as when its folder is read-only, logs a warning through {@code target}
+     * and leaves the app logging to the console only. The static {@code logger} is not used here because it is
+     * not yet assigned while the base logger is being set up.
+     */
+    static void addFileHandler(Logger target, Path logFile) {
+        requireNonNull(target);
+        requireNonNull(logFile);
         try {
-            FileHandler fileHandler = new FileHandler(toFileHandlerPattern(HomeFolder.resolve(LOG_FILE)),
+            FileHandler fileHandler = new FileHandler(toFileHandlerPattern(logFile),
                     MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
             fileHandler.setFormatter(new SimpleFormatter());
             fileHandler.setLevel(Level.ALL);
-            baseLogger.addHandler(fileHandler);
+            target.addHandler(fileHandler);
         } catch (IOException e) {
-            logger.warning("Error adding file handler for logger.");
+            target.warning("Error adding file handler for logger.");
         }
     }
 

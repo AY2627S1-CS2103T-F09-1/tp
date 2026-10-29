@@ -19,6 +19,8 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
 1. Copy the file to the folder you want to use as the _home folder_ for TutorTrack. This folder will contain the data file that stores your student roster and session notes. Rename the downloaded file to `tutortrack.jar` if it has a different name.
 
+   Choose a folder that you can write to, such as one in your user folder. TutorTrack saves its data file, preferences and log files in this folder, so it cannot save anything if the folder is write-protected (see [Known issues](#known-issues)).
+
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutortrack.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. On a first launch, the student roster is empty.<br>
    ![Ui](images/Ui.png)
@@ -34,7 +36,7 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `edit note 1 1 nt/Corrected lesson summary.` : Replaces the first student's first session note without changing its timestamp.
 
-   * `note 1 nt/Practice algebra next session.` : Adds a second session note, numbered `[2]`, to the first student.
+   * `note 1 nt/Practice algebra next session.` : Adds a second session note, numbered `[2]`, to the first student 
 
    * `delete note 1 2` : Shows a confirmation prompt for deleting session note `[2]` from the first student. Enter `delete note 1 2 /confirm` next to complete the deletion.
 
@@ -153,6 +155,7 @@ Format: `note INDEX nt/NOTE`
 * `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number, such as 1, 2, or 3.
 * `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed.
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
+* `nt/` may appear only once. A second `nt/` after a space, as in `note 1 nt/Remember nt/ notation`, is reported as a repeated parameter and the note is not added. To mention `nt/` in a note, write it without a space before it, such as `(nt/)` or `"nt/"`.
 * You can add the same note text more than once, because each note records a separate lesson.
 
 Examples:
@@ -172,6 +175,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 * `NOTE_NUMBER` is the number shown beside the note in the student's profile. The oldest note is `[1]`.
 * `NEW_NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed.
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside the replacement is saved as part of the note.
+* As with `note`, `nt/` may appear only once. To mention `nt/` in the replacement, write it without a space before it, such as `(nt/)` or `"nt/"`.
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 
@@ -205,16 +209,16 @@ Confirmation format: `delete INDEX /confirm`
 
 * `INDEX` is the student's number in the currently displayed sorted roster.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
-* The preview identifies the student, shows how many session notes would be removed, and displays the exact confirmation command. It does not delete or save anything.
+* A valid preview opens the target student's profile, highlights that student's roster card, shows how many session notes would be removed, and displays the exact confirmation command. It does not delete or save anything.
 * To complete the deletion, enter the displayed `delete INDEX /confirm` command immediately after the preview. `/confirm` is case-sensitive and must appear once, after the index.
 * To cancel, enter any other command. The pending deletion is cleared before that command is processed. Starting another `delete INDEX` preview replaces the earlier pending deletion.
 * A direct, repeated, or mismatched `/confirm` command is rejected without deleting data.
-* After a matching confirmation, TutorTrack reports `Successfully deleted STUDENT_NAME.` The roster is redrawn with new consecutive indices. If the deleted student's profile was open, it closes and its roster highlight is cleared.
+* After a matching confirmation, TutorTrack reports `Successfully deleted STUDENT_NAME.` The roster is redrawn with new consecutive indices, and the deleted student's profile and roster highlight close.
 
 Example:
 
 1. Enter `delete 2`.
-1. Check the student name and session-note count in the prompt.
+1. Check that the target student's profile is open and their roster card is highlighted, then verify the name and session-note count in the prompt.
 1. Enter `delete 2 /confirm` as the next command to delete that student, or enter any other command to cancel.
 
 If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. See [Fixing command errors](#fixing-command-errors) for the messages. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
@@ -253,6 +257,8 @@ Format: `exit`
 
 TutorTrack automatically saves data-changing commands. You do not need to save manually. Student and session-note deletion previews do not save because they do not change any data.
 
+TutorTrack saves your students and session notes in `data/tutortrack.json` inside your TutorTrack home folder, the folder containing `tutortrack.jar`. It creates this file the first time you run a command that changes data, such as `add`. To back up your roster, copy this file while TutorTrack is closed.
+
 If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command.
 
 ### Archiving data files `[coming in v2.0]`
@@ -266,15 +272,13 @@ _Details coming soon ..._
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous TutorTrack home folder.
 
-**Q**: I upgraded from v1.3 and my roster is empty. How do I get my students back?<br>
-**A**: From v1.4, TutorTrack saves its data in `data/tutortrack.json` instead of `data/addressbook.json`. Close TutorTrack, then in the `data` folder of your TutorTrack home folder, delete `tutortrack.json` if it exists and rename `addressbook.json` to `tutortrack.json`. Your students and session notes appear the next time you start TutorTrack.
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+1. **If the folder containing `tutortrack.jar` is write-protected**, TutorTrack still starts, but it cannot create log files or save your window preferences. Commands that change data, such as `add`, fail with an error saying TutorTrack could not save the data file, and the roster stays unchanged. The remedy is to move `tutortrack.jar` to a folder that you can write to.
 
 --------------------------------------------------------------------------------------------------------------------
 
