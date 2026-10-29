@@ -1,0 +1,14 @@
+{
+  "persons": [],
+  "students": [ {
+    "studentId": "123e4567-e89b-12d3-a456-426614174000",
+    "name": "Alex Tan",
+    "parentPhone": "9123 4567",
+    "subject": "Mathematics",
+    "currentLevel": "Secondary 3",
+    "sessionNotes": [ {
+      "recordedAt": "2099-01-01T00:00:00+08:00",
+      "text": "Reviewed factorisation."
+    } ]
+  } ]
+}

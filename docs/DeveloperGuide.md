@@ -313,7 +313,7 @@ Notes are nested in the student record so that the data file stays easy to read 
 
 `JsonAdaptedSessionNote` writes `recordedAt` with `DateTimeFormatter.ISO_OFFSET_DATE_TIME`, which always includes seconds; `OffsetDateTime#toString()` would leave out seconds that are zero. Loading rebuilds each note through `SessionNote`, so persisted notes follow the same validation as notes entered through the app. Notes with equal timestamps keep their saved order, and notes in a hand-edited file are sorted newest first when loaded.
 
-A student record without a `sessionNotes` field loads with an empty history, so data files saved before session notes existed remain loadable. A missing `recordedAt` or `text`, a timestamp without an offset (such as `2026-09-18T18:35:00`), invalid note text, or an empty list entry is a load error, which follows the same recovery path as an invalid student field.
+A student record without a `sessionNotes` field loads with an empty history, so data files saved before session notes existed remain loadable. A missing `recordedAt` or `text`, a timestamp without an offset (such as `2026-09-18T18:35:00`), a `recordedAt` or `lastEditedAt` later than the load time, invalid note text, or an empty list entry is a load error, which follows the same recovery path as an invalid student field. `JsonAddressBookStorage` reads the load time once from an injectable `Clock` and passes it down to each `JsonAdaptedSessionNote`, so every note is checked against the same time and tests can fix it.
 
 ### Session note command
 

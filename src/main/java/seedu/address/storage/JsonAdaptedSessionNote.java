@@ -25,6 +25,8 @@ class JsonAdaptedSessionNote {
     static final String INVALID_LAST_EDITED_AT_MESSAGE =
             "Session note last-edited timestamps must include a date, time, and offset, "
             + "such as 2026-10-23T14:10:00+08:00, and must not precede recordedAt.";
+    static final String FUTURE_TIMESTAMP_MESSAGE_FORMAT =
+            "Session note's %s field must not be later than the time the data file is loaded.";
 
     private static final String RECORDED_AT_FIELD = "recordedAt";
     private static final String TEXT_FIELD = "text";
@@ -68,11 +70,31 @@ class JsonAdaptedSessionNote {
     /**
      * Returns the validated domain session note represented by this JSON object.
      *
+     * @param loadedAt The date-time the data is being loaded.
      * @throws IllegalValueException If a persisted field is missing or invalid.
      */
-    SessionNote toModelType() throws IllegalValueException {
+    SessionNote toModelType(OffsetDateTime loadedAt) throws IllegalValueException {
+        requireNonNull(loadedAt);
         OffsetDateTime modelRecordedAt = requireValidRecordedAt();
-        return new SessionNote(requireValidText(), modelRecordedAt, requireValidLastEditedAt(modelRecordedAt));
+        requireNotAfter(modelRecordedAt, loadedAt, RECORDED_AT_FIELD);
+        OffsetDateTime modelLastEditedAt = requireValidLastEditedAt(modelRecordedAt);
+        if (modelLastEditedAt != null) {
+            requireNotAfter(modelLastEditedAt, loadedAt, LAST_EDITED_AT_FIELD);
+        }
+        return new SessionNote(requireValidText(), modelRecordedAt, modelLastEditedAt);
+    }
+
+    /**
+     * Checks that {@code timestamp} is not later than {@code loadedAt}. Notes are recorded and edited at the
+     * current time, so a later timestamp can only come from editing the data file.
+     *
+     * @throws IllegalValueException If {@code timestamp} is later than {@code loadedAt}.
+     */
+    private static void requireNotAfter(OffsetDateTime timestamp, OffsetDateTime loadedAt, String fieldName)
+            throws IllegalValueException {
+        if (timestamp.isAfter(loadedAt)) {
+            throw new IllegalValueException(String.format(FUTURE_TIMESTAMP_MESSAGE_FORMAT, fieldName));
+        }
     }
 
     /**

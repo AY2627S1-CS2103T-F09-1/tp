@@ -5,8 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
+import static seedu.address.testutil.TypicalSessionNotes.LOADED_AT;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import org.junit.jupiter.api.Assertions;
@@ -24,7 +27,7 @@ public class JsonAdaptedSessionNoteTest {
 
     @Test
     public void toModelType_validNote_returnsNote() throws Exception {
-        assertEquals(FACTORISATION_NOTE, new JsonAdaptedSessionNote(FACTORISATION_NOTE).toModelType());
+        assertEquals(FACTORISATION_NOTE, new JsonAdaptedSessionNote(FACTORISATION_NOTE).toModelType(LOADED_AT));
     }
 
     @Test
@@ -47,7 +50,7 @@ public class JsonAdaptedSessionNoteTest {
 
     @Test
     public void toModelType_utcTimestamp_keepsOffset() throws Exception {
-        SessionNote note = new JsonAdaptedSessionNote("2026-09-18T10:35:00Z", VALID_TEXT).toModelType();
+        SessionNote note = new JsonAdaptedSessionNote("2026-09-18T10:35:00Z", VALID_TEXT).toModelType(LOADED_AT);
 
         assertEquals(OffsetDateTime.parse("2026-09-18T10:35:00Z"), note.getRecordedAt());
     }
@@ -56,7 +59,7 @@ public class JsonAdaptedSessionNoteTest {
     public void toModelType_maximumLengthText_returnsNote() throws Exception {
         String maximumLengthText = "a".repeat(SessionNote.MAX_TEXT_LENGTH);
 
-        SessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, maximumLengthText).toModelType();
+        SessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, maximumLengthText).toModelType(LOADED_AT);
 
         assertEquals(maximumLengthText, note.getText());
     }
@@ -65,18 +68,18 @@ public class JsonAdaptedSessionNoteTest {
     public void toModelType_bothFieldsMissing_reportsRecordedAtFirst() {
         // Each missing field is tested alone below; this checks which one is reported when both are missing.
         assertThrows(IllegalValueException.class,
-                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "recordedAt"),
-                new JsonAdaptedSessionNote(null, null)::toModelType);
+                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "recordedAt"), ()
+                -> new JsonAdaptedSessionNote(null, null).toModelType(LOADED_AT));
     }
 
     @Test
     public void toModelType_missingFields_throwsIllegalValueException() {
         assertThrows(IllegalValueException.class,
-                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "recordedAt"),
-                new JsonAdaptedSessionNote(null, VALID_TEXT)::toModelType);
+                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "recordedAt"), ()
+                -> new JsonAdaptedSessionNote(null, VALID_TEXT).toModelType(LOADED_AT));
         assertThrows(IllegalValueException.class,
-                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "text"),
-                new JsonAdaptedSessionNote(VALID_RECORDED_AT, null)::toModelType);
+                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "text"), ()
+                -> new JsonAdaptedSessionNote(VALID_RECORDED_AT, null).toModelType(LOADED_AT));
     }
 
     @Test
@@ -92,8 +95,8 @@ public class JsonAdaptedSessionNoteTest {
     public void toModelType_invalidRecordedAt_keepsParseFailureAsCause() {
         JsonAdaptedSessionNote note = new JsonAdaptedSessionNote("yesterday", VALID_TEXT);
 
-        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class,
-                note::toModelType);
+        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class, ()
+                -> note.toModelType(LOADED_AT));
 
         assertInstanceOf(DateTimeParseException.class, exception.getCause());
     }
@@ -102,8 +105,8 @@ public class JsonAdaptedSessionNoteTest {
     public void toModelType_invalidLastEditedAt_keepsParseFailureAsCause() {
         JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, "yesterday");
 
-        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class,
-                note::toModelType);
+        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class, ()
+                -> note.toModelType(LOADED_AT));
 
         assertInstanceOf(DateTimeParseException.class, exception.getCause());
     }
@@ -128,20 +131,62 @@ public class JsonAdaptedSessionNoteTest {
         assertInvalidText("a".repeat(SessionNote.MAX_TEXT_LENGTH + 1));
     }
 
+    @Test
+    public void toModelType_timestampsAtLoadTime_returnsNote() throws Exception {
+        String loadedAt = format(LOADED_AT);
+        String sameInstantInUtc = format(LOADED_AT.withOffsetSameInstant(ZoneOffset.UTC));
+
+        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(loadedAt, VALID_TEXT).toModelType(LOADED_AT)
+                .getRecordedAt());
+        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(sameInstantInUtc, VALID_TEXT).toModelType(LOADED_AT)
+                .getRecordedAt().withOffsetSameInstant(LOADED_AT.getOffset()));
+        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, loadedAt)
+                .toModelType(LOADED_AT).getLastEditedAt().orElseThrow());
+    }
+
+    @Test
+    public void toModelType_recordedAtAfterLoadTime_throwsIllegalValueException() {
+        assertFutureRecordedAt(format(LOADED_AT.plusSeconds(1)));
+        // Same local time as the load time, but an earlier offset makes it one hour later.
+        assertFutureRecordedAt(format(LOADED_AT.withOffsetSameLocal(ZoneOffset.ofHours(7))));
+        assertFutureRecordedAt("2099-01-01T00:00:00+08:00");
+    }
+
+    @Test
+    public void toModelType_lastEditedAtAfterLoadTime_throwsIllegalValueException() {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT,
+                format(LOADED_AT.plusSeconds(1)));
+
+        assertThrows(IllegalValueException.class, String.format(
+                JsonAdaptedSessionNote.FUTURE_TIMESTAMP_MESSAGE_FORMAT, "lastEditedAt"), ()
+                -> note.toModelType(LOADED_AT));
+    }
+
+    private void assertFutureRecordedAt(String recordedAt) {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(recordedAt, VALID_TEXT);
+        assertThrows(IllegalValueException.class, String.format(
+                JsonAdaptedSessionNote.FUTURE_TIMESTAMP_MESSAGE_FORMAT, "recordedAt"), ()
+                -> note.toModelType(LOADED_AT));
+    }
+
+    private static String format(OffsetDateTime dateTime) {
+        return dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
     private void assertInvalidRecordedAt(String recordedAt) {
         JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(recordedAt, VALID_TEXT);
-        assertThrows(IllegalValueException.class, JsonAdaptedSessionNote.INVALID_RECORDED_AT_MESSAGE,
-                note::toModelType);
+        assertThrows(IllegalValueException.class, JsonAdaptedSessionNote.INVALID_RECORDED_AT_MESSAGE, ()
+                -> note.toModelType(LOADED_AT));
     }
 
     private void assertInvalidLastEditedAt(String lastEditedAt) {
         JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, lastEditedAt);
-        assertThrows(IllegalValueException.class, JsonAdaptedSessionNote.INVALID_LAST_EDITED_AT_MESSAGE,
-                note::toModelType);
+        assertThrows(IllegalValueException.class, JsonAdaptedSessionNote.INVALID_LAST_EDITED_AT_MESSAGE, ()
+                -> note.toModelType(LOADED_AT));
     }
 
     private void assertInvalidText(String text) {
         JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, text);
-        assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS, note::toModelType);
+        assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> note.toModelType(LOADED_AT));
     }
 }
