@@ -62,7 +62,8 @@ public class SessionNoteDeletionIntegrationTest {
         CommandResult previewResult = logic.execute("delete note 1 2");
         assertEquals("Are you sure you want to delete session note [2] for Ari Tan?\n"
                 + "If yes, type: delete note 1 2 /confirm\n"
-                + "To cancel, enter any other command.", previewResult.getFeedbackToUser());
+                + "To cancel, enter another valid command. Typos keep this preview.",
+                previewResult.getFeedbackToUser());
         assertEquals(3, model.getSessionHistory(studentId).size());
 
         CommandResult deleteResult = logic.execute("delete note 1 2 /confirm");

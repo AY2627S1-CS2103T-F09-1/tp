@@ -250,6 +250,12 @@
     -fx-border-width: 1px;
 }
 
+.session-note-list .list-cell:filled:deletion-target .session-note-card {
+    -fx-background-color: #fff4f2;
+    -fx-border-color: -app-danger;
+    -fx-border-width: 1px 1px 1px 4px;
+}
+
 .session-note-header {
     -fx-font-size: 12px;
     -fx-font-weight: bold;

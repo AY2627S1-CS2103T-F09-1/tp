@@ -277,10 +277,12 @@ public class MainWindow extends UiPart<Stage> {
     CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult commandResult = logic.execute(commandText);
+            studentProfilePanel.clearDeletionPreview();
             studentRosterPanel.setRoster(logic.getStudentRoster());
             commandResult.getProfileStudentId()
                     .ifPresent(studentId -> displayedProfileStudentId = Optional.of(studentId));
             refreshDisplayedProfile();
+            commandResult.getPreviewNoteNumber().ifPresent(studentProfilePanel::previewDeletionOf);
             logger.info("Command executed successfully: " + AddressBookParser.getLoggableCommandWord(commandText));
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
@@ -294,6 +296,9 @@ public class MainWindow extends UiPart<Stage> {
 
             return commandResult;
         } catch (CommandException | ParseException e) {
+            if (e instanceof CommandException) {
+                studentProfilePanel.clearDeletionPreview();
+            }
             logger.info("An error occurred while executing command: "
                     + AddressBookParser.getLoggableCommandWord(commandText));
             resultDisplay.setFeedbackToUser(e.getMessage());
