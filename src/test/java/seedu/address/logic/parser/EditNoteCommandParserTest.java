@@ -120,6 +120,12 @@ public class EditNoteCommandParserTest {
                         EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
     }
 
+    @Test
+    public void parse_notePrefixWithoutLeadingSpace_keptAsText() {
+        assertParseSuccess(parser, "note 1 1 nt/Remember (nt/) notation",
+                new EditNoteCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, "Remember (nt/) notation"));
+    }
+
     // Error precedence: target, then new note, then index count, then indices, then duplicate prefix.
     @Test
     public void parse_wrongTargetAndMissingNewNote_reportsMissingTargetFirst() {
@@ -147,5 +153,4 @@ public class EditNoteCommandParserTest {
                 new EditNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2), "x"));
         assertParseFailure(parser, "note 1 2 3 nt/x", EditNoteCommandParser.MESSAGE_TOO_MANY_INDICES);
     }
-
 }

@@ -306,7 +306,7 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 ### Session note command
 
-`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error; an overlong note's error states the length entered.
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A second `nt/` after a space is a repeated prefix, as in every other command; this is deliberate, so that all commands share one prefix rule. Because a prefix must follow a space, `nt/` written without one, such as `(nt/)`, stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error; an overlong note's error states the length entered.
 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
@@ -1017,6 +1017,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
    Expected: The first reports `Session note is empty. Enter the note text after nt/.` and the second a duplicate prefix error; no note count changes.
+1. Enter `note 1 nt/Remember (nt/) notation`, then `view 1`.
+   Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 
