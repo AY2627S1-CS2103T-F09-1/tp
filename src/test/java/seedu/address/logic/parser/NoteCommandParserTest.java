@@ -104,4 +104,34 @@ public class NoteCommandParserTest {
         assertParseSuccess(parser, " 1 nt/Remember (nt/) and \"nt/\" notation",
                 new NoteCommand(INDEX_FIRST_PERSON, "Remember (nt/) and \"nt/\" notation"));
     }
+
+    @Test
+    public void parse_wrongCaseNotePrefix_throwsLowercaseRequiredWithFormat() {
+        // Partitions: all uppercase, and each letter uppercase on its own.
+        assertParseFailure(parser, " 1 NT/Reviewed factorisation.", wrongCaseNotePrefixMessage("NT/"));
+        assertParseFailure(parser, " 1 Nt/Reviewed factorisation.", wrongCaseNotePrefixMessage("Nt/"));
+        assertParseFailure(parser, " 1 nT/Reviewed factorisation.", wrongCaseNotePrefixMessage("nT/"));
+    }
+
+    @Test
+    public void parse_wrongCaseNotePrefixWithoutIndex_reportsPrefixBeforeMissingIndex() {
+        assertParseFailure(parser, " NT/Reviewed factorisation.", wrongCaseNotePrefixMessage("NT/"));
+    }
+
+    @Test
+    public void parse_textResemblingWrongCasePrefix_throwsMissingNote() {
+        // Boundary: without the slash, or not at the start of a word, the text is not a prefix. A lowercase nt/
+        // after a tab is not a prefix either, and it is not in the wrong case.
+        String missingNoteMessage = Messages.withFormat("Missing nt/NOTE.",
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+
+        assertParseFailure(parser, " 1 NT", missingNoteMessage);
+        assertParseFailure(parser, " 1 xNT/Reviewed", missingNoteMessage);
+        assertParseFailure(parser, " 1\tnt/Reviewed", missingNoteMessage);
+    }
+
+    private static String wrongCaseNotePrefixMessage(String typedPrefix) {
+        return Messages.withFormat(String.format(NoteCommandParser.MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix),
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+    }
 }
