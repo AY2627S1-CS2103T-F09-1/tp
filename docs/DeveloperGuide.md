@@ -1125,7 +1125,7 @@ testers are expected to do more *exploratory* testing.
    Expected: The command box shows `help`, then `invalid`, then the older `help`; another `Up` leaves the oldest `help` displayed.
 1. Press `Down` repeatedly.
    Expected: The command box moves through `invalid` and the newer `help`, then restores `unfinished command`; another `Down` leaves the draft displayed.
-1. Press `Up`, change the recalled `help` to `exit`, submit it, and press `Up` again.
+1. Press `Up` twice to recall `invalid`, change it to `help`, submit it, and press `Up` again.
    Expected: `help` opens the help window and is recalled as the newest history entry.
 1. Close and relaunch TutorTrack, then press `Up` in an empty command box.
    Expected: No command is recalled because history is kept only for the app session.
