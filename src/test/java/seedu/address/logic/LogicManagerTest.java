@@ -249,6 +249,8 @@ public class LogicManagerTest {
                 + "If yes, type: delete note 1 2 /confirm\n"
                 + "To cancel, enter another valid command. Typos keep this preview.",
                 result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
+        assertEquals(Index.fromOneBased(2), result.getPreviewNoteNumber().orElseThrow());
         assertEquals(2, model.getSessionHistory(ALEX.getId()).size());
         assertFalse(Files.exists(addressBookFile));
     }

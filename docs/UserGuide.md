@@ -233,8 +233,8 @@ Confirmation format: `delete note STUDENT_INDEX NOTE_NUMBER /confirm`
 
 * `STUDENT_INDEX` is the student's positive whole-number index in the displayed roster.
 * `NOTE_NUMBER` is the positive number in square brackets beside the note in that student's profile.
-* The preview identifies the student and note number and displays the exact confirmation command. It does not delete or save anything.
-* Enter the displayed confirmation command as the next correctly formatted command. A typing error keeps the preview active; another correctly formatted command cancels it. Starting another deletion preview replaces it.
+* The preview opens the selected student's profile, scrolls the targeted note into view, and highlights its card. Check the note text and number before confirming. The prompt displays the exact confirmation command. No data is deleted or saved during the preview.
+* Enter the displayed confirmation command as the next correctly formatted command. An input that TutorTrack cannot parse keeps the preview and highlight active; another correctly formatted command cancels the preview and clears the highlight while the profile remains open. Starting another deletion preview replaces the earlier one and highlights its target.
 * Direct, repeated, stale, or mismatched confirmations are rejected. This includes a student or session-history change between the preview and confirmation.
 * After a matching confirmation, TutorTrack removes only that note, reports `Successfully deleted session note [NOTE_NUMBER] for STUDENT_NAME.`, refreshes an open profile, and numbers the remaining notes consecutively.
 
@@ -242,10 +242,10 @@ Example:
 
 1. Enter `view 1` and check the displayed note numbers.
 1. Enter `delete note 1 3`.
-1. Check the student name and note number in the prompt.
+1. Check the open profile and highlighted note, then check the student name and note number in the prompt.
 1. Enter `delete note 1 3 /confirm` as the next correctly formatted command to delete that note, or enter another correctly formatted command to cancel.
 
-If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and changes nothing. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
+If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and leaves stored data unchanged. An input that TutorTrack cannot parse keeps any pending preview and highlight active. An input that parses but fails validation cancels the preview and clears the highlight while the profile stays open. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
 
 ### Exiting the program: `exit`
 
