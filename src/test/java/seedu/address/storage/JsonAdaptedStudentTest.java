@@ -75,6 +75,20 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_invalidName_throwsIllegalValueException() {
+        assertInvalidField("@lex", "9123 4567", "guardian@example.com", "Mathematics", "Secondary 3",
+                StudentName.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void toModelSessionHistory_nullSessionNotesList_returnsEmptyHistory() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
+                "Mathematics", "Secondary 3", null);
+
+        assertEquals(SessionHistory.empty(), student.toModelSessionHistory());
+    }
+
+    @Test
     public void toModelSessionHistory_noSessionNotes_returnsEmptyHistory() throws Exception {
         JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
                 "Mathematics", "Secondary 3", null);

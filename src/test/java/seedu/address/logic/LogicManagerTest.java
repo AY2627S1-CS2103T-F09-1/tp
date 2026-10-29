@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX;
-import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.MESSAGE_EMPTY_ROSTER;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 import static seedu.address.testutil.TypicalSessionNotes.BEA;
@@ -34,6 +33,7 @@ import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddCommandParser;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -42,6 +42,8 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.ParentGuardianContact;
+import seedu.address.model.student.Student;
 import seedu.address.model.student.StudentName;
 import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.model.student.Subject;
@@ -73,18 +75,18 @@ public class LogicManagerTest {
     @Test
     public void execute_invalidCommandFormat_throwsParseException() {
         String invalidCommand = "uicfhmowqewca";
-        assertParseException(invalidCommand, MESSAGE_UNKNOWN_COMMAND);
+        assertParseException(invalidCommand, AddressBookParser.getUnknownCommandMessage(invalidCommand));
     }
 
     @Test
     public void execute_commandExecutionError_throwsCommandException() {
         String deleteCommand = "delete 9";
-        assertCommandException(deleteCommand, MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandException(deleteCommand, MESSAGE_EMPTY_ROSTER);
     }
 
     @Test
     public void execute_removedListCommand_throwsParseException() {
-        assertParseException("list", MESSAGE_UNKNOWN_COMMAND);
+        assertParseException("list", AddressBookParser.getUnknownCommandMessage("list"));
     }
 
     @Test
@@ -96,7 +98,9 @@ public class LogicManagerTest {
 
         assertEquals("Are you sure you want to delete " + ALEX.getName() + " and 1 session note?\n"
                 + "If yes, type: delete 1 /confirm\n"
-                + "To cancel, enter any other command.", result.getFeedbackToUser());
+                + "To cancel, enter another valid command. Typos keep this preview.",
+                result.getFeedbackToUser());
+        assertEquals(Optional.of(ALEX.getId()), result.getProfileStudentId());
         assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
         assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
@@ -173,15 +177,40 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_malformedCommandAfterDeletePreview_cancelsPendingDeletion() throws Exception {
+    public void execute_malformedConfirmationAfterDeletePreview_preservesPendingDeletion() throws Exception {
         model.addStudent(ALEX);
         logic.execute("delete 1");
 
-        assertThrows(ParseException.class, () -> logic.execute("delete 1 /Confirm"));
+        assertThrows(ParseException.class, () -> logic.execute("delete 1 /confir"));
+        assertFalse(Files.exists(addressBookFile));
+
+        CommandResult result = logic.execute("delete 1 /confirm");
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName()),
+                result.getFeedbackToUser());
+        assertEquals(0, logic.getStudentRoster().size());
+    }
+
+    @Test
+    public void execute_malformedOtherCommandAfterDeletePreview_preservesPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+
+        assertThrows(ParseException.class, () -> logic.execute("add 123"));
+
+        assertEquals(String.format(DeleteCommand.MESSAGE_DELETE_STUDENT_SUCCESS, ALEX.getName()),
+                logic.execute("delete 1 /confirm").getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_parsedCommandErrorAfterDeletePreview_cancelsPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        logic.execute("delete 1");
+
+        assertThrows(CommandException.class, () -> logic.execute("view 2"));
 
         assertCommandException("delete 1 /confirm", DeleteCommand.MESSAGE_NO_PENDING_DELETION);
-        assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
-                .map(StudentRosterEntry::getStudentId).toList());
+        assertEquals(1, logic.getStudentRoster().size());
     }
 
     @Test
@@ -218,7 +247,10 @@ public class LogicManagerTest {
 
         assertEquals("Are you sure you want to delete session note [2] for " + ALEX.getName() + "?\n"
                 + "If yes, type: delete note 1 2 /confirm\n"
-                + "To cancel, enter any other command.", result.getFeedbackToUser());
+                + "To cancel, enter another valid command. Typos keep this preview.",
+                result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
+        assertEquals(Index.fromOneBased(2), result.getPreviewNoteNumber().orElseThrow());
         assertEquals(2, model.getSessionHistory(ALEX.getId()).size());
         assertFalse(Files.exists(addressBookFile));
     }
@@ -326,6 +358,23 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_malformedCommandAfterDeleteSessionNotePreview_preservesPendingDeletion() throws Exception {
+        model.addStudent(ALEX);
+        model.addSessionNote(ALEX.getId(), "Reviewed indices.");
+        logic.execute("delete note 1 1");
+
+        assertThrows(ParseException.class, () -> logic.execute("delete note 1 1 /confir"));
+        assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
+        assertFalse(Files.exists(addressBookFile));
+
+        CommandResult result = logic.execute("delete note 1 1 /confirm");
+
+        assertEquals(String.format(DeleteSessionNoteCommand.MESSAGE_DELETE_SESSION_NOTE_SUCCESS,
+                1, ALEX.getName()), result.getFeedbackToUser());
+        assertTrue(model.getSessionHistory(ALEX.getId()).isEmpty());
+    }
+
+    @Test
     public void execute_crossTypeDeleteConfirmation_rejectsAndCancelsPendingDeletion() throws Exception {
         model.addStudent(ALEX);
         model.addSessionNote(ALEX.getId(), "Reviewed indices.");
@@ -410,10 +459,25 @@ public class LogicManagerTest {
         String legacyAddCommand =
                 "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
-        assertParseException(legacyAddCommand,
+        assertParseException(legacyAddCommand, Messages.withFormat(
                 String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "a/",
-                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)
-                        + "\n" + AddCommand.MESSAGE_USAGE);
+                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS),
+                                AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE));
+    }
+
+    @Test
+    public void execute_addStudentWithPrefixLikeText_success() throws Exception {
+        String addCommand = "add n/Amy Bee p/11111111 e/amy@example.com "
+                + "sub/Mathematics nt/Science l/Secondary nt/1";
+        Student student = new Student(new StudentName("Amy Bee"),
+                new ParentGuardianContact("11111111", Optional.of("amy@example.com")),
+                new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/1"));
+        Model expectedModel = new ModelManager();
+        expectedModel.addStudent(student);
+
+        assertCommandSuccess(addCommand,
+                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, student.getName(), student.getSubject(),
+                        student.getCurrentLevel()), expectedModel);
     }
 
     @Test
@@ -422,7 +486,8 @@ public class LogicManagerTest {
         List<String> legacyCommands = List.of("find Alicia", "clear");
 
         for (String legacyCommand : legacyCommands) {
-            assertParseException(legacyCommand, MESSAGE_UNKNOWN_COMMAND);
+            assertParseException(legacyCommand,
+                    AddressBookParser.getUnknownCommandMessage(legacyCommand.split(" ")[0]));
         }
 
         assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()

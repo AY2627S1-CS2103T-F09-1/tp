@@ -19,24 +19,21 @@ public final class Subject {
     public Subject(String subject) {
         requireNonNull(subject);
         checkArgument(isValidSubject(subject), MESSAGE_CONSTRAINTS);
-        String normalizedSubject = normalize(subject);
-        value = normalizedSubject;
+        value = normalize(subject);
     }
 
     /**
      * Returns whether {@code subject} is a valid subject.
      */
     public static boolean isValidSubject(String subject) {
-        requireNonNull(subject);
-        return !subject.trim().isEmpty() && !subject.matches(".*[\\r\\n].*");
+        return StudentTextFields.isNonBlankSingleLine(subject);
     }
 
     /**
      * Returns the canonical display form with surrounding and repeated whitespace removed.
      */
     public static String normalize(String subject) {
-        requireNonNull(subject);
-        return subject.trim().replaceAll("\\s+", " ");
+        return StudentTextFields.normalizeWhitespace(subject);
     }
 
     /**
