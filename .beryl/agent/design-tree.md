@@ -16,7 +16,7 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Product direction | TutorTrack serves a private one-to-one tutor with a small active roster. | 2026-09-18 | n/a |
 | Delivery approach | Preserve current AddressBook behaviour until ratified TutorTrack slices replace it deliberately. | 2026-09-18 | n/a |
 | First-release scope | Roster, student profile, chronological session history, and adding a short session note. | 2026-09-18 | n/a |
-| Student identity | Duplicate students have the same case-insensitive, whitespace-normalized name and parent or guardian phone number after spaces and hyphens are removed. | 2026-10-02 | n/a |
+| Student identity | Duplicate students have the same case-insensitive, whitespace-normalized name and parent or guardian phone number after spaces and hyphens are removed; an eight-digit Singapore number and its `+65` form are equivalent. | 2026-10-29 | n/a |
 | Parent or guardian contact | A Student has a required phone number and optional email address for the responsible adult. | 2026-10-02 | n/a |
 | Student internal identity | Each Student has an immutable UUID-backed `StudentId`; legacy records without an ID derive one deterministically from their normalized duplicate identity. | 2026-10-03 | [ADR 0002](adr/0002-stable-student-identifiers.md) |
 | Student roster projection | `Model#getStudentRoster()` returns immutable `StudentRosterEntry` snapshots ordered by normalized name, normalized parent or guardian phone number, and stable student ID, with one-based display indices and note counts supplied by the owning session context. | 2026-10-03 | [ADR 0003](adr/0003-student-roster-snapshots.md) |

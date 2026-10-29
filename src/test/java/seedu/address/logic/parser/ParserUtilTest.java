@@ -168,6 +168,12 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void findUnknownPrefix_uppercasePrefix_returnsPrefix() {
+        assertEquals(Optional.of("P/"), ParserUtil.findUnknownPrefix(" n/Alex P/91234567",
+                List.of(new Prefix("n/"), new Prefix("p/"))));
+    }
+
+    @Test
     public void tokenizeStudentFields_studentAndLegacyPrefixes_tokenizesEveryKnownField() {
         ArgumentMultimap arguments = ParserUtil.tokenizeStudentFields(
                 "1 n/Alex p/9123 e/a@b.com sub/Math l/Sec 3 a/Legacy t/old");

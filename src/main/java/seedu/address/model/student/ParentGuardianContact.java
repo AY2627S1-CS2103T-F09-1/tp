@@ -14,10 +14,10 @@ public final class ParentGuardianContact {
     public static final String PHONE_MESSAGE_CONSTRAINTS =
             "Parent or guardian phone numbers must contain at least three digits and may use spaces or hyphens.";
     public static final String EMAIL_MESSAGE_CONSTRAINTS =
-            "Parent or guardian email addresses must contain one '@' and a non-blank local part and domain.";
+            "Parent or guardian email addresses must contain one '@' and a domain with at least one dot.";
     private static final String PHONE_CHARACTERS_REGEX = "\\+?[0-9][0-9 -]*";
     private static final String NORMALIZED_PHONE_REGEX = "\\+?[0-9]{3,}";
-    private static final String EMAIL_REGEX = "[^@\\s]+@[^@\\s]+";
+    private static final String EMAIL_REGEX = "[^@\\s]+@[^@\\s.]+(?:\\.[^@\\s.]+)+";
 
     private final String phone;
     private final String email;
@@ -88,7 +88,8 @@ public final class ParentGuardianContact {
      * Returns the normalized phone number used for student identity comparison.
      */
     public String getNormalizedPhone() {
-        return normalizePhone(phone);
+        String normalizedPhone = normalizePhone(phone);
+        return normalizedPhone.matches("\\+65[689][0-9]{7}") ? normalizedPhone.substring(3) : normalizedPhone;
     }
 
     @Override

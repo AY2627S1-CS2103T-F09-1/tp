@@ -27,7 +27,7 @@ public class ParentGuardianContactTest {
 
         assertEquals("+65 9123-4567", contact.getPhone());
         assertEquals(Optional.of("guardian@example.com"), contact.getEmail());
-        assertEquals("+6591234567", contact.getNormalizedPhone());
+        assertEquals("91234567", contact.getNormalizedPhone());
     }
 
     @Test
@@ -52,6 +52,7 @@ public class ParentGuardianContactTest {
         assertThrows(NullPointerException.class, () -> ParentGuardianContact.isValidEmail(null));
         // equivalence partition: missing or extra '@', or whitespace, is rejected
         assertFalse(ParentGuardianContact.isValidEmail(""));
+        assertFalse(ParentGuardianContact.isValidEmail("a@b"));
         assertFalse(ParentGuardianContact.isValidEmail("guardian.example.com"));
         assertFalse(ParentGuardianContact.isValidEmail("guardian@"));
         assertFalse(ParentGuardianContact.isValidEmail("@example.com"));

@@ -42,8 +42,6 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
-import seedu.address.model.student.ParentGuardianContact;
-import seedu.address.model.student.Student;
 import seedu.address.model.student.StudentName;
 import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.model.student.Subject;
@@ -469,18 +467,14 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_addStudentWithPrefixLikeText_success() throws Exception {
+    public void execute_addStudentWithUnknownPrefix_throwsParseException() {
         String addCommand = "add n/Amy Bee p/11111111 e/amy@example.com "
                 + "sub/Mathematics nt/Science l/Secondary nt/1";
-        Student student = new Student(new StudentName("Amy Bee"),
-                new ParentGuardianContact("11111111", Optional.of("amy@example.com")),
-                new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/1"));
-        Model expectedModel = new ModelManager();
-        expectedModel.addStudent(student);
 
-        assertCommandSuccess(addCommand,
-                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, student.getName(), student.getSubject(),
-                        student.getCurrentLevel()), expectedModel);
+        assertParseException(addCommand, Messages.withFormat(
+                String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "nt/",
+                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS),
+                AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE));
     }
 
     @Test

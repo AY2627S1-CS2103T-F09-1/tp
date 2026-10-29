@@ -216,11 +216,11 @@ TutorTrack's first student-domain slice introduces immutable `Student`, `Student
 
 The command and storage layers will construct `Student` values and delegate duplicate comparisons to `StudentIdentity`; they must not reproduce this normalization logic. This keeps the same duplicate outcome for typed commands and manually edited persisted data.
 
-Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. Each session note stores `recordedAt`, `text`, and an optional `lastEditedAt`; the latter is omitted for unedited notes and missing or null values load as unedited. `lastEditedAt` must not precede `recordedAt`. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableAddressBook` then checks each loaded student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
+Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. Each session note stores `recordedAt`, `text`, and an optional `lastEditedAt`; the latter is omitted for unedited notes and missing or null values load as unedited. `lastEditedAt` must not precede `recordedAt`. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. Identity normalization removes spaces and hyphens from phone numbers and treats a Singapore `+65` number as equivalent to its eight-digit local form. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableAddressBook` then checks each loaded student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
 
 ### Student editing
 
-`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated fields and obsolete AddressBook `a/` or `t/` parameters, and applies the same student value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization set: it recognizes student fields and those obsolete prefixes, while other prefix-like text remains in its field value. An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
+`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. The parser requires exactly one positive roster index and at least one supplied edit, rejects repeated or unknown prefixes, and applies the same student value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization set, including legacy person prefixes that must be recognized and rejected consistently. The unknown-prefix detector also recognizes uppercase prefix-like tokens, so a typo such as `P/` produces a recoverable error rather than becoming part of the preceding value. An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
 
 The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile.
 
@@ -966,6 +966,15 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: The first reports `Missing l/CURRENT_LEVEL.` and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
 5. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
    Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
+
+### Alpha validation feedback
+
+1. Enter `ADD n/Raj s/o Kumar p/91234567 sub/C++ l/P6+ e/guardian@example.com`.
+   Expected: TutorTrack adds the student. Command words are case-insensitive, names may contain slashes, and subject and level values must each contain a letter or number.
+1. Enter `add n/Alicia Lim p/91234567 sub/Math l/Sec 1`, then enter `add n/alicia lim p/+65 9123 4567 sub/Math l/Sec 1`.
+   Expected: The second command reports a duplicate student and preserves the roster because the two phone formats identify the same Singapore number.
+1. Enter `edit 1 sub/Math P/81234567`, `add n/Bob p/91234567 sub/!!! l/???`, and `add n/Bob p/91234567 e/a@b sub/Math l/Sec 1`.
+   Expected: The first names `P/` as an unknown parameter; the latter two report their respective value rules. None changes the roster or data file.
 
 ### Editing a student
 

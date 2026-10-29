@@ -43,7 +43,7 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
         Optional<String> noteText = argMultimap.getValue(PREFIX_NOTE);
         String[] preamble = argMultimap.getPreamble().split(WHITESPACE_PATTERN);
 
-        if (!EditNoteCommand.NOTE_TARGET.equals(preamble[0])) {
+        if (!EditNoteCommand.NOTE_TARGET.equalsIgnoreCase(preamble[0])) {
             throw new ParseException(MESSAGE_MISSING_NOTE_TARGET);
         }
         if (noteText.isEmpty()) {

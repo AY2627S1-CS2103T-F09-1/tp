@@ -49,7 +49,7 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
-        verifyCommandShape(argMultimap);
+        verifyCommandShape(args, argMultimap);
         return new AddCommand(createStudent(argMultimap));
     }
 
@@ -59,7 +59,13 @@ public class AddCommandParser implements Parser<AddCommand> {
      *
      * @throws ParseException If any shape rule is violated, with the add format appended.
      */
-    private static void verifyCommandShape(ArgumentMultimap argMultimap) throws ParseException {
+    private static void verifyCommandShape(String args, ArgumentMultimap argMultimap) throws ParseException {
+        Optional<String> unknownPrefix = ParserUtil.findUnknownPrefix(args, SUPPORTED_PREFIXES);
+        if (unknownPrefix.isPresent()) {
+            throw new ParseException(withAddFormat(
+                    String.format(MESSAGE_UNKNOWN_PARAMETER, unknownPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
+        }
+
         Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
         if (legacyPrefix.isPresent()) {
             throw new ParseException(withAddFormat(

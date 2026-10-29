@@ -54,16 +54,6 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_prefixLikeTextInSubjectAndLevel_success() {
-        Student student = new Student(new StudentName("Alicia Lim"),
-                new ParentGuardianContact("+65 9123 4567", Optional.empty()),
-                new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/4"));
-
-        assertParseSuccess(parser, " n/Alicia Lim p/+65 9123 4567 sub/Mathematics nt/Science l/Secondary nt/4",
-                new AddCommand(student));
-    }
-
-    @Test
     public void parse_missingLevel_failure() {
         assertParseFailure(parser, " n/Alicia Lim p/91234567 sub/Mathematics",
                 withAddFormat("Missing l/CURRENT_LEVEL."));
@@ -162,12 +152,11 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_prefixLikeTextAfterLevel_success() {
-        Student student = new Student(new StudentName("Alicia Lim"),
-                new ParentGuardianContact("+65 9123 4567", Optional.empty()),
-                new Subject("Mathematics"), new CurrentLevel("Secondary 3 x/value"));
-
-        assertParseSuccess(parser, VALID_REQUIRED_ARGUMENTS + " x/value", new AddCommand(student));
+    public void parse_unknownPrefix_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " x/value",
+                getUnknownParameterMessage("x/"));
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " P/91234567",
+                getUnknownParameterMessage("P/"));
     }
 
     private static String getUnknownParameterMessage(String prefix) {

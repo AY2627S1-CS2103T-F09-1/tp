@@ -5,6 +5,7 @@ import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.Messages.withFormat;
 
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -75,7 +76,7 @@ public class AddressBookParser {
             return UNKNOWN_COMMAND_WORD;
         }
 
-        String commandWord = matcher.group("commandWord");
+        String commandWord = matcher.group("commandWord").toLowerCase(Locale.ROOT);
         return COMMAND_WORDS.contains(commandWord) ? commandWord : UNKNOWN_COMMAND_WORD;
     }
 
@@ -92,7 +93,8 @@ public class AddressBookParser {
             throw new ParseException(getEmptyCommandMessage());
         }
 
-        final String commandWord = matcher.group("commandWord");
+        final String enteredCommandWord = matcher.group("commandWord");
+        final String commandWord = enteredCommandWord.toLowerCase(Locale.ROOT);
         final String arguments = matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
@@ -110,14 +112,14 @@ public class AddressBookParser {
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             default -> {
                 logger.finer("An unknown command word caused a ParseException.");
-                throw new ParseException(getUnknownCommandMessage(commandWord));
+                throw new ParseException(getUnknownCommandMessage(enteredCommandWord));
             }
         };
     }
 
     private static Command parseEditCommand(String arguments) throws ParseException {
         String editTarget = arguments.stripLeading().split("\\s+", 2)[0];
-        if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
+        if (EditNoteCommand.NOTE_TARGET.equalsIgnoreCase(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
         }
         if (ParserUtil.isMistypedTarget(editTarget, EditNoteCommand.NOTE_TARGET)) {

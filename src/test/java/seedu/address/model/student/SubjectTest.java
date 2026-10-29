@@ -13,12 +13,14 @@ public class SubjectTest {
     public void constructor_invalidSubject_throwsIllegalArgumentException() {
         assertThrows(NullPointerException.class, () -> new Subject(null));
         assertThrows(IllegalArgumentException.class, () -> new Subject("   "));
+        assertThrows(IllegalArgumentException.class, () -> new Subject("!!!"));
         assertThrows(IllegalArgumentException.class, () -> new Subject("Mathematics\nAdvanced"));
     }
 
     @Test
     public void constructor_validSubject_normalizesWhitespace() {
         assertEquals("English Literature", new Subject(" English   Literature ").getValue());
+        assertEquals("C++", new Subject("C++").getValue());
     }
 
     @Test
