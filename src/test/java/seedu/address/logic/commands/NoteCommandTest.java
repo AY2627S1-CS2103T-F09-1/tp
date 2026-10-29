@@ -74,7 +74,8 @@ public class NoteCommandTest {
         Index outOfRangeIndex = Index.fromOneBased(model.getStudentRoster().size() + 1);
 
         assertCommandFailure(new NoteCommand(outOfRangeIndex, NOTE_TEXT), model,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, outOfRangeIndex.getOneBased(),
+                        model.getStudentRoster().size()));
     }
 
     @Test
@@ -82,7 +83,7 @@ public class NoteCommandTest {
         ModelManager emptyModel = new ModelManager(new AddressBook(), new UserPrefs(), FIXED_CLOCK);
 
         assertCommandFailure(new NoteCommand(INDEX_FIRST_PERSON, NOTE_TEXT), emptyModel,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                Messages.MESSAGE_EMPTY_ROSTER);
     }
 
     @Test

@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /**
  * Represents an immutable, display-ready snapshot of the student's roster.
  */
 public final class StudentRoster {
 
+    private static final int DISPLAY_INDEX_OFFSET = 1;
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
     private static final Map<Character, Character> NON_DECOMPOSING_LETTERS = Map.of(
             'Ø', 'O',
@@ -57,7 +59,7 @@ public final class StudentRoster {
     }
 
     /**
-     * Returns the students sorted by normalized name with one-based display indices.
+     * Returns immutable entries sorted by normalized name with one-based display indices.
      */
     public List<StudentRosterEntry> getEntries() {
         return entries;
@@ -93,8 +95,8 @@ public final class StudentRoster {
                 .map(student -> requireNonNull(student))
                 .sorted(BY_NORMALIZED_NAME)
                 .toList();
-        return java.util.stream.IntStream.range(0, sortedStudents.size())
-                .mapToObj(index -> createEntry(sortedStudents.get(index), index + 1, noteCounts))
+        return IntStream.range(0, sortedStudents.size())
+                .mapToObj(index -> createEntry(sortedStudents.get(index), index + DISPLAY_INDEX_OFFSET, noteCounts))
                 .toList();
     }
 
@@ -115,24 +117,32 @@ public final class StudentRoster {
         while (firstIndex < firstName.length() && secondIndex < secondName.length()) {
             char firstCharacter = firstName.charAt(firstIndex);
             char secondCharacter = secondName.charAt(secondIndex);
-            if (Character.isDigit(firstCharacter) && Character.isDigit(secondCharacter)) {
+            if (areBothDigits(firstCharacter, secondCharacter)) {
                 int numericComparison = compareNumericRuns(firstName, firstIndex, secondName, secondIndex);
                 if (numericComparison != 0) {
                     return numericComparison;
                 }
                 firstIndex = skipDigits(firstName, firstIndex);
                 secondIndex = skipDigits(secondName, secondIndex);
-            } else {
-                int characterComparison = Character.compare(Character.toLowerCase(firstCharacter),
-                        Character.toLowerCase(secondCharacter));
-                if (characterComparison != 0) {
-                    return characterComparison;
-                }
-                firstIndex++;
-                secondIndex++;
+                continue;
             }
+
+            int characterComparison = compareCharacters(firstCharacter, secondCharacter);
+            if (characterComparison != 0) {
+                return characterComparison;
+            }
+            firstIndex++;
+            secondIndex++;
         }
         return Integer.compare(firstName.length() - firstIndex, secondName.length() - secondIndex);
+    }
+
+    private static boolean areBothDigits(char firstCharacter, char secondCharacter) {
+        return Character.isDigit(firstCharacter) && Character.isDigit(secondCharacter);
+    }
+
+    private static int compareCharacters(char firstCharacter, char secondCharacter) {
+        return Character.compare(Character.toLowerCase(firstCharacter), Character.toLowerCase(secondCharacter));
     }
 
     private static int compareNumericRuns(String firstName, int firstStart, String secondName, int secondStart) {

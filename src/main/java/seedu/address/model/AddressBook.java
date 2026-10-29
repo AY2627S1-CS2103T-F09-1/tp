@@ -4,6 +4,8 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,7 +32,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     static final String MESSAGE_DUPLICATE_STUDENT = "Student with the same identity already exists.";
 
     private final UniquePersonList persons = new UniquePersonList();
-    private final List<Student> students = new java.util.ArrayList<>();
+    private final List<Student> students = new ArrayList<>();
     private final StudentSessionHistories sessionHistories = new StudentSessionHistories();
 
     public AddressBook() {}
@@ -136,7 +138,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void addStudent(Student student) {
         requireNonNull(student);
         if (hasStudent(student)) {
-            throw new IllegalArgumentException("Duplicate student");
+            throw new IllegalArgumentException(MESSAGE_DUPLICATE_STUDENT);
         }
         students.add(student);
     }
@@ -213,10 +215,11 @@ public class AddressBook implements ReadOnlyAddressBook {
      * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
      * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
      */
-    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
-        requireAllNonNull(studentId, noteNumber, text);
+    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text,
+            OffsetDateTime lastEditedAt) {
+        requireAllNonNull(studentId, noteNumber, text, lastEditedAt);
         checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
-        return sessionHistories.editNote(studentId, noteNumber, text);
+        return sessionHistories.editNote(studentId, noteNumber, text, lastEditedAt);
     }
 
     /**
@@ -236,7 +239,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     private boolean hasStudentWithId(StudentId studentId) {
-        return students.stream().anyMatch(student -> student.getId().equals(studentId));
+        return getStudent(studentId).isPresent();
     }
 
     /**

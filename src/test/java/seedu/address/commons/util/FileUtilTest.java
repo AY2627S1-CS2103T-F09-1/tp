@@ -35,6 +35,16 @@ public class FileUtilTest {
     }
 
     @Test
+    public void writeToFile_missingParentAndUnicodeContent_createsFile() throws IOException {
+        Path dataFile = temporaryDirectory.resolve("nested").resolve("addressbook.json");
+
+        FileUtil.writeToFile(dataFile, "新しいデータ");
+
+        assertTrue(Files.exists(dataFile));
+        assertEquals("新しいデータ", Files.readString(dataFile));
+    }
+
+    @Test
     public void writeToFile_readOnlyFile_preservesContentsAndPermissions() throws IOException {
         Path dataFile = temporaryDirectory.resolve("addressbook.json");
         Files.writeString(dataFile, "old data");

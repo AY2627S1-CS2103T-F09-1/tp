@@ -2,6 +2,7 @@ package seedu.address.model.session;
 
 import static java.util.Objects.requireNonNull;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -89,11 +90,12 @@ public final class SessionHistory {
      * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds this history's size.
      * @throws IllegalArgumentException If {@code text} is invalid.
      */
-    public SessionHistory withEditedNote(Index noteNumber, String text) {
+    public SessionHistory withEditedNote(Index noteNumber, String text, OffsetDateTime lastEditedAt) {
         requireNonNull(noteNumber);
         requireNonNull(text);
+        requireNonNull(lastEditedAt);
         int noteIndex = toNewestFirstIndex(noteNumber);
-        SessionNote editedNote = new SessionNote(text, notes.get(noteIndex).getRecordedAt());
+        SessionNote editedNote = new SessionNote(text, notes.get(noteIndex).getRecordedAt(), lastEditedAt);
         List<SessionNote> updatedNotes = new ArrayList<>(notes);
         updatedNotes.set(noteIndex, editedNote);
         return new SessionHistory(List.copyOf(updatedNotes));

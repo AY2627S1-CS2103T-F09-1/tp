@@ -215,7 +215,26 @@ public class ModelManagerTest {
 
         assertEquals("Corrected summary.", editedNote.getText());
         assertEquals(originalNote.getRecordedAt(), editedNote.getRecordedAt());
+        assertTrue(editedNote.getLastEditedAt().isPresent());
         assertEquals(1, modelManager.getStudentRoster().getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void editSessionNote_sameText_recordsLatestEditTime() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addStudent(ALEX);
+        SessionNote originalNote = new SessionNote("Original summary.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        addressBook.addSessionNote(ALEX.getId(), originalNote);
+        OffsetDateTime editTime = OffsetDateTime.parse("2026-10-23T14:10:00+08:00");
+        modelManager = new ModelManager(addressBook, new UserPrefs(),
+                Clock.fixed(editTime.toInstant(), editTime.getOffset()));
+
+        SessionNote editedNote = modelManager.editSessionNote(ALEX.getId(), Index.fromOneBased(1),
+                originalNote.getText());
+
+        assertEquals(editTime, editedNote.getLastEditedAt().orElseThrow());
+        assertEquals(originalNote.getRecordedAt(), editedNote.getRecordedAt());
     }
 
     @Test

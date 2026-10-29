@@ -38,8 +38,7 @@ public final class StudentName {
      * Returns the canonical display form with surrounding and repeated whitespace removed.
      */
     public static String normalize(String name) {
-        requireNonNull(name);
-        return name.trim().replaceAll("\\s+", " ");
+        return StudentTextFields.normalizeWhitespace(name);
     }
 
     /**

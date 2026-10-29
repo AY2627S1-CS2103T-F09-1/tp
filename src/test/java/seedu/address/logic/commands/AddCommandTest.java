@@ -40,8 +40,9 @@ public class AddCommandTest {
         model.addStudent(ALEX);
 
         assertCommandFailure(new AddCommand(ALEX), model,
-                String.format(AddCommand.MESSAGE_DUPLICATE_STUDENT, ALEX.getName())
-                        + "\n" + AddCommand.MESSAGE_USAGE);
+                "Duplicate student: " + ALEX.getName() + " already has this parent phone. "
+                        + "Use a different name or phone, "
+                        + "or edit the existing student.");
     }
 
     @Test

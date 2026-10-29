@@ -8,27 +8,28 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox id="cardPane" fx:id="cardPane" alignment="TOP_LEFT" maxWidth="Infinity"
-      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <GridPane maxWidth="Infinity" HBox.hgrow="ALWAYS">
+<HBox id="cardPane" fx:id="cardPane" alignment="TOP_LEFT" minWidth="0" maxWidth="Infinity"
+       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <GridPane minWidth="0" maxWidth="Infinity" HBox.hgrow="ALWAYS">
     <columnConstraints>
       <ColumnConstraints hgrow="ALWAYS" minWidth="0" />
     </columnConstraints>
-    <VBox alignment="TOP_LEFT" maxWidth="Infinity" spacing="6" GridPane.columnIndex="0">
+    <VBox alignment="TOP_LEFT" minWidth="0" maxWidth="Infinity" spacing="6" GridPane.columnIndex="0">
       <padding>
         <Insets top="12" right="12" bottom="12" left="12" />
       </padding>
-      <HBox spacing="8" alignment="TOP_LEFT">
+      <HBox spacing="8" alignment="TOP_LEFT" minWidth="0" maxWidth="Infinity">
         <Label fx:id="rosterIndex" styleClass="roster-index-badge">
           <minWidth>
             <Region fx:constant="USE_PREF_SIZE" />
           </minWidth>
         </Label>
-        <Label fx:id="name" maxWidth="Infinity" styleClass="roster-name" wrapText="true" HBox.hgrow="ALWAYS" />
+        <Label fx:id="name" minWidth="0" maxWidth="Infinity" styleClass="roster-name" wrapText="true"
+               HBox.hgrow="ALWAYS" />
       </HBox>
-      <Label fx:id="subject" maxWidth="Infinity" styleClass="roster-context" wrapText="true" />
-      <Label fx:id="currentLevel" maxWidth="Infinity" styleClass="roster-context" wrapText="true" />
-      <Label fx:id="noteCount" styleClass="roster-note-count" wrapText="true" />
+      <Label fx:id="subject" minWidth="0" maxWidth="Infinity" styleClass="roster-context" wrapText="true" />
+      <Label fx:id="currentLevel" minWidth="0" maxWidth="Infinity" styleClass="roster-context" wrapText="true" />
+      <Label fx:id="noteCount" minWidth="0" styleClass="roster-note-count" wrapText="true" />
     </VBox>
   </GridPane>
 </HBox>

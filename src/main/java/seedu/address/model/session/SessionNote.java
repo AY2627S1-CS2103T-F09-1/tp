@@ -5,6 +5,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -12,9 +13,12 @@ import java.util.regex.Pattern;
  */
 public final class SessionNote {
 
+    public static final int MIN_TEXT_LENGTH = 1;
     public static final int MAX_TEXT_LENGTH = 500;
-    public static final String MESSAGE_CONSTRAINTS = "Session notes must be 1 to " + MAX_TEXT_LENGTH
-            + " printable characters on one line.";
+    public static final String MESSAGE_CONSTRAINTS = "Session notes must be " + MIN_TEXT_LENGTH + " to "
+            + MAX_TEXT_LENGTH + " printable characters on one line.";
+    public static final String EDITED_AT_CONSTRAINTS =
+            "A session note's last-edited time must not be earlier than its recorded time.";
 
     /**
      * Matches control characters (including tabs and line breaks) and Unicode line or paragraph separators.
@@ -23,6 +27,7 @@ public final class SessionNote {
 
     private final String text;
     private final OffsetDateTime recordedAt;
+    private final OffsetDateTime lastEditedAt;
 
     /**
      * Constructs a session note with surrounding whitespace removed from its text.
@@ -31,11 +36,24 @@ public final class SessionNote {
      * @param recordedAt The date-time the note was recorded.
      */
     public SessionNote(String text, OffsetDateTime recordedAt) {
+        this(text, recordedAt, null);
+    }
+
+    /**
+     * Constructs a session note with an optional last-edited date-time.
+     *
+     * @param text A valid note text.
+     * @param recordedAt The date-time the note was recorded.
+     * @param lastEditedAt The date-time of the latest edit, or {@code null} if the note has not been edited.
+     */
+    public SessionNote(String text, OffsetDateTime recordedAt, OffsetDateTime lastEditedAt) {
         requireNonNull(text);
         requireNonNull(recordedAt);
         checkArgument(isValidText(text), MESSAGE_CONSTRAINTS);
+        checkArgument(lastEditedAt == null || !lastEditedAt.isBefore(recordedAt), EDITED_AT_CONSTRAINTS);
         this.text = text.strip();
         this.recordedAt = recordedAt;
+        this.lastEditedAt = lastEditedAt;
     }
 
     /**
@@ -43,11 +61,28 @@ public final class SessionNote {
      * Internal whitespace is preserved and length is counted in Unicode code points.
      */
     public static boolean isValidText(String text) {
+        int length = countTextLength(text);
+        boolean hasValidLength = length >= MIN_TEXT_LENGTH && length <= MAX_TEXT_LENGTH;
+        return hasValidLength && !hasNonPrintableCharacter(text);
+    }
+
+    /**
+     * Returns the length of {@code text} once surrounding whitespace is removed, counted in Unicode code
+     * points so that an emoji counts as one character.
+     */
+    public static int countTextLength(String text) {
         requireNonNull(text);
         String strippedText = text.strip();
-        int length = strippedText.codePointCount(0, strippedText.length());
-        boolean hasValidLength = length >= 1 && length <= MAX_TEXT_LENGTH;
-        return hasValidLength && !NON_PRINTABLE_PATTERN.matcher(strippedText).find();
+        return strippedText.codePointCount(0, strippedText.length());
+    }
+
+    /**
+     * Returns whether {@code text} contains a control character (such as a tab or line break) or a Unicode
+     * line or paragraph separator once surrounding whitespace is removed.
+     */
+    public static boolean hasNonPrintableCharacter(String text) {
+        requireNonNull(text);
+        return NON_PRINTABLE_PATTERN.matcher(text.strip()).find();
     }
 
     /**
@@ -64,6 +99,13 @@ public final class SessionNote {
         return recordedAt;
     }
 
+    /**
+     * Returns the date-time of the latest edit, if this note has been edited.
+     */
+    public Optional<OffsetDateTime> getLastEditedAt() {
+        return Optional.ofNullable(lastEditedAt);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -72,11 +114,12 @@ public final class SessionNote {
 
         return other instanceof SessionNote otherNote
                 && text.equals(otherNote.text)
-                && recordedAt.equals(otherNote.recordedAt);
+                && recordedAt.equals(otherNote.recordedAt)
+                && Objects.equals(lastEditedAt, otherNote.lastEditedAt);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(text, recordedAt);
+        return Objects.hash(text, recordedAt, lastEditedAt);
     }
 }

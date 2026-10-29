@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalSessionNotes.BEA;
 import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
 import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ public class StudentSessionHistoriesTest {
 
     private static final StudentId ALEX_ID = ALEX.getId();
     private static final StudentId BEA_ID = BEA.getId();
+    private static final OffsetDateTime EDITED_AT = OffsetDateTime.parse("2026-10-23T14:10:00+08:00");
 
     private final StudentSessionHistories histories = new StudentSessionHistories();
 
@@ -97,10 +99,11 @@ public class StudentSessionHistoriesTest {
     public void editNote_validNumber_replacesTextAndPreservesTimestamp() {
         histories.addNote(ALEX_ID, INDICES_NOTE);
 
-        SessionNote editedNote = histories.editNote(ALEX_ID, Index.fromOneBased(1), "Corrected summary.");
+        SessionNote editedNote = histories.editNote(ALEX_ID, Index.fromOneBased(1), "Corrected summary.", EDITED_AT);
 
         assertEquals("Corrected summary.", editedNote.getText());
         assertEquals(INDICES_NOTE.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(EDITED_AT, editedNote.getLastEditedAt().orElseThrow());
         assertEquals(List.of(editedNote), histories.getHistory(ALEX_ID).getNotes());
     }
 
@@ -135,9 +138,13 @@ public class StudentSessionHistoriesTest {
         assertThrows(NullPointerException.class, () -> histories.addNote(ALEX_ID, null));
         assertThrows(NullPointerException.class, () -> histories.removeNote(null, Index.fromOneBased(1)));
         assertThrows(NullPointerException.class, () -> histories.removeNote(ALEX_ID, null));
-        assertThrows(NullPointerException.class, () -> histories.editNote(null, Index.fromOneBased(1), "text"));
-        assertThrows(NullPointerException.class, () -> histories.editNote(ALEX_ID, null, "text"));
-        assertThrows(NullPointerException.class, () -> histories.editNote(ALEX_ID, Index.fromOneBased(1), null));
+        assertThrows(NullPointerException.class, () -> histories.editNote(null, Index.fromOneBased(1), "text",
+                EDITED_AT));
+        assertThrows(NullPointerException.class, () -> histories.editNote(ALEX_ID, null, "text", EDITED_AT));
+        assertThrows(NullPointerException.class, () -> histories.editNote(ALEX_ID, Index.fromOneBased(1), null,
+                EDITED_AT));
+        assertThrows(NullPointerException.class, () -> histories.editNote(ALEX_ID, Index.fromOneBased(1), "text",
+                null));
         assertThrows(NullPointerException.class, () -> histories.setHistory(null, SessionHistory.empty()));
         assertThrows(NullPointerException.class, () -> histories.setHistory(ALEX_ID, null));
         assertThrows(NullPointerException.class, () -> histories.removeHistory(null));

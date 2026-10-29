@@ -25,6 +25,7 @@ The coding policy is the primary contract. Follow the selected workflow only whe
 * Do not use sub-agents unless the user explicitly requests them.
 * Never weaken tests to make implementation pass.
 * Do not make material changes to `build.gradle`; the established build configuration must be preserved unless the user explicitly approves a necessary, narrowly scoped change.
+* Apply assertions, exceptions, and logging wherever their semantics require them: assertions guard internal invariants, exceptions report recoverable failures, and logging records diagnostic events without personal data.
 * For method Javadocs, start the first summary sentence with a third-person verb such as `Returns`, `Sends`, or `Adds`; follow the full formatting rules in `.beryl/agent/coding-policy.md`.
 * Use `.beryl/agent/session-state.md` only for temporary state; clear it when the task ends.
 * Run the formatter if configured, focused checks, and `./.beryl/scripts/check.sh` after edits.

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 public class SessionNoteTest {
 
     private static final OffsetDateTime RECORDED_AT = OffsetDateTime.parse("2026-09-18T18:35:00+08:00");
+    private static final OffsetDateTime EDITED_AT = OffsetDateTime.parse("2026-10-23T14:10:00+08:00");
     private static final String VALID_TEXT = "Reviewed factorisation.";
 
     @Test
@@ -36,6 +37,26 @@ public class SessionNoteTest {
     }
 
     @Test
+    public void messageConstraints_namesLengthLimits() {
+        assertEquals("Session notes must be 1 to 500 printable characters on one line.",
+                SessionNote.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void constructor_editedNote_keepsRecordedAndEditedTimes() {
+        SessionNote note = new SessionNote(VALID_TEXT, RECORDED_AT, EDITED_AT);
+
+        assertEquals(RECORDED_AT, note.getRecordedAt());
+        assertEquals(EDITED_AT, note.getLastEditedAt().orElseThrow());
+    }
+
+    @Test
+    public void constructor_lastEditedBeforeRecorded_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, SessionNote.EDITED_AT_CONSTRAINTS, () -> new SessionNote(
+                VALID_TEXT, RECORDED_AT, RECORDED_AT.minusSeconds(1)));
+    }
+
+    @Test
     public void isValidText_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> SessionNote.isValidText(null));
     }
@@ -47,8 +68,9 @@ public class SessionNoteTest {
     }
 
     @Test
-    public void isValidText_lengthBoundaries_acceptsUpToMaximum() {
-        assertTrue(SessionNote.isValidText("a"));
+    public void isValidText_lengthBoundaries_acceptsMinimumToMaximum() {
+        assertFalse(SessionNote.isValidText("a".repeat(SessionNote.MIN_TEXT_LENGTH - 1)));
+        assertTrue(SessionNote.isValidText("a".repeat(SessionNote.MIN_TEXT_LENGTH)));
         assertTrue(SessionNote.isValidText("a".repeat(SessionNote.MAX_TEXT_LENGTH)));
         assertFalse(SessionNote.isValidText("a".repeat(SessionNote.MAX_TEXT_LENGTH + 1)));
     }
@@ -71,9 +93,27 @@ public class SessionNoteTest {
         assertFalse(SessionNote.isValidText("Line one\nLine two"));
         assertFalse(SessionNote.isValidText("Line one\rLine two"));
         assertFalse(SessionNote.isValidText("Column\tvalue"));
-        assertFalse(SessionNote.isValidText("Line one Line two"));
-        assertFalse(SessionNote.isValidText("Para one Para two"));
+        assertFalse(SessionNote.isValidText("Line one\u2028Line two"));
+        assertFalse(SessionNote.isValidText("Para one\u2029Para two"));
         assertFalse(SessionNote.isValidText("Bell\u0007"));
+    }
+
+    @Test
+    public void countTextLength_surroundingWhitespaceAndSurrogatePairs_countsStrippedCodePoints() {
+        assertEquals(0, SessionNote.countTextLength("   "));
+        assertEquals(3, SessionNote.countTextLength("  a b  "));
+        assertEquals(2, SessionNote.countTextLength("😀😀"));
+    }
+
+    @Test
+    public void hasNonPrintableCharacter_internalControlCharacter_returnsTrue() {
+        assertTrue(SessionNote.hasNonPrintableCharacter("Column\tvalue"));
+        assertTrue(SessionNote.hasNonPrintableCharacter("Line one\u2028Line two"));
+    }
+
+    @Test
+    public void hasNonPrintableCharacter_surroundingWhitespaceOnly_returnsFalse() {
+        assertFalse(SessionNote.hasNonPrintableCharacter("\tReviewed indices.\n"));
     }
 
     @Test
@@ -92,6 +132,7 @@ public class SessionNoteTest {
         assertFalse(note.equals(VALID_TEXT));
         assertFalse(note.equals(new SessionNote("Reviewed indices.", RECORDED_AT)));
         assertFalse(note.equals(new SessionNote(VALID_TEXT, RECORDED_AT.plusMinutes(1))));
+        assertFalse(note.equals(new SessionNote(VALID_TEXT, RECORDED_AT, EDITED_AT)));
     }
 
     @Test
@@ -100,5 +141,6 @@ public class SessionNoteTest {
 
         assertEquals(note.hashCode(), new SessionNote(VALID_TEXT, RECORDED_AT).hashCode());
         assertNotEquals(note.hashCode(), new SessionNote("Reviewed indices.", RECORDED_AT).hashCode());
+        assertNotEquals(note.hashCode(), new SessionNote(VALID_TEXT, RECORDED_AT, EDITED_AT).hashCode());
     }
 }

@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -13,9 +12,6 @@ import seedu.address.logic.commands.NoteCommand;
 import seedu.address.model.session.SessionNote;
 
 public class NoteCommandParserTest {
-
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
 
     private final NoteCommandParser parser = new NoteCommandParser();
 
@@ -46,39 +42,66 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_missingParts_throwsParseException() {
-        assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
+        String missingNoteMessage = Messages.withFormat("Missing nt/NOTE.",
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+
+        assertParseFailure(parser, "", missingNoteMessage);
+        assertParseFailure(parser, " 1", missingNoteMessage);
+        assertParseFailure(parser, " 1 Reviewed factorisation.", missingNoteMessage);
+        assertParseFailure(parser, " nt/Reviewed factorisation.",
+                Messages.withFormat("Missing INDEX.", NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
     }
 
     @Test
     public void parse_invalidIndexValue_throwsInvalidIndexMessage() {
-        String[] invalidIndices = {"abc", "0", "-1", "2147483648", "99999999999"};
+        String[] invalidIndices = {"abc", "0", "-1"};
 
         for (String invalidIndex : invalidIndices) {
             assertParseFailure(parser, " " + invalidIndex + " nt/Reviewed factorisation.",
-                    NoteCommandParser.MESSAGE_INVALID_INDEX);
+                    "INDEX must be a positive whole number, e.g. 1.");
         }
     }
 
     @Test
-    public void parse_severalPreambleWords_throwsInvalidFormat() {
-        assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", MESSAGE_INVALID_FORMAT);
+    public void parse_aboveIntegerRange_throwsTooLarge() {
+        String[] oversizedIndices = {"2147483648", "99999999999"};
+
+        for (String oversizedIndex : oversizedIndices) {
+            assertParseFailure(parser, " " + oversizedIndex + " nt/Reviewed factorisation.",
+                    "INDEX is too large. Enter a student index shown in the roster.");
+        }
     }
 
     @Test
-    public void parse_invalidNoteText_throwsParseException() {
-        assertParseFailure(parser, " 1 nt/", SessionNote.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 nt/    ", SessionNote.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 nt/" + "a".repeat(SessionNote.MAX_TEXT_LENGTH + 1),
-                SessionNote.MESSAGE_CONSTRAINTS);
+    public void parse_severalPreambleWords_throwsOnlyOneIndexWithFormat() {
+        String expectedMessage = Messages.withFormat("note takes only one INDEX.",
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+
+        assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", expectedMessage);
+        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", expectedMessage);
+    }
+
+    @Test
+    public void parse_invalidNoteText_throwsSpecificRuleMessage() {
+        int overLimit = SessionNote.MAX_TEXT_LENGTH + 1;
+
+        assertParseFailure(parser, " 1 nt/", ParserUtil.MESSAGE_EMPTY_NOTE);
+        assertParseFailure(parser, " 1 nt/    ", ParserUtil.MESSAGE_EMPTY_NOTE);
+        assertParseFailure(parser, " 1 nt/" + "a".repeat(overLimit),
+                String.format(ParserUtil.MESSAGE_NOTE_TOO_LONG, overLimit));
+        assertParseFailure(parser, " 1 nt/Column\tvalue", ParserUtil.MESSAGE_NOTE_NON_PRINTABLE);
     }
 
     @Test
     public void parse_duplicateNotePrefix_throwsParseException() {
         assertParseFailure(parser, " 1 nt/Reviewed indices. nt/Reviewed factorisation.",
-                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE));
+                Messages.withFormat(Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NOTE),
+                        NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
+    }
+
+    @Test
+    public void parse_notePrefixWithoutLeadingSpace_keptAsText() {
+        assertParseSuccess(parser, " 1 nt/Remember (nt/) and \"nt/\" notation",
+                new NoteCommand(INDEX_FIRST_PERSON, "Remember (nt/) and \"nt/\" notation"));
     }
 }

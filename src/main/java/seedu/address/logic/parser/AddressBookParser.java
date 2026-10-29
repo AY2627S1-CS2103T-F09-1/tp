@@ -1,12 +1,15 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.withFormat;
 
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
@@ -34,12 +37,28 @@ public class AddressBookParser {
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
-    private static final Pattern NUMERIC_EDIT_TARGET = Pattern.compile("[+-]?\\d+");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     private static final Set<String> COMMAND_WORDS = Set.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
             EditCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
             ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD);
+    private static final String AVAILABLE_COMMANDS = COMMAND_WORDS.stream()
+            .sorted()
+            .collect(Collectors.joining(", "));
+
+    /**
+     * Returns the error shown when {@code commandWord} does not name a command, listing the available ones.
+     */
+    public static String getUnknownCommandMessage(String commandWord) {
+        return String.format(MESSAGE_UNKNOWN_COMMAND, commandWord, AVAILABLE_COMMANDS);
+    }
+
+    /**
+     * Returns the error shown when no command is entered, listing the available commands.
+     */
+    public static String getEmptyCommandMessage() {
+        return String.format(MESSAGE_EMPTY_COMMAND, AVAILABLE_COMMANDS);
+    }
 
     /**
      * Returns the command word of {@code userInput} if it names a known command, or {@code "unknown"}
@@ -50,6 +69,7 @@ public class AddressBookParser {
      * @return The known command word, or {@code "unknown"}.
      */
     public static String getLoggableCommandWord(String userInput) {
+        requireNonNull(userInput);
         Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
         if (!matcher.matches()) {
             return UNKNOWN_COMMAND_WORD;
@@ -69,7 +89,7 @@ public class AddressBookParser {
     public Command parseCommand(String userInput) throws ParseException {
         final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
         if (!matcher.matches()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
+            throw new ParseException(getEmptyCommandMessage());
         }
 
         final String commandWord = matcher.group("commandWord");
@@ -90,7 +110,7 @@ public class AddressBookParser {
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             default -> {
                 logger.finer("An unknown command word caused a ParseException.");
-                throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
+                throw new ParseException(getUnknownCommandMessage(commandWord));
             }
         };
     }
@@ -100,9 +120,11 @@ public class AddressBookParser {
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
         }
-        if (!editTarget.isEmpty() && !NUMERIC_EDIT_TARGET.matcher(editTarget).matches()) {
-            throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
-                    editTarget, EditNoteCommand.COMMAND_FORMAT));
+        if (ParserUtil.isMistypedTarget(editTarget, EditNoteCommand.NOTE_TARGET)) {
+            String suggestion = EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET;
+            throw new ParseException(withFormat(
+                    String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, editTarget, suggestion),
+                    EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
         }
         return new EditCommandParser().parse(arguments);
     }

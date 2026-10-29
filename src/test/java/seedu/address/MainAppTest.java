@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,9 +16,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -121,6 +124,31 @@ public class MainAppTest {
 
         assertTrue(logMessages.stream().anyMatch(message -> message.contains("[ Stopping TutorTrack ]")));
         assertEquals(Optional.of(userPrefs), app.storage.readUserPrefs());
+    }
+
+    @Test
+    public void initModelManager_invalidDataFileAndBackupFails_logsBackupFailureAndStartsEmpty() throws Exception {
+        JsonAddressBookStorage unreadableAndUnbackableStorage =
+                new JsonAddressBookStorage(testFolder.resolve("addressbook.json")) {
+                    @Override
+                    public Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException {
+                        throw new DataLoadingException(new IOException("unreadable"));
+                    }
+
+                    @Override
+                    public Path backupAddressBookFile() throws IOException {
+                        throw new IOException("backup failed");
+                    }
+                };
+        Storage storage = new StorageManager(unreadableAndUnbackableStorage,
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
+        MainApp app = new MainApp();
+
+        List<String> logMessages = LogRecorder.captureMessages(MainApp.class, () ->
+                assertTrue(app.initModelManager(storage, new UserPrefs()).getAddressBook()
+                        .getStudentList().isEmpty()));
+
+        assertTrue(logMessages.stream().anyMatch(message -> message.startsWith("Failed to back up data file")));
     }
 
     private Storage createStorage() {

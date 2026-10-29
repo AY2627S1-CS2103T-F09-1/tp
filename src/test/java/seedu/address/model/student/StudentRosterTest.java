@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +60,17 @@ public class StudentRosterTest {
     }
 
     @Test
+    public void constructor_equalNamesAndPhones_areOrderedByStableId() {
+        Student laterId = student("Alex Tan", "9123 4567", BEA_ID, "Mathematics", "Secondary 3");
+        Student earlierId = student(" alex tan ", "9123-4567", ALEX_ID, "English", "JC 1");
+
+        StudentRoster roster = new StudentRoster(List.of(laterId, earlierId));
+
+        assertEquals(List.of(ALEX_ID, BEA_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
     public void constructor_accentedNamesAreSortedWithBaseLetters() {
         Student accentedName = student("Ålice Tan", ALEX_ID, "Mathematics", "Primary 5");
         Student laterName = student("Zoe Lim", BEA_ID, "Mathematics", "Primary 5");
@@ -74,6 +87,39 @@ public class StudentRosterTest {
         Student studentTwo = student("Student 2", BEA_ID, "Mathematics", "Primary 5");
 
         StudentRoster roster = new StudentRoster(List.of(studentTen, studentTwo));
+
+        assertEquals(List.of(BEA_ID, ALEX_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void constructor_numericAndAlphabeticSuffixes_areComparedNaturally() {
+        Student alphabeticSuffix = student("Student A", ALEX_ID, "Mathematics", "Primary 5");
+        Student numericSuffix = student("Student 2", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(alphabeticSuffix, numericSuffix));
+
+        assertEquals(List.of(BEA_ID, ALEX_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void constructor_sameLengthNumericSuffixes_areComparedByDigitValue() {
+        Student largerSuffix = student("Student 3", ALEX_ID, "Mathematics", "Primary 5");
+        Student smallerSuffix = student("Student 2", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(largerSuffix, smallerSuffix));
+
+        assertEquals(List.of(BEA_ID, ALEX_ID), roster.getEntries().stream()
+                .map(StudentRosterEntry::getStudentId).toList());
+    }
+
+    @Test
+    public void constructor_namePrefix_isOrderedBeforeLongerName() {
+        Student longerName = student("Alex Tan", ALEX_ID, "Mathematics", "Primary 5");
+        Student shorterName = student("Alex", BEA_ID, "Mathematics", "Primary 5");
+
+        StudentRoster roster = new StudentRoster(List.of(longerName, shorterName));
 
         assertEquals(List.of(BEA_ID, ALEX_ID), roster.getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
@@ -151,6 +197,21 @@ public class StudentRosterTest {
     }
 
     @Test
+    public void constructor_nullInputs_throwNullPointerException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+        Map<StudentId, Integer> nullKeyCounts = new HashMap<>();
+        nullKeyCounts.put(null, 1);
+        Map<StudentId, Integer> nullValueCounts = new HashMap<>();
+        nullValueCounts.put(ALEX_ID, null);
+
+        assertThrows(NullPointerException.class, () -> new StudentRoster(null));
+        assertThrows(NullPointerException.class, () -> new StudentRoster(List.of(student), null));
+        assertThrows(NullPointerException.class, () -> new StudentRoster(Collections.singletonList(null)));
+        assertThrows(NullPointerException.class, () -> new StudentRoster(List.of(student), nullKeyCounts));
+        assertThrows(NullPointerException.class, () -> new StudentRoster(List.of(student), nullValueCounts));
+    }
+
+    @Test
     public void entry_negativeNoteCount_throwsIllegalArgumentException() {
         Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
 
@@ -175,6 +236,20 @@ public class StudentRosterTest {
 
         assertThrows(IllegalArgumentException.class, () -> new StudentRosterEntry(ALEX_ID, 0, student.getName(),
                 student.getSubject(), student.getCurrentLevel(), 0));
+    }
+
+    @Test
+    public void entry_nullRequiredField_throwsNullPointerException() {
+        Student student = student("Alex Tan", ALEX_ID, "Mathematics", "Secondary 3");
+
+        assertThrows(NullPointerException.class, () -> new StudentRosterEntry(null, 1, student.getName(),
+                student.getSubject(), student.getCurrentLevel(), 0));
+        assertThrows(NullPointerException.class, () -> new StudentRosterEntry(ALEX_ID, 1, null,
+                student.getSubject(), student.getCurrentLevel(), 0));
+        assertThrows(NullPointerException.class, () -> new StudentRosterEntry(ALEX_ID, 1, student.getName(),
+                null, student.getCurrentLevel(), 0));
+        assertThrows(NullPointerException.class, () -> new StudentRosterEntry(ALEX_ID, 1, student.getName(),
+                student.getSubject(), null, 0));
     }
 
     private static StudentId id(String value) {

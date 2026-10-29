@@ -19,24 +19,21 @@ public final class CurrentLevel {
     public CurrentLevel(String currentLevel) {
         requireNonNull(currentLevel);
         checkArgument(isValidCurrentLevel(currentLevel), MESSAGE_CONSTRAINTS);
-        String normalizedLevel = normalize(currentLevel);
-        value = normalizedLevel;
+        value = normalize(currentLevel);
     }
 
     /**
      * Returns whether {@code currentLevel} is a valid current level.
      */
     public static boolean isValidCurrentLevel(String currentLevel) {
-        requireNonNull(currentLevel);
-        return !currentLevel.trim().isEmpty() && !currentLevel.matches(".*[\\r\\n].*");
+        return StudentTextFields.isNonBlankSingleLine(currentLevel);
     }
 
     /**
      * Returns the canonical display form with surrounding and repeated whitespace removed.
      */
     public static String normalize(String currentLevel) {
-        requireNonNull(currentLevel);
-        return currentLevel.trim().replaceAll("\\s+", " ");
+        return StudentTextFields.normalizeWhitespace(currentLevel);
     }
 
     /**

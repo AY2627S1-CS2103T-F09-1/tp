@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.Objects;
 import java.util.Optional;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.student.StudentId;
 
@@ -24,18 +25,23 @@ public class CommandResult {
     /** Stable ID of the student profile that should be displayed, if any. */
     private final StudentId profileStudentId;
 
+    /** Displayed note number to mark during a deletion preview, if any. */
+    private final Index previewNoteNumber;
+
     /**
      * Constructs a {@code CommandResult} with the specified fields.
      */
     public CommandResult(String feedbackToUser, boolean showHelp, boolean exit) {
-        this(feedbackToUser, showHelp, exit, null);
+        this(feedbackToUser, showHelp, exit, null, null);
     }
 
-    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, StudentId profileStudentId) {
+    private CommandResult(String feedbackToUser, boolean showHelp, boolean exit, StudentId profileStudentId,
+            Index previewNoteNumber) {
         this.feedbackToUser = requireNonNull(feedbackToUser);
         this.showHelp = showHelp;
         this.exit = exit;
         this.profileStudentId = profileStudentId;
+        this.previewNoteNumber = previewNoteNumber;
     }
 
     /**
@@ -50,7 +56,14 @@ public class CommandResult {
      * Constructs a {@code CommandResult} that requests display of one student profile.
      */
     public CommandResult(String feedbackToUser, StudentId profileStudentId) {
-        this(feedbackToUser, false, false, requireNonNull(profileStudentId));
+        this(feedbackToUser, false, false, requireNonNull(profileStudentId), null);
+    }
+
+    /**
+     * Constructs a preview result that opens a student's profile and marks one displayed session note.
+     */
+    public CommandResult(String feedbackToUser, StudentId profileStudentId, Index previewNoteNumber) {
+        this(feedbackToUser, false, false, requireNonNull(profileStudentId), requireNonNull(previewNoteNumber));
     }
 
     public String getFeedbackToUser() {
@@ -72,6 +85,13 @@ public class CommandResult {
         return Optional.ofNullable(profileStudentId);
     }
 
+    /**
+     * Returns the displayed session-note number to mark during a deletion preview, if any.
+     */
+    public Optional<Index> getPreviewNoteNumber() {
+        return Optional.ofNullable(previewNoteNumber);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -86,12 +106,14 @@ public class CommandResult {
         return feedbackToUser.equals(otherCommandResult.feedbackToUser)
                 && showHelp == otherCommandResult.showHelp
                 && exit == otherCommandResult.exit
-                && Objects.equals(profileStudentId, otherCommandResult.profileStudentId);
+                && Objects.equals(profileStudentId, otherCommandResult.profileStudentId)
+                && Objects.equals(previewNoteNumber, otherCommandResult.previewNoteNumber);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedbackToUser, showHelp, exit, profileStudentId);
+        Integer previewNoteNumberValue = previewNoteNumber == null ? null : previewNoteNumber.getOneBased();
+        return Objects.hash(feedbackToUser, showHelp, exit, profileStudentId, previewNoteNumberValue);
     }
 
     @Override
@@ -101,6 +123,7 @@ public class CommandResult {
                 .add("showHelp", showHelp)
                 .add("exit", exit)
                 .add("profileStudentId", profileStudentId)
+                .add("previewNoteNumber", previewNoteNumber)
                 .toString();
     }
 

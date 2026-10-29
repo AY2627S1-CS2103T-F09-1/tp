@@ -1,10 +1,15 @@
 package seedu.address.ui;
 
+import java.awt.DisplayMode;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -31,8 +36,10 @@ import seedu.address.model.student.StudentId;
 public class MainWindow extends UiPart<Stage> {
 
     private static final String FXML = "MainWindow.fxml";
+    private static final double SAVED_ORIGIN_PROBE_SIZE = 1;
 
     private final Logger logger = LogsCenter.getLogger(getClass());
+    private final ListChangeListener<Screen> screenConfigurationListener = change -> updateWindowMaximumSize();
 
     private Stage primaryStage;
     private Logic logic;
@@ -77,6 +84,7 @@ public class MainWindow extends UiPart<Stage> {
 
         // Configure the UI
         setWindowDefaultSize(logic.getGuiSettings());
+        configureWindowMaximumSizeUpdates();
 
         setAccelerators();
 
@@ -137,7 +145,7 @@ public class MainWindow extends UiPart<Stage> {
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);
         statusbarPlaceholder.getChildren().add(statusBarFooter.getRoot());
 
-        CommandBox commandBox = new CommandBox(this::executeCommand);
+        CommandBox commandBox = new CommandBox(this::executeCommand, studentProfilePanel::scrollSessionNotes);
         commandBoxPlaceholder.getChildren().add(commandBox.getRoot());
     }
 
@@ -146,13 +154,51 @@ public class MainWindow extends UiPart<Stage> {
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
         Rectangle2D visualBounds = getTargetScreenVisualBounds(guiSettings);
+        setWindowMaximumSize(visualBounds);
         primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), visualBounds.getHeight()));
         primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), visualBounds.getWidth()));
         Point windowCoordinates = guiSettings.getWindowCoordinates();
         if (windowCoordinates != null) {
-            primaryStage.setX(windowCoordinates.getX());
-            primaryStage.setY(windowCoordinates.getY());
+            double maximumX = visualBounds.getMaxX() - primaryStage.getWidth();
+            double maximumY = visualBounds.getMaxY() - primaryStage.getHeight();
+            primaryStage.setX(ScreenBoundsCalculator.clampCoordinate(
+                    windowCoordinates.getX(), visualBounds.getMinX(), maximumX));
+            primaryStage.setY(ScreenBoundsCalculator.clampCoordinate(
+                    windowCoordinates.getY(), visualBounds.getMinY(), maximumY));
         }
+    }
+
+    private void configureWindowMaximumSizeUpdates() {
+        primaryStage.xProperty().addListener((observable, oldX, newX) -> updateWindowMaximumSize());
+        primaryStage.yProperty().addListener((observable, oldY, newY) -> updateWindowMaximumSize());
+        primaryStage.showingProperty().addListener((observable, wasShowing, isShowing) -> {
+            if (isShowing) {
+                Screen.getScreens().addListener(screenConfigurationListener);
+                updateWindowMaximumSize();
+            } else {
+                Screen.getScreens().removeListener(screenConfigurationListener);
+            }
+        });
+    }
+
+    private void updateWindowMaximumSize() {
+        setWindowMaximumSize(getScaleAdjustedVisualBounds(getCurrentScreen()));
+    }
+
+    private void setWindowMaximumSize(Rectangle2D visualBounds) {
+        primaryStage.setMaxWidth(visualBounds.getWidth());
+        primaryStage.setMaxHeight(visualBounds.getHeight());
+    }
+
+    private Screen getCurrentScreen() {
+        Rectangle2D windowBounds = new Rectangle2D(primaryStage.getX(), primaryStage.getY(),
+                primaryStage.getWidth(), primaryStage.getHeight());
+        List<Screen> screens = Screen.getScreensForRectangle(windowBounds);
+        if (screens.isEmpty()) {
+            return Screen.getPrimary();
+        }
+        List<Rectangle2D> screenBounds = screens.stream().map(Screen::getBounds).toList();
+        return screens.get(ScreenBoundsCalculator.findLargestOverlapIndex(windowBounds, screenBounds));
     }
 
     /**
@@ -161,14 +207,30 @@ public class MainWindow extends UiPart<Stage> {
      */
     private Rectangle2D getTargetScreenVisualBounds(GuiSettings guiSettings) {
         Point windowCoordinates = guiSettings.getWindowCoordinates();
+        Screen targetScreen;
         if (windowCoordinates == null) {
-            return Screen.getPrimary().getVisualBounds();
+            targetScreen = Screen.getPrimary();
+        } else {
+            targetScreen = Screen.getScreensForRectangle(windowCoordinates.getX(), windowCoordinates.getY(),
+                    SAVED_ORIGIN_PROBE_SIZE, SAVED_ORIGIN_PROBE_SIZE)
+                    .stream()
+                    .findFirst()
+                    .orElse(Screen.getPrimary());
         }
-        return Screen.getScreensForRectangle(windowCoordinates.getX(), windowCoordinates.getY(), 1, 1)
-                .stream()
-                .findFirst()
-                .orElse(Screen.getPrimary())
-                .getVisualBounds();
+        return getScaleAdjustedVisualBounds(targetScreen);
+    }
+
+    private Rectangle2D getScaleAdjustedVisualBounds(Screen targetScreen) {
+        GraphicsDevice[] graphicsDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+        int screenCount = Screen.getScreens().size();
+        if (!ScreenBoundsCalculator.canCorrectOutputScale(screenCount, graphicsDevices.length)) {
+            return targetScreen.getVisualBounds();
+        }
+        DisplayMode displayMode = graphicsDevices[0].getDisplayMode();
+        return ScreenBoundsCalculator.adjustVisualBoundsForOutputScale(
+                targetScreen.getBounds(), targetScreen.getVisualBounds(),
+                targetScreen.getOutputScaleX(), targetScreen.getOutputScaleY(),
+                displayMode.getWidth(), displayMode.getHeight());
     }
 
     /**
@@ -215,10 +277,12 @@ public class MainWindow extends UiPart<Stage> {
     CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult commandResult = logic.execute(commandText);
+            studentProfilePanel.clearDeletionPreview();
             studentRosterPanel.setRoster(logic.getStudentRoster());
             commandResult.getProfileStudentId()
                     .ifPresent(studentId -> displayedProfileStudentId = Optional.of(studentId));
             refreshDisplayedProfile();
+            commandResult.getPreviewNoteNumber().ifPresent(studentProfilePanel::previewDeletionOf);
             logger.info("Command executed successfully: " + AddressBookParser.getLoggableCommandWord(commandText));
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
@@ -232,6 +296,9 @@ public class MainWindow extends UiPart<Stage> {
 
             return commandResult;
         } catch (CommandException | ParseException e) {
+            if (e instanceof CommandException) {
+                studentProfilePanel.clearDeletionPreview();
+            }
             logger.info("An error occurred while executing command: "
                     + AddressBookParser.getLoggableCommandWord(commandText));
             resultDisplay.setFeedbackToUser(e.getMessage());
@@ -245,6 +312,7 @@ public class MainWindow extends UiPart<Stage> {
                     studentProfilePanel.setProfile(studentProfile);
                     studentRosterPanel.selectStudent(studentId);
                 }, () -> {
+                    logger.fine("Displayed student profile no longer exists; clearing it.");
                     studentProfilePanel.clearProfile();
                     studentRosterPanel.clearSelection();
                     displayedProfileStudentId = Optional.empty();
