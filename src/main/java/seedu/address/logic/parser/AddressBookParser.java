@@ -29,7 +29,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class AddressBookParser {
 
     /** Placeholder logged in place of a command word that does not name a known command */
-    public static final String UNKNOWN_COMMAND_WORD = "unknown";
+    static final String UNKNOWN_COMMAND_WORD = "unknown";
     static final String MESSAGE_MISTYPED_NOTE_TARGET_FORMAT =
             "Unknown edit target: %s. Did you mean %s?";
 
