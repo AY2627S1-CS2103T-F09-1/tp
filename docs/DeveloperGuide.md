@@ -128,7 +128,6 @@ The `Model` component,
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
 * stores added `Student` records in `AddressBook`; each student has a stable `StudentId`, name, parent or guardian contact, subject, and current level. The diagram shows these student relationships alongside the inherited person model.
 * stores each student's session notes in a `StudentSessionHistories` object beside the student list, rather than inside `Student`. It keeps one `SessionHistory` of `SessionNote`s per `StudentId` (see [Session note model integration](#session-note-model-integration)).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 

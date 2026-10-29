@@ -162,6 +162,11 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_studentArgumentsWithLegacyTagPrefix_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " t/friend", getUnknownParameterMessage("t/"));
+    }
+
+    @Test
     public void parse_prefixLikeTextAfterLevel_success() {
         Student student = new Student(new StudentName("Alicia Lim"),
                 new ParentGuardianContact("+65 9123 4567", Optional.empty()),
