@@ -87,6 +87,7 @@ When a command cannot run, TutorTrack names the specific problem and does not ch
 * **Index outside the roster:** the error gives the valid range, for example `Student index [3] is outside the roster. Enter a student index from 1 to 2.` If the roster is empty, TutorTrack asks you to add a student first.
 * **Note number outside the history:** `edit note` and `delete note` give the valid note-number range for that student.
 * **Unknown command:** a misspelled command word, such as `veiw 1`, is named in the error together with the list of available commands.
+* **Mistyped keyword:** the word `/confirm` must be typed in lowercase, so `delete 1 /CONFIRM` and `delete note 1 1 /CONFIRM` are rejected with `/confirm must be typed in lowercase.` A mistyped `note`, such as `delete notes 1 1` or `edit nte 1 1 nt/Corrected.`, is named in the error together with the command you probably meant, such as `delete note`. A mistyped parameter prefix, such as `em/` in `edit 1 em/parent@example.com`, is reported as an unknown parameter together with the list of supported parameters.
 
 ### Viewing help: `help`
 
@@ -214,7 +215,7 @@ Confirmation format: `delete INDEX /confirm`
 * `INDEX` is the student's number in the currently displayed sorted roster.
 * `INDEX` must be a positive whole number and must refer to a student currently in the roster.
 * A valid preview opens the target student's profile, highlights that student's roster card, shows how many session notes would be removed, and displays the exact confirmation command. It does not delete or save anything.
-* To delete the student, enter the exact `delete INDEX /confirm` command shown in the preview as your next correctly formatted command. `/confirm` is case-sensitive and must appear once, after the index.
+* To delete the student, enter the exact `delete INDEX /confirm` command shown in the preview as your next correctly formatted command. `/confirm` is case-sensitive: it must be in lowercase, and it must appear once, after the index.
 * If TutorTrack rejects a command because its format is wrong, correct the typo and try again; the preview stays active. A different correctly formatted command cancels the preview, even if that command then fails. Starting another deletion preview replaces it.
 * A confirmation for the wrong student, or without an active preview, does not delete anything. Start a new preview to try again.
 * After a matching confirmation, TutorTrack reports `Successfully deleted STUDENT_NAME.`, redraws the roster with consecutive indices, closes the deleted student's profile, and clears its roster highlight.

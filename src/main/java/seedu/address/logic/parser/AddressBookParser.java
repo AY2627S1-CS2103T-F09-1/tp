@@ -37,10 +37,6 @@ public class AddressBookParser {
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
-    /** Largest number of single-character edits from {@code note}, as in {@code nte}, still treated as a typo */
-    private static final int MAX_NOTE_TARGET_TYPO_DISTANCE = 2;
-    /** Separates a parameter prefix from its value, as in {@code n/NAME} */
-    private static final String PARAMETER_PREFIX_SEPARATOR = "/";
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     private static final Set<String> COMMAND_WORDS = Set.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
@@ -124,7 +120,7 @@ public class AddressBookParser {
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
         }
-        if (isMistypedNoteTarget(editTarget)) {
+        if (ParserUtil.isMistypedTarget(editTarget, EditNoteCommand.NOTE_TARGET)) {
             String suggestion = EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET;
             throw new ParseException(withFormat(
                     String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, editTarget, suggestion),
@@ -133,14 +129,4 @@ public class AddressBookParser {
         return new EditCommandParser().parse(arguments);
     }
 
-    /**
-     * Returns true if {@code editTarget} looks like a typo of {@code note} rather than a student index or a
-     * parameter such as {@code n/NAME}.
-     */
-    private static boolean isMistypedNoteTarget(String editTarget) {
-        boolean isParameter = editTarget.contains(PARAMETER_PREFIX_SEPARATOR);
-        boolean isCloseToNoteTarget = EditDistance.between(editTarget, EditNoteCommand.NOTE_TARGET)
-                <= MAX_NOTE_TARGET_TYPO_DISTANCE;
-        return !editTarget.isEmpty() && !isParameter && isCloseToNoteTarget;
-    }
 }

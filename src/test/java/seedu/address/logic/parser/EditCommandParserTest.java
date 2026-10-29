@@ -120,6 +120,28 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_mistypedPrefixAfterIndex_reportsUnknownParameter() {
+        assertParseFailure(parser, " 1 em/foo@bar.com", unknownParameterMessage("em/"));
+        assertParseFailure(parser, " 1 P/81234567", unknownParameterMessage("P/"));
+        assertParseFailure(parser, " 1 em/foo@bar.com n/Alexis Tan", unknownParameterMessage("em/"));
+        assertParseFailure(parser, " 1 2 x/y", unknownParameterMessage("x/"));
+    }
+
+    @Test
+    public void parse_mistypedPrefixAfterIndex_messageListsSupportedParameters() {
+        assertParseFailure(parser, " 1 em/foo@bar.com", "Unknown parameter: em/. Supported parameters: "
+                + AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS + ".\n"
+                + "Format: " + EditCommand.COMMAND_FORMAT + "\n"
+                + "Example: " + EditCommand.COMMAND_EXAMPLE);
+    }
+
+    @Test
+    public void parse_strayNumberWithSlash_reportsUnexpectedTextNotUnknownParameter() {
+        assertParseFailure(parser, " 1 3/4 n/Alexis Tan",
+                withEditFormat("Unexpected text before the first parameter: 3/4."));
+    }
+
+    @Test
     public void parse_invalidValues_failure() {
         assertParseFailure(parser, " 1 n/", StudentName.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 p/12", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
