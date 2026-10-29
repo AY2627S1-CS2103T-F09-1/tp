@@ -1050,6 +1050,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: The note is added with `sub/topics` as part of its text.
 1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
    Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
+1. Enter `note 1 NT/text` and `note 1 Nt/text`.
+   Expected: Each reports `Parameter prefixes must be typed in lowercase:` naming the prefix as typed, such as `NT/ should be nt/.`, followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
    Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
