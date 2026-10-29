@@ -14,10 +14,8 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
@@ -55,7 +53,6 @@ public class ParserUtil {
     public static final String MESSAGE_NOTE_NON_PRINTABLE = "Session note contains a tab, line break or other"
             + " non-printable character. Enter the note on one line without them.";
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
-    private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)([A-Za-z][A-Za-z0-9_-]{0,2})/");
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final List<Prefix> LEGACY_PERSON_PREFIXES = List.of(PREFIX_ADDRESS, PREFIX_TAG);
     private static final String PARAMETER_PREFIX_SEPARATOR = "/";
@@ -70,27 +67,8 @@ public class ParserUtil {
         requireNonNull(word);
         requireNonNull(target);
         boolean isParameter = word.contains(PARAMETER_PREFIX_SEPARATOR);
-        boolean isCloseToTarget = EditDistance.between(word.toLowerCase(Locale.ROOT), target)
-                <= MAX_TARGET_TYPO_DISTANCE;
-        return !word.isEmpty() && !word.equalsIgnoreCase(target) && !isParameter && isCloseToTarget;
-    }
-
-    /**
-     * Returns the first prefix-like token in {@code arguments} that is not supported.
-     */
-    public static Optional<String> findUnknownPrefix(String arguments, Collection<Prefix> supportedPrefixes) {
-        requireNonNull(arguments);
-        requireNonNull(supportedPrefixes);
-        Matcher matcher = PREFIX_PATTERN.matcher(arguments);
-        while (matcher.find()) {
-            String prefix = matcher.group(1) + "/";
-            boolean isSupported = supportedPrefixes.stream()
-                    .anyMatch(supportedPrefix -> supportedPrefix.toString().equals(prefix));
-            if (!isSupported) {
-                return Optional.of(prefix);
-            }
-        }
-        return Optional.empty();
+        boolean isCloseToTarget = EditDistance.between(word, target) <= MAX_TARGET_TYPO_DISTANCE;
+        return !word.isEmpty() && !word.equals(target) && !isParameter && isCloseToTarget;
     }
 
     /**

@@ -42,6 +42,8 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
 import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.ParentGuardianContact;
+import seedu.address.model.student.Student;
 import seedu.address.model.student.StudentName;
 import seedu.address.model.student.StudentRosterEntry;
 import seedu.address.model.student.Subject;
@@ -445,6 +447,22 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_editStudentWithUppercasePhonePrefix_changesSubjectOnly() throws Exception {
+        model.addStudent(ALEX);
+
+        logic.execute("edit 1 sub/Math P/81234567");
+
+        Student updatedStudent = model.getStudent(ALEX.getId()).orElseThrow();
+        assertEquals(new Subject("Math P/81234567"), updatedStudent.getSubject());
+        assertEquals(ALEX.getParentGuardianContact().getPhone(), updatedStudent.getParentGuardianContact().getPhone());
+        ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
+                .readAddressBook().orElseThrow();
+        assertEquals(new Subject("Math P/81234567"), savedData.getStudentList().get(0).getSubject());
+        assertEquals(ALEX.getParentGuardianContact().getPhone(),
+                savedData.getStudentList().get(0).getParentGuardianContact().getPhone());
+    }
+
+    @Test
     public void execute_editStudentAfterDeletePreview_cancelsPendingDeletion() throws Exception {
         model.addStudent(ALEX);
         logic.execute("delete 1");
@@ -467,14 +485,18 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_addStudentWithUnknownPrefix_throwsParseException() {
-        String addCommand = "add n/Amy Bee p/11111111 e/amy@example.com "
+    public void execute_addStudentWithPrefixLikeText_success() throws Exception {
+        String addCommand = "add n/Amy Bee p/91234567 e/amy@example.com "
                 + "sub/Mathematics nt/Science l/Secondary nt/1";
+        Student student = new Student(new StudentName("Amy Bee"),
+                new ParentGuardianContact("91234567", Optional.of("amy@example.com")),
+                new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/1"));
+        Model expectedModel = new ModelManager();
+        expectedModel.addStudent(student);
 
-        assertParseException(addCommand, Messages.withFormat(
-                String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "nt/",
-                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS),
-                AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE));
+        assertCommandSuccess(addCommand,
+                String.format(AddCommand.MESSAGE_STUDENT_SUCCESS, student.getName(), student.getSubject(),
+                        student.getCurrentLevel()), expectedModel);
     }
 
     @Test

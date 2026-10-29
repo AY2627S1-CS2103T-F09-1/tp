@@ -90,10 +90,18 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_uppercaseCommandWords_success() throws Exception {
-        assertTrue(parser.parseCommand("ADD n/Alex Tan p/91234567 sub/Math l/Sec 3") instanceof AddCommand);
-        assertTrue(parser.parseCommand("EDIT NOTE 1 2 nt/Corrected summary.") instanceof EditNoteCommand);
-        assertTrue(parser.parseCommand("HELP") instanceof HelpCommand);
+    public void parseCommand_uppercaseCommandWords_reportsUnknownCommand() {
+        List<String> uppercaseWords = List.of("ADD", "DELETE", "EDIT", "NOTE", "VIEW", "EXIT", "HELP");
+        for (String commandWord : uppercaseWords) {
+            String commandText = commandWord + " 1";
+            Executable parseCommand = () -> parser.parseCommand(commandText);
+            ParseException exception = Assertions.assertThrows(ParseException.class, parseCommand);
+            assertEquals(AddressBookParser.getUnknownCommandMessage(commandWord), exception.getMessage());
+        }
+        String mixedCaseCommand = "Add n/Alex Tan p/91234567 sub/Math l/Sec 3";
+        Executable parseMixedCase = () -> parser.parseCommand(mixedCaseCommand);
+        ParseException mixedCase = Assertions.assertThrows(ParseException.class, parseMixedCase);
+        assertEquals(AddressBookParser.getUnknownCommandMessage("Add"), mixedCase.getMessage());
     }
 
     @Test
@@ -220,8 +228,6 @@ public class AddressBookParserTest {
     public void getLoggableCommandWord_knownCommandWithArguments_returnsCommandWordOnly() {
         assertEquals(NoteCommand.COMMAND_WORD,
                 AddressBookParser.getLoggableCommandWord("  note 1 nt/Reviewed indices."));
-        assertEquals(NoteCommand.COMMAND_WORD,
-                AddressBookParser.getLoggableCommandWord("  NOTE 1 nt/Reviewed indices."));
     }
 
     @Test
@@ -267,8 +273,9 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void getLoggableCommandWord_upperCaseCommandWord_returnsNormalizedCommandWord() {
-        assertEquals(NoteCommand.COMMAND_WORD,
+    public void getLoggableCommandWord_upperCaseCommandWord_returnsUnknown() {
+        // Command words are case-sensitive, so a differently cased word is not a known command.
+        assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD,
                 AddressBookParser.getLoggableCommandWord("NOTE 1 nt/Reviewed indices."));
     }
 

@@ -23,12 +23,12 @@ public class EditCommandBoundaryTest {
     private final EditCommandParser parser = new EditCommandParser();
 
     @Test
-    public void parse_phoneAtMinimumLength_acceptsThreeDigitsAndRejectsTwo() {
+    public void parse_phoneAtLocalLength_acceptsEightDigitsAndRejectsShorterNumber() {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
-        descriptor.setParentPhone("123");
+        descriptor.setParentPhone("91234567");
 
-        assertParseSuccess(parser, " 1 p/123", new EditCommand(INDEX_FIRST_PERSON, descriptor));
-        assertParseFailure(parser, " 1 p/12", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
+        assertParseSuccess(parser, " 1 p/91234567", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseFailure(parser, " 1 p/9123456", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
     }
 
     @Test

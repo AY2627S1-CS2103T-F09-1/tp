@@ -64,7 +64,7 @@ public class JsonAdaptedStudentTest {
 
     @Test
     public void toModelType_invalidFields_throwsIllegalValueException() {
-        assertInvalidField("Test Learner", "not-a-phone", "guardian@example.com", "Mathematics", "Secondary 3",
+        assertInvalidField("Test Learner", "10101010", "guardian@example.com", "Mathematics", "Secondary 3",
                 ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
         assertInvalidField("Test Learner", "9123 4567", "invalid-email", "Mathematics", "Secondary 3",
                 ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);

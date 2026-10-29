@@ -8,7 +8,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,8 +27,6 @@ import seedu.address.model.student.Subject;
  */
 public class EditCommandParser implements Parser<EditCommand> {
 
-    private static final List<Prefix> SUPPORTED_PREFIXES = List.of(
-            PREFIX_NAME, PREFIX_PHONE, PREFIX_SUBJECT, PREFIX_LEVEL, PREFIX_EMAIL);
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
     /** The start of a word that looks like a parameter prefix, such as the {@code em/} in {@code em/a@b.com} */
@@ -44,12 +41,6 @@ public class EditCommandParser implements Parser<EditCommand> {
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
-
-        Optional<String> unknownPrefix = ParserUtil.findUnknownPrefix(args, SUPPORTED_PREFIXES);
-        if (unknownPrefix.isPresent()) {
-            throw new ParseException(withEditFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
-                    unknownPrefix.get(), AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)));
-        }
 
         Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
         if (legacyPrefix.isPresent()) {

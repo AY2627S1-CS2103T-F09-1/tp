@@ -67,12 +67,12 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_subjectWithSlash_success() {
+    public void parse_prefixLikeTextInSubjectAndLevel_success() {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
-        descriptor.setSubject(new Subject("E Math/A Math"));
-        descriptor.setCurrentLevel(new CurrentLevel("Secondary 4"));
+        descriptor.setSubject(new Subject("Mathematics nt/Science"));
+        descriptor.setCurrentLevel(new CurrentLevel("Secondary nt/4"));
 
-        assertParseSuccess(parser, " 1 sub/E Math/A Math l/Secondary 4",
+        assertParseSuccess(parser, " 1 sub/Mathematics nt/Science l/Secondary nt/4",
                 new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
@@ -144,7 +144,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidValues_failure() {
         assertParseFailure(parser, " 1 n/", StudentName.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 p/12", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 p/10101010", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 e/example.com",
                 ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 sub/", Subject.MESSAGE_CONSTRAINTS);
@@ -160,9 +160,16 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_unknownOrLegacyPrefix_failure() {
-        assertParseFailure(parser, " 1 n/Alexis Tan x/value", unknownParameterMessage("x/"));
-        assertParseFailure(parser, " 1 sub/Math P/91234567", unknownParameterMessage("P/"));
+    public void parse_prefixLikeTextInSubject_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Math P/81234567"));
+
+        assertParseSuccess(parser, " 1 sub/Math P/81234567",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_legacyPrefix_failure() {
         assertParseFailure(parser, " 1 a/Block 1", unknownParameterMessage("a/"));
         assertParseFailure(parser, " 1 t/friend", unknownParameterMessage("t/"));
     }

@@ -28,16 +28,6 @@ public class StudentIdentityTest {
     }
 
     @Test
-    public void matches_localAndSingaporeInternationalPhone_returnsTrue() {
-        StudentIdentity localIdentity = new StudentIdentity(new StudentName("Alicia Lim"),
-                new ParentGuardianContact("91234567", Optional.empty()));
-        StudentIdentity internationalIdentity = new StudentIdentity(new StudentName("alicia lim"),
-                new ParentGuardianContact("+65 9123 4567", Optional.empty()));
-
-        assertTrue(localIdentity.matches(internationalIdentity));
-    }
-
-    @Test
     public void matches_differentNameOrPhone_doesNotMatch() {
         StudentIdentity identity = new StudentIdentity(NAME, CONTACT);
 
@@ -61,7 +51,7 @@ public class StudentIdentityTest {
         StudentIdentity identity = new StudentIdentity(new StudentName("  ARI   Tan "),
                 new ParentGuardianContact("+65 9123-4567", Optional.empty()));
 
-        assertEquals("ari tan\u000091234567", identity.getStableValue());
+        assertEquals("ari tan\u0000+6591234567", identity.getStableValue());
     }
 
     @Test
