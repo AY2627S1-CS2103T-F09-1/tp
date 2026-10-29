@@ -117,6 +117,8 @@ public class AddressBookParserTest {
                 EditCommand.COMMAND_EXAMPLE);
 
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("edit n/Bob"));
+        String expectedInvalidIndexMessage = "INDEX must be a positive whole number, e.g. 1.";
+        assertThrows(ParseException.class, expectedInvalidIndexMessage, () -> parser.parseCommand("edit a n/Bob"));
     }
 
     @Test
