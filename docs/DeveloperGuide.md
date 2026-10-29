@@ -80,6 +80,8 @@ The `UI` component uses the JavaFX UI framework. The layouts of these UI parts a
 `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
 
 `CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which pages the profile: while the outer profile pane (added for short windows) can still scroll down, `PageDown` moves that pane, and only once its end is visible does it page the session-note list by the list's visible height. `PageUp` pages the list back to its top first, then moves the outer pane back up. Keyboard focus and any draft stay in the command box, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
+`MainWindow.fxml` gives the result display the same minimum, preferred, and maximum height of 100 px, enough for the four lines of the longest messages, such as the deletion previews. The minimum matters because the window's `VBox` shrinks each child toward its minimum height when the window is short, and a lower minimum cut off the last line of those previews; the roster and profile workspace absorbs the shrinkage instead. Messages longer than four lines scroll.
+
 `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
 
 The `UI` component,
@@ -946,7 +948,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter the same `note 1 nt/NOTE` command with one more character, then `edit note 1 1 nt/NOTE` with that 501-character text.
    Expected: Both commands show `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.` No note is added or changed.
 1. Enter `delete 1`.
-   Expected: TutorTrack displays Alicia's name, note count, `delete 1 /confirm`, and `To cancel, enter another valid command. Typos keep this preview.` Alicia's profile and roster remain unchanged.
+   Expected: TutorTrack displays Alicia's name, note count, `delete 1 /confirm`, and `To cancel, enter another valid command. Typos keep this preview.` All three lines are visible in the result box without scrolling. Alicia's profile and roster remain unchanged.
 1. Enter `delete 1 /confirm`.
    Expected: Alicia's profile and profile-selection treatment both clear. Blair is reindexed to 1 and remains usable.
 1. Repeat the populated-workspace checks at 1920x1080 with 100% and 125% scaling and at 1280x720 with 150% scaling.
@@ -1095,7 +1097,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter `view 2`.
    Expected: Bea's profile is open and shows no session notes.
 1. Enter `delete note 1 2`.
-   Expected: Ari's profile is open with note `[2]` scrolled into view and highlighted. TutorTrack asks whether to delete session note `[2]` for Ari Tan, shows `If yes, type: delete note 1 2 /confirm`, and states `To cancel, enter another valid command. Typos keep this preview.` All three notes, the roster, and the data file remain unchanged.
+   Expected: Ari's profile is open with note `[2]` scrolled into view and highlighted. TutorTrack asks whether to delete session note `[2]` for Ari Tan, shows `If yes, type: delete note 1 2 /confirm`, and states `To cancel, enter another valid command. Typos keep this preview.` All three lines are visible in the result box without scrolling. All three notes, the roster, and the data file remain unchanged.
 1. Enter `help`, followed by `delete note 1 2 /confirm`.
    Expected: `help` cancels the pending deletion, removes the note highlight while Ari's profile remains open, and opens the help window. The confirmation is then rejected because no matching session-note deletion is pending, and all three notes remain.
 1. Enter `delete note 1 2`, followed immediately by `delete 2 /confirm`.

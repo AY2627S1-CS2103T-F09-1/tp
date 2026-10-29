@@ -37,6 +37,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -66,6 +67,8 @@ import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteSessionNoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Person;
@@ -82,6 +85,11 @@ import seedu.address.model.student.Subject;
 
 public class StudentRosterUiTest {
 
+    // Logical window size of a 1280x720 screen at 150% scaling, the smallest supported environment.
+    private static final double HIGH_DPI_WIDTH = 1280 / 1.5;
+    private static final double HIGH_DPI_HEIGHT = 720 / 1.5;
+    private static final double MIN_USABLE_WORKSPACE_HEIGHT = 150;
+    private static final double RESULT_OVERFLOW_TOLERANCE = 1;
     private static final StudentId ALEX_ID = StudentId.fromString("123e4567-e89b-12d3-a456-426614174000");
     private static final StudentId BLAIR_ID = StudentId.fromString("123e4567-e89b-12d3-a456-426614174001");
 
@@ -1352,8 +1360,8 @@ public class StudentRosterUiTest {
             assertEquals(420, stage.getMinHeight());
             StackPane resultDisplay = (StackPane) stage.getScene().lookup("#resultDisplayPlaceholder");
             assertNotNull(resultDisplay);
-            assertEquals(64, resultDisplay.getMinHeight());
-            assertEquals(82, resultDisplay.getPrefHeight());
+            assertEquals(100, resultDisplay.getMinHeight());
+            assertEquals(100, resultDisplay.getPrefHeight());
             assertEquals(100, resultDisplay.getMaxHeight());
             return null;
         });
@@ -1425,6 +1433,77 @@ public class StudentRosterUiTest {
                 assertNodeWithinScene(stage, "#resultDisplayPlaceholder");
                 assertNodeWithinScene(stage, "#workspaceSplitPane");
                 assertNodeWithinScene(stage, "#statusbarPlaceholder");
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_deleteNotePreview_showsEveryLineWithoutScrolling() throws Exception {
+        String preview = String.format(DeleteSessionNoteCommand.MESSAGE_CONFIRM_DELETE, 1, "Alex Tan", 1);
+
+        assertResultFullyVisibleAtSupportedSizes(preview);
+    }
+
+    @Test
+    public void executeCommand_deleteStudentPreview_showsEveryLineWithoutScrolling() throws Exception {
+        String preview = String.format(DeleteCommand.MESSAGE_CONFIRM_DELETE, "Alex Tan", 2, "session notes", 1);
+
+        assertResultFullyVisibleAtSupportedSizes(preview);
+    }
+
+    @Test
+    public void executeCommand_fourLineMessage_showsEveryLineWithoutScrolling() throws Exception {
+        assertResultFullyVisibleAtSupportedSizes("First line.\nSecond line.\nThird line.\nFourth line.");
+    }
+
+    @Test
+    public void executeCommand_unusuallyLongMessage_stillScrolls() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            stage.show();
+            try {
+                logic.setCommandResult(new CommandResult("Line.\n".repeat(30)));
+                mainWindow.executeCommand("help");
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                assertTrue(getResultTextOverflow(stage) > RESULT_OVERFLOW_TOLERANCE);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_scaledHighDpiSize_keepsWorkspaceUsableWithTallResultDisplay() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            stage.setWidth(HIGH_DPI_WIDTH);
+            stage.setHeight(HIGH_DPI_HEIGHT);
+            stage.show();
+            try {
+                logic.setCommandResult(new CommandResult(String.format(
+                        DeleteSessionNoteCommand.MESSAGE_CONFIRM_DELETE, 1, "Alex Tan", 1)));
+                mainWindow.executeCommand("delete note 1 1");
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                assertNodeWithinScene(stage, "#commandBoxPlaceholder");
+                assertNodeWithinScene(stage, "#resultDisplayPlaceholder");
+                assertNodeWithinScene(stage, "#workspaceSplitPane");
+                assertNodeWithinScene(stage, "#statusbarPlaceholder");
+                Node workspace = stage.getScene().lookup("#workspaceSplitPane");
+                assertTrue(workspace.getLayoutBounds().getHeight() >= MIN_USABLE_WORKSPACE_HEIGHT);
             } finally {
                 stage.hide();
             }
@@ -2117,6 +2196,57 @@ public class StudentRosterUiTest {
         StudentProfilePanel.SessionNoteListViewCell noteCell =
                 (StudentProfilePanel.SessionNoteListViewCell) cell;
         noteCell.updateItem(sessionNote, isEmpty);
+    }
+
+    /**
+     * Asserts that {@code message} fits in the result display without scrolling, both at the default window size
+     * and at the logical size of a 1280x720 screen at 150% scaling.
+     */
+    private void assertResultFullyVisibleAtSupportedSizes(String message) throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+        logic.setCommandResult(new CommandResult(message));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            stage.show();
+            try {
+                mainWindow.executeCommand("help");
+                assertTrue(getResultTextOverflow(stage) <= RESULT_OVERFLOW_TOLERANCE);
+
+                stage.setWidth(HIGH_DPI_WIDTH);
+                stage.setHeight(HIGH_DPI_HEIGHT);
+                assertTrue(getResultTextOverflow(stage) <= RESULT_OVERFLOW_TOLERANCE);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    /**
+     * Returns how many pixels of the result display's text do not fit in its viewport, so a positive value means
+     * part of the message is hidden. This measures the text instead of looking for a scroll bar, because a
+     * text area on a fractionally scaled screen can show a scroll bar for a single pixel of rounding.
+     */
+    private double getResultTextOverflow(Stage stage) {
+        for (int pass = 0; pass < 3; pass++) {
+            stage.getScene().getRoot().applyCss();
+            stage.getScene().getRoot().layout();
+        }
+        TextArea resultDisplay = (TextArea) stage.getScene().lookup("#resultDisplay");
+        assertNotNull(resultDisplay);
+        Region content = (Region) resultDisplay.lookup(".content");
+        Text text = (Text) resultDisplay.lookup(".content .text");
+        ScrollPane scrollPane = (ScrollPane) resultDisplay.lookup(".scroll-pane");
+        assertNotNull(content);
+        assertNotNull(text);
+        assertNotNull(scrollPane);
+
+        double neededHeight = text.getLayoutBounds().getHeight() + content.getInsets().getTop()
+                + content.getInsets().getBottom();
+        return neededHeight - scrollPane.getViewportBounds().getHeight();
     }
 
     private <T> T onFxThread(ThrowingSupplier<T> supplier) throws Exception {
