@@ -5,5 +5,4 @@ Copyright by Susumu Yoshida - http://www.mcdodesign.com/
 - AddressApp.ico
 
 Copyright by Jan Jan Kovařík - http://glyphicons.com/
-- calendar.png
 - edit.png
