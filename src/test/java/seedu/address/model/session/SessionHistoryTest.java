@@ -19,6 +19,7 @@ public class SessionHistoryTest {
 
     private static final OffsetDateTime EARLIER = OffsetDateTime.parse("2026-09-11T18:35:00+08:00");
     private static final OffsetDateTime LATER = OffsetDateTime.parse("2026-09-18T18:35:00+08:00");
+    private static final OffsetDateTime EDITED_AT = OffsetDateTime.parse("2026-10-23T14:10:00+08:00");
 
     private static final SessionNote EARLIER_NOTE = new SessionNote("Reviewed indices.", EARLIER);
     private static final SessionNote LATER_NOTE = new SessionNote("Reviewed factorisation.", LATER);
@@ -184,11 +185,12 @@ public class SessionHistoryTest {
                 .withNote(middleNote)
                 .withNote(LATER_NOTE);
 
-        SessionHistory editedHistory = history.withEditedNote(Index.fromOneBased(2), "Corrected summary.");
+        SessionHistory editedHistory = history.withEditedNote(Index.fromOneBased(2), "Corrected summary.", EDITED_AT);
         SessionNote editedNote = editedHistory.getNote(Index.fromOneBased(2));
 
         assertEquals("Corrected summary.", editedNote.getText());
         assertEquals(middleNote.getRecordedAt(), editedNote.getRecordedAt());
+        assertEquals(EDITED_AT, editedNote.getLastEditedAt().orElseThrow());
         assertEquals(List.of(LATER_NOTE, editedNote, EARLIER_NOTE), editedHistory.getNotes());
         assertEquals(List.of(LATER_NOTE, middleNote, EARLIER_NOTE), history.getNotes());
     }
@@ -198,9 +200,9 @@ public class SessionHistoryTest {
         SessionHistory history = SessionHistory.empty().withNote(EARLIER_NOTE);
 
         assertThrows(IllegalArgumentException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> history
-                .withEditedNote(Index.fromOneBased(1), " "));
+                .withEditedNote(Index.fromOneBased(1), " ", EDITED_AT));
         assertThrows(IndexOutOfBoundsException.class, () -> history
-                .withEditedNote(Index.fromOneBased(2), "Corrected summary."));
+                .withEditedNote(Index.fromOneBased(2), "Corrected summary.", EDITED_AT));
         assertEquals(List.of(EARLIER_NOTE), history.getNotes());
     }
 
@@ -210,8 +212,12 @@ public class SessionHistoryTest {
 
         assertThrows(NullPointerException.class, () -> history.getNote(null));
         assertThrows(NullPointerException.class, () -> history.withoutNote(null));
-        assertThrows(NullPointerException.class, () -> history.withEditedNote(null, "Corrected summary."));
-        assertThrows(NullPointerException.class, () -> history.withEditedNote(Index.fromOneBased(1), null));
+        assertThrows(NullPointerException.class, () -> history
+                .withEditedNote(null, "Corrected summary.", EDITED_AT));
+        assertThrows(NullPointerException.class, () -> history
+                .withEditedNote(Index.fromOneBased(1), null, EDITED_AT));
+        assertThrows(NullPointerException.class, () -> history
+                .withEditedNote(Index.fromOneBased(1), "Corrected summary.", null));
         assertThrows(IndexOutOfBoundsException.class, () -> history.getNote(Index.fromOneBased(2)));
         assertThrows(IndexOutOfBoundsException.class, () -> history.withoutNote(Index.fromOneBased(2)));
         assertThrows(IndexOutOfBoundsException.class, () -> SessionHistory.empty()

@@ -35,19 +35,39 @@ public class SessionNoteCard extends UiPart<Region> {
         if (noteNumber < 1) {
             throw new IllegalArgumentException("Session note number must be positive");
         }
-        header.setText(formatHeader(noteNumber, sessionNote.getRecordedAt()));
+        header.setText(formatHeader(noteNumber, sessionNote));
         noteText.setText(sessionNote.getText());
     }
 
-    private static String formatHeader(int noteNumber, OffsetDateTime recordedAt) {
-        return "[" + noteNumber + "] " + formatRecordedAt(recordedAt);
+    private static String formatHeader(int noteNumber, SessionNote sessionNote) {
+        return "[" + noteNumber + "] " + formatSessionNote(sessionNote);
     }
 
     /**
      * Returns a friendly timestamp that preserves the recorded UTC offset.
      */
+    static String formatSessionNote(SessionNote sessionNote) {
+        requireNonNull(sessionNote);
+        String recordedAt = formatDateTime(sessionNote.getRecordedAt(), true);
+        return sessionNote.getLastEditedAt()
+                .map(lastEditedAt -> recordedAt + " · edited "
+                        + formatDateTime(lastEditedAt, !lastEditedAt.getOffset()
+                                .equals(sessionNote.getRecordedAt().getOffset())))
+                .orElse(recordedAt);
+    }
+
+    /**
+     * Returns a friendly timestamp for a recorded time that preserves its UTC offset.
+     */
     static String formatRecordedAt(OffsetDateTime recordedAt) {
+        return formatDateTime(recordedAt, true);
+    }
+
+    private static String formatDateTime(OffsetDateTime recordedAt, boolean includeOffset) {
         requireNonNull(recordedAt);
+        if (!includeOffset) {
+            return TIMESTAMP_FORMATTER.format(recordedAt);
+        }
         ZoneOffset offset = recordedAt.getOffset();
         String offsetText = offset.equals(ZoneOffset.UTC) ? UTC_OFFSET_TEXT : offset.getId();
         return TIMESTAMP_FORMATTER.format(recordedAt) + " (UTC" + offsetText + ")";

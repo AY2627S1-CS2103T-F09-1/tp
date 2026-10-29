@@ -3,6 +3,7 @@ package seedu.address.model.session;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,10 +53,10 @@ public class StudentSessionHistories {
      *
      * @return The replacement note.
      */
-    public SessionNote editNote(StudentId studentId, Index noteNumber, String text) {
-        requireAllNonNull(studentId, noteNumber, text);
+    public SessionNote editNote(StudentId studentId, Index noteNumber, String text, OffsetDateTime lastEditedAt) {
+        requireAllNonNull(studentId, noteNumber, text, lastEditedAt);
         SessionHistory history = getHistory(studentId);
-        SessionHistory editedHistory = history.withEditedNote(noteNumber, text);
+        SessionHistory editedHistory = history.withEditedNote(noteNumber, text, lastEditedAt);
         setHistory(studentId, editedHistory);
         return editedHistory.getNote(noteNumber);
     }

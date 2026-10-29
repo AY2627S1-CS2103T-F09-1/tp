@@ -16,6 +16,7 @@ import seedu.address.model.session.SessionNote;
 public class JsonAdaptedSessionNoteTest {
 
     private static final String VALID_RECORDED_AT = "2026-09-18T18:35:00+08:00";
+    private static final String VALID_LAST_EDITED_AT = "2026-10-23T14:10:00+08:00";
     private static final String VALID_TEXT = "Reviewed factorisation.";
 
     @Test
@@ -28,6 +29,17 @@ public class JsonAdaptedSessionNoteTest {
         String json = JsonUtil.toJsonString(new JsonAdaptedSessionNote(FACTORISATION_NOTE));
 
         assertTrue(json.contains("\"recordedAt\" : \"" + VALID_RECORDED_AT + "\""));
+        assertTrue(!json.contains("lastEditedAt"));
+    }
+
+    @Test
+    public void constructor_editedNote_writesLastEditedAt() throws Exception {
+        SessionNote editedNote = new SessionNote(VALID_TEXT, OffsetDateTime.parse(VALID_RECORDED_AT),
+                OffsetDateTime.parse(VALID_LAST_EDITED_AT));
+
+        String json = JsonUtil.toJsonString(new JsonAdaptedSessionNote(editedNote));
+
+        assertTrue(json.contains("\"lastEditedAt\" : \"" + VALID_LAST_EDITED_AT + "\""));
     }
 
     @Test
@@ -57,6 +69,13 @@ public class JsonAdaptedSessionNoteTest {
     }
 
     @Test
+    public void toModelType_invalidLastEditedAt_throwsIllegalValueException() {
+        assertInvalidLastEditedAt("yesterday");
+        assertInvalidLastEditedAt("2026-09-18T18:35:00");
+        assertInvalidLastEditedAt("2026-09-17T18:35:00+08:00");
+    }
+
+    @Test
     public void toModelType_invalidText_throwsIllegalValueException() {
         assertInvalidText("   ");
         assertInvalidText("Line one\nLine two");
@@ -66,6 +85,12 @@ public class JsonAdaptedSessionNoteTest {
     private void assertInvalidRecordedAt(String recordedAt) {
         JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(recordedAt, VALID_TEXT);
         assertThrows(IllegalValueException.class, JsonAdaptedSessionNote.INVALID_RECORDED_AT_MESSAGE,
+                note::toModelType);
+    }
+
+    private void assertInvalidLastEditedAt(String lastEditedAt) {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, lastEditedAt);
+        assertThrows(IllegalValueException.class, JsonAdaptedSessionNote.INVALID_LAST_EDITED_AT_MESSAGE,
                 note::toModelType);
     }
 
