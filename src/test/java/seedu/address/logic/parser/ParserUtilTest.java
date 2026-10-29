@@ -115,9 +115,11 @@ public class ParserUtilTest {
 
     @Test
     public void parseNoteText_validText_returnsTextUnchanged() throws Exception {
+        String minimumLengthNote = "a".repeat(SessionNote.MIN_TEXT_LENGTH);
         String maximumLengthNote = "a".repeat(SessionNote.MAX_TEXT_LENGTH);
 
         assertEquals("  Reviewed  indices.  ", ParserUtil.parseNoteText("  Reviewed  indices.  "));
+        assertEquals(minimumLengthNote, ParserUtil.parseNoteText(minimumLengthNote));
         assertEquals(maximumLengthNote, ParserUtil.parseNoteText(maximumLengthNote));
     }
 
@@ -140,9 +142,9 @@ public class ParserUtilTest {
     @Test
     public void parseNoteText_aboveMaximumLengthWithTab_reportsLengthFirst() {
         String overlongNoteWithTab = "a\t" + "a".repeat(SessionNote.MAX_TEXT_LENGTH);
+        String expectedMessage = String.format(MESSAGE_NOTE_TOO_LONG, SessionNote.MAX_TEXT_LENGTH + 2);
 
-        assertThrows(ParseException.class, String.format(MESSAGE_NOTE_TOO_LONG, SessionNote.MAX_TEXT_LENGTH + 2), ()
-                -> ParserUtil.parseNoteText(overlongNoteWithTab));
+        assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseNoteText(overlongNoteWithTab));
     }
 
     @Test

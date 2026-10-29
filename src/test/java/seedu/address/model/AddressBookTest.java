@@ -288,7 +288,8 @@ public class AddressBookTest {
     public void sessionNoteMethods_nullArguments_throwNullPointerException() {
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(null, INDICES_NOTE));
         assertThrows(NullPointerException.class, () -> addressBook.addSessionNote(ALEX.getId(), null));
-        assertThrows(NullPointerException.class, () -> addressBook.setSessionHistory(null, SessionHistory.empty()));
+        assertThrows(NullPointerException.class, () ->
+                addressBook.setSessionHistory(null, SessionHistory.empty()));
         assertThrows(NullPointerException.class, () -> addressBook.setSessionHistory(ALEX.getId(), null));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(null, Index.fromOneBased(1)));
         assertThrows(NullPointerException.class, () -> addressBook.removeSessionNote(ALEX.getId(), null));

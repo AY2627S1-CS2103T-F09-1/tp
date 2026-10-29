@@ -14,7 +14,8 @@ import java.util.Locale;
 /**
  * Locates TutorTrack's home folder, the folder containing the TutorTrack JAR.
  * TutorTrack keeps its files in the home folder so that they stay with the JAR wherever it is launched from.
- * When TutorTrack is not running from a JAR, such as during development and tests, the working directory is used.
+ * When TutorTrack is not running from a JAR, such as during development and tests, the working directory is
+ * used.
  */
 public class HomeFolder {
 
@@ -37,7 +38,8 @@ public class HomeFolder {
     }
 
     /**
-     * Returns {@code path} as it should be shown to the user: relative to the home folder when it is inside it.
+     * Returns {@code path} as it should be shown to the user: relative to the home folder when it is inside
+     * it.
      */
     public static Path toDisplayPath(Path path) {
         return toDisplayPath(HOME_FOLDER, path);
@@ -59,8 +61,8 @@ public class HomeFolder {
     }
 
     /**
-     * Returns the home folder for code loaded from {@code codeLocation}: the folder containing it when it is a JAR
-     * file, or the working directory when it is not a JAR file or cannot be converted to a local path.
+     * Returns the home folder for code loaded from {@code codeLocation}: the folder containing it when it is a
+     * JAR file, or the working directory when it is not a JAR file or cannot be converted to a local path.
      *
      * @param codeLocation The location the code was loaded from, or null if it is unknown.
      */
@@ -88,7 +90,13 @@ public class HomeFolder {
      * Returns the location this class was loaded from, or null if the JVM does not report one.
      */
     private static URL findCodeLocation() {
-        CodeSource codeSource = HomeFolder.class.getProtectionDomain().getCodeSource();
+        return toCodeLocation(HomeFolder.class.getProtectionDomain().getCodeSource());
+    }
+
+    /**
+     * Returns the location of {@code codeSource}, or null if {@code codeSource} is null.
+     */
+    static URL toCodeLocation(CodeSource codeSource) {
         return codeSource == null ? null : codeSource.getLocation();
     }
 }

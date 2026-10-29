@@ -37,6 +37,12 @@ public class SessionNoteTest {
     }
 
     @Test
+    public void messageConstraints_namesLengthLimits() {
+        assertEquals("Session notes must be 1 to 500 printable characters on one line.",
+                SessionNote.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void constructor_editedNote_keepsRecordedAndEditedTimes() {
         SessionNote note = new SessionNote(VALID_TEXT, RECORDED_AT, EDITED_AT);
 
@@ -62,8 +68,9 @@ public class SessionNoteTest {
     }
 
     @Test
-    public void isValidText_lengthBoundaries_acceptsUpToMaximum() {
-        assertTrue(SessionNote.isValidText("a"));
+    public void isValidText_lengthBoundaries_acceptsMinimumToMaximum() {
+        assertFalse(SessionNote.isValidText("a".repeat(SessionNote.MIN_TEXT_LENGTH - 1)));
+        assertTrue(SessionNote.isValidText("a".repeat(SessionNote.MIN_TEXT_LENGTH)));
         assertTrue(SessionNote.isValidText("a".repeat(SessionNote.MAX_TEXT_LENGTH)));
         assertFalse(SessionNote.isValidText("a".repeat(SessionNote.MAX_TEXT_LENGTH + 1)));
     }

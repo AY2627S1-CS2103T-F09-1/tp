@@ -243,8 +243,25 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void getLoggableCommandWord_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> AddressBookParser.getLoggableCommandWord(null));
+    }
+
+    @Test
     public void getLoggableCommandWord_blankInput_returnsUnknown() {
         assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD, AddressBookParser.getLoggableCommandWord("   "));
+    }
+
+    @Test
+    public void getLoggableCommandWord_emptyInput_returnsUnknown() {
+        assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD, AddressBookParser.getLoggableCommandWord(""));
+    }
+
+    @Test
+    public void getLoggableCommandWord_upperCaseCommandWord_returnsUnknown() {
+        // Command words are case-sensitive, so a differently cased word is not a known command.
+        assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD,
+                AddressBookParser.getLoggableCommandWord("NOTE 1 nt/Reviewed indices."));
     }
 
     // Boundary values of the typo threshold (edit distance 2): distances 3 and 4 are ordinary edit input.

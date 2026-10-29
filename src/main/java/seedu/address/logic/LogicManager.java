@@ -37,6 +37,9 @@ public class LogicManager implements Logic {
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
 
+    /** Format of the log line that marks each command, given the command word only */
+    static final String USER_COMMAND_LOG_FORMAT = "----------------[USER COMMAND][%s]";
+
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
     private final Model model;
@@ -56,7 +59,7 @@ public class LogicManager implements Logic {
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         String commandWord = AddressBookParser.getLoggableCommandWord(commandText);
-        logger.info("----------------[USER COMMAND][" + commandWord + "]");
+        logger.info(String.format(USER_COMMAND_LOG_FORMAT, commandWord));
 
         Command command = addressBookParser.parseCommand(commandText);
         PendingDeletion deletionAwaitingConfirmation = pendingDeletion;

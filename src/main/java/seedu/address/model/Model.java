@@ -3,6 +3,7 @@ package seedu.address.model;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -115,7 +116,7 @@ public interface Model {
         ReadOnlyAddressBook addressBook = getAddressBook();
         Map<StudentId, Integer> noteCounts = addressBook.getStudentList().stream()
                 .map(Student::getId)
-                .collect(Collectors.toMap(studentId -> studentId,
+                .collect(Collectors.toMap(Function.identity(),
                         studentId -> addressBook.getSessionHistory(studentId).size()));
         return new StudentRoster(addressBook.getStudentList(), noteCounts);
     }

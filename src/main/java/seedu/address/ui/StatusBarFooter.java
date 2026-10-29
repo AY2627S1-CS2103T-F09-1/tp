@@ -18,7 +18,8 @@ public class StatusBarFooter extends UiPart<Region> {
     private Label saveLocationStatus;
 
     /**
-     * Creates a {@code StatusBarFooter} showing {@code saveLocation} relative to the home folder when it is inside it.
+     * Creates a {@code StatusBarFooter} showing {@code saveLocation} relative to the home folder when it is
+     * inside it.
      */
     public StatusBarFooter(Path saveLocation) {
         super(FXML);

@@ -1,12 +1,15 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -50,6 +53,23 @@ public class JsonAdaptedSessionNoteTest {
     }
 
     @Test
+    public void toModelType_maximumLengthText_returnsNote() throws Exception {
+        String maximumLengthText = "a".repeat(SessionNote.MAX_TEXT_LENGTH);
+
+        SessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, maximumLengthText).toModelType();
+
+        assertEquals(maximumLengthText, note.getText());
+    }
+
+    @Test
+    public void toModelType_bothFieldsMissing_reportsRecordedAtFirst() {
+        // Each missing field is tested alone below; this checks which one is reported when both are missing.
+        assertThrows(IllegalValueException.class,
+                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "recordedAt"),
+                new JsonAdaptedSessionNote(null, null)::toModelType);
+    }
+
+    @Test
     public void toModelType_missingFields_throwsIllegalValueException() {
         assertThrows(IllegalValueException.class,
                 String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "recordedAt"),
@@ -66,6 +86,31 @@ public class JsonAdaptedSessionNoteTest {
         assertInvalidRecordedAt("2026-09-18T18:35:00");
         assertInvalidRecordedAt("2026-09-18");
         assertInvalidRecordedAt("2026-02-30T18:35:00+08:00");
+    }
+
+    @Test
+    public void toModelType_invalidRecordedAt_keepsParseFailureAsCause() {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote("yesterday", VALID_TEXT);
+
+        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class,
+                note::toModelType);
+
+        assertInstanceOf(DateTimeParseException.class, exception.getCause());
+    }
+
+    @Test
+    public void toModelType_invalidLastEditedAt_keepsParseFailureAsCause() {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, "yesterday");
+
+        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class,
+                note::toModelType);
+
+        assertInstanceOf(DateTimeParseException.class, exception.getCause());
+    }
+
+    @Test
+    public void constructor_nullSource_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new JsonAdaptedSessionNote(null));
     }
 
     @Test

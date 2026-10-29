@@ -45,6 +45,18 @@ public class LogsCenterTest {
     }
 
     @Test
+    public void toFileHandlerPattern_placeholderLikeFolderNames_escapesEveryPercentSign() {
+        // One folder name for each placeholder FileHandler expands, plus an already-doubled %%.
+        List<String> folderNames = List.of("%t", "%h", "%u", "%g", "%%");
+        for (String folderName : folderNames) {
+            Path logFile = Paths.get(folderName, "tutortrack.log");
+            String expectedPattern = Paths.get(folderName.replace("%", "%%"), "tutortrack.log").toString();
+
+            assertEquals(expectedPattern, LogsCenter.toFileHandlerPattern(logFile));
+        }
+    }
+
+    @Test
     public void toFileHandlerPattern_nullPath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> LogsCenter.toFileHandlerPattern(null));
     }
