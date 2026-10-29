@@ -56,6 +56,17 @@ public class UiThemeTest {
     }
 
     @Test
+    public void rosterTheme_noteCountUsesIndexBadgeBackground() throws IOException {
+        String theme = readResource("/view/TutorTrackTheme.css");
+        String indexBadgeRule = getRule(theme, ".roster-index-badge");
+        String noteCountRule = getRule(theme, ".roster-note-count");
+
+        assertTrue(indexBadgeRule.contains("-fx-background-color: -app-surface-muted;"));
+        assertTrue(noteCountRule.contains("-fx-background-color: -app-surface-muted;"));
+        assertFalse(noteCountRule.contains("-app-accent-soft"));
+    }
+
+    @Test
     public void nonInteractiveResultDisplay_doesNotAdvertiseFocusState() throws IOException {
         String theme = readResource("/view/TutorTrackTheme.css");
         String resultDisplay = readResource("/view/ResultDisplay.fxml");
@@ -63,6 +74,7 @@ public class UiThemeTest {
         assertFalse(theme.contains(".text-area:focused"));
         assertTrue(theme.contains(".result-display:focused"));
         assertTrue(resultDisplay.contains("focusTraversable=\"false\""));
+        assertTrue(resultDisplay.contains("wrapText=\"true\""));
     }
 
     private String readResource(String resourcePath) throws IOException {
@@ -72,5 +84,13 @@ public class UiThemeTest {
         try (InputStream inputStream = resource.openStream()) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
+    }
+
+    private String getRule(String stylesheet, String selector) {
+        int ruleStart = stylesheet.indexOf(selector + " {");
+        assertTrue(ruleStart >= 0, selector + " does not exist.");
+        int ruleEnd = stylesheet.indexOf('}', ruleStart);
+        assertTrue(ruleEnd >= 0, selector + " is incomplete.");
+        return stylesheet.substring(ruleStart, ruleEnd);
     }
 }

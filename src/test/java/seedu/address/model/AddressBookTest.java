@@ -107,6 +107,17 @@ public class AddressBookTest {
     }
 
     @Test
+    public void addStudent_duplicateIdentity_throwsWithoutAddingAgain() {
+        addressBook.addStudent(ALEX);
+        Student duplicateAlex = new Student(ALEX.getName(), ALEX.getParentGuardianContact(), BEA.getSubject(),
+                BEA.getCurrentLevel());
+
+        assertThrows(IllegalArgumentException.class, AddressBook.MESSAGE_DUPLICATE_STUDENT, () ->
+                addressBook.addStudent(duplicateAlex));
+        assertEquals(List.of(ALEX), addressBook.getStudentList());
+    }
+
+    @Test
     public void findConflictingStudent_excludesTargetAndReturnsOtherDuplicate() {
         addressBook.addStudent(ALEX);
         addressBook.addStudent(BEA);

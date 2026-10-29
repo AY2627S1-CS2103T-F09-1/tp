@@ -60,11 +60,28 @@ public final class SessionNote {
      * Internal whitespace is preserved and length is counted in Unicode code points.
      */
     public static boolean isValidText(String text) {
+        int length = countTextLength(text);
+        boolean hasValidLength = length >= 1 && length <= MAX_TEXT_LENGTH;
+        return hasValidLength && !hasNonPrintableCharacter(text);
+    }
+
+    /**
+     * Returns the length of {@code text} once surrounding whitespace is removed, counted in Unicode code points
+     * so that an emoji counts as one character.
+     */
+    public static int countTextLength(String text) {
         requireNonNull(text);
         String strippedText = text.strip();
-        int length = strippedText.codePointCount(0, strippedText.length());
-        boolean hasValidLength = length >= 1 && length <= MAX_TEXT_LENGTH;
-        return hasValidLength && !NON_PRINTABLE_PATTERN.matcher(strippedText).find();
+        return strippedText.codePointCount(0, strippedText.length());
+    }
+
+    /**
+     * Returns whether {@code text} contains a control character (such as a tab or line break) or a Unicode line
+     * or paragraph separator once surrounding whitespace is removed.
+     */
+    public static boolean hasNonPrintableCharacter(String text) {
+        requireNonNull(text);
+        return NON_PRINTABLE_PATTERN.matcher(text.strip()).find();
     }
 
     /**

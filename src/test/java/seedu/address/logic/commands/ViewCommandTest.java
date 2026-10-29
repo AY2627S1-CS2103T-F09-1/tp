@@ -53,7 +53,8 @@ public class ViewCommandTest {
         Index outOfRangeIndex = Index.fromOneBased(model.getStudentRoster().size() + 1);
 
         assertCommandFailure(new ViewCommand(outOfRangeIndex), model,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, outOfRangeIndex.getOneBased(),
+                        model.getStudentRoster().size()));
     }
 
     @Test
@@ -61,7 +62,7 @@ public class ViewCommandTest {
         ModelManager emptyModel = new ModelManager();
 
         assertCommandFailure(new ViewCommand(INDEX_FIRST_PERSON), emptyModel,
-                Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+                Messages.MESSAGE_EMPTY_ROSTER);
     }
 
     @Test
@@ -82,4 +83,21 @@ public class ViewCommandTest {
         assertEquals(ViewCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON + "}",
                 viewCommand.toString());
     }
+
+    // Boundary value analysis: the first index is covered above; size is the last valid index, size + 1 invalid.
+    @Test
+    public void execute_lastRosterIndex_returnsLastStudent() throws Exception {
+        Index lastIndex = Index.fromOneBased(model.getStudentRoster().size());
+
+        CommandResult result = new ViewCommand(lastIndex).execute(model);
+
+        assertEquals(BEA.getId(), result.getProfileStudentId().orElseThrow());
+        assertEquals(String.format(ViewCommand.MESSAGE_SUCCESS, BEA.getName()), result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_nullModel_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new ViewCommand(INDEX_FIRST_PERSON).execute(null));
+    }
+
 }

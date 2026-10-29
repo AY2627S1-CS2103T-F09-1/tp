@@ -5,6 +5,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,7 +32,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     static final String MESSAGE_DUPLICATE_STUDENT = "Student with the same identity already exists.";
 
     private final UniquePersonList persons = new UniquePersonList();
-    private final List<Student> students = new java.util.ArrayList<>();
+    private final List<Student> students = new ArrayList<>();
     private final StudentSessionHistories sessionHistories = new StudentSessionHistories();
 
     public AddressBook() {}
@@ -137,7 +138,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void addStudent(Student student) {
         requireNonNull(student);
         if (hasStudent(student)) {
-            throw new IllegalArgumentException("Duplicate student");
+            throw new IllegalArgumentException(MESSAGE_DUPLICATE_STUDENT);
         }
         students.add(student);
     }

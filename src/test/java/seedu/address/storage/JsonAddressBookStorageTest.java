@@ -110,6 +110,31 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void deleteIncompleteBackup_deletableFile_removesFileWithoutSuppressedException() throws Exception {
+        Path backupFile = Files.createFile(testFolder.resolve("addressbook.json.backup-1.bak"));
+        IOException copyException = new IOException("copy failed");
+
+        JsonAddressBookStorage.deleteIncompleteBackup(backupFile, copyException);
+
+        assertFalse(Files.exists(backupFile));
+        assertEquals(0, copyException.getSuppressed().length);
+    }
+
+    @Test
+    public void deleteIncompleteBackup_undeletablePath_attachesDeleteFailureToCopyException() throws Exception {
+        // A non-empty directory cannot be deleted by Files#deleteIfExists on any platform.
+        Path undeletableDirectory = Files.createDirectory(testFolder.resolve("addressbook.json.backup-2.bak"));
+        Files.createFile(undeletableDirectory.resolve("child"));
+        IOException copyException = new IOException("copy failed");
+
+        JsonAddressBookStorage.deleteIncompleteBackup(undeletableDirectory, copyException);
+
+        assertEquals(1, copyException.getSuppressed().length);
+        assertTrue(copyException.getSuppressed()[0] instanceof IOException);
+        assertEquals("copy failed", copyException.getMessage());
+    }
+
+    @Test
     public void readAndSaveAddressBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempAddressBook.json");
         AddressBook original = getTypicalAddressBook();

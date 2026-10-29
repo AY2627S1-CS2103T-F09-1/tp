@@ -17,6 +17,9 @@ public abstract class UiPart<T> {
     /** Resource folder where FXML files are stored. */
     public static final String FXML_FILE_FOLDER = "/view/";
 
+    /** Selector of the virtualized flow that a {@code ListView} uses to lay out and scroll its cells. */
+    static final String VIRTUAL_FLOW_SELECTOR = ".virtual-flow";
+
     private final FXMLLoader fxmlLoader = new FXMLLoader();
 
     /**
