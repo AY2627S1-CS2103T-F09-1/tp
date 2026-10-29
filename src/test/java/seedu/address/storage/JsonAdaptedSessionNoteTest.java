@@ -8,6 +8,8 @@ import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
 import static seedu.address.testutil.TypicalSessionNotes.LOADED_AT;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import org.junit.jupiter.api.Assertions;
@@ -126,6 +128,48 @@ public class JsonAdaptedSessionNoteTest {
         assertInvalidText("   ");
         assertInvalidText("Line one\nLine two");
         assertInvalidText("a".repeat(SessionNote.MAX_TEXT_LENGTH + 1));
+    }
+
+    @Test
+    public void toModelType_timestampsAtLoadTime_returnsNote() throws Exception {
+        String loadedAt = format(LOADED_AT);
+        String sameInstantInUtc = format(LOADED_AT.withOffsetSameInstant(ZoneOffset.UTC));
+
+        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(loadedAt, VALID_TEXT).toModelType(LOADED_AT)
+                .getRecordedAt());
+        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(sameInstantInUtc, VALID_TEXT).toModelType(LOADED_AT)
+                .getRecordedAt().withOffsetSameInstant(LOADED_AT.getOffset()));
+        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, loadedAt)
+                .toModelType(LOADED_AT).getLastEditedAt().orElseThrow());
+    }
+
+    @Test
+    public void toModelType_recordedAtAfterLoadTime_throwsIllegalValueException() {
+        assertFutureRecordedAt(format(LOADED_AT.plusSeconds(1)));
+        // Same local time as the load time, but an earlier offset makes it one hour later.
+        assertFutureRecordedAt(format(LOADED_AT.withOffsetSameLocal(ZoneOffset.ofHours(7))));
+        assertFutureRecordedAt("2099-01-01T00:00:00+08:00");
+    }
+
+    @Test
+    public void toModelType_lastEditedAtAfterLoadTime_throwsIllegalValueException() {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT,
+                format(LOADED_AT.plusSeconds(1)));
+
+        assertThrows(IllegalValueException.class, String.format(
+                JsonAdaptedSessionNote.FUTURE_TIMESTAMP_MESSAGE_FORMAT, "lastEditedAt"), ()
+                -> note.toModelType(LOADED_AT));
+    }
+
+    private void assertFutureRecordedAt(String recordedAt) {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(recordedAt, VALID_TEXT);
+        assertThrows(IllegalValueException.class, String.format(
+                JsonAdaptedSessionNote.FUTURE_TIMESTAMP_MESSAGE_FORMAT, "recordedAt"), ()
+                -> note.toModelType(LOADED_AT));
+    }
+
+    private static String format(OffsetDateTime dateTime) {
+        return dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     private void assertInvalidRecordedAt(String recordedAt) {

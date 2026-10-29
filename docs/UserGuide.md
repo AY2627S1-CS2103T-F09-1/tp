@@ -281,7 +281,7 @@ Each student's session notes are in that student's `sessionNotes` list, for exam
 } ]
 ```
 
-* `recordedAt` is the date and time the note was recorded, followed by the time zone as an offset from UTC, in the form `YYYY-MM-DDThh:mm:ss+hh:mm`. Use `Z` for UTC.
+* `recordedAt` is the date and time the note was recorded, followed by the time zone as an offset from UTC, in the form `YYYY-MM-DDThh:mm:ss+hh:mm`. Use `Z` for UTC. It must not be later than the time TutorTrack starts, and neither may an edited note's `lastEditedAt`, because notes are always saved at the current time.
 * `text` follows the same rules as `NOTE` in [Adding a session note](#adding-a-session-note-note): 1 to 500 characters on one line, without tabs or line breaks such as `\t` or `\n`. Spaces at the start and end are removed.
 * A student without session notes may leave out `sessionNotes` or use an empty list, `[]`.
 * Notes may be listed in any order. TutorTrack numbers them by `recordedAt`, starting from the oldest. For notes with the same `recordedAt`, the one listed first in the file is treated as the newer note.
