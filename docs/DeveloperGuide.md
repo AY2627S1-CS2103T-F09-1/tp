@@ -182,7 +182,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### TutorTrack command routing
 
-`AddressBookParser` registers the TutorTrack domain commands `add`, `edit`, `edit note`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. TutorTrack's `edit` route dispatches `edit note` to `EditNoteCommandParser` and all other edit arguments to `EditCommandParser`, so it can update either a session note or a student record without exposing the inherited person edit behavior. The student add and edit parsers accept only the fields documented in the User Guide, so inherited person parameters such as `a/ADDRESS` and `t/TAG` are rejected before they can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
+`AddressBookParser` registers the TutorTrack domain commands `add`, `edit`, `edit note`, `view`, `note`, and `delete`, together with the application-level `help` and `exit` commands. The inherited AB3 `find`, `clear`, and removed TutorTrack `list` words have no routes and produce the standard unknown-command error. TutorTrack's `edit` route dispatches the exact `note` target and a small set of note-like misspellings to `EditNoteCommandParser`; all other edit arguments go to `EditCommandParser`, so a missing or malformed student index receives the student-edit usage rather than a misleading note-edit hint. The student add and edit parsers accept only the fields documented in the User Guide, so inherited person parameters such as `a/ADDRESS` and `t/TAG` are rejected before they can mutate or save data. A brand-new installation with no data file starts with an empty address book, so it does not create inaccessible legacy person records. Legacy person data types remain only for persisted-data compatibility; they are not part of TutorTrack's command surface.
 
 ### Command error messages
 
@@ -916,11 +916,11 @@ testers are expected to do more *exploratory* testing.
 ### UI theme and scaling
 
 1. Launch TutorTrack and confirm that the window title is `TutorTrack`, the main surface is light, and teal accents are used for controls and selected roster entries.
-2. Focus the command box, open the Help window with `F1`, and open an error dialog with an invalid command.
-   Expected: Focus, hover, error, Help window, and dialog states remain readable and use the same light and teal visual system. The Help window shows the User Guide link `https://ay2627s1-cs2103t-f09-1.github.io/tp/UserGuide.html`.
-1. Enter `add n/`.
+2. Focus the command box, open the Help window with `F1`, and enter an invalid command.
+   Expected: The invalid command appears in the result display and the command box shows its failed-command styling. Focus, hover, error, and Help window states remain readable and use the same light and teal visual system. The Help window shows the User Guide link `https://ay2627s1-cs2103t-f09-1.github.io/tp/UserGuide.html`.
+3. Enter `add n/`.
    Expected: The complete error message and add-command format wrap within the result display without a horizontal scrollbar.
-1. Repeat the launch and the checks above at 1920x1080 with 100% scaling, 1920x1080 with 125% scaling, and 1280x720 with 150% scaling.
+4. Repeat the launch and the checks above at 1920x1080 with 100% scaling, 1920x1080 with 125% scaling, and 1280x720 with 150% scaling.
    Expected: The restored window fits within the usable screen area. The command box, result display, roster, profile, status bar, Help window, and standard controls remain reachable without clipped controls.
 
 ### Roster and profile workspace
