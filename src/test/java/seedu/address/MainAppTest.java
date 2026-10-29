@@ -101,6 +101,25 @@ public class MainAppTest {
     }
 
     @Test
+    public void initModelManager_invalidLegacyPerson_preservesFileInBackup() throws Exception {
+        Storage storage = createStorage();
+        String invalidData = "{\"persons\":[{\"name\":\"\",\"phone\":\"123\","
+                + "\"email\":\"a@example.com\",\"address\":\"Example\",\"tags\":[]}],\"students\":[]}";
+        Files.writeString(storage.getAddressBookFilePath(), invalidData);
+
+        Model model = new MainApp().initModelManager(storage, new UserPrefs());
+
+        assertTrue(model.getAddressBook().getStudentList().isEmpty());
+        assertEquals(invalidData, Files.readString(storage.getAddressBookFilePath()));
+        try (var files = Files.list(testFolder)) {
+            List<Path> backups = files.filter(path -> path.getFileName().toString()
+                    .startsWith("addressbook.json.backup-")).toList();
+            assertEquals(1, backups.size());
+            assertEquals(invalidData, Files.readString(backups.get(0)));
+        }
+    }
+
+    @Test
     public void start_validUi_logsVersionAndStartsUi() {
         MainApp app = new MainApp();
         boolean[] isUiStarted = {false};

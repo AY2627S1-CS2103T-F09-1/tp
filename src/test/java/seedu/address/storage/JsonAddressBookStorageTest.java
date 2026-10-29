@@ -6,10 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.HOON;
 import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
+import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,6 +23,9 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -189,6 +194,45 @@ public class JsonAddressBookStorageTest {
         ReadOnlyAddressBook readBack = jsonAddressBookStorage.readAddressBook(filePath).get();
 
         assertEquals(editedNote, readBack.getSessionHistory(ALEX.getId()).getNote(Index.fromOneBased(1)));
+    }
+
+    @Test
+    public void readAndSave_mixedLegacyAndStudentData_preservesDataAndPersonOrder() throws Exception {
+        Path filePath = testFolder.resolve("mixed.json");
+        AddressBook original = new AddressBook();
+        original.addPerson(ALICE);
+        original.addPerson(BENSON);
+        original.addStudent(ALEX);
+        original.addSessionNote(ALEX.getId(), INDICES_NOTE);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+
+        storage.saveAddressBook(original);
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+        storage.saveAddressBook(loaded);
+        ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
+
+        assertEquals(original, new AddressBook(reloaded));
+        assertEquals(original.getPersonList(), reloaded.getPersonList());
+        assertEquals(original.getSessionHistory(ALEX.getId()), reloaded.getSessionHistory(ALEX.getId()));
+        JsonNode savedJson = new ObjectMapper().readTree(Files.readString(filePath));
+        assertEquals(2, savedJson.get("persons").size());
+        assertEquals(ALICE.getName().fullName, savedJson.get("persons").get(0).get("name").asText());
+        assertEquals(BENSON.getName().fullName, savedJson.get("persons").get(1).get("name").asText());
+    }
+
+    @Test
+    public void readAndSave_emptyLegacyList_keepsPersonsField() throws Exception {
+        Path filePath = testFolder.resolve("empty.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        Files.writeString(filePath, "{\"persons\": [], \"students\": [], \"unknown\": true}");
+
+        ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+        storage.saveAddressBook(loaded);
+
+        JsonNode savedJson = new ObjectMapper().readTree(Files.readString(filePath));
+        assertTrue(savedJson.get("persons").isArray());
+        assertEquals(0, savedJson.get("persons").size());
+        assertTrue(storage.readAddressBook().orElseThrow().getStudentList().isEmpty());
     }
 
     @Test
