@@ -58,9 +58,9 @@ public class LogicManager implements Logic {
         String commandWord = AddressBookParser.getLoggableCommandWord(commandText);
         logger.info("----------------[USER COMMAND][" + commandWord + "]");
 
+        Command command = addressBookParser.parseCommand(commandText);
         PendingDeletion deletionAwaitingConfirmation = pendingDeletion;
         pendingDeletion = null;
-        Command command = addressBookParser.parseCommand(commandText);
 
         if (command instanceof DeleteCommand deleteCommand) {
             return executeDeleteStudentCommand(deleteCommand, deletionAwaitingConfirmation);

@@ -55,7 +55,8 @@ public class StudentDeletionIntegrationTest {
         CommandResult previewResult = logic.execute("delete 1");
         assertEquals("Are you sure you want to delete Ari Tan and 2 session notes?\n"
                 + "If yes, type: delete 1 /confirm\n"
-                + "To cancel, enter any other command.", previewResult.getFeedbackToUser());
+                + "To cancel, enter another valid command. Typos keep this preview.",
+                previewResult.getFeedbackToUser());
         assertTrue(model.getStudentProfile(deletedStudentId).isPresent());
 
         CommandResult deleteResult = logic.execute("delete 1 /confirm");
@@ -76,8 +77,8 @@ public class StudentDeletionIntegrationTest {
         String savedData = Files.readString(dataFile);
         List<StudentRosterEntry> originalEntries = model.getStudentRoster().getEntries();
 
-        assertThrows(CommandException.class, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX, () ->
-                logic.execute("delete 3"));
+        assertThrows(CommandException.class, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 3, 2), ()
+                -> logic.execute("delete 3"));
         assertThrows(ParseException.class, () -> logic.execute("delete 1 2"));
 
         assertEquals(originalEntries, model.getStudentRoster().getEntries());

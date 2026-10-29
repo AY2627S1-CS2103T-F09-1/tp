@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.ModelManager;
 import seedu.address.model.session.SessionNote;
@@ -42,7 +43,7 @@ public class EditNoteCommandTest {
                 "Corrected summary.");
 
         Executable executeInvalidCommand = () -> command.execute(model);
-        assertThrows(CommandException.class, String.format(EditNoteCommand.MESSAGE_INVALID_STUDENT_INDEX, 3, 2),
+        assertThrows(CommandException.class, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE, 3, 2),
                 executeInvalidCommand);
     }
 
@@ -51,7 +52,7 @@ public class EditNoteCommandTest {
         EditNoteCommand command = new EditNoteCommand(Index.fromOneBased(1), Index.fromOneBased(1),
                 "Corrected summary.");
 
-        assertThrows(CommandException.class, EditNoteCommand.MESSAGE_NO_STUDENTS, () -> command.execute(model));
+        assertThrows(CommandException.class, Messages.MESSAGE_EMPTY_ROSTER, () -> command.execute(model));
     }
 
     @Test
