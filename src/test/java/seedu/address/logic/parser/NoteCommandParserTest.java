@@ -78,7 +78,44 @@ public class NoteCommandParserTest {
                 NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
 
         assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", expectedMessage);
-        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", expectedMessage);
+        assertParseFailure(parser, " 1 2 3 nt/Reviewed factorisation.", expectedMessage);
+    }
+
+    @Test
+    public void parse_strayTextAfterIndex_reportsUnexpectedTextNotSecondIndex() {
+        assertParseFailure(parser, " 1 hello nt/x",
+                withNoteFormat("Unexpected text before the first parameter: hello."));
+        assertParseFailure(parser, " 1 2 hello nt/x",
+                withNoteFormat("Unexpected text before the first parameter: hello."));
+        assertParseFailure(parser, " 1 hello world nt/x",
+                withNoteFormat("Unexpected text before the first parameter: hello world."));
+    }
+
+    @Test
+    public void parse_invalidIndexBeforeMoreWords_reportsInvalidIndex() {
+        String invalidIndexMessage = "INDEX must be a positive whole number, e.g. 1.";
+
+        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", invalidIndexMessage);
+        assertParseFailure(parser, " abc hello nt/x", invalidIndexMessage);
+    }
+
+    @Test
+    public void parse_notePrefixGluedToIndex_reportsMissingSpace() {
+        String expectedMessage = withNoteFormat("Put a space before nt/, after the student INDEX.");
+
+        assertParseFailure(parser, " 1nt/hello", expectedMessage);
+        assertParseFailure(parser, " 12nt/hello", expectedMessage);
+    }
+
+    @Test
+    public void parse_noNotePrefixOrNotePrefixNotAfterIndex_stillReportsMissingNote() {
+        assertParseFailure(parser, " 1 hello", NoteCommandParser.MESSAGE_MISSING_NOTE);
+        assertParseFailure(parser, " 1 Remember (nt/)", NoteCommandParser.MESSAGE_MISSING_NOTE);
+        assertParseFailure(parser, " 1 hellont/x", NoteCommandParser.MESSAGE_MISSING_NOTE);
+    }
+
+    private static String withNoteFormat(String message) {
+        return Messages.withFormat(message, NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
     }
 
     @Test
