@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
@@ -28,6 +29,8 @@ public class EditCommandParser implements Parser<EditCommand> {
 
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
+    /** The start of a word that looks like a parameter prefix, such as the {@code em/} in {@code em/a@b.com} */
+    private static final Pattern PREFIX_LIKE_PATTERN = Pattern.compile("[A-Za-z]+/");
 
     /**
      * Parses {@code args} as a student roster index and one or more replacement fields.
@@ -61,7 +64,7 @@ public class EditCommandParser implements Parser<EditCommand> {
      * number, so that stray text is reported as such instead of as a second index.
      *
      * @throws ParseException If the first word is not a valid index when more words follow it, or a later word
-     *         is not a number.
+     *         is not a number. A later word that looks like a parameter prefix is reported as an unknown parameter.
      */
     private static void verifyNoStrayText(String preamble) throws ParseException {
         String[] words = preamble.split(WHITESPACE_PATTERN);
@@ -70,6 +73,11 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         for (int i = 1; i < words.length; i++) {
             if (!WHOLE_NUMBER_PATTERN.matcher(words[i]).matches()) {
+                Matcher unknownPrefix = PREFIX_LIKE_PATTERN.matcher(words[i]);
+                if (unknownPrefix.lookingAt()) {
+                    throw new ParseException(withEditFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
+                            unknownPrefix.group(), AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)));
+                }
                 String strayText = String.join(" ", Arrays.copyOfRange(words, i, words.length));
                 throw new ParseException(withEditFormat(
                         String.format(AddCommandParser.MESSAGE_UNEXPECTED_PREAMBLE, strayText)));

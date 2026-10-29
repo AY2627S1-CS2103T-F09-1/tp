@@ -70,11 +70,28 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_severalStudentValues_throwsOnlyOneIndexWithFormat() {
-        String[] invalidArguments = {"1 2", "1 2 /confirm", "1 /Confirm"};
+        String[] invalidArguments = {"1 2", "1 2 /confirm", "1 /confirmx"};
 
         for (String invalidArgument : invalidArguments) {
             assertParseFailure(parser, invalidArgument, DeleteCommandParser.MESSAGE_TOO_MANY_STUDENT_INDICES);
         }
+    }
+
+    @Test
+    public void parse_studentConfirmationFlagInWrongCase_throwsLowercaseMessage() {
+        String[] mistypedFlags = {"1 /CONFIRM", "1 /Confirm", "1 /cOnFiRm", "/Confirm", "/CONFIRM 1",
+            "1 2 /Confirm", "1\t/CONFIRM"};
+
+        for (String mistypedFlag : mistypedFlags) {
+            assertParseFailure(parser, mistypedFlag, DeleteCommandParser.MESSAGE_MISTYPED_STUDENT_CONFIRMATION_FLAG);
+        }
+    }
+
+    @Test
+    public void parse_studentConfirmationFlagInWrongCase_messageNamesLowercaseFlagWithFormat() {
+        assertParseFailure(parser, "1 /CONFIRM", "/confirm must be typed in lowercase.\n"
+                + "Format: delete INDEX [/confirm]\n"
+                + "Example: delete 1");
     }
 
     @Test
@@ -114,12 +131,51 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_misplacedOrInvalidConfirmationFlag_throwsSpecificParseException() {
         String[] invalidArguments = {"note /confirm", "note /confirm 2", "note 1 /confirm", "note 1 /confirm 2",
-            "note 1 2 /Confirm", "note 1 2 /confirm /confirm", "note 1 2 /confirm extra"};
+            "note 1 2 /confirm /confirm", "note 1 2 /confirm extra"};
 
         for (String invalidArgument : invalidArguments) {
             assertParseFailure(parser, invalidArgument,
                     DeleteCommandParser.MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
         }
+    }
+
+    @Test
+    public void parse_sessionNoteConfirmationFlagInWrongCase_throwsLowercaseMessage() {
+        String[] mistypedFlags = {"note 1 1 /CONFIRM", "note 1 2 /Confirm", "note 1 /Confirm", "note /Confirm",
+            "note /CONFIRM 1 1", "note 1 2 3 /Confirm"};
+
+        for (String mistypedFlag : mistypedFlags) {
+            assertParseFailure(parser, mistypedFlag,
+                    DeleteCommandParser.MESSAGE_MISTYPED_SESSION_NOTE_CONFIRMATION_FLAG);
+        }
+    }
+
+    @Test
+    public void parse_sessionNoteConfirmationFlagInWrongCase_messageMatchesStudentFormWithNoteFormat() {
+        assertParseFailure(parser, "note 1 1 /CONFIRM", "/confirm must be typed in lowercase.\n"
+                + "Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]\n"
+                + "Example: delete note 1 2");
+    }
+
+    @Test
+    public void parse_mistypedNoteTarget_suggestsDeleteNote() {
+        String[] mistypedTargets = {"notes", "nte", "nots", "no"};
+
+        for (String mistypedTarget : mistypedTargets) {
+            String expectedMessage = "Unknown delete target: " + mistypedTarget + ". Did you mean delete note?\n"
+                    + "Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]\n"
+                    + "Example: delete note 1 2";
+
+            assertParseFailure(parser, mistypedTarget + " 1 1", expectedMessage);
+            assertParseFailure(parser, mistypedTarget, expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_wordsFarFromNoteTarget_areNotTreatedAsMistypedNoteTarget() {
+        assertParseFailure(parser, "abc", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "x 1", DeleteCommandParser.MESSAGE_TOO_MANY_STUDENT_INDICES);
+        assertParseFailure(parser, "/confirmx", MESSAGE_INVALID_INDEX);
     }
 
     @Test

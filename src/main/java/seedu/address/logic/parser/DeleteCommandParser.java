@@ -36,6 +36,14 @@ public class DeleteCommandParser implements Parser<Command> {
     static final String MESSAGE_INVALID_STUDENT_CONFIRMATION_FLAG = withFormat(
             DeleteCommand.CONFIRMATION_FLAG + " must appear at most once and at the end of the command.",
             DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
+    static final String MESSAGE_MISTYPED_CONFIRMATION_FLAG =
+            DeleteCommand.CONFIRMATION_FLAG + " must be typed in lowercase.";
+    static final String MESSAGE_MISTYPED_STUDENT_CONFIRMATION_FLAG = withFormat(
+            MESSAGE_MISTYPED_CONFIRMATION_FLAG, DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
+    static final String MESSAGE_MISTYPED_SESSION_NOTE_CONFIRMATION_FLAG = withFormat(
+            MESSAGE_MISTYPED_CONFIRMATION_FLAG,
+            DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
+    static final String MESSAGE_MISTYPED_NOTE_TARGET_FORMAT = "Unknown delete target: %s. Did you mean %s?";
     static final String MESSAGE_MISSING_STUDENT_INDEX = withFormat(
             String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL),
                     DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
@@ -57,7 +65,8 @@ public class DeleteCommandParser implements Parser<Command> {
     /**
      * Parses the given {@code String} of arguments in the context of the delete command.
      *
-     * @throws ParseException If an index is missing, repeated, or invalid, or if {@code /confirm} is misplaced.
+     * @throws ParseException If an index is missing, repeated, or invalid, if {@code /confirm} is misplaced or
+     *         typed in the wrong case, or if the first word looks like a typo of {@code note}.
      */
     public Command parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
@@ -67,7 +76,26 @@ public class DeleteCommandParser implements Parser<Command> {
         if (isSessionNoteDeletion(arguments)) {
             return parseSessionNoteDeletion(arguments);
         }
+        verifyNoMistypedNoteTarget(arguments);
         return parseStudentDeletion(arguments);
+    }
+
+    /**
+     * Checks that the first word is not a typo of {@code note}, such as {@code notes}, which would otherwise be
+     * reported as a second student index.
+     *
+     * @throws ParseException If the first word looks like a typo of {@code note}.
+     */
+    private static void verifyNoMistypedNoteTarget(List<String> arguments) throws ParseException {
+        if (arguments.isEmpty()
+                || !ParserUtil.isMistypedTarget(arguments.get(NOTE_TARGET_POSITION),
+                        DeleteSessionNoteCommand.NOTE_TARGET)) {
+            return;
+        }
+        String suggestion = DeleteCommand.COMMAND_WORD + " " + DeleteSessionNoteCommand.NOTE_TARGET;
+        throw new ParseException(withFormat(
+                String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, arguments.get(NOTE_TARGET_POSITION), suggestion),
+                DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE));
     }
 
     private boolean isSessionNoteDeletion(List<String> arguments) {
@@ -76,6 +104,9 @@ public class DeleteCommandParser implements Parser<Command> {
     }
 
     private DeleteCommand parseStudentDeletion(List<String> arguments) throws ParseException {
+        if (arguments.stream().anyMatch(DeleteCommandParser::isMistypedConfirmationFlag)) {
+            throw new ParseException(MESSAGE_MISTYPED_STUDENT_CONFIRMATION_FLAG);
+        }
         boolean isConfirmed = !arguments.isEmpty()
                 && DeleteCommand.CONFIRMATION_FLAG.equals(arguments.get(arguments.size() - 1));
         List<String> indices = isConfirmed ? arguments.subList(0, arguments.size() - 1) : arguments;
@@ -98,6 +129,9 @@ public class DeleteCommandParser implements Parser<Command> {
      * Parses {@code arguments}, which start with the {@code note} target, as a session-note deletion.
      */
     private DeleteSessionNoteCommand parseSessionNoteDeletion(List<String> arguments) throws ParseException {
+        if (arguments.stream().anyMatch(DeleteCommandParser::isMistypedConfirmationFlag)) {
+            throw new ParseException(MESSAGE_MISTYPED_SESSION_NOTE_CONFIRMATION_FLAG);
+        }
         verifyIndicesPresent(arguments);
         verifyConfirmationFlagPlacement(arguments);
         verifyNoExtraValues(arguments);
@@ -126,20 +160,15 @@ public class DeleteCommandParser implements Parser<Command> {
     }
 
     /**
-     * Checks that a misplaced or mistyped confirmation flag is not present.
+     * Checks that a misplaced confirmation flag is not present.
      *
-     * @throws ParseException If the flag is not the last word, takes the place of an index, or is a mistyped
-     *         flag such as {@code /Confirm} after both indices.
+     * @throws ParseException If the flag is not the last word or takes the place of an index.
      */
     private static void verifyConfirmationFlagPlacement(List<String> arguments) throws ParseException {
         int lastPosition = arguments.size() - 1;
         boolean isFlagBeforeLast = arguments.subList(0, lastPosition).contains(DeleteCommand.CONFIRMATION_FLAG);
         boolean isFlagInNoteNumberPosition = isConfirmationFlag(arguments.get(NOTE_NUMBER_POSITION));
-        String lastArgument = arguments.get(lastPosition);
-        boolean isLastArgumentMistypedFlag = arguments.size() == SESSION_NOTE_VALUE_COUNT + 1
-                && !isConfirmationFlag(lastArgument)
-                && DeleteCommand.CONFIRMATION_FLAG.equalsIgnoreCase(lastArgument);
-        if (isFlagBeforeLast || isFlagInNoteNumberPosition || isLastArgumentMistypedFlag) {
+        if (isFlagBeforeLast || isFlagInNoteNumberPosition) {
             throw new ParseException(MESSAGE_INVALID_SESSION_NOTE_CONFIRMATION_FLAG);
         }
     }
@@ -162,5 +191,12 @@ public class DeleteCommandParser implements Parser<Command> {
 
     private static boolean isConfirmationFlag(String argument) {
         return DeleteCommand.CONFIRMATION_FLAG.equals(argument);
+    }
+
+    /**
+     * Returns true if {@code argument} is the confirmation flag typed in the wrong case, such as {@code /CONFIRM}.
+     */
+    private static boolean isMistypedConfirmationFlag(String argument) {
+        return !isConfirmationFlag(argument) && DeleteCommand.CONFIRMATION_FLAG.equalsIgnoreCase(argument);
     }
 }

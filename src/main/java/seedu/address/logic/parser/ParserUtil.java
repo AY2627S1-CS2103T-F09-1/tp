@@ -55,6 +55,21 @@ public class ParserUtil {
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final List<Prefix> LEGACY_PERSON_PREFIXES = List.of(PREFIX_ADDRESS, PREFIX_TAG);
+    private static final String PARAMETER_PREFIX_SEPARATOR = "/";
+    /** Largest number of single-character edits from a target such as {@code note} still treated as a typo */
+    private static final int MAX_TARGET_TYPO_DISTANCE = 2;
+
+    /**
+     * Returns true if {@code word} looks like a typo of {@code target}, as in {@code nte} for {@code note}, rather
+     * than a student index or a parameter such as {@code n/NAME}. A word equal to {@code target} is not a typo.
+     */
+    public static boolean isMistypedTarget(String word, String target) {
+        requireNonNull(word);
+        requireNonNull(target);
+        boolean isParameter = word.contains(PARAMETER_PREFIX_SEPARATOR);
+        boolean isCloseToTarget = EditDistance.between(word, target) <= MAX_TARGET_TYPO_DISTANCE;
+        return !word.isEmpty() && !word.equals(target) && !isParameter && isCloseToTarget;
+    }
 
     /**
      * Returns the first legacy person prefix present in {@code arguments}.
