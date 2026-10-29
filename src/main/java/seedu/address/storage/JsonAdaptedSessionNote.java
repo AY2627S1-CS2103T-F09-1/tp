@@ -68,9 +68,11 @@ class JsonAdaptedSessionNote {
     /**
      * Returns the validated domain session note represented by this JSON object.
      *
+     * @param loadedAt The date-time the data is being loaded.
      * @throws IllegalValueException If a persisted field is missing or invalid.
      */
-    SessionNote toModelType() throws IllegalValueException {
+    SessionNote toModelType(OffsetDateTime loadedAt) throws IllegalValueException {
+        requireNonNull(loadedAt);
         OffsetDateTime modelRecordedAt = requireValidRecordedAt();
         return new SessionNote(requireValidText(), modelRecordedAt, requireValidLastEditedAt(modelRecordedAt));
     }

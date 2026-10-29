@@ -1,5 +1,8 @@
 package seedu.address.storage;
 
+import static java.util.Objects.requireNonNull;
+
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -58,12 +61,14 @@ class JsonSerializableAddressBook {
     /**
      * Converts this address book into the model's {@code AddressBook} object.
      *
+     * @param loadedAt The date-time the data is being loaded.
      * @throws IllegalValueException if there were any data constraints violated.
      */
-    public AddressBook toModelType() throws IllegalValueException {
+    public AddressBook toModelType(OffsetDateTime loadedAt) throws IllegalValueException {
+        requireNonNull(loadedAt);
         AddressBook addressBook = new AddressBook();
         addPersons(addressBook);
-        addStudents(addressBook);
+        addStudents(addressBook, loadedAt);
         return addressBook;
     }
 
@@ -87,7 +92,7 @@ class JsonSerializableAddressBook {
      *
      * @throws IllegalValueException If a student is invalid, shares an ID, or shares an identity.
      */
-    private void addStudents(AddressBook addressBook) throws IllegalValueException {
+    private void addStudents(AddressBook addressBook, OffsetDateTime loadedAt) throws IllegalValueException {
         Set<String> studentIds = new HashSet<>();
         for (JsonAdaptedStudent jsonAdaptedStudent : students) {
             Student student = jsonAdaptedStudent.toModelType();
@@ -98,7 +103,7 @@ class JsonSerializableAddressBook {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_STUDENT);
             }
             addressBook.addStudent(student);
-            addressBook.setSessionHistory(student.getId(), jsonAdaptedStudent.toModelSessionHistory());
+            addressBook.setSessionHistory(student.getId(), jsonAdaptedStudent.toModelSessionHistory(loadedAt));
         }
     }
 }

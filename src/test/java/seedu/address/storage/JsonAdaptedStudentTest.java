@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
 import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
+import static seedu.address.testutil.TypicalSessionNotes.LOADED_AT;
 
 import java.util.Arrays;
 import java.util.List;
@@ -91,7 +92,7 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
                 "Mathematics", "Secondary 3", null);
 
-        assertEquals(SessionHistory.empty(), student.toModelSessionHistory());
+        assertEquals(SessionHistory.empty(), student.toModelSessionHistory(LOADED_AT));
     }
 
     @Test
@@ -99,8 +100,8 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = new JsonAdaptedStudent(null, "Test Learner", "9123 4567", null,
                 "Mathematics", "Secondary 3", null);
 
-        assertEquals(SessionHistory.empty(), student.toModelSessionHistory());
-        assertEquals(SessionHistory.empty(), new JsonAdaptedStudent(VALID_STUDENT).toModelSessionHistory());
+        assertEquals(SessionHistory.empty(), student.toModelSessionHistory(LOADED_AT));
+        assertEquals(SessionHistory.empty(), new JsonAdaptedStudent(VALID_STUDENT).toModelSessionHistory(LOADED_AT));
     }
 
     @Test
@@ -115,7 +116,7 @@ public class JsonAdaptedStudentTest {
 
         JsonAdaptedStudent student = new JsonAdaptedStudent(VALID_STUDENT, history);
 
-        assertEquals(history, student.toModelSessionHistory());
+        assertEquals(history, student.toModelSessionHistory(LOADED_AT));
         assertEquals(VALID_STUDENT, student.toModelType());
     }
 
@@ -124,8 +125,8 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedSessionNote validNote = new JsonAdaptedSessionNote(INDICES_NOTE);
         JsonAdaptedStudent student = createStudentWithNotes(Arrays.asList(validNote, null));
 
-        assertThrows(IllegalValueException.class, JsonAdaptedStudent.MISSING_SESSION_NOTE_MESSAGE,
-                student::toModelSessionHistory);
+        assertThrows(IllegalValueException.class, JsonAdaptedStudent.MISSING_SESSION_NOTE_MESSAGE, ()
+                -> student.toModelSessionHistory(LOADED_AT));
     }
 
     @Test
@@ -133,8 +134,8 @@ public class JsonAdaptedStudentTest {
         JsonAdaptedStudent student = createStudentWithNotes(List.of(
                 new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Line one\nLine two")));
 
-        assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS,
-                student::toModelSessionHistory);
+        assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS, ()
+                -> student.toModelSessionHistory(LOADED_AT));
     }
 
     @Test
@@ -145,7 +146,7 @@ public class JsonAdaptedStudentTest {
                 new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Finished algebra worksheet."),
                 new JsonAdaptedSessionNote("2026-09-18T18:35:00+08:00", "Started algebra worksheet.")));
 
-        List<String> noteTexts = student.toModelSessionHistory().getNotes().stream()
+        List<String> noteTexts = student.toModelSessionHistory(LOADED_AT).getNotes().stream()
                 .map(SessionNote::getText)
                 .toList();
 
