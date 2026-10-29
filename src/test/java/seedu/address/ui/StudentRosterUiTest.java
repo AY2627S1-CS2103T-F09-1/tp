@@ -574,7 +574,7 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void sessionNoteCard_note_displaysFriendlyOffsetTimestampAndWrappedText() throws Exception {
+    public void sessionNoteCard_note_displaysFriendlyTimestampAndWrappedText() throws Exception {
         SessionNote note = new SessionNote("A long note that should wrap instead of widening the profile panel.",
                 OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
 
@@ -582,17 +582,15 @@ public class StudentRosterUiTest {
 
         SelectableText header = (SelectableText) card.getChildren().get(0);
         SelectableText noteText = (SelectableText) card.getChildren().get(1);
-        assertEquals("[3] 18 Sep 2026, 6:35 PM (UTC+08:00)", header.getText());
+        assertEquals("[3] 18 Sep 2026, 6:35 PM", header.getText());
         assertEquals(note.getText(), noteText.getText());
         assertTrue(header.isWrapText());
         assertTrue(noteText.isWrapText());
         assertFalse(header.isEditable());
         assertFalse(noteText.isEditable());
         assertEquals(2, noteText.getLineSpacing());
-        assertEquals("18 Sep 2026, 10:35 AM (UTC+00:00)", SessionNoteCard.formatSessionNote(new SessionNote(
-                "Recorded in UTC.", OffsetDateTime.parse("2026-09-18T10:35:00Z"))));
         assertThrows(IllegalArgumentException.class, () -> new SessionNoteCard(note, 0));
-        assertThrows(NullPointerException.class, () -> SessionNoteCard.formatRecordedAt(null));
+        assertThrows(NullPointerException.class, () -> SessionNoteCard.formatDateTime(null));
     }
 
     @Test
@@ -1003,7 +1001,7 @@ public class StudentRosterUiTest {
                 SelectableText noteText = (SelectableText) card.getChildren().get(1);
 
                 assertTrue(card.getWidth() <= listView.getWidth());
-                assertEquals("[1] 18 Sep 2026, 6:35 PM (UTC+08:00)", header.getText());
+                assertEquals("[1] 18 Sep 2026, 6:35 PM", header.getText());
                 assertTrue(noteText.getHeight() > noteText.getFont().getSize() * 2);
             } finally {
                 stage.hide();
@@ -1907,19 +1905,36 @@ public class StudentRosterUiTest {
 
     // Equivalence partitions of the timestamp offset: UTC, positive, negative and fractional-hour offsets.
     @Test
-    public void formatRecordedAt_differentOffsets_preservesRecordedOffset() {
-        assertEquals("5 Jan 2026, 9:30 AM (UTC+05:30)", SessionNoteCard.formatRecordedAt(
-                OffsetDateTime.parse("2026-01-05T09:30:00+05:30")));
-        assertEquals("5 Jan 2026, 9:30 AM (UTC-08:00)", SessionNoteCard.formatRecordedAt(
+    public void formatDateTime_differentOffsets_showsSavedClockTimeWithoutOffset() {
+        assertEquals("5 Jan 2026, 9:30 AM", SessionNoteCard.formatDateTime(
+                OffsetDateTime.parse("2026-01-05T09:30:00Z")));
+        assertEquals("5 Jan 2026, 9:30 AM", SessionNoteCard.formatDateTime(
+                OffsetDateTime.parse("2026-01-05T09:30:00+08:00")));
+        assertEquals("5 Jan 2026, 9:30 AM", SessionNoteCard.formatDateTime(
                 OffsetDateTime.parse("2026-01-05T09:30:00-08:00")));
+        assertEquals("5 Jan 2026, 9:30 AM", SessionNoteCard.formatDateTime(
+                OffsetDateTime.parse("2026-01-05T09:30:00+05:30")));
+    }
+
+    // Partitions of the edit state: unedited, edited at the recorded offset and edited at another offset.
+    @Test
+    public void formatSessionNote_editState_showsEditTimeWithoutOffsets() {
+        OffsetDateTime recordedAt = OffsetDateTime.parse("2026-10-20T18:30:00+08:00");
+
+        assertEquals("20 Oct 2026, 6:30 PM", SessionNoteCard.formatSessionNote(
+                new SessionNote("Unedited note.", recordedAt)));
+        assertEquals("20 Oct 2026, 6:30 PM · edited 29 Oct 2026, 11:44 PM", SessionNoteCard.formatSessionNote(
+                new SessionNote("Edited note.", recordedAt, OffsetDateTime.parse("2026-10-29T23:44:00+08:00"))));
+        assertEquals("20 Oct 2026, 6:30 PM · edited 29 Oct 2026, 3:44 PM", SessionNoteCard.formatSessionNote(
+                new SessionNote("Edited in UTC.", recordedAt, OffsetDateTime.parse("2026-10-29T15:44:00Z"))));
     }
 
     // Boundary values of the 12-hour clock: midnight and noon.
     @Test
-    public void formatRecordedAt_midnightAndNoon_usesTwelveHourClock() {
-        assertEquals("5 Jan 2026, 12:00 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
+    public void formatDateTime_midnightAndNoon_usesTwelveHourClock() {
+        assertEquals("5 Jan 2026, 12:00 AM", SessionNoteCard.formatDateTime(
                 OffsetDateTime.parse("2026-01-05T00:00:00Z")));
-        assertEquals("5 Jan 2026, 12:00 PM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
+        assertEquals("5 Jan 2026, 12:00 PM", SessionNoteCard.formatDateTime(
                 OffsetDateTime.parse("2026-01-05T12:00:00Z")));
     }
 
@@ -1930,7 +1945,7 @@ public class StudentRosterUiTest {
 
         VBox card = (VBox) onFxThread(() -> new SessionNoteCard(note, 1).getRoot());
 
-        assertEquals("[1] 5 Jan 2026, 9:30 AM (UTC+00:00)", ((SelectableText) card.getChildren().get(0)).getText());
+        assertEquals("[1] 5 Jan 2026, 9:30 AM", ((SelectableText) card.getChildren().get(0)).getText());
         assertThrows(IllegalArgumentException.class, () -> new SessionNoteCard(note, -1));
         assertThrows(NullPointerException.class, () -> new SessionNoteCard(null, 1));
     }
