@@ -100,6 +100,7 @@ public class LogicManagerTest {
                 + "If yes, type: delete 1 /confirm\n"
                 + "To cancel, enter another valid command. Typos keep this preview.",
                 result.getFeedbackToUser());
+        assertEquals(Optional.of(ALEX.getId()), result.getProfileStudentId());
         assertEquals(List.of(ALEX.getId()), logic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
         assertEquals(1, model.getSessionHistory(ALEX.getId()).size());

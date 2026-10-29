@@ -154,7 +154,7 @@ The `Storage` component,
 
 #### Data-file format and recovery
 
-TutorTrack stores application data in `data/tutortrack.json` inside the _home folder_, the folder containing the JAR file, so the data stays with the JAR wherever TutorTrack is launched from. `HomeFolder` locates that folder and also places `preferences.json` and the `tutortrack.log` files there; when TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, it uses the working directory instead. Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
+TutorTrack stores application data in `data/tutortrack.json` inside the _home folder_, the folder containing the JAR file, so the data stays with the JAR wherever TutorTrack is launched from. `HomeFolder` locates that folder and also places `preferences.json` and the `tutortrack.log` files there; when TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, it uses the working directory instead. If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. It reports the failure through the base logger rather than `LogsCenter`'s own static logger, which is not yet assigned while the base logger is being set up. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback). Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
 
 The storage adapter validates manually edited records by rebuilding the corresponding domain value types. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`.
 
@@ -306,7 +306,7 @@ A student record without a `sessionNotes` field loads with an empty history, so 
 
 ### Session note command
 
-`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error; an overlong note's error states the length entered.
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A second `nt/` after a space is a repeated prefix, as in every other command; this is deliberate, so that all commands share one prefix rule. Because a prefix must follow a space, `nt/` written without one, such as `(nt/)`, stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error; an overlong note's error states the length entered.
 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
@@ -324,7 +324,7 @@ The [architecture sequence diagram](#architecture) illustrates student deletion.
 
 #### Preview and pending target
 
-For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. It returns the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter another valid command. Typos keep this preview.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`.
+For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. Its `CommandResult` contains the student's stable `StudentId` alongside the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter another valid command. Typos keep this preview.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`. `MainWindow` uses the result's ID to load the target profile and select the matching roster card through the [profile display flow](#profile-display-and-refresh), even if another profile was previously open. An invalid preview returns no result, leaving the displayed profile and selection unchanged.
 
 For `delete note STUDENT_INDEX NOTE_NUMBER`, `DeleteSessionNoteCommand#execute` resolves the same sorted roster and checks that the selected student has the displayed note number. After returning the preview and exact confirmation command, `LogicManager` retains a `PendingSessionNoteDeletion` containing the student index, stable `StudentId`, chronological note number, and exact immutable `SessionHistory` snapshot. The note number maps to the internal newest-first list position with `history size - NOTE_NUMBER`; because it is a display selector rather than a stored note ID, the remaining notes are numbered consecutively after deletion.
 
@@ -338,7 +338,7 @@ A student confirmation must use the pending index, and that index must still res
 
 After a match, `LogicManager` snapshots the address book and calls either `Model#deleteStudent(StudentId)` or `Model#deleteSessionNote(StudentId, Index)`. Student deletion removes the student and complete history atomically; session-note deletion removes only the selected note and preserves the student and every other note. `LogicManager` then saves the complete address book. A save failure restores the snapshot and leaves no confirmation pending, so the user must preview again. No storage-schema change is needed because the existing `sessionNotes` list stores the updated history, while note numbers and pending state remain transient.
 
-After a successful student deletion, `MainWindow` requests a fresh roster snapshot, assigns consecutive student indices, and closes the profile if it belonged to the deleted student. After a successful note deletion, it refreshes an open profile so the remaining newest-first notes and their reassigned numbers are visible. A preview or rejected confirmation leaves the roster and profile unchanged.
+After a successful student deletion, `MainWindow` requests a fresh roster snapshot, assigns consecutive student indices, and closes the previewed student's profile and roster selection. After a successful note deletion, it refreshes an open profile so the remaining newest-first notes and their reassigned numbers are visible. A student preview changes only the displayed profile and roster selection; both deletion previews leave model and saved data unchanged. A rejected confirmation leaves the displayed profile, roster, and saved data unchanged.
 
 **Design considerations:**
 
@@ -892,7 +892,15 @@ testers are expected to do more *exploratory* testing.
       Expected: Folder A contains `preferences.json`, `tutortrack.log.0`, and `data/tutortrack.json`. Folder B contains no new files. The status bar shows `./data/tutortrack.json`.
    1. Launch TutorTrack again from folder B with the same command.
       Expected: Dev Patel is still in the roster.
-4. _{ more test cases … }_
+4. Launching from a write-protected folder
+
+   1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows, run `icacls <folder> /deny "%USERNAME%:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d %USERNAME%`.
+   1. Run `java -jar tutortrack.jar` from that folder.
+      Expected: The GUI opens with an empty roster, the terminal shows a warning that the file handler could not be added, and no stack trace or crash occurs. The folder contains no new files.
+   1. Enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`.
+      Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Dev Patel is not added to the roster.
+   1. Restore write access to the folder.
+5. _{ more test cases … }_
 
 ### UI theme and scaling
 
@@ -1017,6 +1025,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
    Expected: The first reports `Session note is empty. Enter the note text after nt/.` and the second a duplicate prefix error; no note count changes.
+1. Enter `note 1 nt/Remember (nt/) notation`, then `view 1`.
+   Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 
@@ -1041,8 +1051,14 @@ testers are expected to do more *exploratory* testing.
 ### Deleting a student
 
 1. Add Ari Tan and Bea Tan, add two session notes to Ari, and open Ari's profile with `view 1`.
+1. Enter `delete 2`.
+   Expected: TutorTrack previews deletion of Bea Tan with 0 session notes and shows `delete 2 /confirm`. Bea's profile opens and her roster card is highlighted instead of Ari's. The roster, notes, and data file remain unchanged.
+1. Enter `delete 3`.
+   Expected: TutorTrack reports that index 3 is outside the roster and cancels the pending deletion. Bea's profile and roster highlight remain visible, and no data changes.
+1. Enter `view 1`.
+   Expected: Ari's profile and roster highlight return.
 1. Enter `delete 1`.
-   Expected: TutorTrack reports `Are you sure you want to delete Ari Tan and 2 session notes?`, shows `If yes, type: delete 1 /confirm`, and states `To cancel, enter another valid command. Typos keep this preview.` The roster, notes, profile, and data file remain unchanged.
+   Expected: TutorTrack reports `Are you sure you want to delete Ari Tan and 2 session notes?`, shows `If yes, type: delete 1 /confirm`, and states `To cancel, enter another valid command. Typos keep this preview.` Ari's profile and roster highlight remain visible; the roster, notes, and data file remain unchanged.
 1. Enter `help`, followed by `delete 1 /confirm`.
    Expected: `help` cancels the pending deletion and opens the help window. The confirmation is then rejected because no matching deletion is pending; Ari and the notes remain unchanged.
 1. Enter `delete 1`, followed immediately by `delete 1 /confirm`.
