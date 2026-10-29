@@ -1559,6 +1559,34 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void executeCommand_editNoteAfterView_switchesToEditedStudentProfile() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Tan", BLAIR_ID);
+        StudentRoster roster = new StudentRoster(List.of(alex, blair));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+        StudentProfile blairProfile = new StudentProfile(BLAIR_ID, blair.getName(), blair.getParentGuardianContact(),
+                blair.getSubject(), blair.getCurrentLevel(), List.of());
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Successfully edited session note [1] for Blair Tan.",
+                    BLAIR_ID));
+            logic.setProfile(Optional.of(blairProfile));
+
+            mainWindow.executeCommand("edit note 2 1 nt/Corrected note.");
+
+            assertEquals("Blair Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            assertEquals(BLAIR_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_editAfterView_refreshesReorderedRosterAndOpenProfile() throws Exception {
         Student alex = student("Alex Tan", ALEX_ID);
         Student blair = student("Blair Tan", BLAIR_ID);
