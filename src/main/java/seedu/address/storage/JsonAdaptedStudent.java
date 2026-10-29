@@ -1,5 +1,7 @@
 package seedu.address.storage;
 
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -83,6 +85,7 @@ class JsonAdaptedStudent {
      * Constructs a Jackson-friendly student from a domain student and that student's session history.
      */
     JsonAdaptedStudent(Student source, SessionHistory sessionHistory) {
+        requireAllNonNull(source, sessionHistory);
         studentId = source.getId().getValue();
         name = source.getName().getValue();
         parentPhone = source.getParentGuardianContact().getPhone();

@@ -1,12 +1,15 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.FACTORISATION_NOTE;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -54,6 +57,21 @@ public class JsonAdaptedSessionNoteTest {
         assertInvalidRecordedAt("2026-09-18T18:35:00");
         assertInvalidRecordedAt("2026-09-18");
         assertInvalidRecordedAt("2026-02-30T18:35:00+08:00");
+    }
+
+    @Test
+    public void toModelType_invalidRecordedAt_keepsParseFailureAsCause() {
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote("yesterday", VALID_TEXT);
+
+        IllegalValueException exception = Assertions.assertThrows(IllegalValueException.class,
+                note::toModelType);
+
+        assertInstanceOf(DateTimeParseException.class, exception.getCause());
+    }
+
+    @Test
+    public void constructor_nullSource_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new JsonAdaptedSessionNote(null));
     }
 
     @Test

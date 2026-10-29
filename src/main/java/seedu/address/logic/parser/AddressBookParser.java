@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.Messages.withFormat;
@@ -72,6 +73,7 @@ public class AddressBookParser {
      * @return The known command word, or {@code "unknown"}.
      */
     public static String getLoggableCommandWord(String userInput) {
+        requireNonNull(userInput);
         Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
         if (!matcher.matches()) {
             return UNKNOWN_COMMAND_WORD;

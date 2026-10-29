@@ -237,7 +237,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     }
 
     private boolean hasStudentWithId(StudentId studentId) {
-        return students.stream().anyMatch(student -> student.getId().equals(studentId));
+        return getStudent(studentId).isPresent();
     }
 
     /**

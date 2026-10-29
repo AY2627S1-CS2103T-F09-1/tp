@@ -90,7 +90,13 @@ public class HomeFolder {
      * Returns the location this class was loaded from, or null if the JVM does not report one.
      */
     private static URL findCodeLocation() {
-        CodeSource codeSource = HomeFolder.class.getProtectionDomain().getCodeSource();
+        return toCodeLocation(HomeFolder.class.getProtectionDomain().getCodeSource());
+    }
+
+    /**
+     * Returns the location of {@code codeSource}, or null if {@code codeSource} is null.
+     */
+    static URL toCodeLocation(CodeSource codeSource) {
         return codeSource == null ? null : codeSource.getLocation();
     }
 }

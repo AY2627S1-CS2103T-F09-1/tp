@@ -241,6 +241,11 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void getLoggableCommandWord_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> AddressBookParser.getLoggableCommandWord(null));
+    }
+
+    @Test
     public void getLoggableCommandWord_blankInput_returnsUnknown() {
         assertEquals(AddressBookParser.UNKNOWN_COMMAND_WORD, AddressBookParser.getLoggableCommandWord("   "));
     }

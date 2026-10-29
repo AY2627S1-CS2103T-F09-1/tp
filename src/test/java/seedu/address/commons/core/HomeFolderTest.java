@@ -1,6 +1,7 @@
 package seedu.address.commons.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.io.IOException;
@@ -9,6 +10,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.CodeSigner;
+import java.security.CodeSource;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -138,5 +141,17 @@ public class HomeFolderTest {
         Path siblingFile = testFolder.resolve("home-backup").resolve("tutortrack.json");
 
         assertEquals(siblingFile, HomeFolder.toDisplayPath(homeFolder, siblingFile));
+    }
+
+    @Test
+    public void toCodeLocation_nullCodeSource_returnsNull() {
+        assertNull(HomeFolder.toCodeLocation(null));
+    }
+
+    @Test
+    public void toCodeLocation_codeSourceWithLocation_returnsLocation() throws IOException {
+        URL location = testFolder.resolve("tutortrack.jar").toUri().toURL();
+
+        assertEquals(location, HomeFolder.toCodeLocation(new CodeSource(location, (CodeSigner[]) null)));
     }
 }

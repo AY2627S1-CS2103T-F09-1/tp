@@ -98,6 +98,12 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void constructor_nullSourceOrHistory_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new JsonAdaptedStudent(null, SessionHistory.empty()));
+        assertThrows(NullPointerException.class, () -> new JsonAdaptedStudent(VALID_STUDENT, null));
+    }
+
+    @Test
     public void toModelSessionHistory_withSessionNotes_returnsHistory() throws Exception {
         SessionHistory history = SessionHistory.empty().withNote(INDICES_NOTE).withNote(FACTORISATION_NOTE);
 

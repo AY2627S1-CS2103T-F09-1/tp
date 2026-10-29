@@ -1,5 +1,7 @@
 package seedu.address.storage;
 
+import static java.util.Objects.requireNonNull;
+
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -45,6 +47,7 @@ class JsonAdaptedSessionNote {
      * Constructs a Jackson-friendly session note from a domain session note.
      */
     JsonAdaptedSessionNote(SessionNote source) {
+        requireNonNull(source);
         recordedAt = source.getRecordedAt().format(RECORDED_AT_FORMAT);
         text = source.getText();
     }
@@ -70,7 +73,7 @@ class JsonAdaptedSessionNote {
         try {
             return OffsetDateTime.parse(recordedAt, RECORDED_AT_FORMAT);
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException(INVALID_RECORDED_AT_MESSAGE);
+            throw new IllegalValueException(INVALID_RECORDED_AT_MESSAGE, exception);
         }
     }
 
