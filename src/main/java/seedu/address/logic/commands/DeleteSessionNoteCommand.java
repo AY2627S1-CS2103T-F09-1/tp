@@ -23,7 +23,7 @@ public class DeleteSessionNoteCommand extends Command {
             "Are you sure you want to delete session note [%1$d] for %2$s?\n"
             + "If yes, type: " + DeleteCommand.COMMAND_WORD + " " + NOTE_TARGET + " %3$d %1$d "
             + DeleteCommand.CONFIRMATION_FLAG + "\n"
-            + "To cancel, enter any other command.";
+            + DeleteCommand.MESSAGE_CANCEL_PREVIEW;
     public static final String MESSAGE_DELETE_SESSION_NOTE_SUCCESS =
             "Successfully deleted session note [%1$d] for %2$s.";
     public static final String MESSAGE_NO_PENDING_DELETION =
@@ -96,7 +96,8 @@ public class DeleteSessionNoteCommand extends Command {
         }
 
         return new CommandResult(String.format(MESSAGE_CONFIRM_DELETE,
-                noteNumber.getOneBased(), student.getName(), studentIndex.getOneBased()));
+                noteNumber.getOneBased(), student.getName(), studentIndex.getOneBased()),
+                student.getStudentId(), noteNumber);
     }
 
     @Override

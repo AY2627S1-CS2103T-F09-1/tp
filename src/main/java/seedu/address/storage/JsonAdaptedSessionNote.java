@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -21,9 +22,13 @@ class JsonAdaptedSessionNote {
     static final String INVALID_RECORDED_AT_MESSAGE =
             "Session note timestamps must include a date, time, and offset, "
             + "such as 2026-09-18T18:35:00+08:00.";
+    static final String INVALID_LAST_EDITED_AT_MESSAGE =
+            "Session note last-edited timestamps must include a date, time, and offset, "
+            + "such as 2026-10-23T14:10:00+08:00, and must not precede recordedAt.";
 
     private static final String RECORDED_AT_FIELD = "recordedAt";
     private static final String TEXT_FIELD = "text";
+    private static final String LAST_EDITED_AT_FIELD = "lastEditedAt";
 
     /**
      * Always writes seconds, unlike {@link OffsetDateTime#toString()}, which omits them when they are zero.
@@ -32,15 +37,22 @@ class JsonAdaptedSessionNote {
 
     private final String recordedAt;
     private final String text;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final String lastEditedAt;
 
     /**
      * Constructs a Jackson-friendly session note from persisted fields.
      */
     @JsonCreator
     JsonAdaptedSessionNote(@JsonProperty(RECORDED_AT_FIELD) String recordedAt,
-            @JsonProperty(TEXT_FIELD) String text) {
+            @JsonProperty(TEXT_FIELD) String text, @JsonProperty(LAST_EDITED_AT_FIELD) String lastEditedAt) {
         this.recordedAt = recordedAt;
         this.text = text;
+        this.lastEditedAt = lastEditedAt;
+    }
+
+    JsonAdaptedSessionNote(String recordedAt, String text) {
+        this(recordedAt, text, null);
     }
 
     /**
@@ -50,6 +62,7 @@ class JsonAdaptedSessionNote {
         requireNonNull(source);
         recordedAt = source.getRecordedAt().format(RECORDED_AT_FORMAT);
         text = source.getText();
+        lastEditedAt = source.getLastEditedAt().map(value -> value.format(RECORDED_AT_FORMAT)).orElse(null);
     }
 
     /**
@@ -58,7 +71,8 @@ class JsonAdaptedSessionNote {
      * @throws IllegalValueException If a persisted field is missing or invalid.
      */
     SessionNote toModelType() throws IllegalValueException {
-        return new SessionNote(requireValidText(), requireValidRecordedAt());
+        OffsetDateTime modelRecordedAt = requireValidRecordedAt();
+        return new SessionNote(requireValidText(), modelRecordedAt, requireValidLastEditedAt(modelRecordedAt));
     }
 
     /**
@@ -74,6 +88,21 @@ class JsonAdaptedSessionNote {
             return OffsetDateTime.parse(recordedAt, RECORDED_AT_FORMAT);
         } catch (DateTimeParseException exception) {
             throw new IllegalValueException(INVALID_RECORDED_AT_MESSAGE, exception);
+        }
+    }
+
+    private OffsetDateTime requireValidLastEditedAt(OffsetDateTime modelRecordedAt) throws IllegalValueException {
+        if (lastEditedAt == null) {
+            return null;
+        }
+        try {
+            OffsetDateTime parsedLastEditedAt = OffsetDateTime.parse(lastEditedAt, RECORDED_AT_FORMAT);
+            if (parsedLastEditedAt.isBefore(modelRecordedAt)) {
+                throw new IllegalValueException(INVALID_LAST_EDITED_AT_MESSAGE);
+            }
+            return parsedLastEditedAt;
+        } catch (DateTimeParseException exception) {
+            throw new IllegalValueException(INVALID_LAST_EDITED_AT_MESSAGE);
         }
     }
 

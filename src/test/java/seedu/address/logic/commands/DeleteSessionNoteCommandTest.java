@@ -34,7 +34,8 @@ public class DeleteSessionNoteCommandTest {
                 NOTE_TWO.getOneBased(), ALEX.getName(), INDEX_FIRST_PERSON.getOneBased());
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
 
-        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertCommandSuccess(command, model, new CommandResult(expectedMessage, ALEX.getId(), NOTE_TWO),
+                expectedModel);
     }
 
     @Test

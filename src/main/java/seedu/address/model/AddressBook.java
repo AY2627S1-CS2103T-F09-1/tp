@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -214,10 +215,11 @@ public class AddressBook implements ReadOnlyAddressBook {
      * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
      * @throws IndexOutOfBoundsException If {@code noteNumber} exceeds the student's history size.
      */
-    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text) {
-        requireAllNonNull(studentId, noteNumber, text);
+    public SessionNote editSessionNote(StudentId studentId, Index noteNumber, String text,
+            OffsetDateTime lastEditedAt) {
+        requireAllNonNull(studentId, noteNumber, text, lastEditedAt);
         checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
-        return sessionHistories.editNote(studentId, noteNumber, text);
+        return sessionHistories.editNote(studentId, noteNumber, text, lastEditedAt);
     }
 
     /**

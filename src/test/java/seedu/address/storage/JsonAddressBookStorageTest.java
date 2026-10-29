@@ -15,14 +15,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.session.SessionHistory;
+import seedu.address.model.session.SessionNote;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -167,6 +172,23 @@ public class JsonAddressBookStorageTest {
         assertEquals(original, new AddressBook(readBack));
         assertEquals(original.getSessionHistory(ALEX.getId()), readBack.getSessionHistory(ALEX.getId()));
         assertTrue(Files.readString(filePath).contains("\"recordedAt\" : \"2026-09-18T18:35:00+08:00\""));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_withEditedSessionNote_keepsLastEditedAt() throws Exception {
+        Path filePath = testFolder.resolve("EditedSessionNoteAddressBook.json");
+        AddressBook original = new AddressBook();
+        original.addStudent(ALEX);
+        SessionNote editedNote = new SessionNote("Corrected summary.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"),
+                OffsetDateTime.parse("2026-10-23T14:10:00+08:00"));
+        original.setSessionHistory(ALEX.getId(), SessionHistory.of(List.of(editedNote)));
+        JsonAddressBookStorage jsonAddressBookStorage = new JsonAddressBookStorage(filePath);
+
+        jsonAddressBookStorage.saveAddressBook(original, filePath);
+        ReadOnlyAddressBook readBack = jsonAddressBookStorage.readAddressBook(filePath).get();
+
+        assertEquals(editedNote, readBack.getSessionHistory(ALEX.getId()).getNote(Index.fromOneBased(1)));
     }
 
     @Test
