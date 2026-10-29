@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
@@ -19,7 +18,6 @@ import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
-import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.student.StudentId;
@@ -230,11 +228,6 @@ public class LogicManager implements Logic {
     private void restore(AddressBook dataBeforeCommand) {
         logger.warning("Could not save data; restoring the data from before the command.");
         model.setAddressBook(dataBeforeCommand);
-    }
-
-    @Override
-    public ObservableList<Person> getFilteredPersonList() {
-        return model.getFilteredPersonList();
     }
 
     @Override
