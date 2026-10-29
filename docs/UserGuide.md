@@ -19,6 +19,8 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
 1. Copy the file to the folder you want to use as the _home folder_ for TutorTrack. This folder will contain the data file that stores your student roster and session notes. Rename the downloaded file to `tutortrack.jar` if it has a different name.
 
+   Choose a folder that you can write to, such as one in your user folder. TutorTrack saves its data file, preferences and log files in this folder, so it cannot save anything if the folder is write-protected (see [Known issues](#known-issues)).
+
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar tutortrack.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. On a first launch, the student roster is empty.<br>
    ![Ui](images/Ui.png)
@@ -274,6 +276,7 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+1. **If the folder containing `tutortrack.jar` is write-protected**, TutorTrack still starts, but it cannot create log files or save your window preferences. Commands that change data, such as `add`, fail with an error saying TutorTrack could not save the data file, and the roster stays unchanged. The remedy is to move `tutortrack.jar` to a folder that you can write to.
 
 --------------------------------------------------------------------------------------------------------------------
 
