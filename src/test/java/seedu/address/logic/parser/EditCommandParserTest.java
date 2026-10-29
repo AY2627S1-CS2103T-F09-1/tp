@@ -144,7 +144,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidValues_failure() {
         assertParseFailure(parser, " 1 n/", StudentName.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 p/12", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 p/10101010", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 e/example.com",
                 ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 sub/", Subject.MESSAGE_CONSTRAINTS);

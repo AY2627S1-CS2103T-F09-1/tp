@@ -106,6 +106,7 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 
 * **Required details:** Name, parent or guardian phone number, subject, and current level must be provided.
 * **Student name:** Names must begin with a letter or number and may contain only letters, numbers, spaces, apostrophes, periods, and hyphens.
+* **Parent or guardian phone:** Use an 8-digit Singapore number beginning with `6`, `8`, or `9`, such as `9123 4567`, or an international number beginning with `+` and containing 8 to 15 digits, such as `+65 9123 4567`. Spaces and hyphens are allowed. TutorTrack validates the format only; it cannot confirm ownership or reachability.
 * **Optional detail:** Parent or guardian email may be included with `e/`.
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
 * **Subject and level text:** Text that looks like a prefix other than a command parameter or obsolete AddressBook `a/` or `t/` parameter is kept as part of a subject or current level. The obsolete `a/` and `t/` parameters are rejected with an error instead.

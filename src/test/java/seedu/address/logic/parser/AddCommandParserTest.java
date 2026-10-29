@@ -106,7 +106,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_invalidValue_failureWithoutFormat() {
-        assertParseFailure(parser, " n/Alicia Lim p/12 sub/Mathematics l/Secondary 3",
+        assertParseFailure(parser, " n/Alicia Lim p/10101010 sub/Mathematics l/Secondary 3",
                 ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
     }
 

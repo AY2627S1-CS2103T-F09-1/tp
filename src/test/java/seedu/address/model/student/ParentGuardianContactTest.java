@@ -15,7 +15,7 @@ public class ParentGuardianContactTest {
     @Test
     public void constructor_invalidValues_throwsIllegalArgumentException() {
         assertThrows(NullPointerException.class, () -> new ParentGuardianContact(null, Optional.empty()));
-        assertThrows(IllegalArgumentException.class, () -> new ParentGuardianContact("12", Optional.empty()));
+        assertThrows(IllegalArgumentException.class, () -> new ParentGuardianContact("10101010", Optional.empty()));
         assertThrows(IllegalArgumentException.class, () -> new ParentGuardianContact("9123 4567",
                 Optional.of("not-an-email")));
     }
@@ -33,18 +33,18 @@ public class ParentGuardianContactTest {
     @Test
     public void isValidPhone() {
         assertThrows(NullPointerException.class, () -> ParentGuardianContact.isValidPhone(null));
-        // boundary: fewer than three digits is rejected, exactly three is accepted
         assertFalse(ParentGuardianContact.isValidPhone(""));
         assertFalse(ParentGuardianContact.isValidPhone("12"));
         assertFalse(ParentGuardianContact.isValidPhone("+12"));
-        assertTrue(ParentGuardianContact.isValidPhone("123"));
-        assertTrue(ParentGuardianContact.isValidPhone("1 2 3"));
-        assertTrue(ParentGuardianContact.isValidPhone("+123"));
-        // equivalence partition: unsupported characters are rejected
+        assertFalse(ParentGuardianContact.isValidPhone("+65 91234"));
+        assertFalse(ParentGuardianContact.isValidPhone("10101010"));
+        assertFalse(ParentGuardianContact.isValidPhone("7123 4567"));
+        assertFalse(ParentGuardianContact.isValidPhone("+65 9123 4567 8901 23"));
         assertFalse(ParentGuardianContact.isValidPhone("9123abc"));
         assertFalse(ParentGuardianContact.isValidPhone("+ 9123"));
         assertTrue(ParentGuardianContact.isValidPhone("9123 4567"));
         assertTrue(ParentGuardianContact.isValidPhone("+65-9123-4567"));
+        assertTrue(ParentGuardianContact.isValidPhone("+123456789012345"));
     }
 
     @Test

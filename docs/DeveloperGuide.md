@@ -216,7 +216,7 @@ TutorTrack's first student-domain slice introduces immutable `Student`, `Student
 
 The command and storage layers will construct `Student` values and delegate duplicate comparisons to `StudentIdentity`; they must not reproduce this normalization logic. This keeps the same duplicate outcome for typed commands and manually edited persisted data.
 
-Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. Each session note stores `recordedAt`, `text`, and an optional `lastEditedAt`; the latter is omitted for unedited notes and missing or null values load as unedited. `lastEditedAt` must not precede `recordedAt`. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableAddressBook` then checks each loaded student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
+Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. Each session note stores `recordedAt`, `text`, and an optional `lastEditedAt`; the latter is omitted for unedited notes and missing or null values load as unedited. `lastEditedAt` must not precede `recordedAt`. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `ParentGuardianContact` accepts either an 8-digit Singapore number beginning with `6`, `8`, or `9`, or a `+`-prefixed international number with 8 to 15 digits; spaces and hyphens do not affect validation or duplicate identity. The rule detects structurally implausible values but cannot establish ownership or reachability. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableAddressBook` then checks each loaded student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
 
 ### Student editing
 
@@ -958,14 +958,16 @@ When manually testing roster resizing, start with a populated roster containing 
 
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
    Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
-2. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
+1. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
    Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone. Use a different name or phone, or edit the existing student.` and preserves the existing record.
-3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
+1. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
-4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
+1. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
    Expected: The first reports `Missing l/CURRENT_LEVEL.` and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
-5. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
+1. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
    Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
+1. Enter `add n/Alex Tan p/10101010 sub/Mathematics l/Secondary 3`, then enter `edit 1 p/10101010` for an existing student.
+   Expected: Both report only the phone-number rule and leave the roster, profile, session notes, and data file unchanged. A valid local number such as `9123 4567` and international number such as `+65 9123 4567` remain accepted.
 
 ### Editing a student
 
