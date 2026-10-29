@@ -109,6 +109,25 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseNoteText_onlyInvisibleCharacters_throwsEmptyNoteMessage() {
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText(" "));
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText("​"));
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText("  ​ "));
+    }
+
+    @Test
+    public void parseNoteText_overlongInvisibleCharacters_throwsEmptyNoteMessage() {
+        String overlongInvisibleNote = " ".repeat(SessionNote.MAX_TEXT_LENGTH + 1);
+
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText(overlongInvisibleNote));
+    }
+
+    @Test
+    public void parseNoteText_visibleTextWithNonBreakingSpace_returnsTextUnchanged() throws Exception {
+        assertEquals("Reviewed indices.", ParserUtil.parseNoteText("Reviewed indices."));
+    }
+
+    @Test
     public void parseNoteText_aboveMaximumLength_throwsMessageWithEnteredLength() {
         int overLimit = SessionNote.MAX_TEXT_LENGTH + 1;
 

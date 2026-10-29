@@ -68,6 +68,33 @@ public class SessionNoteTest {
     }
 
     @Test
+    public void isValidText_onlyInvisibleCharacters_returnsFalse() {
+        assertFalse(SessionNote.isValidText(" "));
+        assertFalse(SessionNote.isValidText("​"));
+        assertFalse(SessionNote.isValidText("   ​﻿ "));
+    }
+
+    @Test
+    public void isValidText_visibleTextAroundInvisibleCharacters_returnsTrue() {
+        assertTrue(SessionNote.isValidText("Reviewed indices."));
+        assertTrue(SessionNote.isValidText("​Reviewed indices. "));
+    }
+
+    @Test
+    public void hasVisibleCharacter_variousTexts_returnsWhetherAnyCharacterIsVisible() {
+        assertFalse(SessionNote.hasVisibleCharacter(""));
+        assertFalse(SessionNote.hasVisibleCharacter(" \t  ​﻿"));
+        assertTrue(SessionNote.hasVisibleCharacter(" a "));
+        assertTrue(SessionNote.hasVisibleCharacter("😀"));
+    }
+
+    @Test
+    public void constructor_onlyInvisibleCharacters_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> new SessionNote(
+                " ​", RECORDED_AT));
+    }
+
+    @Test
     public void isValidText_lengthBoundaries_acceptsMinimumToMaximum() {
         assertFalse(SessionNote.isValidText("a".repeat(SessionNote.MIN_TEXT_LENGTH - 1)));
         assertTrue(SessionNote.isValidText("a".repeat(SessionNote.MIN_TEXT_LENGTH)));
