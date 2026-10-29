@@ -44,7 +44,7 @@ public class DeleteSessionNoteCommandTest {
         DeleteSessionNoteCommand command = new DeleteSessionNoteCommand(INDEX_FIRST_PERSON, NOTE_ONE);
 
         assertCommandFailure(command, model,
-                String.format(DeleteSessionNoteCommand.MESSAGE_NO_SESSION_NOTES, ALEX.getName()));
+                ALEX.getName() + " has no session notes to delete. Add one with note INDEX nt/NOTE first.");
     }
 
     @Test
@@ -63,7 +63,8 @@ public class DeleteSessionNoteCommandTest {
         Index outOfRangeStudent = Index.fromOneBased(model.getStudentRoster().size() + 1);
         DeleteSessionNoteCommand command = new DeleteSessionNoteCommand(outOfRangeStudent, NOTE_ONE);
 
-        assertCommandFailure(command, model, Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
+        assertCommandFailure(command, model, String.format(Messages.MESSAGE_STUDENT_INDEX_OUT_OF_RANGE,
+                outOfRangeStudent.getOneBased(), model.getStudentRoster().size()));
     }
 
     @Test

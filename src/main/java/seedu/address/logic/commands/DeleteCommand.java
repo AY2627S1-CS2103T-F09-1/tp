@@ -2,11 +2,8 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.List;
-
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.student.StudentRosterEntry;
@@ -18,13 +15,8 @@ public class DeleteCommand extends Command {
 
     public static final String COMMAND_WORD = "delete";
     public static final String CONFIRMATION_FLAG = "/confirm";
-
-    public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Previews or confirms deletion of the student identified by the index number used in the student "
-            + "roster.\n"
-            + "Parameters: INDEX (must be a positive integer) [" + CONFIRMATION_FLAG + "]\n"
-            + "Preview: " + COMMAND_WORD + " 1\n"
-            + "Confirm: " + COMMAND_WORD + " 1 " + CONFIRMATION_FLAG;
+    public static final String COMMAND_FORMAT = COMMAND_WORD + " INDEX [" + CONFIRMATION_FLAG + "]";
+    public static final String COMMAND_EXAMPLE = COMMAND_WORD + " 1";
 
     public static final String MESSAGE_CONFIRM_DELETE =
             "Are you sure you want to delete %1$s and %2$d %3$s?\n"
@@ -83,17 +75,12 @@ public class DeleteCommand extends Command {
             throw new CommandException(MESSAGE_NO_PENDING_DELETION);
         }
 
-        List<StudentRosterEntry> rosterEntries = model.getStudentRoster().getEntries();
-
-        if (targetIndex.getZeroBased() >= rosterEntries.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_STUDENT_DISPLAYED_INDEX);
-        }
-
-        StudentRosterEntry studentToDelete = rosterEntries.get(targetIndex.getZeroBased());
+        StudentRosterEntry studentToDelete = getRosterEntry(model, targetIndex);
         int noteCount = studentToDelete.getNoteCount();
         String noteLabel = noteCount == 1 ? "session note" : "session notes";
         return new CommandResult(String.format(MESSAGE_CONFIRM_DELETE,
-                studentToDelete.getName(), noteCount, noteLabel, targetIndex.getOneBased()));
+                studentToDelete.getName(), noteCount, noteLabel, targetIndex.getOneBased()),
+                studentToDelete.getStudentId());
     }
 
     @Override

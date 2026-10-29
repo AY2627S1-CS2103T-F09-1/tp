@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -147,13 +148,8 @@ class JsonAdaptedStudent {
     }
 
     private String requireValidPhone() throws IllegalValueException {
-        if (parentPhone == null) {
-            throw missingField(ParentGuardianContact.class);
-        }
-        if (!ParentGuardianContact.isValidPhone(parentPhone)) {
-            throw new IllegalValueException(ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
-        }
-        return parentPhone;
+        return requireValidField(parentPhone, ParentGuardianContact.class,
+                ParentGuardianContact::isValidPhone, ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
     }
 
     private Optional<String> optionalValidEmail() throws IllegalValueException {
@@ -167,23 +163,32 @@ class JsonAdaptedStudent {
     }
 
     private String requireValidSubject() throws IllegalValueException {
-        if (subject == null) {
-            throw missingField(Subject.class);
-        }
-        if (!Subject.isValidSubject(subject)) {
-            throw new IllegalValueException(Subject.MESSAGE_CONSTRAINTS);
-        }
-        return subject;
+        return requireValidField(subject, Subject.class, Subject::isValidSubject, Subject.MESSAGE_CONSTRAINTS);
     }
 
     private String requireValidCurrentLevel() throws IllegalValueException {
-        if (currentLevel == null) {
-            throw missingField(CurrentLevel.class);
+        return requireValidField(currentLevel, CurrentLevel.class,
+                CurrentLevel::isValidCurrentLevel, CurrentLevel.MESSAGE_CONSTRAINTS);
+    }
+
+    /**
+     * Returns {@code value} when it is present and satisfies {@code isValid}.
+     *
+     * @param value The persisted field value.
+     * @param fieldType The domain type used in the missing-field message.
+     * @param isValid The validity predicate for a present value.
+     * @param constraintMessage The message used when a present value is invalid.
+     * @throws IllegalValueException If {@code value} is missing or invalid.
+     */
+    private String requireValidField(String value, Class<?> fieldType, Predicate<String> isValid,
+            String constraintMessage) throws IllegalValueException {
+        if (value == null) {
+            throw missingField(fieldType);
         }
-        if (!CurrentLevel.isValidCurrentLevel(currentLevel)) {
-            throw new IllegalValueException(CurrentLevel.MESSAGE_CONSTRAINTS);
+        if (!isValid.test(value)) {
+            throw new IllegalValueException(constraintMessage);
         }
-        return currentLevel;
+        return value;
     }
 
     private IllegalValueException missingField(Class<?> fieldType) {

@@ -9,8 +9,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -26,6 +29,7 @@ public class StudentProfilePanel extends UiPart<Region> {
     private static final String FXML = "StudentProfilePanel.fxml";
     private static final String EMAIL_NOT_PROVIDED = "Not provided";
     private static final PseudoClass DELETION_TARGET = PseudoClass.getPseudoClass("deletion-target");
+    private static final double VISIBLE_EDGE_TOLERANCE_PIXELS = 1;
 
     private final ObservableList<NumberedSessionNote> sessionNotes = FXCollections.observableArrayList();
     private Integer previewNoteNumber;
@@ -33,7 +37,7 @@ public class StudentProfilePanel extends UiPart<Region> {
     @FXML
     private VBox emptyState;
     @FXML
-    private VBox profileContent;
+    private ScrollPane profileScrollPane;
     @FXML
     private SelectableText studentName;
     @FXML
@@ -81,6 +85,7 @@ public class StudentProfilePanel extends UiPart<Region> {
         sessionNotes.setAll(numberSessionNotes(profile.getSessionNotes()));
         updateNotesEmptyState();
         setProfileVisible(true);
+        profileScrollPane.setVvalue(profileScrollPane.getVmin());
     }
 
     /**
@@ -91,6 +96,80 @@ public class StudentProfilePanel extends UiPart<Region> {
         sessionNotes.clear();
         updateNotesEmptyState();
         setProfileVisible(false);
+    }
+
+    /**
+     * Scrolls the profile by {@code pageCount} visible pages; a negative count scrolls upward.
+     * Paging down first moves the outer profile pane until its end is visible, then pages the session-note
+     * history; paging up first pages the history back to its top, then moves the outer pane.
+     * Does nothing when the profile has not been laid out yet.
+     */
+    public void scrollSessionNotes(int pageCount) {
+        Node flowNode = sessionNoteListView.lookup(UiPart.VIRTUAL_FLOW_SELECTOR);
+        if (!(flowNode instanceof VirtualFlow<?> virtualFlow)) {
+            return;
+        }
+        if (shouldPageSessionNotes(pageCount, virtualFlow)) {
+            virtualFlow.scrollPixels(pageCount * virtualFlow.getHeight());
+        } else {
+            scrollProfilePane(pageCount);
+        }
+    }
+
+    /**
+     * Returns true if a page request should move the session-note list rather than the outer profile pane.
+     */
+    private boolean shouldPageSessionNotes(int pageCount, VirtualFlow<?> sessionNoteFlow) {
+        boolean isPagingDown = pageCount > 0;
+        return isPagingDown ? isSessionNoteListBottomVisible() : sessionNoteFlow.getPosition() > 0;
+    }
+
+    private double getViewportHeight() {
+        return profileScrollPane.getViewportBounds().getHeight();
+    }
+
+    private double getScrollValueRange() {
+        return profileScrollPane.getVmax() - profileScrollPane.getVmin();
+    }
+
+    private double getScrollableProfilePixels() {
+        return profileScrollPane.getContent().getLayoutBounds().getHeight() - getViewportHeight();
+    }
+
+    /**
+     * Returns true if the profile pane needs no further scrolling for the end of the session-note list to be
+     * visible. Compares edges instead of scroll values because the pane keeps its pixel offset, not its
+     * {@code vvalue}, when the list re-estimates its cell heights while scrolling.
+     */
+    private boolean isSessionNoteListBottomVisible() {
+        double scrollablePixels = getScrollableProfilePixels();
+        if (scrollablePixels <= 0) {
+            return true;
+        }
+        double scrolledValue = profileScrollPane.getVvalue() - profileScrollPane.getVmin();
+        double scrolledFraction = scrolledValue / getScrollValueRange();
+        double visibleBottom = scrolledFraction * scrollablePixels + getViewportHeight();
+        return getSessionNoteListBottom() <= visibleBottom + VISIBLE_EDGE_TOLERANCE_PIXELS;
+    }
+
+    /**
+     * Returns the bottom edge of the session-note list in the coordinates of the scrolled profile content.
+     */
+    private double getSessionNoteListBottom() {
+        Node content = profileScrollPane.getContent();
+        return content.sceneToLocal(sessionNoteListView.localToScene(sessionNoteListView.getLayoutBounds()))
+                .getMaxY();
+    }
+
+    private void scrollProfilePane(int pageCount) {
+        double scrollablePixels = getScrollableProfilePixels();
+        if (scrollablePixels <= 0) {
+            return;
+        }
+        double pageFraction = getViewportHeight() / scrollablePixels;
+        double newValue = profileScrollPane.getVvalue() + pageCount * pageFraction * getScrollValueRange();
+        profileScrollPane.setVvalue(Math.max(profileScrollPane.getVmin(),
+                Math.min(profileScrollPane.getVmax(), newValue)));
     }
 
     private void updateNotesEmptyState() {
@@ -112,7 +191,18 @@ public class StudentProfilePanel extends UiPart<Region> {
 
         previewNoteNumber = noteNumber.getOneBased();
         sessionNoteListView.refresh();
-        sessionNoteListView.scrollTo(listIndex);
+        profileScrollPane.setVvalue(profileScrollPane.getVmax());
+        Node flowNode = sessionNoteListView.lookup(UiPart.VIRTUAL_FLOW_SELECTOR);
+        if (flowNode instanceof VirtualFlow<?> virtualFlow) {
+            if (listIndex == sessionNotes.size() - 1) {
+                // Variable-height cards can leave the last note below the viewport after scrollToTop.
+                virtualFlow.setPosition(1);
+            } else {
+                virtualFlow.scrollToTop(listIndex);
+            }
+        } else {
+            sessionNoteListView.scrollTo(listIndex);
+        }
     }
 
     /**
@@ -126,8 +216,8 @@ public class StudentProfilePanel extends UiPart<Region> {
     }
 
     private void setProfileVisible(boolean isVisible) {
-        profileContent.setVisible(isVisible);
-        profileContent.setManaged(isVisible);
+        profileScrollPane.setVisible(isVisible);
+        profileScrollPane.setManaged(isVisible);
         emptyState.setVisible(!isVisible);
         emptyState.setManaged(!isVisible);
     }

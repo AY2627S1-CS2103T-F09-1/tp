@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -35,6 +36,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -54,9 +56,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.Window;
+import seedu.address.MainApp;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
@@ -160,14 +166,7 @@ public class StudentRosterUiTest {
                 stage.getScene().getRoot().layout();
 
                 ListView<StudentRosterEntry> listView = getListView(panel);
-                Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
-                assertNotNull(virtualFlow);
-                ScrollBar verticalScrollBar = virtualFlow.getChildrenUnmodifiable().stream()
-                        .filter(ScrollBar.class::isInstance)
-                        .map(ScrollBar.class::cast)
-                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
-                        .findFirst()
-                        .orElseThrow();
+                ScrollBar verticalScrollBar = getVerticalScrollBar(listView);
                 assertTrue(verticalScrollBar.isVisible());
                 verticalScrollBar.setValue(verticalScrollBar.getMin());
                 stage.getScene().getRoot().layout();
@@ -181,6 +180,36 @@ public class StudentRosterUiTest {
                         .filter(ListCell.class::isInstance)
                         .map(ListCell.class::cast)
                         .anyMatch(cell -> cell.getItem() == lastEntry));
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void roster_widthChanges_keepsRenderedCardNodes() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        StudentRosterEntry entry = roster.getEntries().get(0);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(roster));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 420, 500));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListCell<?> cellBeforeResize = getVisibleCellForEntry(panel, entry);
+                Node cardBeforeResize = cellBeforeResize.getGraphic();
+
+                ListView<StudentRosterEntry> listView = getListView(panel);
+                listView.resize(listView.getWidth() - 60, listView.getHeight());
+                listView.layout();
+
+                ListCell<?> cellAfterResize = getVisibleCellForEntry(panel, entry);
+                assertSame(cardBeforeResize, cellAfterResize.getGraphic());
             } finally {
                 stage.hide();
             }
@@ -304,7 +333,7 @@ public class StudentRosterUiTest {
         VBox details = (VBox) grid.getChildren().get(0);
         HBox heading = (HBox) details.getChildren().get(0);
 
-        assertEquals("2. ", ((Label) heading.getChildren().get(0)).getText());
+        assertEquals("2", ((Label) heading.getChildren().get(0)).getText());
         assertEquals("Alex Tan", ((Label) heading.getChildren().get(1)).getText());
         assertEquals("Subject: Mathematics", ((Label) details.getChildren().get(1)).getText());
         assertEquals("Level: Secondary 3", ((Label) details.getChildren().get(2)).getText());
@@ -313,6 +342,53 @@ public class StudentRosterUiTest {
         assertTrue(((Label) details.getChildren().get(1)).isWrapText());
         assertTrue(((Label) details.getChildren().get(2)).isWrapText());
         assertTrue(((Label) details.getChildren().get(3)).isWrapText());
+    }
+
+    @Test
+    public void rosterPanel_narrowWidthWithLongFields_wrapsWithoutHorizontalScroll() throws Exception {
+        Student student = new Student(new StudentName("Alicia Alexandra Catherine Elizabeth Lim Wei Xuan"),
+                new ParentGuardianContact("8000 0001",
+                        Optional.of("guardian.with.a.long.address@example.com")),
+                new Subject("Additional Mathematics and Mathematical Modelling"),
+                new CurrentLevel("Secondary Four Express Integrated Academic Programme"), ALEX_ID);
+        StudentRosterPanel panel = onFxThread(() -> new StudentRosterPanel(new StudentRoster(List.of(student))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 260, 500));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ListView<StudentRosterEntry> listView = getListView(panel);
+                ScrollBar horizontalScrollBar = findDescendants(listView, ScrollBar.class).stream()
+                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.HORIZONTAL)
+                        .findFirst()
+                        .orElseThrow();
+                assertFalse(horizontalScrollBar.isVisible());
+
+                @SuppressWarnings("rawtypes")
+                ListCell cell = findDescendants(listView, ListCell.class).stream()
+                        .filter(listCell -> listCell.getGraphic() != null)
+                        .findFirst()
+                        .orElseThrow();
+                HBox card = (HBox) cell.getGraphic();
+                VBox details = (VBox) ((GridPane) card.getChildren().get(0)).getChildren().get(0);
+                Label name = (Label) ((HBox) details.getChildren().get(0)).getChildren().get(1);
+                Label subject = (Label) details.getChildren().get(1);
+                Label currentLevel = (Label) details.getChildren().get(2);
+                Label noteCount = (Label) details.getChildren().get(3);
+                assertTrue(card.getWidth() <= listView.getWidth());
+                assertTrue(name.getHeight() > name.getFont().getSize() * 1.5);
+                assertTrue(subject.getHeight() > subject.getFont().getSize() * 2);
+                assertTrue(currentLevel.getHeight() > currentLevel.getFont().getSize() * 1.5);
+                assertTrue(noteCount.getWidth() <= noteCount.prefWidth(-1) + 1);
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
     }
 
     @Test
@@ -349,12 +425,12 @@ public class StudentRosterUiTest {
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
         StackPane root = (StackPane) panel.getRoot();
         VBox emptyState = (VBox) root.getChildren().get(0);
-        VBox profileContent = (VBox) root.getChildren().get(1);
+        ScrollPane profileScrollPane = getProfileScrollPane(panel);
 
         assertTrue(emptyState.isVisible());
         assertTrue(emptyState.isManaged());
-        assertFalse(profileContent.isVisible());
-        assertFalse(profileContent.isManaged());
+        assertFalse(profileScrollPane.isVisible());
+        assertFalse(profileScrollPane.isManaged());
     }
 
     @Test
@@ -507,6 +583,35 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void profilePanel_widerPlatformFont_fieldLabelsRemainFullyVisible() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile("alex.parent@example.com"));
+            List<Label> fieldLabels = findDescendants(panel.getRoot(), Label.class).stream()
+                    .filter(label -> label.getStyleClass().contains("profile-field-label"))
+                    .toList();
+            fieldLabels.forEach(label -> label.setStyle("-fx-font-size: 18px;"));
+
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 700, 480));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                assertEquals(4, fieldLabels.size());
+                fieldLabels.forEach(label -> assertTrue(label.getWidth() + 1 >= label.prefWidth(-1), () ->
+                        String.format("%s was allocated %.1f px but needs %.1f px",
+                                label.getText(), label.getWidth(), label.prefWidth(-1))));
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void profilePanel_tallWindow_detailsGridCanResize() throws Exception {
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
 
@@ -554,6 +659,41 @@ public class StudentRosterUiTest {
 
                 assertEquals(panel.getRoot().getWidth(), panelClip.getWidth());
                 assertEquals(panel.getRoot().getHeight(), panelClip.getHeight());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void profilePanel_compactViewport_longProfileCanScrollWithoutHorizontalOverflow() throws Exception {
+        SessionNote note = new SessionNote("Reviewed factorisation.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfile longProfile = new StudentProfile(ALEX_ID,
+                new StudentName("Alicia Alexandra Lim Wei Xuan"),
+                new ParentGuardianContact("8000 0001",
+                        Optional.of("guardian.with.a.long.address@example.com")),
+                new Subject("Additional Mathematics and Mathematical Modelling"),
+                new CurrentLevel("Secondary 4 Express"), List.of(note));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(longProfile);
+            Stage stage = new Stage();
+            try {
+                stage.setScene(new Scene(panel.getRoot(), 280, 300));
+                stage.show();
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+
+                ScrollPane profileScrollPane = (ScrollPane) panel.getRoot().lookup("#profileScrollPane");
+                assertNotNull(profileScrollPane);
+                assertTrue(profileScrollPane.getVmax() > profileScrollPane.getVmin());
+                assertEquals(ScrollPane.ScrollBarPolicy.NEVER, profileScrollPane.getHbarPolicy());
+                assertTrue(profileScrollPane.isFitToWidth());
+                assertTrue(profileScrollPane.getContent().getLayoutBounds().getWidth()
+                        <= profileScrollPane.getViewportBounds().getWidth() + 1);
             } finally {
                 stage.hide();
             }
@@ -667,15 +807,10 @@ public class StudentRosterUiTest {
 
     @Test
     public void selectableText_scrollEvent_scrollsSessionHistoryList() throws Exception {
-        List<SessionNote> notes = new ArrayList<>();
-        for (int i = 0; i < 12; i++) {
-            notes.add(new SessionNote("Reviewed algebra concepts in lesson " + i + ".",
-                    OffsetDateTime.parse("2026-09-18T18:35:00+08:00").minusDays(i)));
-        }
         StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
 
         onFxThread(() -> {
-            panel.setProfile(profile(null, notes));
+            panel.setProfile(profile(null, sessionNotes(12)));
             Stage stage = new Stage();
             try {
                 stage.setScene(new Scene(panel.getRoot(), 360, 480));
@@ -686,14 +821,7 @@ public class StudentRosterUiTest {
                 ListView<StudentProfilePanel.NumberedSessionNote> listView = getSessionNoteListView(panel);
                 SelectableText noteText = (SelectableText) listView.lookup(".session-note-text");
                 assertNotNull(noteText);
-                Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
-                assertNotNull(virtualFlow);
-                ScrollBar verticalScrollBar = virtualFlow.getChildrenUnmodifiable().stream()
-                        .filter(ScrollBar.class::isInstance)
-                        .map(ScrollBar.class::cast)
-                        .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
-                        .findFirst()
-                        .orElseThrow();
+                ScrollBar verticalScrollBar = getVerticalScrollBar(listView);
                 assertTrue(verticalScrollBar.isVisible());
                 double initialScrollValue = verticalScrollBar.getValue();
                 ScrollEvent downwardScrollEvent = scrollEvent();
@@ -806,11 +934,13 @@ public class StudentRosterUiTest {
                 stage.getScene().getRoot().layout();
                 panel.previewDeletionOf(Index.fromOneBased(1));
                 stage.getScene().getRoot().layout();
-                boolean isTargetVisible = panel.getRoot().lookupAll(".session-note-header").stream()
+                List<String> visibleHeaders = panel.getRoot().lookupAll(".session-note-header").stream()
                         .filter(SelectableText.class::isInstance)
                         .map(SelectableText.class::cast)
-                        .anyMatch(header -> header.getText().startsWith("[1]"));
-                assertTrue(isTargetVisible);
+                        .map(SelectableText::getText)
+                        .toList();
+                assertTrue(visibleHeaders.stream().anyMatch(header -> header.startsWith("[1]")),
+                        "Visible note headers: " + visibleHeaders);
             } finally {
                 stage.hide();
             }
@@ -854,6 +984,180 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void sessionNoteListCell_nearLimitNote_showsEveryWrappedLine() throws Exception {
+        StringBuilder noteText = new StringBuilder("w001");
+        for (int i = 2; i <= 100; i++) {
+            noteText.append(String.format(" w%03d", i));
+        }
+        SessionNote note = new SessionNote(noteText.toString(),
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            try {
+                panel.setProfile(profile(null, List.of(note)));
+                Scene scene = new Scene(panel.getRoot(), 360, 600);
+                scene.getStylesheets().add(MainApp.class.getResource("/view/TutorTrackTheme.css").toExternalForm());
+                stage.setScene(scene);
+                stage.show();
+
+                for (double width : new double[] {360, 500, 900}) {
+                    stage.setWidth(width);
+                    scene.getRoot().applyCss();
+                    scene.getRoot().layout();
+
+                    ListCell<?> cell = (ListCell<?>) getSessionNoteListView(panel).lookup(".list-cell");
+                    assertNotNull(cell);
+                    SelectableText displayedNote = (SelectableText) ((VBox) cell.getGraphic()).getChildren().get(1);
+                    Text renderedText = (Text) displayedNote.lookup(".text");
+                    assertNotNull(renderedText);
+
+                    assertTrue(displayedNote.getHeight() >= renderedText.getLayoutBounds().getHeight(),
+                            "Note text is clipped at panel width " + width);
+                }
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void commandBox_pageKeys_requestPageScrollWithoutChangingText() throws Exception {
+        List<Integer> scrolledPages = new ArrayList<>();
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed."), scrolledPages::add));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            commandTextField.setText("note 1 nt/draft");
+            pressKey(commandTextField, KeyCode.PAGE_DOWN);
+            pressKey(commandTextField, KeyCode.PAGE_UP);
+            pressKey(commandTextField, KeyCode.LEFT);
+            assertEquals("note 1 nt/draft", commandTextField.getText());
+            return null;
+        });
+
+        assertEquals(List.of(1, -1), scrolledPages);
+    }
+
+    @Test
+    public void scrollSessionNotes_beforeLayout_doesNothing() throws Exception {
+        StudentProfilePanel panel = onFxThread(StudentProfilePanel::new);
+
+        onFxThread(() -> {
+            panel.setProfile(profile(null, sessionNotes(12)));
+            panel.scrollSessionNotes(1);
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_pageKeysInCommandBox_scrollSessionNotes() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, sessionNotes(12))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            stage.setWidth(900);
+            stage.setHeight(800);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                stage.getScene().getRoot().layout();
+                TextField commandTextField = (TextField) stage.getScene().lookup("#commandTextField");
+                ScrollBar verticalScrollBar = getVerticalScrollBar(
+                        getSessionNoteListView(mainWindow.getStudentProfilePanel()));
+                assertTrue(verticalScrollBar.isVisible());
+                assertEquals(0, verticalScrollBar.getValue());
+
+                pressKey(commandTextField, KeyCode.PAGE_UP);
+                assertEquals(0, verticalScrollBar.getValue());
+
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                double scrolledValue = verticalScrollBar.getValue();
+                assertTrue(scrolledValue > 0);
+
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                double furtherScrolledValue = verticalScrollBar.getValue();
+                assertTrue(furtherScrolledValue > scrolledValue);
+
+                pressKey(commandTextField, KeyCode.PAGE_UP);
+                assertTrue(verticalScrollBar.getValue() < furtherScrolledValue);
+
+                // Cell heights are re-estimated while scrolling, so paging up need not mirror paging down exactly;
+                // extra presses must still stop at the top.
+                for (int i = 0; i < 5; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
+                assertEquals(0, verticalScrollBar.getValue());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+
+    @Test
+    public void mainWindow_pageKeysInCompactWindow_scrollProfilePaneBeforeSessionNotes() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, sessionNotes(12))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            stage.setWidth(900);
+            stage.setHeight(360);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                stage.getScene().getRoot().layout();
+                TextField commandTextField = (TextField) stage.getScene().lookup("#commandTextField");
+                ScrollPane profileScrollPane = (ScrollPane) stage.getScene().lookup("#profileScrollPane");
+                ScrollBar notesScrollBar = getVerticalScrollBar(
+                        getSessionNoteListView(mainWindow.getStudentProfilePanel()));
+                assertTrue(profileScrollPane.getVmax() > profileScrollPane.getVmin());
+                assertEquals(0, profileScrollPane.getVvalue());
+                assertEquals(0, notesScrollBar.getValue());
+
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                assertTrue(profileScrollPane.getVvalue() > 0);
+                assertEquals(0, notesScrollBar.getValue());
+
+                for (int i = 0; i < 10 && notesScrollBar.getValue() == 0; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                }
+                assertTrue(notesScrollBar.getValue() > 0);
+                double notesValue = notesScrollBar.getValue();
+                pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                assertTrue(notesScrollBar.getValue() > notesValue);
+
+                for (int i = 0; i < 10; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
+                assertEquals(0, notesScrollBar.getValue());
+                assertEquals(0, profileScrollPane.getVvalue());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
     public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
         List<String> executedCommands = new ArrayList<>();
         CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
@@ -869,9 +1173,9 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "list");
             submitCommand(commandTextField, "invalid");
             commandTextField.setText("draft");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("invalid", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
             return null;
         });
@@ -889,19 +1193,19 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "list");
             submitCommand(commandTextField, "view 1");
             submitCommand(commandTextField, "view 1");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
 
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             commandTextField.setText("view 2");
             submitCommand(commandTextField, "view 2");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 2", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
             return null;
         });
@@ -918,18 +1222,18 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "view 1");
             commandTextField.setText("unfinished command");
 
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("list", commandTextField.getText());
 
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             assertEquals("view 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             assertEquals("unfinished command", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.DOWN);
+            pressKey(commandTextField, KeyCode.DOWN);
             assertEquals("unfinished command", commandTextField.getText());
             return null;
         });
@@ -948,7 +1252,7 @@ public class StudentRosterUiTest {
             submitCommand(commandTextField, "");
             submitCommand(commandTextField, "   ");
             commandTextField.setText("draft");
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("draft", commandTextField.getText());
 
             for (int i = 0; i <= 100; i++) {
@@ -956,13 +1260,13 @@ public class StudentRosterUiTest {
             }
             commandTextField.setText("new draft");
             for (int i = 0; i < 100; i++) {
-                pressHistoryKey(commandTextField, KeyCode.UP);
+                pressKey(commandTextField, KeyCode.UP);
             }
             assertEquals("command 1", commandTextField.getText());
-            pressHistoryKey(commandTextField, KeyCode.UP);
+            pressKey(commandTextField, KeyCode.UP);
             assertEquals("command 1", commandTextField.getText());
             for (int i = 0; i < 100; i++) {
-                pressHistoryKey(commandTextField, KeyCode.DOWN);
+                pressKey(commandTextField, KeyCode.DOWN);
             }
             assertEquals("new draft", commandTextField.getText());
             return null;
@@ -988,6 +1292,24 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void statusBarFooter_dataFileInHomeFolder_showsPathRelativeToHomeFolder() throws Exception {
+        Path dataFile = HomeFolder.resolve("data", "tutortrack.json");
+
+        String shownLocation = onFxThread(() -> getSaveLocationText(new StatusBarFooter(dataFile)));
+
+        assertEquals(Path.of(".", "data", "tutortrack.json").toString(), shownLocation);
+    }
+
+    @Test
+    public void statusBarFooter_dataFileOutsideHomeFolder_showsFullPath() throws Exception {
+        Path dataFile = Path.of("").toAbsolutePath().getRoot().resolve("other-folder").resolve("tutortrack.json");
+
+        String shownLocation = onFxThread(() -> getSaveLocationText(new StatusBarFooter(dataFile)));
+
+        assertEquals(dataFile.toString(), shownLocation);
+    }
+
+    @Test
     public void mainWindow_largeSavedSize_clampsToTargetScreenAndKeepsResponsiveMinimums() throws Exception {
         TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
 
@@ -1001,6 +1323,8 @@ public class StudentRosterUiTest {
 
             assertEquals(visualBounds.getWidth(), stage.getWidth());
             assertEquals(visualBounds.getHeight(), stage.getHeight());
+            assertEquals(visualBounds.getWidth(), stage.getMaxWidth());
+            assertEquals(visualBounds.getHeight(), stage.getMaxHeight());
             assertEquals(700, stage.getMinWidth());
             assertEquals(420, stage.getMinHeight());
             StackPane resultDisplay = (StackPane) stage.getScene().lookup("#resultDisplayPlaceholder");
@@ -1008,6 +1332,54 @@ public class StudentRosterUiTest {
             assertEquals(64, resultDisplay.getMinHeight());
             assertEquals(82, resultDisplay.getPrefHeight());
             assertEquals(100, resultDisplay.getMaxHeight());
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_savedPositionNearScreenEdge_clampsEntireWindowToVisualBounds() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+            double savedWidth = visualBounds.getWidth() * 0.75;
+            double savedHeight = visualBounds.getHeight() * 0.75;
+            int savedX = (int) visualBounds.getMaxX() - 1;
+            int savedY = (int) visualBounds.getMaxY() - 1;
+            logic.setInitialGuiSettings(new GuiSettings(savedWidth, savedHeight, savedX, savedY));
+
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+
+            assertEquals(visualBounds.getMaxX() - savedWidth, stage.getX());
+            assertEquals(visualBounds.getMaxY() - savedHeight, stage.getY());
+            assertTrue(stage.getX() >= visualBounds.getMinX());
+            assertTrue(stage.getY() >= visualBounds.getMinY());
+            assertTrue(stage.getX() + stage.getWidth() <= visualBounds.getMaxX());
+            assertTrue(stage.getY() + stage.getHeight() <= visualBounds.getMaxY());
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_movedAfterStartup_refreshesMaximumSizeFromCurrentScreen() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+            logic.setInitialGuiSettings(new GuiSettings(700, 420,
+                    (int) visualBounds.getMinX(), (int) visualBounds.getMinY()));
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            stage.setMaxWidth(visualBounds.getWidth() / 2);
+            stage.setMaxHeight(visualBounds.getHeight() / 2);
+
+            stage.setX(stage.getX() + 1);
+
+            assertEquals(visualBounds.getWidth(), stage.getMaxWidth());
+            assertEquals(visualBounds.getHeight(), stage.getMaxHeight());
             return null;
         });
     }
@@ -1052,6 +1424,41 @@ public class StudentRosterUiTest {
                     .getChildren().get(0)).getText());
             assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
                     .getSelectionModel().getSelectedItem().getStudentId());
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_deletePreview_opensTargetProfileAndKeepsRoster() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Tan", BLAIR_ID);
+        StudentRoster roster = new StudentRoster(List.of(alex, blair));
+        StudentProfile blairProfile = new StudentProfile(BLAIR_ID, blair.getName(),
+                blair.getParentGuardianContact(), blair.getSubject(), blair.getCurrentLevel(), List.of());
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("If yes, type: delete 2 /confirm", BLAIR_ID));
+            logic.setProfile(Optional.of(blairProfile));
+
+            mainWindow.executeCommand("delete 2");
+
+            assertEquals("Blair Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            ListView<StudentRosterEntry> rosterList = getListView(mainWindow.getStudentRosterPanel());
+            assertEquals(BLAIR_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
+            assertEquals(List.of(ALEX_ID, BLAIR_ID), rosterList.getItems().stream()
+                    .map(StudentRosterEntry::getStudentId).toList());
+
+            logic.setCommandFailure(new CommandException("Invalid student index."));
+            assertThrows(CommandException.class, () -> mainWindow.executeCommand("delete 9"));
+            assertEquals("Blair Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            assertEquals(BLAIR_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
             return null;
         });
     }
@@ -1252,8 +1659,255 @@ public class StudentRosterUiTest {
         });
     }
 
+    // Branch coverage of MainWindow command-result handling: help requested versus not, window already open.
+    @Test
+    public void executeCommand_helpResult_opensHelpWindowOnce() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()),
+                new CommandResult("Help shown.", true, false), Optional.empty());
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            long windowsBeforeHelp = countShowingWindows();
+
+            mainWindow.executeCommand("help");
+            long windowsAfterFirstHelp = countShowingWindows();
+            mainWindow.executeCommand("help");
+            long windowsAfterSecondHelp = countShowingWindows();
+
+            try {
+                assertEquals(windowsBeforeHelp + 1, windowsAfterFirstHelp);
+                assertEquals(windowsAfterFirstHelp, windowsAfterSecondHelp);
+            } finally {
+                mainWindow.handleHelp();
+                closeShowingWindows();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_exitResult_savesWindowSettingsAndHidesWindow() throws Exception {
+        RecordingLogic logic = new RecordingLogic(new CommandResult("Exiting.", false, true));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.show();
+
+            mainWindow.executeCommand("exit");
+
+            assertFalse(stage.isShowing());
+            assertEquals(stage.getWidth(), logic.savedGuiSettings.getWindowWidth());
+            assertEquals(stage.getHeight(), logic.savedGuiSettings.getWindowHeight());
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_ordinaryResult_keepsWindowOpenAndHelpClosed() throws Exception {
+        RecordingLogic logic = new RecordingLogic(new CommandResult("Done."));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.show();
+            long windowsBeforeCommand = countShowingWindows();
+
+            mainWindow.executeCommand("list");
+
+            try {
+                assertTrue(stage.isShowing());
+                assertEquals(windowsBeforeCommand, countShowingWindows());
+                assertNull(logic.savedGuiSettings);
+                assertSame(stage, mainWindow.getPrimaryStage());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_helpAcceleratorPressedInCommandBox_opensHelpWindow() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            TextField commandTextField = (TextField) mainWindow.getPrimaryStage().getScene()
+                    .lookup("#commandTextField");
+            long windowsBeforeHelp = countShowingWindows();
+
+            pressKey(commandTextField, KeyCode.F1);
+
+            try {
+                assertEquals(windowsBeforeHelp + 1, countShowingWindows());
+            } finally {
+                closeShowingWindows();
+            }
+            return null;
+        });
+    }
+
+    @Test
+    public void mainWindow_otherKeyPressedInCommandBox_doesNotOpenHelpWindow() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            TextField commandTextField = (TextField) mainWindow.getPrimaryStage().getScene()
+                    .lookup("#commandTextField");
+            long windowsBeforeKey = countShowingWindows();
+
+            pressKey(commandTextField, KeyCode.F2);
+
+            assertEquals(windowsBeforeKey, countShowingWindows());
+            return null;
+        });
+    }
+
+    // Equivalence partitions of the timestamp offset: UTC, positive, negative and fractional-hour offsets.
+    @Test
+    public void formatRecordedAt_differentOffsets_preservesRecordedOffset() {
+        assertEquals("5 Jan 2026, 9:30 AM (UTC+05:30)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T09:30:00+05:30")));
+        assertEquals("5 Jan 2026, 9:30 AM (UTC-08:00)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T09:30:00-08:00")));
+    }
+
+    // Boundary values of the 12-hour clock: midnight and noon.
+    @Test
+    public void formatRecordedAt_midnightAndNoon_usesTwelveHourClock() {
+        assertEquals("5 Jan 2026, 12:00 AM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T00:00:00Z")));
+        assertEquals("5 Jan 2026, 12:00 PM (UTC+00:00)", SessionNoteCard.formatRecordedAt(
+                OffsetDateTime.parse("2026-01-05T12:00:00Z")));
+    }
+
+    // Boundary value analysis for the note number: 1 is the smallest valid number, 0 and below are invalid.
+    @Test
+    public void sessionNoteCard_noteNumberBoundary_acceptsOneAndRejectsZeroAndNegative() throws Exception {
+        SessionNote note = new SessionNote("Boundary note.", OffsetDateTime.parse("2026-01-05T09:30:00Z"));
+
+        VBox card = (VBox) onFxThread(() -> new SessionNoteCard(note, 1).getRoot());
+
+        assertEquals("[1] 5 Jan 2026, 9:30 AM (UTC+00:00)", ((SelectableText) card.getChildren().get(0)).getText());
+        assertThrows(IllegalArgumentException.class, () -> new SessionNoteCard(note, -1));
+        assertThrows(NullPointerException.class, () -> new SessionNoteCard(null, 1));
+    }
+
+    @Test
+    public void commandBox_nullPageScroller_throwsNullPointerException() throws Exception {
+        onFxThread(() -> {
+            assertThrows(NullPointerException.class, () -> new CommandBox(
+                    commandText -> new CommandResult("Command executed."), null));
+            return null;
+        });
+    }
+
+    // Repeated use: a second failure while the error style is already shown must not stack the style class.
+    @Test
+    public void commandBox_repeatedFailures_showErrorStyleOnceUntilTextChanges() throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
+            throw new CommandException("Rejected.");
+        }));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            submitCommand(commandTextField, "bad");
+            submitCommand(commandTextField, "bad");
+            assertEquals(1, commandTextField.getStyleClass().stream()
+                    .filter(CommandBox.ERROR_STYLE_CLASS::equals).count());
+
+            commandTextField.setText("good");
+            assertFalse(commandTextField.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+            return null;
+        });
+    }
+
+    @Test
+    public void selectableText_negativeLineSpacing_throwsAssertionError() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            assertThrows(AssertionError.class, () -> text.setLineSpacing(-1));
+            text.setLineSpacing(0);
+            assertEquals(0, text.getLineSpacing());
+            return null;
+        });
+    }
+
+    // Equivalence partitions of the layout width: unusable widths disable wrapping, a narrow width wraps.
+    @Test
+    public void selectableText_unusableOrNarrowWidth_wrapsOnlyWhenWidthIsUsable() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            text.setText("Selectable text wraps only when a usable width is available. ".repeat(3));
+
+            double unwrappedHeight = text.prefHeight(10_000);
+
+            assertEquals(unwrappedHeight, text.prefHeight(-1));
+            assertEquals(unwrappedHeight, text.prefHeight(0));
+            assertEquals(unwrappedHeight, text.prefHeight(Double.POSITIVE_INFINITY));
+            assertTrue(text.prefHeight(120) > unwrappedHeight);
+            return null;
+        });
+    }
+
+    @Test
+    public void selectableText_scrollEventWithoutListView_isNotConsumed() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            new VBox(text);
+            ScrollEvent scroll = scrollEvent(-40);
+
+            text.fireEvent(scroll);
+
+            assertFalse(scroll.isConsumed());
+            return null;
+        });
+    }
+
+    // Branch: an ancestor ListView that has not been skinned has no virtual flow, so there is nothing to scroll.
+    @Test
+    public void selectableText_scrollEventInUnrenderedListView_isNotConsumed() throws Exception {
+        onFxThread(() -> {
+            SelectableText text = new SelectableText();
+            new ListView<String>() {
+                {
+                    getChildren().add(text);
+                }
+            };
+            ScrollEvent scroll = scrollEvent(-40);
+
+            text.fireEvent(scroll);
+
+            assertFalse(scroll.isConsumed());
+            return null;
+        });
+    }
+
+    private long countShowingWindows() {
+        return Window.getWindows().stream().filter(Window::isShowing).count();
+    }
+
+    private void closeShowingWindows() {
+        new ArrayList<>(Window.getWindows()).forEach(window -> {
+            if (window instanceof Stage stage) {
+                stage.hide();
+            }
+        });
+    }
+
     private VBox getProfileContent(StudentProfilePanel panel) {
-        return (VBox) ((StackPane) panel.getRoot()).getChildren().get(1);
+        return (VBox) getProfileScrollPane(panel).getContent();
+    }
+
+    private ScrollPane getProfileScrollPane(StudentProfilePanel panel) {
+        return (ScrollPane) ((StackPane) panel.getRoot()).getChildren().get(1);
     }
 
     @SuppressWarnings("unchecked")
@@ -1272,7 +1926,9 @@ public class StudentRosterUiTest {
         if (nodeType.isInstance(node)) {
             matches.add(nodeType.cast(node));
         }
-        if (node instanceof Parent parent) {
+        if (node instanceof ScrollPane scrollPane) {
+            matches.addAll(findDescendants(scrollPane.getContent(), nodeType));
+        } else if (node instanceof Parent parent) {
             parent.getChildrenUnmodifiable().forEach(child -> matches.addAll(findDescendants(child, nodeType)));
         }
         return matches;
@@ -1282,6 +1938,15 @@ public class StudentRosterUiTest {
     private ListView<StudentRosterEntry> getListView(StudentRosterPanel panel) {
         StackPane root = (StackPane) panel.getRoot();
         return (ListView<StudentRosterEntry>) root.getChildren().get(0);
+    }
+
+    private ListCell<?> getVisibleCellForEntry(StudentRosterPanel panel, StudentRosterEntry entry) {
+        return getListView(panel).lookupAll(".list-cell").stream()
+                .filter(ListCell.class::isInstance)
+                .map(ListCell.class::cast)
+                .filter(cell -> cell.getItem() == entry)
+                .findFirst()
+                .orElseThrow();
     }
 
     private VBox getEmptyRosterState(StudentRosterPanel panel) {
@@ -1298,9 +1963,33 @@ public class StudentRosterUiTest {
         commandTextField.fireEvent(new ActionEvent());
     }
 
-    private void pressHistoryKey(TextField commandTextField, KeyCode keyCode) {
+    private void pressKey(TextField commandTextField, KeyCode keyCode) {
         commandTextField.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode,
                 false, false, false, false));
+    }
+
+    private ScrollBar getVerticalScrollBar(ListView<?> listView) {
+        Parent virtualFlow = (Parent) listView.lookup(".virtual-flow");
+        assertNotNull(virtualFlow);
+        return virtualFlow.getChildrenUnmodifiable().stream()
+                .filter(ScrollBar.class::isInstance)
+                .map(ScrollBar.class::cast)
+                .filter(scrollBar -> scrollBar.getOrientation() == Orientation.VERTICAL)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private List<SessionNote> sessionNotes(int count) {
+        List<SessionNote> notes = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            notes.add(new SessionNote("Reviewed algebra concepts in lesson " + i + ".",
+                    OffsetDateTime.parse("2026-09-18T18:35:00+08:00").minusDays(i)));
+        }
+        return notes;
+    }
+
+    private String getSaveLocationText(StatusBarFooter statusBarFooter) {
+        return ((Label) statusBarFooter.getRoot().lookup("#saveLocationStatus")).getText();
     }
 
     private ScrollEvent scrollEvent() {
@@ -1450,6 +2139,20 @@ public class StudentRosterUiTest {
         @Override
         public void setGuiSettings(GuiSettings guiSettings) {
             throw new AssertionError("This method should not be called.");
+        }
+    }
+
+    /** A {@code TestLogic} that records the GUI settings saved when the window closes. */
+    private static class RecordingLogic extends TestLogic {
+        private GuiSettings savedGuiSettings;
+
+        RecordingLogic(CommandResult commandResult) {
+            super(new StudentRoster(List.of()), new StudentRoster(List.of()), commandResult, Optional.empty());
+        }
+
+        @Override
+        public void setGuiSettings(GuiSettings guiSettings) {
+            savedGuiSettings = guiSettings;
         }
     }
 }
