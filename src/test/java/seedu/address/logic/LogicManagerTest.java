@@ -55,6 +55,9 @@ import seedu.address.testutil.LogRecorder;
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
     private static final IOException DUMMY_AD_EXCEPTION = new AccessDeniedException("dummy access denied exception");
+    private static final String NOTE_TEXT = "Reviewed indices.";
+    private static final String NOTE_FIRST_STUDENT_COMMAND = NoteCommand.COMMAND_WORD + " 1 nt/" + NOTE_TEXT;
+    private static final String ADD_BEA_COMMAND = "add n/Bea Lim p/9876 5432 sub/English l/JC 1";
 
     @TempDir
     public Path temporaryFolder;
@@ -489,8 +492,8 @@ public class LogicManagerTest {
     public void execute_noteWithStorageFailure_restoresSessionHistory() {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
-        assertThrows(CommandException.class, getSaveFailureMessage(), () -> failingLogic
-                .execute(NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices."));
+        assertThrows(CommandException.class, getSaveFailureMessage(), () ->
+                failingLogic.execute(NOTE_FIRST_STUDENT_COMMAND));
 
         assertTrue(studentModel.getSessionHistory(ALEX.getId()).isEmpty());
         assertEquals(0, failingLogic.getStudentRoster().getEntries().get(0).getNoteCount());
@@ -502,19 +505,17 @@ public class LogicManagerTest {
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
 
         List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
-                assertThrows(CommandException.class, () -> failingLogic
-                        .execute(NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices.")));
+                assertThrows(CommandException.class, () -> failingLogic.execute(NOTE_FIRST_STUDENT_COMMAND)));
 
         assertTrue(logMessages.contains("Could not save data; restoring the data from before the command."));
-        assertTrue(logMessages.stream().noneMatch(message -> message.contains("Reviewed indices")));
+        assertTrue(logMessages.stream().noneMatch(message -> message.contains(NOTE_TEXT)));
     }
 
     @Test
     public void execute_addStudentWithStorageFailure_restoresRoster() {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
-        assertThrows(CommandException.class, getSaveFailureMessage(), () -> failingLogic
-                .execute("add n/Bea Lim p/9876 5432 sub/English l/JC 1"));
+        assertThrows(CommandException.class, getSaveFailureMessage(), () -> failingLogic.execute(ADD_BEA_COMMAND));
 
         assertEquals(List.of(ALEX.getId()), failingLogic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());
@@ -608,10 +609,9 @@ public class LogicManagerTest {
     public void execute_successAfterStorageFailure_savesOnlyLaterChange() throws Exception {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
-        assertThrows(CommandException.class, () -> failingLogic.execute(NoteCommand.COMMAND_WORD
-                + " 1 nt/Reviewed indices."));
+        assertThrows(CommandException.class, () -> failingLogic.execute(NOTE_FIRST_STUDENT_COMMAND));
 
-        failingLogic.execute("add n/Bea Lim p/9876 5432 sub/English l/JC 1");
+        failingLogic.execute(ADD_BEA_COMMAND);
 
         Path savedFile = temporaryFolder.resolve("addressBook.json");
         JsonAddressBookStorage savedStorage = new JsonAddressBookStorage(savedFile);
@@ -639,10 +639,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_commandWithArguments_logsCommandWordOnly() {
-        String commandText = NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices.";
-
         List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
-                assertThrows(CommandException.class, () -> logic.execute(commandText)));
+                assertThrows(CommandException.class, () -> logic.execute(NOTE_FIRST_STUDENT_COMMAND)));
 
         assertTrue(logMessages.contains(String.format(LogicManager.USER_COMMAND_LOG_FORMAT,
                 NoteCommand.COMMAND_WORD)));
