@@ -154,7 +154,17 @@ The `Storage` component,
 
 #### Data-file format and recovery
 
-TutorTrack stores application data in `data/tutortrack.json` inside the _home folder_, the folder containing the JAR file, so the data stays with the JAR wherever TutorTrack is launched from. `HomeFolder` locates that folder and also places `preferences.json` and the `tutortrack.log` files there; when TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, it uses the working directory instead. If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. It reports the failure through the base logger rather than `LogsCenter`'s own static logger, which is not yet assigned while the base logger is being set up. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback). Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list. Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`. Displayed note numbers and pending deletion confirmations are transient UI and command state; they are not persisted.
+TutorTrack keeps its files in the _home folder_, the folder containing the JAR file, so they stay with the JAR wherever TutorTrack is launched from.
+
+* `HomeFolder` locates the home folder and places the data file `data/tutortrack.json`, `preferences.json`, and the `tutortrack.log` files there.
+* When TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, `HomeFolder` uses the working directory instead.
+* If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. It reports the failure through the base logger rather than `LogsCenter`'s own static logger, which is not yet assigned while the base logger is being set up. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
+
+In the data file:
+
+* Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list.
+* Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`.
+* Displayed note numbers and pending deletion confirmations are transient UI and command state, so they are not persisted.
 
 The storage adapter validates manually edited records by rebuilding the corresponding domain value types. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`.
 
@@ -858,6 +868,7 @@ history and saved locally. No other student record is changed.
 * **Normalized parent phone number**: A parent or guardian phone number after spaces and hyphens are removed.
 * **Active student**: A student currently receiving tuition and included in the normal roster.
 * **Archived student**: A former or inactive student whose details and session history are retained but excluded from the active roster.
+* **Home folder**: The folder containing the TutorTrack JAR file, where TutorTrack keeps its data file, preferences, and log files wherever it is launched from.
 * **Typical modern computer**: A computer that can run Java `25` comfortably
   and has at least 8 GB of memory.
 
@@ -1143,4 +1154,14 @@ testers are expected to do more *exploratory* testing.
       Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`.
    1. Close TutorTrack without entering a command, replace the original data file with different invalid content, and start TutorTrack again.
       Expected: TutorTrack preserves the new content in a second uniquely named backup and leaves the first backup unchanged.
+1. Saving fails while TutorTrack is running
+
+   1. Prerequisites: at least one student in the roster, so that `data/tutortrack.json` exists. Run the `chmod` or `attrib` commands below in a terminal opened in the folder containing the JAR file.
+   1. With TutorTrack still running, make the data file read-only. On Linux or macOS, run `chmod a-w data/tutortrack.json`. On Windows, run `attrib +r data\tutortrack.json`.
+   1. Enter `note 1 nt/Reviewed factorisation.`
+      Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Student 1's session-note count is unchanged.
+   1. Enter `view 1`.
+      Expected: Student 1's profile is shown without the rejected note and without a save error, because commands that change no data are not saved.
+   1. Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.
+      Expected: The note is added and student 1's session-note count increases by one.
 2. _{ more test cases … }_
