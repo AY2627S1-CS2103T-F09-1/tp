@@ -12,6 +12,9 @@ import seedu.address.model.student.StudentRosterEntry;
 public class StudentRosterCard extends UiPart<Region> {
 
     private static final String FXML = "StudentRosterCard.fxml";
+    private static final String SUBJECT_LABEL = "Subject: ";
+    private static final String LEVEL_LABEL = "Level: ";
+    private static final String SESSION_NOTES_LABEL = "Session notes: ";
 
     @FXML
     private HBox cardPane;
@@ -35,8 +38,8 @@ public class StudentRosterCard extends UiPart<Region> {
         super(FXML);
         rosterIndex.setText(String.valueOf(entry.getRosterIndex()));
         name.setText(entry.getName().getValue());
-        subject.setText("Subject: " + entry.getSubject().getValue());
-        currentLevel.setText("Level: " + entry.getCurrentLevel().getValue());
-        noteCount.setText("Session notes: " + entry.getNoteCount());
+        subject.setText(SUBJECT_LABEL + entry.getSubject().getValue());
+        currentLevel.setText(LEVEL_LABEL + entry.getCurrentLevel().getValue());
+        noteCount.setText(SESSION_NOTES_LABEL + entry.getNoteCount());
     }
 }
