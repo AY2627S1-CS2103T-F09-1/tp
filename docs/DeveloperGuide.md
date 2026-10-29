@@ -908,7 +908,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows, run `icacls <folder> /deny "%USERNAME%:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d %USERNAME%`.
    1. Run `java -jar tutortrack.jar` from that folder.
-      Expected: The GUI opens with an empty roster, the terminal shows a warning that the file handler could not be added, and no stack trace or crash occurs. The folder contains no new files.
+      Expected: The GUI opens with an empty roster, the terminal shows one-line warnings that the file handler could not be added and that the preference file could not be saved, and no stack trace or crash occurs. The folder contains no new files.
    1. Enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`.
       Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Dev Patel is not added to the roster.
    1. Restore write access to the folder.
