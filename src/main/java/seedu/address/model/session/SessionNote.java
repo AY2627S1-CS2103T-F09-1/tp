@@ -12,9 +12,10 @@ import java.util.regex.Pattern;
  */
 public final class SessionNote {
 
+    public static final int MIN_TEXT_LENGTH = 1;
     public static final int MAX_TEXT_LENGTH = 500;
-    public static final String MESSAGE_CONSTRAINTS = "Session notes must be 1 to " + MAX_TEXT_LENGTH
-            + " printable characters on one line.";
+    public static final String MESSAGE_CONSTRAINTS = "Session notes must be " + MIN_TEXT_LENGTH + " to "
+            + MAX_TEXT_LENGTH + " printable characters on one line.";
 
     /**
      * Matches control characters (including tabs and line breaks) and Unicode line or paragraph separators.
@@ -44,7 +45,7 @@ public final class SessionNote {
      */
     public static boolean isValidText(String text) {
         int length = countTextLength(text);
-        boolean hasValidLength = length >= 1 && length <= MAX_TEXT_LENGTH;
+        boolean hasValidLength = length >= MIN_TEXT_LENGTH && length <= MAX_TEXT_LENGTH;
         return hasValidLength && !hasNonPrintableCharacter(text);
     }
 

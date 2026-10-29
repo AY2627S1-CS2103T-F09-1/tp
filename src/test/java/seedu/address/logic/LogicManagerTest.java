@@ -631,7 +631,8 @@ public class LogicManagerTest {
         List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
                 assertThrows(CommandException.class, () -> logic.execute(commandText)));
 
-        assertTrue(logMessages.contains("----------------[USER COMMAND][note]"));
+        assertTrue(logMessages.contains(String.format(LogicManager.USER_COMMAND_LOG_FORMAT,
+                NoteCommand.COMMAND_WORD)));
         assertTrue(logMessages.stream().noneMatch(message -> message.contains("Reviewed indices")));
     }
 
@@ -655,7 +656,8 @@ public class LogicManagerTest {
         List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
                 assertThrows(ParseException.class, () -> logic.execute(commandText)));
 
-        assertTrue(logMessages.contains("----------------[USER COMMAND][unknown]"));
+        assertTrue(logMessages.contains(String.format(LogicManager.USER_COMMAND_LOG_FORMAT,
+                AddressBookParser.UNKNOWN_COMMAND_WORD)));
         assertTrue(logMessages.stream()
                 .noneMatch(message -> message.contains("Alex") || message.contains("9123")));
     }

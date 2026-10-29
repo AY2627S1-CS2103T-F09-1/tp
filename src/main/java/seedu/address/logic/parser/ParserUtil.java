@@ -149,7 +149,7 @@ public class ParserUtil {
     public static String parseNoteText(String noteText) throws ParseException {
         requireNonNull(noteText);
         int length = SessionNote.countTextLength(noteText);
-        if (length == 0) {
+        if (length < SessionNote.MIN_TEXT_LENGTH) {
             throw new ParseException(MESSAGE_EMPTY_NOTE);
         }
         if (length > SessionNote.MAX_TEXT_LENGTH) {
