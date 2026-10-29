@@ -116,9 +116,7 @@ public class LogicManager implements Logic {
 
         Optional<StudentRosterEntry> targetStudent = getRosterEntry(command.getTargetIndex());
         if (!(deletionAwaitingConfirmation instanceof PendingStudentDeletion pendingStudentDeletion)
-                || !pendingStudentDeletion.targetIndex().equals(command.getTargetIndex())
-                || targetStudent.isEmpty()
-                || !pendingStudentDeletion.studentId().equals(targetStudent.get().getStudentId())) {
+                || !matchesStudentDeletion(pendingStudentDeletion, command, targetStudent)) {
             throw new CommandException(DeleteCommand.MESSAGE_CONFIRMATION_MISMATCH);
         }
 
@@ -128,6 +126,16 @@ public class LogicManager implements Logic {
                 targetStudent.get().getName()));
         saveOrRestore(dataBeforeCommand);
         return commandResult;
+    }
+
+    /**
+     * Returns whether the pending student deletion still identifies the requested roster entry.
+     */
+    private static boolean matchesStudentDeletion(PendingStudentDeletion pending, DeleteCommand command,
+            Optional<StudentRosterEntry> targetStudent) {
+        return pending.targetIndex().equals(command.getTargetIndex())
+                && targetStudent.isPresent()
+                && pending.studentId().equals(targetStudent.get().getStudentId());
     }
 
     /**
@@ -158,12 +166,7 @@ public class LogicManager implements Logic {
 
         Optional<StudentRosterEntry> targetStudent = getRosterEntry(command.getStudentIndex());
         if (!(deletionAwaitingConfirmation instanceof PendingSessionNoteDeletion pendingSessionNoteDeletion)
-                || !pendingSessionNoteDeletion.studentIndex().equals(command.getStudentIndex())
-                || !pendingSessionNoteDeletion.noteNumber().equals(command.getNoteNumber())
-                || targetStudent.isEmpty()
-                || !pendingSessionNoteDeletion.studentId().equals(targetStudent.get().getStudentId())
-                || pendingSessionNoteDeletion.history() != model.getSessionHistory(pendingSessionNoteDeletion
-                        .studentId())) {
+                || !matchesSessionNoteDeletion(pendingSessionNoteDeletion, command, targetStudent)) {
             throw new CommandException(DeleteSessionNoteCommand.MESSAGE_CONFIRMATION_MISMATCH);
         }
 
@@ -174,6 +177,18 @@ public class LogicManager implements Logic {
                 command.getNoteNumber().getOneBased(), targetStudent.get().getName()));
         saveOrRestore(dataBeforeCommand);
         return commandResult;
+    }
+
+    /**
+     * Returns whether the requested student and note still match the pending history snapshot.
+     */
+    private boolean matchesSessionNoteDeletion(PendingSessionNoteDeletion pending, DeleteSessionNoteCommand command,
+            Optional<StudentRosterEntry> targetStudent) {
+        return pending.studentIndex().equals(command.getStudentIndex())
+                && pending.noteNumber().equals(command.getNoteNumber())
+                && targetStudent.isPresent()
+                && pending.studentId().equals(targetStudent.get().getStudentId())
+                && pending.history() == model.getSessionHistory(pending.studentId());
     }
 
     /**
