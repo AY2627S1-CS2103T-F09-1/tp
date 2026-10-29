@@ -137,6 +137,26 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void mainAndHelpWindows_loadTheirIcons() throws Exception {
+        TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
+
+        onFxThread(() -> {
+            Stage mainStage = new Stage();
+            MainWindow mainWindow = new MainWindow(mainStage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            HelpWindow helpWindow = new HelpWindow();
+
+            assertFalse(mainStage.getIcons().isEmpty());
+            assertFalse(mainStage.getIcons().get(0).isError());
+            assertTrue(mainStage.getIcons().get(0).getWidth() > 0);
+            assertFalse(helpWindow.getRoot().getIcons().isEmpty());
+            assertFalse(helpWindow.getRoot().getIcons().get(0).isError());
+            assertTrue(helpWindow.getRoot().getIcons().get(0).getWidth() > 0);
+            return null;
+        });
+    }
+
+    @Test
     public void constructor_populatedRoster_displaysEntriesAndHidesEmptyMessage() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
 
