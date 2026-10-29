@@ -52,6 +52,7 @@ public class ParentGuardianContactTest {
         assertThrows(NullPointerException.class, () -> ParentGuardianContact.isValidEmail(null));
         // equivalence partition: missing or extra '@', or whitespace, is rejected
         assertFalse(ParentGuardianContact.isValidEmail(""));
+        assertFalse(ParentGuardianContact.isValidEmail("a@b"));
         assertFalse(ParentGuardianContact.isValidEmail("guardian.example.com"));
         assertFalse(ParentGuardianContact.isValidEmail("guardian@"));
         assertFalse(ParentGuardianContact.isValidEmail("@example.com"));

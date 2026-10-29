@@ -68,9 +68,15 @@ public class JsonAdaptedStudentTest {
                 ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
         assertInvalidField("Test Learner", "9123 4567", "invalid-email", "Mathematics", "Secondary 3",
                 ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);
+        assertInvalidField("Test Learner", "9123 4567", "a@b", "Mathematics", "Secondary 3",
+                ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);
         assertInvalidField("Test Learner", "9123 4567", "guardian@example.com", "", "Secondary 3",
                 Subject.MESSAGE_CONSTRAINTS);
+        assertInvalidField("Test Learner", "9123 4567", "guardian@example.com", "!!!", "Secondary 3",
+                Subject.MESSAGE_CONSTRAINTS);
         assertInvalidField("Test Learner", "9123 4567", "guardian@example.com", "Mathematics", "",
+                CurrentLevel.MESSAGE_CONSTRAINTS);
+        assertInvalidField("Test Learner", "9123 4567", "guardian@example.com", "Mathematics", "???",
                 CurrentLevel.MESSAGE_CONSTRAINTS);
     }
 

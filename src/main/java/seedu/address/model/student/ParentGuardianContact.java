@@ -16,11 +16,11 @@ public final class ParentGuardianContact {
                     + "or an international number starting with + and containing 8 to 15 digits; "
                     + "spaces and hyphens are allowed.";
     public static final String EMAIL_MESSAGE_CONSTRAINTS =
-            "Parent or guardian email addresses must contain one '@' and a non-blank local part and domain.";
+            "Parent or guardian email addresses must contain one '@' and a domain with at least one dot.";
     private static final String PHONE_CHARACTERS_REGEX = "\\+?[0-9][0-9 -]*";
     private static final String LOCAL_PHONE_REGEX = "[689][0-9]{7}";
     private static final String INTERNATIONAL_PHONE_REGEX = "\\+[1-9][0-9]{7,14}";
-    private static final String EMAIL_REGEX = "[^@\\s]+@[^@\\s]+";
+    private static final String EMAIL_REGEX = "[^@\\s]+@[^@\\s.]+(?:\\.[^@\\s.]+)+";
 
     private final String phone;
     private final String email;

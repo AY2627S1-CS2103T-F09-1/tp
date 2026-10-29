@@ -8,7 +8,8 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public final class CurrentLevel {
 
-    public static final String MESSAGE_CONSTRAINTS = "Current levels must not be blank or contain line breaks.";
+    public static final String MESSAGE_CONSTRAINTS =
+            "Current levels must contain a letter or number and must not contain line breaks.";
     private final String value;
 
     /**
@@ -26,7 +27,9 @@ public final class CurrentLevel {
      * Returns whether {@code currentLevel} is a valid current level.
      */
     public static boolean isValidCurrentLevel(String currentLevel) {
-        return StudentTextFields.isNonBlankSingleLine(currentLevel);
+        requireNonNull(currentLevel);
+        return currentLevel.matches("(?s).*[\\p{L}\\p{N}].*")
+                && !currentLevel.matches("(?s).*[\\r\\n].*");
     }
 
     /**

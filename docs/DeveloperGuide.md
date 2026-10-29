@@ -969,6 +969,17 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter `add n/Alex Tan p/10101010 sub/Mathematics l/Secondary 3`, then enter `edit 1 p/10101010` for an existing student.
    Expected: Both report only the phone-number rule and leave the roster, profile, session notes, and data file unchanged. A valid local number such as `9123 4567` and international number such as `+65 9123 4567` remain accepted.
 
+### Alpha validation feedback
+
+1. Enter `add n/Raj s/o Kumar p/91234567 sub/C++ l/P6+ e/guardian@example.com`.
+   Expected: TutorTrack adds the student. Names may contain slashes, and subject and level values must each contain a letter or number.
+1. Enter `ADD n/Raj s/o Kumar p/91234567 sub/C++ l/P6+` and `HELP`.
+   Expected: Both report an unknown command because command words must be lowercase.
+1. Enter `edit 1 sub/Math P/81234567`.
+   Expected: The subject becomes `Math P/81234567`; the phone does not change because `P/` is not a recognized parameter prefix.
+1. Enter `add n/Bob p/91234567 sub/!!! l/???` and `add n/Bob p/91234567 e/a@b sub/Math l/Sec 1`.
+   Expected: Both report their respective value rules and leave the roster and data file unchanged.
+
 ### Editing a student
 
 1. Add Alicia and Bea, add two session notes to Alicia, and enter `view 1` to open Alicia's profile.

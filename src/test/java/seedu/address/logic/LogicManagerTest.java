@@ -447,6 +447,22 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_editStudentWithUppercasePhonePrefix_changesSubjectOnly() throws Exception {
+        model.addStudent(ALEX);
+
+        logic.execute("edit 1 sub/Math P/81234567");
+
+        Student updatedStudent = model.getStudent(ALEX.getId()).orElseThrow();
+        assertEquals(new Subject("Math P/81234567"), updatedStudent.getSubject());
+        assertEquals(ALEX.getParentGuardianContact().getPhone(), updatedStudent.getParentGuardianContact().getPhone());
+        ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
+                .readAddressBook().orElseThrow();
+        assertEquals(new Subject("Math P/81234567"), savedData.getStudentList().get(0).getSubject());
+        assertEquals(ALEX.getParentGuardianContact().getPhone(),
+                savedData.getStudentList().get(0).getParentGuardianContact().getPhone());
+    }
+
+    @Test
     public void execute_editStudentAfterDeletePreview_cancelsPendingDeletion() throws Exception {
         model.addStudent(ALEX);
         logic.execute("delete 1");

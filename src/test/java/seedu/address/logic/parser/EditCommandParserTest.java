@@ -160,6 +160,15 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_prefixLikeTextInSubject_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Math P/81234567"));
+
+        assertParseSuccess(parser, " 1 sub/Math P/81234567",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_legacyPrefix_failure() {
         assertParseFailure(parser, " 1 a/Block 1", unknownParameterMessage("a/"));
         assertParseFailure(parser, " 1 t/friend", unknownParameterMessage("t/"));

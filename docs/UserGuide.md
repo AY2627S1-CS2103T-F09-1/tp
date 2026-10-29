@@ -86,7 +86,7 @@ When a command cannot run, TutorTrack names the specific problem and does not ch
 * **Invalid value:** a value that breaks a rule, such as a phone number that is too short, shows only that rule. An index such as `0`, `-1`, or `abc` shows `INDEX must be a positive whole number, e.g. 1.` A number too large to be any index, such as `99999999999`, is reported as too large. A session note that is too long reports its length, for example `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.` An empty note shows `Session note is empty. Enter the note text after nt/.`, and a note containing a tab or line break shows `Session note contains a tab, line break or other non-printable character. Enter the note on one line without them.`
 * **Index outside the roster:** the error gives the valid range, for example `Student index [3] is outside the roster. Enter a student index from 1 to 2.` If the roster is empty, TutorTrack asks you to add a student first.
 * **Note number outside the history:** `edit note` and `delete note` give the valid note-number range for that student.
-* **Unknown command:** a misspelled command word, such as `veiw 1`, is named in the error together with the list of available commands.
+* **Unknown command:** Command words must be typed in lowercase. An uppercase command such as `ADD` or a misspelled command such as `veiw 1` is rejected and named in the error together with the list of available commands.
 * **Mistyped keyword:** the word `/confirm` must be typed in lowercase, so `delete 1 /CONFIRM` and `delete note 1 1 /CONFIRM` are rejected with `/confirm must be typed in lowercase.` A mistyped `note`, such as `delete notes 1 1` or `edit nte 1 1 nt/Corrected.`, is named in the error together with the command you probably meant, such as `delete note`. A mistyped parameter prefix, such as `em/` in `edit 1 em/parent@example.com`, is reported as an unknown parameter together with the list of supported parameters.
 
 ### Viewing help: `help`
@@ -105,11 +105,12 @@ Adds a student with the responsible parent or guardian's contact details, subjec
 Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 
 * **Required details:** Name, parent or guardian phone number, subject, and current level must be provided.
-* **Student name:** Names must begin with a letter or number and may contain only letters, numbers, spaces, apostrophes, periods, and hyphens.
+* **Student name:** Names must begin with a letter or number and may contain only letters, numbers, spaces, apostrophes, periods, hyphens, and slashes. For example, `Raj s/o Kumar` is valid.
+* **Subject and current level:** Each must contain at least one letter or number. Other ordinary punctuation is allowed, so values such as `C++` and `P6+` are valid.
 * **Parent or guardian phone:** Use an 8-digit Singapore number beginning with `6`, `8`, or `9`, such as `9123 4567`, or an international number beginning with `+` and containing 8 to 15 digits, such as `+65 9123 4567`. Spaces and hyphens are allowed. TutorTrack validates the format only; it cannot confirm ownership or reachability.
-* **Optional detail:** Parent or guardian email may be included with `e/`.
+* **Optional detail:** Parent or guardian email may be included with `e/`. It must include `@` and a domain with a dot, such as `guardian@example.com`.
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
-* **Subject and level text:** Text that looks like a prefix other than a command parameter or obsolete AddressBook `a/` or `t/` parameter is kept as part of a subject or current level. The obsolete `a/` and `t/` parameters are rejected with an error instead.
+* **Subject and level text:** Only lowercase command parameter prefixes are recognized. Other prefix-like text, such as `P/81234567` after `sub/Math`, stays in the subject value; it does not change the phone. Obsolete AddressBook `a/` and `t/` parameters are rejected with an error.
 * **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
 * **After a successful addition:** TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
 * **Invalid input:** Missing values, invalid values, duplicate students, text before the first parameter, and obsolete AddressBook parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
@@ -128,8 +129,7 @@ Format: `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/
 * `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number that refers to an existing student.
 * Supply at least one field. Details you omit keep their existing values.
 * Use `e/` without a value to remove the parent or guardian email. Other supplied fields cannot be empty.
-* The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order.
-* Text that looks like a prefix other than a command parameter or obsolete AddressBook `a/` or `t/` parameter is kept as part of a supplied subject or current level. The obsolete `a/` and `t/` parameters are rejected with an error instead.
+* The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order. Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. Obsolete AddressBook `a/` and `t/` parameters are rejected.
 * Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts, preserves that student's internal identity and session notes, and keeps an open profile selected on that student.
 
 Examples:

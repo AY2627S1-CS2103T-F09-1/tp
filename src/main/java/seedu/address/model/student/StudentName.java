@@ -9,8 +9,9 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public final class StudentName {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Student names must contain letters or numbers and may include spaces, apostrophes, periods, and hyphens.";
-    private static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{N} .'\\-]*";
+            "Student names must contain letters or numbers and may include spaces, apostrophes, periods, hyphens, "
+                    + "and slashes.";
+    private static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{N} .'/\\-]*";
 
     private final String value;
 
