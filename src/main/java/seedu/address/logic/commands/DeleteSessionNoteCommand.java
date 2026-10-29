@@ -87,6 +87,17 @@ public class DeleteSessionNoteCommand extends Command {
 
         StudentRosterEntry student = getRosterEntry(model, studentIndex);
         SessionHistory history = model.getSessionHistory(student.getStudentId());
+        verifyNoteExists(student, history);
+
+        return new CommandResult(String.format(MESSAGE_CONFIRM_DELETE,
+                noteNumber.getOneBased(), student.getName(), studentIndex.getOneBased()),
+                student.getStudentId(), noteNumber);
+    }
+
+    /**
+     * Verifies that the student's history contains the requested chronological note number.
+     */
+    private void verifyNoteExists(StudentRosterEntry student, SessionHistory history) throws CommandException {
         if (history.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_SESSION_NOTES, student.getName()));
         }
@@ -94,10 +105,6 @@ public class DeleteSessionNoteCommand extends Command {
             throw new CommandException(String.format(MESSAGE_INVALID_NOTE_NUMBER,
                     noteNumber.getOneBased(), student.getName(), history.size()));
         }
-
-        return new CommandResult(String.format(MESSAGE_CONFIRM_DELETE,
-                noteNumber.getOneBased(), student.getName(), studentIndex.getOneBased()),
-                student.getStudentId(), noteNumber);
     }
 
     @Override

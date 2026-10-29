@@ -79,15 +79,23 @@ public class EditCommand extends Command {
      */
     private static Student createStudent(Student originalStudent, EditStudentDescriptor descriptor) {
         StudentName name = descriptor.getName().orElse(originalStudent.getName());
+        Subject subject = descriptor.getSubject().orElse(originalStudent.getSubject());
+        CurrentLevel currentLevel = descriptor.getCurrentLevel().orElse(originalStudent.getCurrentLevel());
+        ParentGuardianContact contact = createParentGuardianContact(originalStudent, descriptor);
+        return new Student(name, contact, subject, currentLevel, originalStudent.getId());
+    }
+
+    /**
+     * Returns the contact with supplied edits applied to the original student's contact.
+     */
+    private static ParentGuardianContact createParentGuardianContact(Student originalStudent,
+            EditStudentDescriptor descriptor) {
         String phone = descriptor.getParentPhone()
                 .orElse(originalStudent.getParentGuardianContact().getPhone());
         Optional<String> email = descriptor.isParentEmailEdited()
                 ? descriptor.getParentEmail()
                 : originalStudent.getParentGuardianContact().getEmail();
-        Subject subject = descriptor.getSubject().orElse(originalStudent.getSubject());
-        CurrentLevel currentLevel = descriptor.getCurrentLevel().orElse(originalStudent.getCurrentLevel());
-        ParentGuardianContact contact = new ParentGuardianContact(phone, email);
-        return new Student(name, contact, subject, currentLevel, originalStudent.getId());
+        return new ParentGuardianContact(phone, email);
     }
 
     @Override
