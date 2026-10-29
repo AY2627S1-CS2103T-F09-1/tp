@@ -28,7 +28,8 @@ public final class Subject {
      */
     public static boolean isValidSubject(String subject) {
         requireNonNull(subject);
-        return subject.matches(".*[\\p{L}\\p{N}].*") && !subject.matches(".*[\\r\\n].*");
+        return subject.matches("(?s).*[\\p{L}\\p{N}].*")
+                && !subject.matches("(?s).*[\\r\\n].*");
     }
 
     /**

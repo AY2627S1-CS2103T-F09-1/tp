@@ -28,7 +28,8 @@ public final class CurrentLevel {
      */
     public static boolean isValidCurrentLevel(String currentLevel) {
         requireNonNull(currentLevel);
-        return currentLevel.matches(".*[\\p{L}\\p{N}].*") && !currentLevel.matches(".*[\\r\\n].*");
+        return currentLevel.matches("(?s).*[\\p{L}\\p{N}].*")
+                && !currentLevel.matches("(?s).*[\\r\\n].*");
     }
 
     /**
