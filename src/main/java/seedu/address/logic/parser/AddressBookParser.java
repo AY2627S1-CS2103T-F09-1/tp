@@ -1,12 +1,14 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.withFormat;
 
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
@@ -34,13 +36,32 @@ public class AddressBookParser {
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
-    private static final Pattern NUMERIC_EDIT_TARGET = Pattern.compile("[+-]?\\d+");
-    private static final Set<String> MISTYPED_NOTE_TARGETS = Set.of("notes", "nte");
+    /** Largest number of single-character edits from {@code note}, as in {@code nte}, still treated as a typo */
+    private static final int MAX_NOTE_TARGET_TYPO_DISTANCE = 2;
+    /** Separates a parameter prefix from its value, as in {@code n/NAME} */
+    private static final String PARAMETER_PREFIX_SEPARATOR = "/";
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     private static final Set<String> COMMAND_WORDS = Set.of(AddCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
             EditCommand.COMMAND_WORD, NoteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD,
             ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD);
+    private static final String AVAILABLE_COMMANDS = COMMAND_WORDS.stream()
+            .sorted()
+            .collect(Collectors.joining(", "));
+
+    /**
+     * Returns the error shown when {@code commandWord} does not name a command, listing the available ones.
+     */
+    public static String getUnknownCommandMessage(String commandWord) {
+        return String.format(MESSAGE_UNKNOWN_COMMAND, commandWord, AVAILABLE_COMMANDS);
+    }
+
+    /**
+     * Returns the error shown when no command is entered, listing the available commands.
+     */
+    public static String getEmptyCommandMessage() {
+        return String.format(MESSAGE_EMPTY_COMMAND, AVAILABLE_COMMANDS);
+    }
 
     /**
      * Returns the command word of {@code userInput} if it names a known command, or {@code "unknown"}
@@ -70,7 +91,7 @@ public class AddressBookParser {
     public Command parseCommand(String userInput) throws ParseException {
         final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
         if (!matcher.matches()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
+            throw new ParseException(getEmptyCommandMessage());
         }
 
         final String commandWord = matcher.group("commandWord");
@@ -91,7 +112,7 @@ public class AddressBookParser {
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             default -> {
                 logger.finer("An unknown command word caused a ParseException.");
-                throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
+                throw new ParseException(getUnknownCommandMessage(commandWord));
             }
         };
     }
@@ -101,11 +122,23 @@ public class AddressBookParser {
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
         }
-        if (MISTYPED_NOTE_TARGETS.contains(editTarget)) {
-            throw new ParseException(String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT,
-                    editTarget, EditNoteCommand.COMMAND_FORMAT));
+        if (isMistypedNoteTarget(editTarget)) {
+            String suggestion = EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET;
+            throw new ParseException(withFormat(
+                    String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, editTarget, suggestion),
+                    EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE));
         }
         return new EditCommandParser().parse(arguments);
     }
 
+    /**
+     * Returns true if {@code editTarget} looks like a typo of {@code note} rather than a student index or a
+     * parameter such as {@code n/NAME}.
+     */
+    private static boolean isMistypedNoteTarget(String editTarget) {
+        boolean isParameter = editTarget.contains(PARAMETER_PREFIX_SEPARATOR);
+        boolean isCloseToNoteTarget = EditDistance.between(editTarget, EditNoteCommand.NOTE_TARGET)
+                <= MAX_NOTE_TARGET_TYPO_DISTANCE;
+        return !editTarget.isEmpty() && !isParameter && isCloseToNoteTarget;
+    }
 }

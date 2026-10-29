@@ -3,6 +3,7 @@ package seedu.address.model.student;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -31,9 +32,16 @@ public final class ParentGuardianContact {
         requireNonNull(phone);
         requireNonNull(email);
         checkArgument(isValidPhone(phone), PHONE_MESSAGE_CONSTRAINTS);
-        checkArgument(email.isEmpty() || isValidEmail(email.get()), EMAIL_MESSAGE_CONSTRAINTS);
+        checkArgument(hasValidOptionalEmail(email), EMAIL_MESSAGE_CONSTRAINTS);
         this.phone = phone.trim();
         this.email = email.map(String::trim).orElse(null);
+    }
+
+    /**
+     * Returns whether {@code email} is empty or holds a valid email address.
+     */
+    private static boolean hasValidOptionalEmail(Optional<String> email) {
+        return email.isEmpty() || isValidEmail(email.get());
     }
 
     /**
@@ -91,11 +99,11 @@ public final class ParentGuardianContact {
 
         return other instanceof ParentGuardianContact otherContact
                 && phone.equals(otherContact.phone)
-                && Optional.ofNullable(email).equals(Optional.ofNullable(otherContact.email));
+                && Objects.equals(email, otherContact.email);
     }
 
     @Override
     public int hashCode() {
-        return 31 * phone.hashCode() + Optional.ofNullable(email).hashCode();
+        return Objects.hash(phone, email);
     }
 }
