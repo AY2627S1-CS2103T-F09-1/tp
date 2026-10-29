@@ -41,6 +41,23 @@ public class JsonAdaptedSessionNoteTest {
     }
 
     @Test
+    public void toModelType_maximumLengthText_returnsNote() throws Exception {
+        String maximumLengthText = "a".repeat(SessionNote.MAX_TEXT_LENGTH);
+
+        SessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, maximumLengthText).toModelType();
+
+        assertEquals(maximumLengthText, note.getText());
+    }
+
+    @Test
+    public void toModelType_bothFieldsMissing_reportsTextFirst() {
+        // Each missing field is tested alone below; this checks which one is reported when both are missing.
+        assertThrows(IllegalValueException.class,
+                String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "text"),
+                new JsonAdaptedSessionNote(null, null)::toModelType);
+    }
+
+    @Test
     public void toModelType_missingFields_throwsIllegalValueException() {
         assertThrows(IllegalValueException.class,
                 String.format(JsonAdaptedSessionNote.MISSING_FIELD_MESSAGE_FORMAT, "recordedAt"),

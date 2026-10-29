@@ -497,6 +497,19 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_storageFailure_logsRollbackWithoutNoteText() throws Exception {
+        Model studentModel = createModelWithAlex();
+        Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
+
+        List<String> logMessages = LogRecorder.captureMessages(LogicManager.class, () ->
+                assertThrows(CommandException.class, () -> failingLogic
+                        .execute(NoteCommand.COMMAND_WORD + " 1 nt/Reviewed indices.")));
+
+        assertTrue(logMessages.contains("Could not save data; restoring the data from before the command."));
+        assertTrue(logMessages.stream().noneMatch(message -> message.contains("Reviewed indices")));
+    }
+
+    @Test
     public void execute_addStudentWithStorageFailure_restoresRoster() {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);

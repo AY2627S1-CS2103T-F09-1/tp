@@ -115,9 +115,11 @@ public class ParserUtilTest {
 
     @Test
     public void parseNoteText_validText_returnsTextUnchanged() throws Exception {
+        String minimumLengthNote = "a".repeat(SessionNote.MIN_TEXT_LENGTH);
         String maximumLengthNote = "a".repeat(SessionNote.MAX_TEXT_LENGTH);
 
         assertEquals("  Reviewed  indices.  ", ParserUtil.parseNoteText("  Reviewed  indices.  "));
+        assertEquals(minimumLengthNote, ParserUtil.parseNoteText(minimumLengthNote));
         assertEquals(maximumLengthNote, ParserUtil.parseNoteText(maximumLengthNote));
     }
 

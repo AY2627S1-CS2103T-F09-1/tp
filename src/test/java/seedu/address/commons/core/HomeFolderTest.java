@@ -128,6 +128,12 @@ public class HomeFolderTest {
     }
 
     @Test
+    public void toDisplayPath_homeFolderItself_returnsCurrentFolder() {
+        // Boundary: the home folder is the outermost path still counted as inside it.
+        assertEquals(Paths.get("."), HomeFolder.toDisplayPath(testFolder, testFolder));
+    }
+
+    @Test
     public void toDisplayPath_pathOutsideHomeFolder_returnsPathUnchanged() {
         Path homeFolder = testFolder.resolve("home");
         Path otherFile = testFolder.resolve("other").resolve("tutortrack.json");
