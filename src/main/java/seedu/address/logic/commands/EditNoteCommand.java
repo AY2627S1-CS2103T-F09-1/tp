@@ -65,6 +65,14 @@ public class EditNoteCommand extends Command {
         requireNonNull(model);
         StudentRosterEntry student = getRosterEntry(model, studentIndex);
         SessionHistory history = model.getSessionHistory(student.getStudentId());
+        validateNoteTarget(student, history);
+
+        model.editSessionNote(student.getStudentId(), noteNumber, text);
+        return new CommandResult(String.format(MESSAGE_SUCCESS,
+                noteNumber.getOneBased(), student.getName()));
+    }
+
+    private void validateNoteTarget(StudentRosterEntry student, SessionHistory history) throws CommandException {
         if (history.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_SESSION_NOTES, student.getName()));
         }
@@ -72,10 +80,6 @@ public class EditNoteCommand extends Command {
             throw new CommandException(String.format(MESSAGE_INVALID_NOTE_NUMBER,
                     noteNumber.getOneBased(), student.getName(), history.size()));
         }
-
-        model.editSessionNote(student.getStudentId(), noteNumber, text);
-        return new CommandResult(String.format(MESSAGE_SUCCESS,
-                noteNumber.getOneBased(), student.getName()));
     }
 
     @Override
