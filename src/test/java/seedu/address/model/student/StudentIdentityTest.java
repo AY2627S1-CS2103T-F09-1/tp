@@ -73,4 +73,10 @@ public class StudentIdentityTest {
         assertFalse(stableId.equals(null));
         assertThrows(IllegalArgumentException.class, () -> StudentId.fromString("not-a-uuid"));
     }
+
+    @Test
+    public void studentId_nullInputs_throwNullPointerException() {
+        assertThrows(NullPointerException.class, () -> StudentId.fromLegacyIdentity(null));
+        assertThrows(NullPointerException.class, () -> StudentId.fromString(null));
+    }
 }

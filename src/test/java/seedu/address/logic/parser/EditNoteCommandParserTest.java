@@ -111,6 +111,14 @@ public class EditNoteCommandParserTest {
         assertParseFailure(parser, "note 1 1 nt/" + "a".repeat(overLimit),
                 String.format(ParserUtil.MESSAGE_NOTE_TOO_LONG, overLimit));
         assertParseFailure(parser, "note 1 1 nt/Column\tvalue", ParserUtil.MESSAGE_NOTE_NON_PRINTABLE);
+        assertParseFailure(parser, "note 1 1 nt/   ", ParserUtil.MESSAGE_EMPTY_NOTE);
+    }
+
+    @Test
+    public void parse_symbolsInText_preservesValidNoteText() {
+        assertParseSuccess(parser, "note 1 1 nt/Review Chapter #2: John's progress.",
+                new EditNoteCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1),
+                        "Review Chapter #2: John's progress."));
     }
 
     @Test
