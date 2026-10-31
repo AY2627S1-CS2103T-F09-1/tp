@@ -159,7 +159,7 @@ TutorTrack keeps its files in the _home folder_, the folder containing the JAR f
 
 * `HomeFolder` locates the home folder and places the data file `data/tutortrack.json`, `preferences.json`, and the `tutortrack.log` files there.
 * When TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, `HomeFolder` uses the working directory instead.
-* If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. It reports the failure through the base logger rather than `LogsCenter`'s own static logger, which is not yet assigned while the base logger is being set up. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
+* If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
 
 In the data file:
 
@@ -912,7 +912,6 @@ testers are expected to do more *exploratory* testing.
    1. Enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`.
       Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Dev Patel is not added to the roster.
    1. Restore write access to the folder.
-5. _{ more test cases … }_
 
 ### UI theme and scaling
 
