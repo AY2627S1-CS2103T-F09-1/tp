@@ -9,7 +9,10 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* TutorTrack is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) (AB3) by the [SE-EDU initiative](https://se-education.org). The code structure, much of the code, this Developer Guide's structure, the User Guide template, and the diagrams that have not been replaced are adapted from AB3.
+* Libraries: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for JSON storage, and [JUnit 5](https://junit.org/junit5/) for testing.
+* Diagrams are drawn with [PlantUML](https://plantuml.com/).
+* AI tools [Codex](https://openai.com/codex/), [Claude Code](https://www.anthropic.com/claude-code), and [Kiro](https://kiro.dev/) were used to help write and review code, tests, and documentation.
 
 --------------------------------------------------------------------------------------------------------------------
 
