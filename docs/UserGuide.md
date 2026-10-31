@@ -291,9 +291,9 @@ Each student's session notes are in that student's `sessionNotes` list, for exam
 If an edit makes the data file invalid, TutorTrack starts with an empty roster and shows a message saying that it could not load your data file. It also tries to keep a copy of the file in the `data` folder, with a name such as `tutortrack.json.backup-123456.bak`, and the message gives the copy's location if it succeeds. Correct the original file and restart TutorTrack **before** running any command that changes data, because such a command replaces the original file with the empty roster. Back up the data file before editing it.
 </div>
 
-### Archiving data files `[coming in v2.0]`
+### Archiving students `[Coming soon]`
 
-_Details coming soon ..._
+This feature is planned for v2.0 and is not available yet. You will be able to archive a student who has stopped lessons, so that the student no longer appears in the roster but keeps their details and session notes. You will also be able to view an archived student and restore them to the roster if they resume lessons.
 
 --------------------------------------------------------------------------------------------------------------------
 
