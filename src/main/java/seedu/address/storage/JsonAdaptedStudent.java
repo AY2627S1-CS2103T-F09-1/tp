@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -113,15 +114,16 @@ class JsonAdaptedStudent {
      * Returns the validated session history represented by this JSON object's session notes.
      * Notes with equal timestamps keep their saved order.
      *
+     * @param loadedAt The date-time the data is being loaded.
      * @throws IllegalValueException If a session note is empty or invalid.
      */
-    SessionHistory toModelSessionHistory() throws IllegalValueException {
+    SessionHistory toModelSessionHistory(OffsetDateTime loadedAt) throws IllegalValueException {
         List<SessionNote> modelNotes = new ArrayList<>();
         for (JsonAdaptedSessionNote sessionNote : sessionNotes) {
             if (sessionNote == null) {
                 throw new IllegalValueException(MISSING_SESSION_NOTE_MESSAGE);
             }
-            modelNotes.add(sessionNote.toModelType());
+            modelNotes.add(sessionNote.toModelType(loadedAt));
         }
         SessionHistory history = SessionHistory.of(modelNotes);
         assert history.size() == sessionNotes.size() : "Every persisted session note must be in the history";

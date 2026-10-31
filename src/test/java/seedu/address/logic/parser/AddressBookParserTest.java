@@ -90,6 +90,21 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_uppercaseCommandWords_reportsUnknownCommand() {
+        List<String> uppercaseWords = List.of("ADD", "DELETE", "EDIT", "NOTE", "VIEW", "EXIT", "HELP");
+        for (String commandWord : uppercaseWords) {
+            String commandText = commandWord + " 1";
+            Executable parseCommand = () -> parser.parseCommand(commandText);
+            ParseException exception = Assertions.assertThrows(ParseException.class, parseCommand);
+            assertEquals(AddressBookParser.getUnknownCommandMessage(commandWord), exception.getMessage());
+        }
+        String mixedCaseCommand = "Add n/Alex Tan p/91234567 sub/Math l/Sec 3";
+        Executable parseMixedCase = () -> parser.parseCommand(mixedCaseCommand);
+        ParseException mixedCase = Assertions.assertThrows(ParseException.class, parseMixedCase);
+        assertEquals(AddressBookParser.getUnknownCommandMessage("Add"), mixedCase.getMessage());
+    }
+
+    @Test
     public void parseCommand_mistypedEditNoteTarget_suggestsCorrectCommand() {
         List<String> mistypedTargets = List.of("notes", "nte", "nots", "no");
         for (String mistypedTarget : mistypedTargets) {

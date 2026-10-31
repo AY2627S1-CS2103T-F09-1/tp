@@ -78,7 +78,44 @@ public class NoteCommandParserTest {
                 NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
 
         assertParseFailure(parser, " 1 2 nt/Reviewed factorisation.", expectedMessage);
-        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", expectedMessage);
+        assertParseFailure(parser, " 1 2 3 nt/Reviewed factorisation.", expectedMessage);
+    }
+
+    @Test
+    public void parse_strayTextAfterIndex_reportsUnexpectedTextNotSecondIndex() {
+        assertParseFailure(parser, " 1 hello nt/x",
+                withNoteFormat("Unexpected text before the first parameter: hello."));
+        assertParseFailure(parser, " 1 2 hello nt/x",
+                withNoteFormat("Unexpected text before the first parameter: hello."));
+        assertParseFailure(parser, " 1 hello world nt/x",
+                withNoteFormat("Unexpected text before the first parameter: hello world."));
+    }
+
+    @Test
+    public void parse_invalidIndexBeforeMoreWords_reportsInvalidIndex() {
+        String invalidIndexMessage = "INDEX must be a positive whole number, e.g. 1.";
+
+        assertParseFailure(parser, " abc 1 nt/Reviewed factorisation.", invalidIndexMessage);
+        assertParseFailure(parser, " abc hello nt/x", invalidIndexMessage);
+    }
+
+    @Test
+    public void parse_notePrefixGluedToIndex_reportsMissingSpace() {
+        String expectedMessage = withNoteFormat("Put a space before nt/, after the student INDEX.");
+
+        assertParseFailure(parser, " 1nt/hello", expectedMessage);
+        assertParseFailure(parser, " 12nt/hello", expectedMessage);
+    }
+
+    @Test
+    public void parse_noNotePrefixOrNotePrefixNotAfterIndex_stillReportsMissingNote() {
+        assertParseFailure(parser, " 1 hello", NoteCommandParser.MESSAGE_MISSING_NOTE);
+        assertParseFailure(parser, " 1 Remember (nt/)", NoteCommandParser.MESSAGE_MISSING_NOTE);
+        assertParseFailure(parser, " 1 hellont/x", NoteCommandParser.MESSAGE_MISSING_NOTE);
+    }
+
+    private static String withNoteFormat(String message) {
+        return Messages.withFormat(message, NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
     }
 
     @Test
@@ -103,5 +140,35 @@ public class NoteCommandParserTest {
     public void parse_notePrefixWithoutLeadingSpace_keptAsText() {
         assertParseSuccess(parser, " 1 nt/Remember (nt/) and \"nt/\" notation",
                 new NoteCommand(INDEX_FIRST_PERSON, "Remember (nt/) and \"nt/\" notation"));
+    }
+
+    @Test
+    public void parse_wrongCaseNotePrefix_throwsLowercaseRequiredWithFormat() {
+        // Partitions: all uppercase, and each letter uppercase on its own.
+        assertParseFailure(parser, " 1 NT/Reviewed factorisation.", wrongCaseNotePrefixMessage("NT/"));
+        assertParseFailure(parser, " 1 Nt/Reviewed factorisation.", wrongCaseNotePrefixMessage("Nt/"));
+        assertParseFailure(parser, " 1 nT/Reviewed factorisation.", wrongCaseNotePrefixMessage("nT/"));
+    }
+
+    @Test
+    public void parse_wrongCaseNotePrefixWithoutIndex_reportsPrefixBeforeMissingIndex() {
+        assertParseFailure(parser, " NT/Reviewed factorisation.", wrongCaseNotePrefixMessage("NT/"));
+    }
+
+    @Test
+    public void parse_textResemblingWrongCasePrefix_throwsMissingNote() {
+        // Boundary: without the slash, or not at the start of a word, the text is not a prefix. A lowercase nt/
+        // after a tab is not a prefix either, and it is not in the wrong case.
+        String missingNoteMessage = Messages.withFormat("Missing nt/NOTE.",
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+
+        assertParseFailure(parser, " 1 NT", missingNoteMessage);
+        assertParseFailure(parser, " 1 xNT/Reviewed", missingNoteMessage);
+        assertParseFailure(parser, " 1\tnt/Reviewed", missingNoteMessage);
+    }
+
+    private static String wrongCaseNotePrefixMessage(String typedPrefix) {
+        return Messages.withFormat(String.format(NoteCommandParser.MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix),
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
     }
 }

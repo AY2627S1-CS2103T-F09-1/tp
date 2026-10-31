@@ -1,11 +1,13 @@
 package seedu.address;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,6 +23,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -89,6 +92,35 @@ public class MainAppTest {
     }
 
     @Test
+    public void initModelManager_missingDataFile_logsThatFileIsCreatedOnFirstSave() {
+        Storage storage = createStorage();
+
+        List<String> logMessages = LogRecorder.captureMessages(MainApp.class, () ->
+                new MainApp().initModelManager(storage, new UserPrefs()));
+
+        assertTrue(logMessages.stream().anyMatch(message -> message.startsWith("No data file found at")
+                && message.contains("the file is created when the first change is saved")));
+        assertTrue(logMessages.stream().noneMatch(message -> message.contains("Creating a new empty data file")));
+        assertFalse(Files.exists(storage.getAddressBookFilePath()));
+    }
+
+    @Test
+    public void initPrefs_saveFails_logsOneLineWarningWithoutStackTrace() {
+        JsonUserPrefsStorage failingStorage = new JsonUserPrefsStorage(testFolder.resolve("preferences.json")) {
+            @Override
+            public void saveUserPrefs(ReadOnlyUserPrefs userPrefs) throws IOException {
+                throw new AccessDeniedException("preferences.json");
+            }
+        };
+
+        List<String> logMessages = LogRecorder.captureMessages(MainApp.class, () ->
+                new MainApp().initPrefs(failingStorage));
+
+        assertTrue(logMessages.contains("Failed to save preference file : "
+                + "java.nio.file.AccessDeniedException: preferences.json"));
+    }
+
+    @Test
     public void initModelManager_invalidDataFile_logsEmptyRosterWarning() throws Exception {
         Storage storage = createStorage();
         Files.writeString(storage.getAddressBookFilePath(), "not valid json");
@@ -98,6 +130,25 @@ public class MainAppTest {
 
         assertTrue(logMessages.stream()
                 .anyMatch(message -> message.endsWith("Will be starting with an empty roster.")));
+    }
+
+    @Test
+    public void initModelManager_invalidLegacyPerson_preservesFileInBackup() throws Exception {
+        Storage storage = createStorage();
+        String invalidData = "{\"persons\":[{\"name\":\"\",\"phone\":\"123\","
+                + "\"email\":\"a@example.com\",\"address\":\"Example\",\"tags\":[]}],\"students\":[]}";
+        Files.writeString(storage.getAddressBookFilePath(), invalidData);
+
+        Model model = new MainApp().initModelManager(storage, new UserPrefs());
+
+        assertTrue(model.getAddressBook().getStudentList().isEmpty());
+        assertEquals(invalidData, Files.readString(storage.getAddressBookFilePath()));
+        try (var files = Files.list(testFolder)) {
+            List<Path> backups = files.filter(path -> path.getFileName().toString()
+                    .startsWith("addressbook.json.backup-")).toList();
+            assertEquals(1, backups.size());
+            assertEquals(invalidData, Files.readString(backups.get(0)));
+        }
     }
 
     @Test
@@ -148,7 +199,7 @@ public class MainAppTest {
                 assertTrue(app.initModelManager(storage, new UserPrefs()).getAddressBook()
                         .getStudentList().isEmpty()));
 
-        assertTrue(logMessages.stream().anyMatch(message -> message.startsWith("Failed to back up data file")));
+        assertTrue(logMessages.contains("Failed to back up data file : java.io.IOException: backup failed"));
     }
 
     private Storage createStorage() {

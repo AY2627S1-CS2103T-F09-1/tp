@@ -106,7 +106,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_invalidValue_failureWithoutFormat() {
-        assertParseFailure(parser, " n/Alicia Lim p/12 sub/Mathematics l/Secondary 3",
+        assertParseFailure(parser, " n/Alicia Lim p/10101010 sub/Mathematics l/Secondary 3",
                 ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
     }
 
@@ -159,6 +159,11 @@ public class AddCommandParserTest {
     public void parse_studentArgumentsWithLegacyPersonPrefix_failure() {
         assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " a/Block 312, Amy Street 1 t/friend",
                 getUnknownParameterMessage("a/"));
+    }
+
+    @Test
+    public void parse_studentArgumentsWithLegacyTagPrefix_failure() {
+        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " t/friend", getUnknownParameterMessage("t/"));
     }
 
     @Test

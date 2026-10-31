@@ -1,4 +1,5 @@
 @startuml
+!pragma layout smetana
 !include style.puml
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
@@ -73,5 +74,4 @@ Name -[hidden]right-> Phone
 Phone -[hidden]right-> Address
 Address -[hidden]right-> Email
 
-ModelManager --> "~* filtered" Person
 @enduml

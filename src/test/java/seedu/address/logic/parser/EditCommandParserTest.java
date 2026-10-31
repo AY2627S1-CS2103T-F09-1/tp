@@ -144,7 +144,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidValues_failure() {
         assertParseFailure(parser, " 1 n/", StudentName.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 p/12", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 p/10101010", ParentGuardianContact.PHONE_MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 e/example.com",
                 ParentGuardianContact.EMAIL_MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 sub/", Subject.MESSAGE_CONSTRAINTS);
@@ -157,6 +157,15 @@ public class EditCommandParserTest {
 
         assertParseFailure(parser, " 1 n/Alexis Tan n/Blair Tan e/a@example.com e/b@example.com",
                 expectedMessage);
+    }
+
+    @Test
+    public void parse_prefixLikeTextInSubject_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setSubject(new Subject("Math P/81234567"));
+
+        assertParseSuccess(parser, " 1 sub/Math P/81234567",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test

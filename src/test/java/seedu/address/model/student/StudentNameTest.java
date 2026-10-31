@@ -37,6 +37,7 @@ public class StudentNameTest {
         assertTrue(StudentName.isValidName("A"));
         assertTrue(StudentName.isValidName("Ana Lee"));
         assertTrue(StudentName.isValidName("Ana O'Neil-Smith Jr."));
+        assertTrue(StudentName.isValidName("Raj s/o Kumar"));
         assertTrue(StudentName.isValidName("Élodie Tan 2nd"));
     }
 

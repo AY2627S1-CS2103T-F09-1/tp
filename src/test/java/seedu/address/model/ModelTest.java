@@ -7,14 +7,11 @@ import static seedu.address.testutil.TypicalSessionNotes.INDICES_NOTE;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
-import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.index.Index;
-import seedu.address.model.person.Person;
 import seedu.address.model.student.CurrentLevel;
 import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
@@ -122,34 +119,5 @@ public class ModelTest {
             throw new AssertionError("This method should not be called.");
         }
 
-        @Override
-        public boolean hasPerson(Person person) {
-            throw new AssertionError("This method should not be called.");
-        }
-
-        @Override
-        public void deletePerson(Person target) {
-            throw new AssertionError("This method should not be called.");
-        }
-
-        @Override
-        public void addPerson(Person person) {
-            throw new AssertionError("This method should not be called.");
-        }
-
-        @Override
-        public void setPerson(Person target, Person editedPerson) {
-            throw new AssertionError("This method should not be called.");
-        }
-
-        @Override
-        public ObservableList<Person> getFilteredPersonList() {
-            throw new AssertionError("This method should not be called.");
-        }
-
-        @Override
-        public void updateFilteredPersonList(Predicate<Person> predicate) {
-            throw new AssertionError("This method should not be called.");
-        }
     }
 }

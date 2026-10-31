@@ -31,7 +31,7 @@ import seedu.address.ui.UiManager;
  */
 public class MainApp extends Application {
 
-    public static final String VERSION = "V1.4";
+    public static final String VERSION = "V1.5";
 
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = HomeFolder.resolve("preferences.json");
@@ -92,7 +92,8 @@ public class MainApp extends Application {
         try {
             addressBookOptional = storage.readAddressBook();
             if (addressBookOptional.isEmpty()) {
-                logger.info("Creating a new empty data file " + storage.getAddressBookFilePath() + ".");
+                logger.info("No data file found at " + storage.getAddressBookFilePath()
+                        + ". Starting with an empty roster; the file is created when the first change is saved.");
             }
             initialData = addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
@@ -113,7 +114,7 @@ public class MainApp extends Application {
             Path backupFilePath = storage.backupAddressBookFile();
             return String.format(MESSAGE_DATA_LOAD_FAILED_WITH_BACKUP, backupFilePath);
         } catch (IOException e) {
-            logger.warning("Failed to back up data file " + StringUtil.getDetails(e));
+            logger.warning("Failed to back up data file : " + e);
             return MESSAGE_DATA_LOAD_AND_BACKUP_FAILED;
         }
     }
@@ -144,7 +145,7 @@ public class MainApp extends Application {
         try {
             storage.saveUserPrefs(initializedPrefs);
         } catch (IOException e) {
-            logger.warning("Failed to save preference file : " + StringUtil.getDetails(e));
+            logger.warning("Failed to save preference file : " + e);
         }
 
         return initializedPrefs;

@@ -13,9 +13,11 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -447,6 +449,22 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_editStudentWithUppercasePhonePrefix_changesSubjectOnly() throws Exception {
+        model.addStudent(ALEX);
+
+        logic.execute("edit 1 sub/Math P/81234567");
+
+        Student updatedStudent = model.getStudent(ALEX.getId()).orElseThrow();
+        assertEquals(new Subject("Math P/81234567"), updatedStudent.getSubject());
+        assertEquals(ALEX.getParentGuardianContact().getPhone(), updatedStudent.getParentGuardianContact().getPhone());
+        ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
+                .readAddressBook().orElseThrow();
+        assertEquals(new Subject("Math P/81234567"), savedData.getStudentList().get(0).getSubject());
+        assertEquals(ALEX.getParentGuardianContact().getPhone(),
+                savedData.getStudentList().get(0).getParentGuardianContact().getPhone());
+    }
+
+    @Test
     public void execute_editStudentAfterDeletePreview_cancelsPendingDeletion() throws Exception {
         model.addStudent(ALEX);
         logic.execute("delete 1");
@@ -470,10 +488,10 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addStudentWithPrefixLikeText_success() throws Exception {
-        String addCommand = "add n/Amy Bee p/11111111 e/amy@example.com "
+        String addCommand = "add n/Amy Bee p/91234567 e/amy@example.com "
                 + "sub/Mathematics nt/Science l/Secondary nt/1";
         Student student = new Student(new StudentName("Amy Bee"),
-                new ParentGuardianContact("11111111", Optional.of("amy@example.com")),
+                new ParentGuardianContact("91234567", Optional.of("amy@example.com")),
                 new Subject("Mathematics nt/Science"), new CurrentLevel("Secondary nt/1"));
         Model expectedModel = new ModelManager();
         expectedModel.addStudent(student);
@@ -543,6 +561,25 @@ public class LogicManagerTest {
 
         assertTrue(studentModel.getSessionHistory(ALEX.getId()).isEmpty());
         assertEquals(0, failingLogic.getStudentRoster().getEntries().get(0).getNoteCount());
+    }
+
+    @Test
+    public void execute_storageFailureInsideTutorTrackFolder_namesDataFileRelativeToFolder() {
+        // The storage fails before writing, so nothing is created in the TutorTrack folder.
+        Path dataFile = Paths.get("data", "saveFailure.json");
+        JsonUserPrefsStorage userPrefsStorage =
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
+        Logic failingLogic = new LogicManager(createModelWithAlex(),
+                new StorageManager(new FailingAddressBookStorage(dataFile, 1), userPrefsStorage));
+        String expectedMessage = String.format(LogicManager.FILE_OPS_ERROR_FORMAT,
+                Paths.get(".", "data", "saveFailure.json"), DUMMY_IO_EXCEPTION.getMessage());
+
+        CommandException exception = Assertions.assertThrows(CommandException.class, () ->
+                failingLogic.execute(NOTE_FIRST_STUDENT_COMMAND));
+
+        assertEquals(expectedMessage, exception.getMessage());
+        assertFalse(exception.getMessage().contains(dataFile.toAbsolutePath().toString()));
+        assertFalse(Files.exists(dataFile));
     }
 
     @Test
@@ -664,11 +701,6 @@ public class LogicManagerTest {
         ReadOnlyAddressBook savedData = savedStorage.readAddressBook().orElseThrow();
         assertEquals(2, savedData.getStudentList().size());
         assertTrue(savedData.getSessionHistory(ALEX.getId()).isEmpty());
-    }
-
-    @Test
-    public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
-        assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
     }
 
     @Test

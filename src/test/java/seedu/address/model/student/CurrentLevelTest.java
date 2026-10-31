@@ -13,12 +13,14 @@ public class CurrentLevelTest {
     public void constructor_invalidCurrentLevel_throwsIllegalArgumentException() {
         assertThrows(NullPointerException.class, () -> new CurrentLevel(null));
         assertThrows(IllegalArgumentException.class, () -> new CurrentLevel("   "));
+        assertThrows(IllegalArgumentException.class, () -> new CurrentLevel("???"));
         assertThrows(IllegalArgumentException.class, () -> new CurrentLevel("Secondary\r3"));
     }
 
     @Test
     public void constructor_validCurrentLevel_normalizesWhitespace() {
         assertEquals("Secondary 3", new CurrentLevel(" Secondary   3 ").getValue());
+        assertEquals("P6+", new CurrentLevel("P6+").getValue());
     }
 
     @Test

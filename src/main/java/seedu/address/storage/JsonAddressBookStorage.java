@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Clock;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -25,9 +27,20 @@ public class JsonAddressBookStorage {
     private static final String BACKUP_FILE_SUFFIX = ".bak";
 
     private Path filePath;
+    private final Clock clock;
 
     public JsonAddressBookStorage(Path filePath) {
+        this(filePath, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Constructs a storage for {@code filePath} that reads the current time from {@code clock} when loading,
+     * so that saved timestamps can be checked against it.
+     */
+    public JsonAddressBookStorage(Path filePath, Clock clock) {
+        requireNonNull(clock);
         this.filePath = filePath;
+        this.clock = clock;
     }
 
     public Path getAddressBookFilePath() {
@@ -92,7 +105,7 @@ public class JsonAddressBookStorage {
         }
 
         try {
-            return Optional.of(jsonAddressBook.get().toModelType());
+            return Optional.of(jsonAddressBook.get().toModelType(OffsetDateTime.now(clock)));
         } catch (IllegalValueException ive) {
             logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
             throw new DataLoadingException(ive);

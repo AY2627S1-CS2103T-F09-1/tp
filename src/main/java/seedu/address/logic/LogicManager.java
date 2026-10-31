@@ -6,8 +6,8 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.Command;
@@ -19,7 +19,6 @@ import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
-import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.student.StudentId;
@@ -31,11 +30,14 @@ import seedu.address.storage.Storage;
  * The main LogicManager of the app.
  */
 public class LogicManager implements Logic {
+    /** Sentence ending every save error, because a command whose data cannot be saved is rolled back */
+    public static final String MESSAGE_COMMAND_CANCELLED = " The command was cancelled and no data was changed.";
     public static final String FILE_OPS_ERROR_FORMAT =
-            "Could not save data to file %s due to the following error: %s";
+            "Could not save data to file %s (%s)." + MESSAGE_COMMAND_CANCELLED;
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
-            "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
+            "Could not save data to file %s because TutorTrack cannot write to the file or its folder."
+            + MESSAGE_COMMAND_CANCELLED;
 
     /** Format of the log line that marks each command, given the command word only */
     static final String USER_COMMAND_LOG_FORMAT = "----------------[USER COMMAND][%s]";
@@ -211,8 +213,9 @@ public class LogicManager implements Logic {
      * @throws CommandException If the address book cannot be saved.
      */
     private void saveOrRestore(AddressBook dataBeforeCommand) throws CommandException {
-        // The exception may name a temporary file, so error messages name the data file instead.
-        Path dataFile = storage.getAddressBookFilePath();
+        // The exception may name a temporary file, so error messages name the data file instead, relative to
+        // the TutorTrack folder so that the user's home folder is not shown.
+        Path dataFile = HomeFolder.toDisplayPath(storage.getAddressBookFilePath());
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
@@ -230,11 +233,6 @@ public class LogicManager implements Logic {
     private void restore(AddressBook dataBeforeCommand) {
         logger.warning("Could not save data; restoring the data from before the command.");
         model.setAddressBook(dataBeforeCommand);
-    }
-
-    @Override
-    public ObservableList<Person> getFilteredPersonList() {
-        return model.getFilteredPersonList();
     }
 
     @Override

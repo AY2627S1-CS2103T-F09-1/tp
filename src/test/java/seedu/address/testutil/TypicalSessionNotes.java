@@ -29,6 +29,11 @@ public class TypicalSessionNotes {
     public static final SessionNote FACTORISATION_NOTE = new SessionNote("Reviewed factorisation.",
             OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
 
+    /**
+     * A load time later than every timestamp used in the storage test data.
+     */
+    public static final OffsetDateTime LOADED_AT = OffsetDateTime.parse("2026-10-29T12:00:00+08:00");
+
     private TypicalSessionNotes() {} // prevents instantiation
 
     private static StudentId createStudentId(String uuid) {

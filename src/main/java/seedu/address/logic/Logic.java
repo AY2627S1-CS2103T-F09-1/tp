@@ -2,12 +2,10 @@ package seedu.address.logic;
 
 import java.util.Optional;
 
-import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.student.StudentId;
 import seedu.address.model.student.StudentRoster;
@@ -24,9 +22,6 @@ public interface Logic {
      * @throws ParseException If an error occurs during parsing.
      */
     CommandResult execute(String commandText) throws CommandException, ParseException;
-
-    /** Returns an unmodifiable view of the filtered list of persons */
-    ObservableList<Person> getFilteredPersonList();
 
     /**
      * Returns an immutable snapshot of the student roster.

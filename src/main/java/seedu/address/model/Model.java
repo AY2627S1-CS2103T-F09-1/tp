@@ -4,13 +4,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.index.Index;
-import seedu.address.model.person.Person;
 import seedu.address.model.profile.StudentProfile;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
@@ -22,9 +19,6 @@ import seedu.address.model.student.StudentRoster;
  * The API of the Model component.
  */
 public interface Model {
-    /** {@code Predicate} that always evaluates to true */
-    Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
-
     /**
      * Returns the user prefs.
      */
@@ -47,23 +41,6 @@ public interface Model {
 
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
-
-    /**
-     * Returns true if a person with the same identity as {@code person} exists in the address book.
-     */
-    boolean hasPerson(Person person);
-
-    /**
-     * Deletes the given person.
-     * The person must exist in the address book.
-     */
-    void deletePerson(Person target);
-
-    /**
-     * Adds the given person.
-     * {@code person} must not already exist in the address book.
-     */
-    void addPerson(Person person);
 
     /**
      * Returns whether a student with the same identity as {@code student} exists.
@@ -188,19 +165,4 @@ public interface Model {
         throw new UnsupportedOperationException("Session history removal is not supported by this model.");
     }
 
-    /**
-     * Replaces the given person {@code target} with {@code editedPerson}.
-     * {@code target} must exist in the address book.
-     * The person identity of {@code editedPerson} must not be the same as another existing person in the address book.
-     */
-    void setPerson(Person target, Person editedPerson);
-
-    /** Returns an unmodifiable view of the filtered person list */
-    ObservableList<Person> getFilteredPersonList();
-
-    /**
-     * Updates the filter of the filtered person list to filter by the given {@code predicate}.
-     * @throws NullPointerException if {@code predicate} is null.
-     */
-    void updateFilteredPersonList(Predicate<Person> predicate);
 }

@@ -142,7 +142,6 @@ The `Model` component,
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
 * stores added `Student` records in `AddressBook`; each student has a stable `StudentId`, name, parent or guardian contact, subject, and current level. The diagram shows these student relationships alongside the inherited person model.
 * stores each student's session notes in a `StudentSessionHistories` object beside the student list, rather than inside `Student`. It keeps one `SessionHistory` of `SessionNote`s per `StudentId` (see [Session note model integration](#session-note-model-integration)).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -228,7 +227,7 @@ TutorTrack's first student-domain slice introduces immutable `Student`, `Student
 
 The command and storage layers will construct `Student` values and delegate duplicate comparisons to `StudentIdentity`; they must not reproduce this normalization logic. This keeps the same duplicate outcome for typed commands and manually edited persisted data.
 
-Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. Each session note stores `recordedAt`, `text`, and an optional `lastEditedAt`; the latter is omitted for unedited notes and missing or null values load as unedited. `lastEditedAt` must not precede `recordedAt`. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableAddressBook` then checks each loaded student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
+Student JSON uses `studentId`, `name`, `parentPhone`, optional `parentEmail`, `subject`, `currentLevel`, and optional `sessionNotes` fields. Each session note stores `recordedAt`, `text`, and an optional `lastEditedAt`; the latter is omitted for unedited notes and missing or null values load as unedited. `lastEditedAt` must not precede `recordedAt`. `StudentId` is an immutable UUID-backed identifier that is generated when a student is created and preserved when the record is saved and reloaded. For older files without `studentId`, `JsonAdaptedStudent` derives a deterministic migration ID from the existing `StudentIdentity`, so legacy data remains loadable and receives a stable ID. `ParentGuardianContact` accepts either an 8-digit Singapore number beginning with `6`, `8`, or `9`, or a `+`-prefixed international number with 8 to 15 digits; spaces and hyphens do not affect validation or duplicate identity. The rule detects structurally implausible values but cannot establish ownership or reachability. `JsonAdaptedStudent` validates every persisted value by rebuilding the corresponding domain types. `JsonSerializableAddressBook` then checks each loaded student through `Student#hasSameIdentity`, so JSON data cannot bypass the duplicate rule.
 
 ### Student editing
 
@@ -310,7 +309,7 @@ The next sequence shows the detailed UI interactions after Logic returns a succe
 
 `MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. Commands that target a student, including `view`, `edit`, `note`, and `edit note`, return that stable ID in `CommandResult`, so a successful cross-student edit immediately opens the edited student's profile. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state. A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
-`StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` formats the recorded local date and time for readability while displaying the saved UTC offset explicitly. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
+`StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider. Each `SessionNoteCard` shows the recorded time, and the latest edit time if any, as the saved clock reading without its UTC offset, so both times in a header read alike. Notes are still ordered by instant, so in the rare case of notes saved at different offsets, their displayed clock readings may not look in order. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
 
 `MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
 
@@ -326,11 +325,11 @@ Notes are nested in the student record so that the data file stays easy to read 
 
 `JsonAdaptedSessionNote` writes `recordedAt` with `DateTimeFormatter.ISO_OFFSET_DATE_TIME`, which always includes seconds; `OffsetDateTime#toString()` would leave out seconds that are zero. Loading rebuilds each note through `SessionNote`, so persisted notes follow the same validation as notes entered through the app. Notes with equal timestamps keep their saved order, and notes in a hand-edited file are sorted newest first when loaded.
 
-A student record without a `sessionNotes` field loads with an empty history, so data files saved before session notes existed remain loadable. A missing `recordedAt` or `text`, a timestamp without an offset (such as `2026-09-18T18:35:00`), invalid note text, or an empty list entry is a load error, which follows the same recovery path as an invalid student field.
+A student record without a `sessionNotes` field loads with an empty history, so data files saved before session notes existed remain loadable. A missing `recordedAt` or `text`, a timestamp without an offset (such as `2026-09-18T18:35:00`), a `recordedAt` or `lastEditedAt` later than the load time, invalid note text, or an empty list entry is a load error, which follows the same recovery path as an invalid student field. `JsonAddressBookStorage` reads the load time once from an injectable `Clock` and passes it down to each `JsonAdaptedSessionNote`, so every note is checked against the same time and tests can fix it.
 
 ### Session note command
 
-`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A second `nt/` after a space is a repeated prefix, as in every other command; this is deliberate, so that all commands share one prefix rule. Because a prefix must follow a space, `nt/` written without one, such as `(nt/)`, stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error; an overlong note's error states the length entered.
+`note INDEX nt/NOTE` is parsed by `NoteCommandParser`, which recognizes only the `nt/` prefix, so other prefix-like text stays part of the note. A second `nt/` after a space is a repeated prefix, as in every other command; this is deliberate, so that all commands share one prefix rule. Because a prefix must follow a space, `nt/` written without one, such as `(nt/)`, stays part of the note. A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error, and text made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty; an overlong note's error states the length entered.
 
 `NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
 
@@ -921,7 +920,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows, run `icacls <folder> /deny "%USERNAME%:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d %USERNAME%`.
    1. Run `java -jar tutortrack.jar` from that folder.
-      Expected: The GUI opens with an empty roster, the terminal shows a warning that the file handler could not be added, and no stack trace or crash occurs. The folder contains no new files.
+      Expected: The GUI opens with an empty roster, the terminal shows one-line warnings that the file handler could not be added and that the preference file could not be saved, and no stack trace or crash occurs. The folder contains no new files.
    1. Enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`.
       Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Dev Patel is not added to the roster.
    1. Restore write access to the folder.
@@ -970,14 +969,27 @@ When manually testing roster resizing, start with a populated roster containing 
 
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
    Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
-2. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
+1. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
    Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone. Use a different name or phone, or edit the existing student.` and preserves the existing record.
-3. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
+1. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
-4. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
+1. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
    Expected: The first reports `Missing l/CURRENT_LEVEL.` and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
-5. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
+1. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
    Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
+1. Enter `add n/Alex Tan p/10101010 sub/Mathematics l/Secondary 3`, then enter `edit 1 p/10101010` for an existing student.
+   Expected: Both report only the phone-number rule and leave the roster, profile, session notes, and data file unchanged. A valid local number such as `9123 4567` and international number such as `+65 9123 4567` remain accepted.
+
+### Alpha validation feedback
+
+1. Enter `add n/Raj s/o Kumar p/91234567 sub/C++ l/P6+ e/guardian@example.com`.
+   Expected: TutorTrack adds the student. Names may contain slashes, and subject and level values must each contain a letter or number.
+1. Enter `ADD n/Raj s/o Kumar p/91234567 sub/C++ l/P6+` and `HELP`.
+   Expected: Both report an unknown command because command words must be lowercase.
+1. Enter `edit 1 sub/Math P/81234567`.
+   Expected: The subject becomes `Math P/81234567`; the phone does not change because `P/` is not a recognized parameter prefix.
+1. Enter `add n/Bob p/91234567 sub/!!! l/???` and `add n/Bob p/91234567 e/a@b sub/Math l/Sec 1`.
+   Expected: Both report their respective value rules and leave the roster and data file unchanged.
 
 ### Editing a student
 
@@ -1050,6 +1062,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: The note is added with `sub/topics` as part of its text.
 1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
    Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
+1. Enter `note 1 NT/text` and `note 1 Nt/text`.
+   Expected: Each reports `Parameter prefixes must be typed in lowercase:` naming the prefix as typed, such as `NT/ should be nt/.`, followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
    Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
 1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
@@ -1177,7 +1191,7 @@ When manually testing roster resizing, start with a populated roster containing 
    1. Prerequisites: at least one student in the roster, so that `data/tutortrack.json` exists. Run the `chmod` or `attrib` commands below in a terminal opened in the folder containing the JAR file.
    1. With TutorTrack still running, make the data file read-only. On Linux or macOS, run `chmod a-w data/tutortrack.json`. On Windows, run `attrib +r data\tutortrack.json`.
    1. Enter `note 1 nt/Reviewed factorisation.`
-      Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Student 1's session-note count is unchanged.
+      Expected: TutorTrack reports `Could not save data to file ./data/tutortrack.json because TutorTrack cannot write to the file or its folder. The command was cancelled and no data was changed.` Student 1's session-note count is unchanged.
    1. Enter `view 1`.
       Expected: Student 1's profile is shown without the rejected note and without a save error, because commands that change no data are not saved.
    1. Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.

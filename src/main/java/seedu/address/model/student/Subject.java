@@ -8,7 +8,8 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public final class Subject {
 
-    public static final String MESSAGE_CONSTRAINTS = "Subjects must not be blank or contain line breaks.";
+    public static final String MESSAGE_CONSTRAINTS =
+            "Subjects must contain a letter or number and must not contain line breaks.";
     private final String value;
 
     /**
@@ -26,7 +27,9 @@ public final class Subject {
      * Returns whether {@code subject} is a valid subject.
      */
     public static boolean isValidSubject(String subject) {
-        return StudentTextFields.isNonBlankSingleLine(subject);
+        requireNonNull(subject);
+        return subject.matches("(?s).*[\\p{L}\\p{N}].*")
+                && !subject.matches("(?s).*[\\r\\n].*");
     }
 
     /**
