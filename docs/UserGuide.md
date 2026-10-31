@@ -63,6 +63,9 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
+* Command words, parameter prefixes, the word `note` in `edit note` and `delete note`, and `/confirm` are case-sensitive and must be typed in lowercase.<br>
+  For example, `add` and `p/` are recognized, but `ADD` and `P/` are not.
+
 * Extraneous parameters for commands that take no parameters, such as `help` and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
@@ -111,6 +114,7 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * **Optional detail:** Parent or guardian email may be included with `e/`. It must include `@` and a domain with a dot, such as `guardian@example.com`.
 * **Accepted parameters:** Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
 * **Subject and level text:** Only lowercase command parameter prefixes are recognized. Other prefix-like text, such as `P/81234567` after `sub/Math`, stays in the subject value; it does not change the phone. Obsolete AddressBook `a/` and `t/` parameters are rejected with an error.
+* **Wrong-case prefixes:** A prefix typed in another case, such as `P/` for `p/`, is not recognized. A required one is reported as missing, such as `Missing p/PARENT_PHONE.`, or as unexpected text if it comes first. A wrong-case `E/` stays in the value before it, so `l/Sec 3 E/parent@example.com` saves the level `Sec 3 E/parent@example.com` and no email.
 * **Duplicate detection:** A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
 * **After a successful addition:** TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
 * **Invalid input:** Missing values, invalid values, duplicate students, text before the first parameter, and obsolete AddressBook parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
@@ -129,7 +133,7 @@ Format: `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/
 * `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number that refers to an existing student.
 * Supply at least one field. Details you omit keep their existing values.
 * Use `e/` without a value to remove the parent or guardian email. Other supplied fields cannot be empty.
-* The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order. Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. Obsolete AddressBook `a/` and `t/` parameters are rejected.
+* The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order. Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. Obsolete AddressBook `a/` and `t/` parameters are rejected. A wrong-case prefix typed straight after the index, as in `edit 1 N/Bob`, is reported as an unknown parameter.
 * Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts, preserves that student's internal identity and session notes, and keeps an open profile selected on that student.
 
 Examples:
@@ -182,6 +186,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 * `NOTE_NUMBER` is the number shown beside the note in the student's profile. The oldest note is `[1]`.
 * `NEW_NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed. A note made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty.
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside the replacement is saved as part of the note.
+* `nt/` must be typed in lowercase. A wrong-case prefix such as `NT/` is not recognized, so TutorTrack reports `Missing nt/NEW_NOTE.`
 * As with `note`, `nt/` may appear only once. To mention `nt/` in the replacement, write it without a space before it, such as `(nt/)` or `"nt/"`.
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
