@@ -494,9 +494,17 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
-### \[Proposed\] Data archiving
+### \[Proposed\] Student archiving
 
-_{Explain here how the data archiving feature will be implemented}_
+Student archiving is planned for v2.0 and is not implemented. It covers the low-priority user stories for archiving a student who has stopped lessons, viewing an archived student, and restoring one. The User Guide lists it under [Archiving students](UserGuide.md#archiving-students-coming-soon).
+
+The proposed design keeps archived students in the same `AddressBook` and data file:
+
+* `AddressBook` records which `StudentId`s are archived, beside the student list, in the same way as `StudentSessionHistories`. `Student` and its equality stay unchanged, and the session history is kept.
+* `Model#getStudentRoster()` leaves out archived students, so roster indices refer only to active students.
+* Duplicate detection still checks archived students, so restoring a student cannot create a duplicate.
+* `JsonAdaptedStudent` stores an optional `archived` field. A missing field loads as active, so existing data files still load.
+* Archiving and restoring change data, so they use `LogicManager`'s normal save and [save-failure rollback](#save-failure-rollback).
 
 
 --------------------------------------------------------------------------------------------------------------------
