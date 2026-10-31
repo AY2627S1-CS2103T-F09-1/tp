@@ -890,21 +890,21 @@ testers are expected to do more *exploratory* testing.
 1. Initial launch
 
    1. Download the JAR file and copy it into an empty folder.
-   2. Double-click the JAR file.
+   1. Double-click the JAR file.
       Expected: The GUI opens with an empty student roster and profile, with instructions to use `add` and `view INDEX`. The window size may not be optimal.
-2. Saving window preferences
+1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
-   2. Relaunch the app by double-clicking the JAR file.
+   1. Relaunch the app by double-clicking the JAR file.
       Expected: The most recent window size and location are retained.
-3. Launching from another folder
+1. Launching from another folder
 
    1. Copy the JAR file into an empty folder A. Open a terminal in a different folder B.
    1. Run `java -jar "<path to folder A>/tutortrack.jar"`, enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`, and close the window.
       Expected: Folder A contains `preferences.json`, `tutortrack.log.0`, and `data/tutortrack.json`. Folder B contains no new files. The status bar shows `./data/tutortrack.json`.
    1. Launch TutorTrack again from folder B with the same command.
       Expected: Dev Patel is still in the roster.
-4. Launching from a write-protected folder
+1. Launching from a write-protected folder
 
    1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows, run `icacls <folder> /deny "%USERNAME%:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d %USERNAME%`.
    1. Run `java -jar tutortrack.jar` from that folder.
@@ -1184,4 +1184,3 @@ When manually testing roster resizing, start with a populated roster containing 
       Expected: Student 1's profile is shown without the rejected note and without a save error, because commands that change no data are not saved.
    1. Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.
       Expected: The note is added and student 1's session-note count increases by one.
-2. _{ more test cases … }_
