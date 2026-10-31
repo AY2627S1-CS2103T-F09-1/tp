@@ -233,7 +233,15 @@ Changing a name or phone may reorder the roster. `MainWindow` retains an open pr
 
 ### Student roster contract
 
-`Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students by normalized name, then normalized parent or guardian phone number, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. Student ID is the final tie-breaker for students with equal names and normalized parent or guardian phone numbers. Note counts are supplied as projection data so the student-roster context does not own session-note storage; `Model#getStudentRoster()` takes each student's count from that student's session history.
+`Model#getStudentRoster()` returns an immutable `StudentRoster` snapshot. The roster sorts students, assigns one-based indices after sorting, and exposes immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and session-note count. `StudentRoster#BY_NORMALIZED_NAME` compares students by these keys in turn:
+
+1. The name with accents removed, so `Zoë` sorts as `Zoe`, and `ø` and `ł` sort as `o` and `l`.
+1. A natural comparison that ignores case and compares runs of digits by numeric value, so `Kid 2` comes before `Kid 10`. Other characters are compared by character code after lowercasing, so digits come before letters, punctuation orders as space < `'` < `-` < `.` < `/`, and names in non-Latin scripts such as `李明` come after all Latin names.
+1. The name as typed, ignoring case.
+1. The normalized parent or guardian phone number.
+1. The student ID, as the final tie-breaker.
+
+Note counts are supplied as projection data so the student-roster context does not own session-note storage; `Model#getStudentRoster()` takes each student's count from that student's session history.
 
 `Model#getStudentRoster()` obtains a fresh immutable roster snapshot for the JavaFX presentation. `Model#getStudent(StudentId)` returns the immutable student-domain record used by roster operations, while `Model#findConflictingStudent(StudentId, Student)` applies duplicate detection excluding the record being replaced. `Model#setStudent(StudentId, Student)` replaces one record without changing its stable identity or session history. `MainWindow` creates the roster panel from a roster snapshot during launch, and refreshes it after every successful command, so no separate roster command is needed. The panel reports an actionable add-student message when the snapshot is empty.
 
@@ -1035,11 +1043,11 @@ When manually testing roster resizing, start with a populated roster containing 
 2. Populated roster
 
    1. Add students with different names, subjects, and levels.
-      Expected: Cards appear in normalized alphabetical order and each card shows its index, name, subject, level, and session-note count.
+      Expected: Cards appear sorted by name, ignoring case and accents, with numbers in names compared by value, and each card shows its index, name, subject, level, and session-note count.
    2. Resize the window or drag the roster/profile divider to make the roster pane narrow, or add enough students to exceed the panel height.
       Expected: Wrapped cards are recalculated and every student remains reachable through vertical scrolling.
    3. Add another student.
-      Expected: The displayed roster refreshes and indices match the new alphabetical order.
+      Expected: The displayed roster refreshes and indices match the new sorted order.
 
 ### Adding a session note
 
