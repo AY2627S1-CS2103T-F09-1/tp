@@ -203,9 +203,9 @@ Because every parser finishes before `LogicManager` executes the command, a synt
 
 ### Adding a student
 
-The following sequence shows only the main successful `add` path. `AddressBookParser` delegates to `AddCommandParser`, which constructs a validated `Student`. `AddCommand` checks duplicate identity through `Model#hasStudent` before calling `Model#addStudent`, and `LogicManager` saves the changed address book. Invalid, missing, repeated, or obsolete AddressBook `a/` or `t/` parameters produce a parse error; other prefix-like text remains in a subject or level value. A duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
+The activity diagram below shows only the main successful `add` path, with one swimlane per component. `AddressBookParser` delegates to `AddCommandParser`, which constructs a validated `Student`. `AddCommand` checks duplicate identity through `Model#hasStudent` before calling `Model#addStudent`, and `LogicManager` saves the changed address book. Invalid, missing, repeated, or obsolete AddressBook `a/` or `t/` parameters produce a parse error; other prefix-like text remains in a subject or level value. A duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
 
-![Student add sequence diagram](images/AddStudentSequenceDiagram.png)
+![Student add activity diagram](images/AddStudentActivityDiagram.png)
 
 The class diagrams in [Logic](#logic-component), [Model](#model-component), [Storage](#storage-component), and [UI](#ui-component) show the corresponding relationships. A newly added student appears in `StudentRosterPanel` as a `StudentRosterCard`; `JsonAdaptedStudent` stores the student when the address book is saved.
 
