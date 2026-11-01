@@ -7,6 +7,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
@@ -90,18 +91,36 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_uppercaseCommandWords_reportsUnknownCommand() {
+    public void parseCommand_uppercaseCommandWords_reportsLowercaseRule() {
         List<String> uppercaseWords = List.of("ADD", "DELETE", "EDIT", "NOTE", "VIEW", "EXIT", "HELP");
         for (String commandWord : uppercaseWords) {
             String commandText = commandWord + " 1";
             Executable parseCommand = () -> parser.parseCommand(commandText);
             ParseException exception = Assertions.assertThrows(ParseException.class, parseCommand);
-            assertEquals(AddressBookParser.getUnknownCommandMessage(commandWord), exception.getMessage());
+            assertEquals("Command words must be typed in lowercase. Did you mean "
+                    + commandWord.toLowerCase(Locale.ROOT) + "?", exception.getMessage());
         }
-        String mixedCaseCommand = "Add n/Alex Tan p/91234567 sub/Math l/Sec 3";
-        Executable parseMixedCase = () -> parser.parseCommand(mixedCaseCommand);
-        ParseException mixedCase = Assertions.assertThrows(ParseException.class, parseMixedCase);
-        assertEquals(AddressBookParser.getUnknownCommandMessage("Add"), mixedCase.getMessage());
+    }
+
+    @Test
+    public void parseCommand_mixedCaseCommandWords_reportsLowercaseRule() {
+        assertThrows(ParseException.class, "Command words must be typed in lowercase. Did you mean note?", () ->
+                parser.parseCommand("NOTE 1 nt/hello"));
+        assertThrows(ParseException.class, "Command words must be typed in lowercase. Did you mean delete?", () ->
+                parser.parseCommand("Delete 1"));
+        assertThrows(ParseException.class, "Command words must be typed in lowercase. Did you mean edit?", () ->
+                parser.parseCommand("EDIT note 1 1 nt/x"));
+        assertThrows(ParseException.class, "Command words must be typed in lowercase. Did you mean add?", () ->
+                parser.parseCommand("Add n/Alex Tan p/91234567 sub/Math l/Sec 3"));
+    }
+
+    @Test
+    public void parseCommand_misspelledCommandWord_reportsUnknownCommand() {
+        // A misspelling is not a case difference, so it keeps the unknown-command error.
+        assertThrows(ParseException.class, AddressBookParser.getUnknownCommandMessage("veiw"), () ->
+                parser.parseCommand("veiw 1"));
+        assertThrows(ParseException.class, AddressBookParser.getUnknownCommandMessage("VEIW"), () ->
+                parser.parseCommand("VEIW 1"));
     }
 
     @Test
@@ -116,6 +135,23 @@ public class AddressBookParserTest {
                     "edit " + mistypedTarget + " 1 2 nt/Corrected summary.");
             assertThrows(ParseException.class, expectedMessage, parseMistypedCommand);
         }
+    }
+
+    @Test
+    public void parseCommand_wrongCaseEditNoteTarget_reportsLowercaseRule() {
+        String expectedMessage = "note must be typed in lowercase.\n"
+                + "Format: edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE\n"
+                + "Example: edit note 1 2 nt/Corrected lesson summary.";
+        List<String> wrongCaseTargets = List.of("NOTE", "Note", "nOtE");
+        for (String wrongCaseTarget : wrongCaseTargets) {
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    parser.parseCommand("edit " + wrongCaseTarget + " 1 1 nt/x"));
+        }
+        // A typo that differs by more than case keeps the suggestion.
+        String expectedTypoMessage = Messages.withFormat(
+                String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, "notes", "edit note"),
+                EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
+        assertThrows(ParseException.class, expectedTypoMessage, () -> parser.parseCommand("edit notes 1 1 nt/x"));
     }
 
     @Test

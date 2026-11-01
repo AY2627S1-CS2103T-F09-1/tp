@@ -14,6 +14,7 @@ Class ResultDisplay
 Class StudentRosterPanel
 Class StudentProfilePanel
 Class StudentRosterCard
+Class SessionNoteCard
 Class StatusBarFooter
 Class CommandBox
 }
@@ -39,6 +40,7 @@ MainWindow *-down-> "1" StatusBarFooter
 MainWindow --> "0..1" HelpWindow
 
 StudentRosterPanel -down-> "*" StudentRosterCard : displays students
+StudentProfilePanel -down-> "*" SessionNoteCard : displays notes
 
 MainWindow -left-|> UiPart
 
@@ -47,10 +49,12 @@ CommandBox --|> UiPart
 StudentRosterPanel --|> UiPart
 StudentProfilePanel --|> UiPart
 StudentRosterCard --|> UiPart
+SessionNoteCard --|> UiPart
 StatusBarFooter --|> UiPart
 HelpWindow --|> UiPart
 
 StudentRosterCard ..> Model
+SessionNoteCard ..> Model
 UiManager -right-> Logic
 MainWindow -left-> Logic
 

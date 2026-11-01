@@ -11,6 +11,8 @@ import seedu.address.logic.parser.Prefix;
 public class Messages {
 
     public static final String MESSAGE_UNKNOWN_COMMAND = "Unknown command: %1$s. Available commands: %2$s.";
+    public static final String MESSAGE_WRONG_CASE_COMMAND =
+            "Command words must be typed in lowercase. Did you mean %1$s?";
     public static final String MESSAGE_EMPTY_COMMAND = "Enter a command. Available commands: %1$s.";
     public static final String MESSAGE_EMPTY_ROSTER =
             "There are no students in the roster yet. Add a student with add first.";

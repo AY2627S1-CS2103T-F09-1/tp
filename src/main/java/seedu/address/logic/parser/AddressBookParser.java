@@ -3,8 +3,10 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.MESSAGE_WRONG_CASE_COMMAND;
 import static seedu.address.logic.Messages.withFormat;
 
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -32,6 +34,9 @@ public class AddressBookParser {
     static final String UNKNOWN_COMMAND_WORD = "unknown";
     static final String MESSAGE_MISTYPED_NOTE_TARGET_FORMAT =
             "Unknown edit target: %s. Did you mean %s?";
+    static final String MESSAGE_WRONG_CASE_NOTE_TARGET = withFormat(
+            EditNoteCommand.NOTE_TARGET + " must be typed in lowercase.",
+            EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
 
     /**
      * Used for initial separation of command word and args.
@@ -109,6 +114,11 @@ public class AddressBookParser {
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             default -> {
+                String lowercaseCommandWord = commandWord.toLowerCase(Locale.ROOT);
+                if (COMMAND_WORDS.contains(lowercaseCommandWord)) {
+                    logger.finer("A command word in the wrong case caused a ParseException.");
+                    throw new ParseException(String.format(MESSAGE_WRONG_CASE_COMMAND, lowercaseCommandWord));
+                }
                 logger.finer("An unknown command word caused a ParseException.");
                 throw new ParseException(getUnknownCommandMessage(commandWord));
             }
@@ -119,6 +129,9 @@ public class AddressBookParser {
         String editTarget = arguments.stripLeading().split("\\s+", 2)[0];
         if (EditNoteCommand.NOTE_TARGET.equals(editTarget)) {
             return new EditNoteCommandParser().parse(arguments);
+        }
+        if (EditNoteCommand.NOTE_TARGET.equalsIgnoreCase(editTarget)) {
+            throw new ParseException(MESSAGE_WRONG_CASE_NOTE_TARGET);
         }
         if (ParserUtil.isMistypedTarget(editTarget, EditNoteCommand.NOTE_TARGET)) {
             String suggestion = EditNoteCommand.COMMAND_WORD + " " + EditNoteCommand.NOTE_TARGET;
