@@ -1682,6 +1682,35 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void executeCommand_noteAfterView_switchesToNotedStudentProfile() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan", ALEX_ID),
+                student("Blair Tan", BLAIR_ID)));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+        SessionNote addedNote = new SessionNote("Reviewed fractions.",
+                OffsetDateTime.parse("2026-09-18T18:35:00+08:00"));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Added session note for Blair Tan.", BLAIR_ID));
+            logic.setProfile(Optional.of(profile(BLAIR_ID, "Blair Tan", List.of(addedNote))));
+
+            mainWindow.executeCommand("note 2 nt/Reviewed fractions.");
+
+            StudentProfilePanel profilePanel = mainWindow.getStudentProfilePanel();
+            assertEquals("Blair Tan", ((SelectableText) getProfileContent(profilePanel).getChildren().get(0))
+                    .getText());
+            assertEquals(List.of(new StudentProfilePanel.NumberedSessionNote(addedNote, 1)),
+                    getSessionNoteListView(profilePanel).getItems());
+            assertEquals(BLAIR_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_editAfterView_refreshesReorderedRosterAndOpenProfile() throws Exception {
         Student alex = student("Alex Tan", ALEX_ID);
         Student blair = student("Blair Tan", BLAIR_ID);
