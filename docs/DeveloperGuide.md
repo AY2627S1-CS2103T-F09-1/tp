@@ -271,13 +271,12 @@ The [Model class diagram](#model-component) shows where the session note classes
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
-The `Model` API offers five session-note operations:
+The `Model` API offers four session-note operations:
 
 * `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
 * `Model#editSessionNote(StudentId, Index, String)` replaces one note's text while preserving its recorded timestamp and chronological number.
 * `Model#deleteSessionNote(StudentId, Index)` removes and returns one note selected by its chronological note number while preserving the student and every other session note.
-* `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed.
 
 Student deletion crosses the roster and session-history contexts through one model boundary. `Model#deleteStudent(StudentId)` validates that the stable ID identifies a roster student, then removes the student and session history together and returns the removed-note count. Keeping this coordination inside the model prevents commands from leaving an orphaned student or history if validation fails.
 

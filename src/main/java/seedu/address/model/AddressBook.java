@@ -222,16 +222,6 @@ public class AddressBook implements ReadOnlyAddressBook {
         return sessionHistories.editNote(studentId, noteNumber, text, lastEditedAt);
     }
 
-    /**
-     * Removes the session history of the student with {@code studentId}.
-     *
-     * @return The number of session notes removed, which is zero if the student had none.
-     */
-    public int removeSessionHistory(StudentId studentId) {
-        requireNonNull(studentId);
-        return sessionHistories.removeHistory(studentId);
-    }
-
     @Override
     public SessionHistory getSessionHistory(StudentId studentId) {
         requireNonNull(studentId);
