@@ -9,12 +9,18 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalSessionNotes.ALEX;
 import static seedu.address.testutil.TypicalSessionNotes.BEA;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.student.CurrentLevel;
+import seedu.address.model.student.ParentGuardianContact;
 import seedu.address.model.student.Student;
+import seedu.address.model.student.StudentName;
+import seedu.address.model.student.Subject;
 
 public class AddCommandTest {
 
@@ -40,6 +46,20 @@ public class AddCommandTest {
         model.addStudent(ALEX);
 
         assertCommandFailure(new AddCommand(ALEX), model,
+                "Duplicate student: " + ALEX.getName() + " already has this parent phone. "
+                        + "Use a different name or phone, "
+                        + "or edit the existing student.");
+    }
+
+    @Test
+    public void execute_singaporeCountryCodeDuplicate_throwsCommandException() {
+        Model model = new ModelManager();
+        model.addStudent(ALEX);
+        Student duplicate = new Student(new StudentName("Alex Tan"),
+                new ParentGuardianContact("+65 9123-4567", Optional.empty()), new Subject("Mathematics"),
+                new CurrentLevel("Secondary 3"));
+
+        assertCommandFailure(new AddCommand(duplicate), model,
                 "Duplicate student: " + ALEX.getName() + " already has this parent phone. "
                         + "Use a different name or phone, "
                         + "or edit the existing student.");

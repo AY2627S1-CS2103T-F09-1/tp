@@ -35,6 +35,14 @@ public class JsonAdaptedStudentTest {
     }
 
     @Test
+    public void toModelType_singaporeCountryCodePhone_normalizesStoredPhone() throws Exception {
+        JsonAdaptedStudent student = new JsonAdaptedStudent("Test Learner", "+65 9123-4567", null,
+                "Mathematics", "Secondary 3");
+
+        assertEquals("91234567", student.toModelType().getParentGuardianContact().getPhone());
+    }
+
+    @Test
     public void toModelType_legacyStudent_derivesStableId() throws Exception {
         JsonAdaptedStudent firstLoad = new JsonAdaptedStudent("Test Learner", "9123 4567", null,
                 "Mathematics", "Secondary 3");
