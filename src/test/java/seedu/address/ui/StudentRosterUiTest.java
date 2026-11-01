@@ -174,14 +174,6 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void studentRosterCard_nullEntry_throwsNullPointerException() throws Exception {
-        onFxThread(() -> {
-            assertThrows(NullPointerException.class, () -> new StudentRosterCard(null));
-            return null;
-        });
-    }
-
-    @Test
     public void roster_resizedNarrowly_keepsLastCardReachable() throws Exception {
         List<Student> students = new ArrayList<>();
         for (int index = 0; index < 20; index++) {

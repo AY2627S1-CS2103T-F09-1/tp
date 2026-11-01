@@ -20,18 +20,6 @@ title: Developer Guide
 
 Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
-### PlantUML diagrams
-
-The repository stores PlantUML source files in `docs/diagrams` and exported diagram images in `docs/images`. VS Code users should install the recommended `PlantUML` extension when prompted. The recommendation is recorded in `.vscode/extensions.json`.
-
-Install Graphviz to enable local diagram rendering:
-
-* macOS: `brew install graphviz`
-* Ubuntu/Debian: `sudo apt install graphviz`
-* Windows: install Graphviz from [graphviz.org](https://graphviz.org/download/) and add its `bin` directory to `PATH`.
-
-Open any `.puml` file and run `PlantUML: Preview Current Diagram` from the Command Palette. If Java is not detected automatically, set the PlantUML extension's `plantuml.java` setting to the path of the Java executable. Use `dot -V` in a terminal to verify that Graphviz is available before previewing a diagram.
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Design**
@@ -181,7 +169,7 @@ In the data file:
 * Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`.
 * Displayed note numbers and pending deletion confirmations are transient UI and command state, so they are not persisted.
 
-The storage adapter validates manually edited records by rebuilding the corresponding domain value types. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`.
+The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields except the legacy `_comment` field. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
 
 Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
 
@@ -853,7 +841,7 @@ history and saved locally. No other student record is changed.
 * **Current selection context**: The mapping between the displayed roster indices and their students; it changes when the roster is redrawn.
 * **Duplicate student**: Two student records whose normalized names and normalized parent phone numbers both match.
 * **Normalized name**: A student's name after leading and trailing whitespace is removed and consecutive internal spaces are collapsed to one. Normalized names are compared case-insensitively for sorting and duplicate detection.
-* **Normalized parent phone number**: A parent or guardian phone number after spaces and hyphens are removed.
+* **Normalized parent phone number**: A parent or guardian phone number after spaces and hyphens are removed. A valid Singapore number beginning with `+65` has that prefix removed too.
 * **Active student**: A student currently receiving tuition and included in the normal roster.
 * **Archived student**: A former or inactive student whose details and session history are retained but excluded from the active roster.
 * **Home folder**: The folder containing the TutorTrack JAR file, where TutorTrack keeps its data file, preferences, and log files wherever it is launched from.
@@ -944,7 +932,7 @@ When manually testing roster resizing, start with a populated roster containing 
 
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
    Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
-1. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
+1. Confirm that Alicia's displayed phone is `91234567`, then repeat the command with `n/alicia lim` and `p/9123-4567`.
    Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone. Use a different name or phone, or edit the existing student.` and preserves the existing record.
 1. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.

@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.withFormat;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 
@@ -40,7 +39,6 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
      */
     @Override
     public EditNoteCommand parse(String args) throws ParseException {
-        requireNonNull(args);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTE);
         Optional<String> noteText = argMultimap.getValue(PREFIX_NOTE);
         String[] preamble = argMultimap.getPreamble().split(WHITESPACE_PATTERN);

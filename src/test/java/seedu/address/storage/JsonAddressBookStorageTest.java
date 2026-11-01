@@ -80,6 +80,18 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_unknownTopLevelField_throwDataLoadingException() throws Exception {
+        Path filePath = testFolder.resolve("unknown-field.json");
+        Files.writeString(filePath, "{\"persons\": [], \"student\": []}");
+
+        DataLoadingException exception = Assertions.assertThrows(DataLoadingException.class, () ->
+                new JsonAddressBookStorage(filePath).readAddressBook());
+
+        assertEquals(JsonSerializableAddressBook.MESSAGE_UNKNOWN_FIELDS + "student",
+                exception.getCause().getMessage());
+    }
+
+    @Test
     public void readAddressBook_recordedAtAfterLoadTime_throwDataLoadingException() {
         Path dataFile = TEST_DATA_FOLDER.resolve(FUTURE_SESSION_NOTE_FILE);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile, fixedClockAt(FUTURE_RECORDED_AT
@@ -255,10 +267,10 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAndSave_emptyLegacyList_keepsPersonsField() throws Exception {
+    public void readAndSave_legacyFileWithoutStudents_keepsPersonsField() throws Exception {
         Path filePath = testFolder.resolve("empty.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
-        Files.writeString(filePath, "{\"persons\": [], \"students\": [], \"unknown\": true}");
+        Files.writeString(filePath, "{\"_comment\": \"legacy\", \"persons\": []}");
 
         ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
         storage.saveAddressBook(loaded);

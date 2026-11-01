@@ -110,12 +110,12 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * Name, parent or guardian phone number, subject, and current level must be provided.
 * Names must begin with a letter or number and may contain only letters, numbers, spaces, apostrophes, periods, hyphens, and slashes. For example, `Raj s/o Kumar` is valid.
 * The subject and current level must each contain at least one letter or number. Other ordinary punctuation is allowed, so values such as `C++` and `P6+` are valid.
-* For the parent or guardian phone, use an 8-digit Singapore number beginning with `6`, `8`, or `9`, such as `9123 4567`, or an international number beginning with `+` and containing 8 to 15 digits, such as `+65 9123 4567`. Spaces and hyphens are allowed. TutorTrack validates the format only; it cannot confirm ownership or reachability.
+* For the parent or guardian phone, use an 8-digit Singapore number beginning with `6`, `8`, or `9`, such as `9123 4567`, or an international number beginning with `+` and containing 8 to 15 digits. Spaces and hyphens are allowed. TutorTrack removes the `+65` prefix and separators from a valid Singapore number, so `+65 9123 4567` is saved and displayed as `91234567`. TutorTrack validates the format only; it cannot confirm ownership or reachability.
 * The parent or guardian email is optional. It may be included with `e/`. It must include `@` and a domain with a dot, such as `guardian@example.com`.
 * Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
 * Only lowercase command parameter prefixes are recognized. Other prefix-like text, such as `P/81234567` after `sub/Math`, stays in the subject value; it does not change the phone. Obsolete AddressBook `a/` and `t/` parameters are rejected with an error.
 * A prefix typed in another case, such as `P/` for `p/`, is not recognized. A required one is reported as missing, such as `Missing p/PARENT_PHONE.`, or as unexpected text if it comes first. A wrong-case `E/` stays in the value before it, so `l/Sec 3 E/parent@example.com` saves the level `Sec 3 E/parent@example.com` and no email.
-* A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
+* A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student, and `+65 9123 4567` matches `91234567`.
 * After a successful addition, TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
 * Missing values, invalid values, duplicate students, text before the first parameter, and obsolete AddressBook parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
 
@@ -305,7 +305,7 @@ Each student's session notes are in that student's `sessionNotes` list, for exam
 * Notes may be listed in any order. TutorTrack numbers them by `recordedAt`, starting from the oldest. For notes with the same `recordedAt`, the one listed first in the file is treated as the newer note.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If an edit makes the data file invalid, TutorTrack starts with an empty roster and shows a message saying that it could not load your data file. It also tries to keep a copy of the file in the `data` folder, with a name such as `tutortrack.json.backup-123456.bak`, and the message gives the copy's location if it succeeds. Correct the original file and restart TutorTrack **before** running any command that changes data, because such a command replaces the original file with the empty roster. Back up the data file before editing it.
+If an edit makes the data file invalid, such as mistyping a top-level field name, TutorTrack starts with an empty roster and shows a message saying that it could not load your data file. It also tries to keep a copy of the file in the `data` folder, with a name such as `tutortrack.json.backup-123456.bak`, and the message gives the copy's location if it succeeds. Correct the original file and restart TutorTrack **before** running any command that changes data, because such a command replaces the original file with the empty roster. Back up the data file before editing it.
 </div>
 
 ### Archiving students `[Coming soon]`
