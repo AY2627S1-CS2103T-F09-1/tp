@@ -841,7 +841,7 @@ history and saved locally. No other student record is changed.
 * **Current selection context**: The mapping between the displayed roster indices and their students; it changes when the roster is redrawn.
 * **Duplicate student**: Two student records whose normalized names and normalized parent phone numbers both match.
 * **Normalized name**: A student's name after leading and trailing whitespace is removed and consecutive internal spaces are collapsed to one. Normalized names are compared case-insensitively for sorting and duplicate detection.
-* **Normalized parent phone number**: A parent or guardian phone number after spaces and hyphens are removed.
+* **Normalized parent phone number**: A parent or guardian phone number after spaces and hyphens are removed. A valid Singapore number beginning with `+65` has that prefix removed too.
 * **Active student**: A student currently receiving tuition and included in the normal roster.
 * **Archived student**: A former or inactive student whose details and session history are retained but excluded from the active roster.
 * **Home folder**: The folder containing the TutorTrack JAR file, where TutorTrack keeps its data file, preferences, and log files wherever it is launched from.
@@ -932,7 +932,7 @@ When manually testing roster resizing, start with a populated roster containing 
 
 1. Enter `add n/Alicia Lim p/+65 9123 4567 e/mrs.lim@example.com sub/Mathematics l/Secondary 3`.
    Expected: TutorTrack reports `Added student: Alicia Lim (Mathematics, Secondary 3).`
-1. Repeat the command with `n/alicia lim` and `p/+65-9123-4567`.
+1. Confirm that Alicia's displayed phone is `91234567`, then repeat the command with `n/alicia lim` and `p/9123-4567`.
    Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone. Use a different name or phone, or edit the existing student.` and preserves the existing record.
 1. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.

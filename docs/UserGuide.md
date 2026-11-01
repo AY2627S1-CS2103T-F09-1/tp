@@ -110,12 +110,12 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * Name, parent or guardian phone number, subject, and current level must be provided.
 * Names must begin with a letter or number and may contain only letters, numbers, spaces, apostrophes, periods, hyphens, and slashes. For example, `Raj s/o Kumar` is valid.
 * The subject and current level must each contain at least one letter or number. Other ordinary punctuation is allowed, so values such as `C++` and `P6+` are valid.
-* For the parent or guardian phone, use an 8-digit Singapore number beginning with `6`, `8`, or `9`, such as `9123 4567`, or an international number beginning with `+` and containing 8 to 15 digits, such as `+65 9123 4567`. Spaces and hyphens are allowed. TutorTrack validates the format only; it cannot confirm ownership or reachability.
+* For the parent or guardian phone, use an 8-digit Singapore number beginning with `6`, `8`, or `9`, such as `9123 4567`, or an international number beginning with `+` and containing 8 to 15 digits. Spaces and hyphens are allowed. TutorTrack removes the `+65` prefix and separators from a valid Singapore number, so `+65 9123 4567` is saved and displayed as `91234567`. TutorTrack validates the format only; it cannot confirm ownership or reachability.
 * The parent or guardian email is optional. It may be included with `e/`. It must include `@` and a domain with a dot, such as `guardian@example.com`.
 * Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
 * Only lowercase command parameter prefixes are recognized. Other prefix-like text, such as `P/81234567` after `sub/Math`, stays in the subject value; it does not change the phone. Obsolete AddressBook `a/` and `t/` parameters are rejected with an error.
 * A prefix typed in another case, such as `P/` for `p/`, is not recognized. A required one is reported as missing, such as `Missing p/PARENT_PHONE.`, or as unexpected text if it comes first. A wrong-case `E/` stays in the value before it, so `l/Sec 3 E/parent@example.com` saves the level `Sec 3 E/parent@example.com` and no email.
-* A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student.
+* A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student, and `+65 9123 4567` matches `91234567`.
 * After a successful addition, TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
 * Missing values, invalid values, duplicate students, text before the first parameter, and obsolete AddressBook parameters leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for when the command format is shown.
 

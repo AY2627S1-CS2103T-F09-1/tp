@@ -108,6 +108,20 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_singaporeCountryCodeDuplicate_throwsCommandExceptionAndLeavesStudentsUnchanged() {
+        Model model = modelWith(ALEX, BEA);
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setName(ALEX.getName());
+        descriptor.setParentPhone("+65 9123 4567");
+        EditCommand command = new EditCommand(INDEX_SECOND_PERSON, descriptor);
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_DUPLICATE_STUDENT, ALEX.getName());
+        assertThrows(CommandException.class, expectedMessage, () -> command.execute(model));
+        assertEquals(BEA.getParentGuardianContact(), model.getStudentProfile(BEA.getId()).orElseThrow()
+                .getParentGuardianContact());
+    }
+
+    @Test
     public void execute_invalidIndex_throwsCommandException() {
         Model model = modelWith(ALEX);
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
