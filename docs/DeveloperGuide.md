@@ -241,7 +241,7 @@ The next sequence shows the detailed UI interactions after Logic returns a succe
 
 <img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
 
-`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. Commands that target a student, including `view`, `edit`, `note`, and `edit note`, return that stable ID in `CommandResult`, so a successful cross-student edit immediately opens the edited student's profile. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
+`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, and `edit note` return that stable ID in `CommandResult`, so a successful cross-student edit immediately opens the edited student's profile. `note` refreshes the currently open profile without selecting its target. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
 
 A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
@@ -343,7 +343,7 @@ The sequence below shows a successful student edit with that student's profile o
 
 `Model#setStudent(StudentId, Student)` uses the same lookup authoritatively while also checking that the target exists and the replacement retains its ID. `AddressBook` replaces only the roster entry, so the session history keyed by the same ID is untouched.
 
-Changing a name or phone may reorder the roster. `MainWindow` retains an open profile by stable ID, so the highlighted card and profile move to the edited student's new index and show the replacement details after the successful command. `LogicManager` uses its normal persistence snapshot and rollback path; a failed save restores the original student and session history. Edit command string representations and command-routing logs omit supplied field values because contact and lesson context can contain private information.
+Changing a name or phone may reorder the roster. A successful `edit` returns the target's stable ID, so `MainWindow` opens the updated profile and highlights the correct card at its new index. `LogicManager` uses its normal persistence snapshot and rollback path; a failed save restores the original student and session history. Edit command string representations and command-routing logs omit supplied field values because contact and lesson context can contain private information.
 
 ### View command execution
 
@@ -956,11 +956,11 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Editing a student
 
-1. Add Alicia and Bea, add two session notes to Alicia, and enter `view 1` to open Alicia's profile.
+1. Add Alicia and Bea, add two session notes to Alicia, and enter `view 2` to open Bea's profile.
 1. Enter `edit 1 n/Zara Lim p/+65 8000 0000 sub/Physics l/Secondary 4`.
-   Expected: TutorTrack reports `Edited student: Zara Lim (Physics, Secondary 4).` Zara moves to her new sorted position, retains both session notes and the same selected profile, and the saved JSON retains her original `studentId`.
+   Expected: TutorTrack reports `Edited student: Zara Lim (Physics, Secondary 4).` Zara moves to her new sorted position, retains both session notes, and replaces Bea in the profile and roster highlight; the saved JSON retains Zara's original `studentId`.
 1. Enter `edit 2 e/` for a student with an email.
-   Expected: The email is removed, every omitted field and session note is unchanged, and an open profile displays `Not provided`.
+   Expected: The email is removed, every omitted field and session note is unchanged, and the target's profile opens and displays `Not provided`.
 1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
    Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the one-line `edit` format and example, while `edit 1 l/` shows only the level rule.
 1. Enter `edit 1 hello n/Zara Lim`, `edit 1 2 n/Zara Lim`, and `edit x hello n/Zara Lim`.
