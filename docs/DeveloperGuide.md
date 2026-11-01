@@ -241,7 +241,7 @@ The next sequence shows the detailed UI interactions after Logic returns a succe
 
 <img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
 
-`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, and `edit note` return that stable ID in `CommandResult`, so a successful cross-student edit immediately opens the edited student's profile. `note` refreshes the currently open profile without selecting its target. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
+`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, `note`, and `edit note` return that stable ID in `CommandResult`, so a successful command on another student immediately opens that student's profile. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
 
 A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
@@ -359,7 +359,7 @@ The sequence below shows how `view INDEX` resolves a temporary position in the s
 
 A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error, and text made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty; an overlong note's error states the length entered.
 
-`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
+`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book. The `CommandResult` carries the student's `StudentId`, so `MainWindow` refreshes the roster panel, which shows the new note count, and opens that student's profile with the new note. An index beyond the roster raises a `CommandException` before the model changes.
 
 `NoteCommand#toString` omits the note text, because notes may contain private lesson details.
 
@@ -1016,15 +1016,15 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Adding a session note
 
-1. Prerequisites: add at least two students.
+1. Prerequisites: add at least two students, and enter `view 2` to open student 2's profile.
 1. Enter `note 1 nt/Reviewed factorisation.`
-   Expected: TutorTrack reports `Added session note for <name of student 1>.` and that student's session-note count increases by one.
+   Expected: TutorTrack reports `Added session note for <name of student 1>.`, that student's session-note count increases by one, and their profile replaces student 2's with the new note at the top and their roster card highlighted.
 1. Close and relaunch TutorTrack.
    Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
 1. Enter `note 1 nt/Next: 3 sub/topics`.
    Expected: The note is added with `sub/topics` as part of its text.
 1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
-   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
+   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count, open profile, or roster highlight changes.
 1. Enter `note 1 NT/text` and `note 1 Nt/text`.
    Expected: Each reports `Parameter prefixes must be typed in lowercase:` naming the prefix as typed, such as `NT/ should be nt/.`, followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.

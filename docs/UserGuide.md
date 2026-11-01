@@ -157,7 +157,7 @@ Students are sorted by name, ignoring case and accents, with numbers in names co
 
 Adds a short note about a lesson to a student, such as what was covered, where the student struggled, or what to do next time. TutorTrack records the current date and time with the note and adds one to the student's session-note count in the roster.
 
-If that student's profile is open, the new note appears there immediately after the command succeeds.
+After the command succeeds, TutorTrack opens that student's profile, with the new note at the top, and highlights their roster card, even if another student's profile was open.
 
 Format: `note INDEX nt/NOTE`
 
@@ -210,7 +210,7 @@ Each note also has a number in square brackets. The oldest note is `[1]`, and ea
 
 Long profile fields and notes wrap within the panel, and the note history can be scrolled. Press `PageDown` or `PageUp` in the command box to scroll the profile and notes by one page (in a short window, the profile scrolls first so the notes come into view) without losing what you have typed. Profile text is read-only, but you can select profile values, session-note headers, and note text and copy them with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
 
-The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command; a successful `edit` or `edit note` opens the target student's profile even when another profile was previously open. The profile closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
+The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command; a successful `edit`, `note`, or `edit note` opens the target student's profile even when another profile was previously open. The profile closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
 
 Format: `view INDEX`
 

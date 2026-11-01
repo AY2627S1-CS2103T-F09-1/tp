@@ -54,10 +54,18 @@ public class NoteCommandTest {
         CommandResult result = new NoteCommand(INDEX_FIRST_PERSON, NOTE_TEXT).execute(model);
 
         assertEquals(String.format(NoteCommand.MESSAGE_SUCCESS, ALEX.getName()), result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
         OffsetDateTime expectedRecordedAt = OffsetDateTime.parse("2026-09-18T18:35:00+08:00");
         SessionNote expectedNote = new SessionNote(NOTE_TEXT, expectedRecordedAt);
         assertEquals(List.of(expectedNote), model.getSessionHistory(ALEX.getId()).getNotes());
         assertTrue(model.getSessionHistory(BEA.getId()).isEmpty());
+    }
+
+    @Test
+    public void execute_lastIndex_returnsTargetStudentId() throws Exception {
+        CommandResult result = new NoteCommand(INDEX_SECOND_PERSON, NOTE_TEXT).execute(model);
+
+        assertEquals(BEA.getId(), result.getProfileStudentId().orElseThrow());
     }
 
     @Test
