@@ -21,13 +21,27 @@ public class ParentGuardianContactTest {
     }
 
     @Test
-    public void constructor_validValues_preservesPhoneAndOptionalEmail() {
+    public void constructor_validValues_normalizesSingaporeCountryCodeAndOptionalEmail() {
         ParentGuardianContact contact = new ParentGuardianContact(" +65 9123-4567 ",
                 Optional.of(" guardian@example.com "));
 
-        assertEquals("+65 9123-4567", contact.getPhone());
+        assertEquals("91234567", contact.getPhone());
         assertEquals(Optional.of("guardian@example.com"), contact.getEmail());
-        assertEquals("+6591234567", contact.getNormalizedPhone());
+        assertEquals("91234567", contact.getNormalizedPhone());
+    }
+
+    @Test
+    public void constructor_nonSingaporeInternationalPhone_preservesPhone() {
+        ParentGuardianContact contact = new ParentGuardianContact(" +61 412-345-678 ", Optional.empty());
+
+        assertEquals("+61 412-345-678", contact.getPhone());
+    }
+
+    @Test
+    public void constructor_nonLocalSingaporePhone_preservesPhone() {
+        ParentGuardianContact contact = new ParentGuardianContact("+65 1234 5678", Optional.empty());
+
+        assertEquals("+65 1234 5678", contact.getPhone());
     }
 
     @Test

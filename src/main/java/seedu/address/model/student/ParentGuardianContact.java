@@ -19,6 +19,7 @@ public final class ParentGuardianContact {
             "Parent or guardian email addresses must contain one '@' and a domain with at least one dot.";
     private static final String PHONE_CHARACTERS_REGEX = "\\+?[0-9][0-9 -]*";
     private static final String LOCAL_PHONE_REGEX = "[689][0-9]{7}";
+    private static final String SINGAPORE_COUNTRY_CODE = "+65";
     private static final String INTERNATIONAL_PHONE_REGEX = "\\+[1-9][0-9]{7,14}";
     private static final String EMAIL_REGEX = "[^@\\s]+@[^@\\s.]+(?:\\.[^@\\s.]+)+";
 
@@ -36,7 +37,7 @@ public final class ParentGuardianContact {
         requireNonNull(email);
         checkArgument(isValidPhone(phone), PHONE_MESSAGE_CONSTRAINTS);
         checkArgument(hasValidOptionalEmail(email), EMAIL_MESSAGE_CONSTRAINTS);
-        this.phone = phone.trim();
+        this.phone = normalizeSingaporePhone(phone.trim());
         this.email = email.map(String::trim).orElse(null);
     }
 
@@ -73,6 +74,18 @@ public final class ParentGuardianContact {
     public static String normalizePhone(String phone) {
         requireNonNull(phone);
         return phone.replaceAll("[ -]", "");
+    }
+
+    /**
+     * Returns a Singapore phone number without its {@code +65} country code.
+     */
+    private static String normalizeSingaporePhone(String phone) {
+        String normalizedPhone = normalizePhone(phone);
+        if (normalizedPhone.startsWith(SINGAPORE_COUNTRY_CODE)
+                && normalizedPhone.substring(SINGAPORE_COUNTRY_CODE.length()).matches(LOCAL_PHONE_REGEX)) {
+            return normalizedPhone.substring(SINGAPORE_COUNTRY_CODE.length());
+        }
+        return phone;
     }
 
     /**
