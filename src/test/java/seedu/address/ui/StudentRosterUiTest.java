@@ -1715,6 +1715,65 @@ public class StudentRosterUiTest {
     }
 
     @Test
+    public void executeCommand_editWithoutProfile_opensEditedStudent() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan", ALEX_ID)));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Edited student: Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("edit 1 sub/Mathematics");
+
+            assertEquals("Alex Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            assertEquals(ALEX_ID, getListView(mainWindow.getStudentRosterPanel())
+                    .getSelectionModel().getSelectedItem().getStudentId());
+            return null;
+        });
+    }
+
+    @Test
+    public void executeCommand_editAnotherStudent_opensEditedProfileAndPreservesItOnFailure() throws Exception {
+        Student alex = student("Alex Tan", ALEX_ID);
+        Student blair = student("Blair Tan", BLAIR_ID);
+        Student editedBlair = student("Aaron Tan", BLAIR_ID);
+        StudentRoster roster = new StudentRoster(List.of(alex, blair));
+        StudentRoster editedRoster = new StudentRoster(List.of(alex, editedBlair));
+        TestLogic logic = new TestLogic(roster, editedRoster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID), Optional.of(profile(null)));
+
+        onFxThread(() -> {
+            MainWindow mainWindow = new MainWindow(new Stage(), logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            logic.setCommandResult(new CommandResult("Edited student: Aaron Tan.", BLAIR_ID));
+            logic.setProfile(Optional.of(profile(BLAIR_ID, "Aaron Tan", List.of())));
+            mainWindow.executeCommand("edit 2 n/Aaron Tan");
+
+            ListView<StudentRosterEntry> rosterList = getListView(mainWindow.getStudentRosterPanel());
+            assertEquals(List.of(BLAIR_ID, ALEX_ID), rosterList.getItems().stream()
+                    .map(StudentRosterEntry::getStudentId).toList());
+            assertEquals(BLAIR_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
+            assertEquals("Aaron Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+
+            logic.setParseFailure(new ParseException("Invalid format."));
+            assertThrows(ParseException.class, () -> mainWindow.executeCommand("edit 2"));
+            assertEquals(BLAIR_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
+            assertEquals("Aaron Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            logic.setParseFailure(null);
+            logic.setCommandFailure(new CommandException("Save failed."));
+            assertThrows(CommandException.class, () -> mainWindow.executeCommand("edit 2 n/Zane Tan"));
+            assertEquals(BLAIR_ID, rosterList.getSelectionModel().getSelectedItem().getStudentId());
+            assertEquals("Aaron Tan", ((SelectableText) getProfileContent(mainWindow.getStudentProfilePanel())
+                    .getChildren().get(0)).getText());
+            return null;
+        });
+    }
+
+    @Test
     public void executeCommand_deleteSessionNoteAfterView_refreshesNotesAndNumbers() throws Exception {
         StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
         SessionNote newestNote = new SessionNote("Third session.",

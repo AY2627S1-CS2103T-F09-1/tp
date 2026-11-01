@@ -135,7 +135,7 @@ Format: `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/
 * Use `e/` without a value to remove the parent or guardian email. Other supplied fields cannot be empty.
 * The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order.
 * Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. Obsolete AddressBook `a/` and `t/` parameters are rejected. A mistyped or wrong-case prefix straight after the index, such as `em/` or the `N/` in `edit 1 N/Bob`, is reported as an unknown parameter together with the list of supported parameters.
-* Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts, preserves that student's internal identity and session notes, and keeps an open profile selected on that student.
+* Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts and preserves that student's internal identity and session notes.
 
 Examples:
 
@@ -143,7 +143,7 @@ Examples:
 * `edit 1 e/`
 * `edit 3 n/Devika Patel sub/English Literature`
 
-A successful edit reports the student's updated name, subject, and current level, refreshes the roster and any open profile, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student.
+A successful edit reports the student's updated name, subject, and current level, opens their updated profile, highlights their roster card, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student.
 
 Invalid indices, missing edit fields, repeated or obsolete AddressBook parameters, and invalid values leave the student, session notes, open profile, and saved data unchanged. See [Fixing command errors](#fixing-command-errors) for the messages. If saving fails, TutorTrack restores the complete original record.
 
@@ -210,7 +210,7 @@ Each note also has a number in square brackets. The oldest note is `[1]`, and ea
 
 Long profile fields and notes wrap within the panel, and the note history can be scrolled. Press `PageDown` or `PageUp` in the command box to scroll the profile and notes by one page (in a short window, the profile scrolls first so the notes come into view) without losing what you have typed. Profile text is read-only, but you can select profile values, session-note headers, and note text and copy them with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
 
-The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command; a successful `edit note` opens the edited student's profile even when another profile was previously open. The profile closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
+The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command; a successful `edit` or `edit note` opens the target student's profile even when another profile was previously open. The profile closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
 
 Format: `view INDEX`
 

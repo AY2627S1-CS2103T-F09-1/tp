@@ -71,7 +71,7 @@ public class EditCommand extends Command {
 
         model.setStudent(targetEntry.getStudentId(), editedStudent);
         return new CommandResult(String.format(MESSAGE_SUCCESS, editedStudent.getName(), editedStudent.getSubject(),
-                editedStudent.getCurrentLevel()));
+                editedStudent.getCurrentLevel()), targetEntry.getStudentId());
     }
 
     /**
