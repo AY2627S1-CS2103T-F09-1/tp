@@ -3,8 +3,10 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_EMPTY_COMMAND;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.Messages.MESSAGE_WRONG_CASE_COMMAND;
 import static seedu.address.logic.Messages.withFormat;
 
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -109,6 +111,11 @@ public class AddressBookParser {
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             default -> {
+                String lowercaseCommandWord = commandWord.toLowerCase(Locale.ROOT);
+                if (COMMAND_WORDS.contains(lowercaseCommandWord)) {
+                    logger.finer("A command word in the wrong case caused a ParseException.");
+                    throw new ParseException(String.format(MESSAGE_WRONG_CASE_COMMAND, lowercaseCommandWord));
+                }
                 logger.finer("An unknown command word caused a ParseException.");
                 throw new ParseException(getUnknownCommandMessage(commandWord));
             }
