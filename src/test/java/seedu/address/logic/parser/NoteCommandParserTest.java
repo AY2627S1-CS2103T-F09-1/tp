@@ -170,6 +170,7 @@ public class NoteCommandParserTest {
     @Test
     public void parse_wrongCaseNotePrefixWithoutIndex_reportsPrefixBeforeMissingIndex() {
         assertParseFailure(parser, " NT/Reviewed factorisation.", wrongCaseNotePrefixMessage("NT/"));
+        assertParseFailure(parser, " NT/a nt/b", wrongCaseNotePrefixMessage("NT/"));
     }
 
     @Test
