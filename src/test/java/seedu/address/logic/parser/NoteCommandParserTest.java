@@ -151,8 +151,26 @@ public class NoteCommandParserTest {
     }
 
     @Test
+    public void parse_wrongCaseNotePrefixBeforeNotePrefix_throwsLowercaseRequiredNotStrayText() {
+        assertParseFailure(parser, " 1 NT/a nt/b", wrongCaseNotePrefixMessage("NT/"));
+        assertParseFailure(parser, " 1 Nt/a nt/b", wrongCaseNotePrefixMessage("Nt/"));
+    }
+
+    @Test
+    public void parse_wrongCaseNotePrefixInsideNote_keptAsText() {
+        assertParseSuccess(parser, " 1 nt/Revise NT/ work", new NoteCommand(INDEX_FIRST_PERSON, "Revise NT/ work"));
+    }
+
+    @Test
+    public void parse_strayTextBeforeNotePrefix_stillReportsStrayText() {
+        assertParseFailure(parser, " 1 extra nt/hi",
+                withNoteFormat("Unexpected text before the first parameter: extra."));
+    }
+
+    @Test
     public void parse_wrongCaseNotePrefixWithoutIndex_reportsPrefixBeforeMissingIndex() {
         assertParseFailure(parser, " NT/Reviewed factorisation.", wrongCaseNotePrefixMessage("NT/"));
+        assertParseFailure(parser, " NT/a nt/b", wrongCaseNotePrefixMessage("NT/"));
     }
 
     @Test

@@ -32,7 +32,8 @@ public class NoteCommandParser implements Parser<NoteCommand> {
      * Parses the given {@code String} of arguments in the context of the NoteCommand
      * and returns a NoteCommand object for execution.
      * Only {@code nt/} is recognized, so other prefixes in the note are kept as part of its text.
-     * An {@code nt/} typed in another case, such as {@code NT/}, is reported as such rather than as missing.
+     * An {@code nt/} typed in another case, such as {@code NT/}, is reported as such rather than as missing or as
+     * stray text before a later {@code nt/}.
      *
      * @throws ParseException If the index or {@code nt/} is missing or repeated, the index is invalid, or the
      *         note text is invalid.
@@ -48,6 +49,7 @@ public class NoteCommandParser implements Parser<NoteCommand> {
                     : MESSAGE_MISSING_NOTE);
         }
 
+        verifyNoWrongCaseNotePrefix(argMultimap.getPreamble());
         verifyNoStrayText(argMultimap.getPreamble());
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), NoteCommand.COMMAND_WORD,
                 NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
