@@ -36,7 +36,7 @@ TutorTrack will evolve the existing JavaFX desktop application into a focused lo
 | Command error messages | A rejected command names one specific problem. Only structure errors (missing, unknown, repeated, or out-of-place parts) append a one-line `Format:` from the command's `COMMAND_FORMAT` and a one-line `Example:` from its `COMMAND_EXAMPLE`; value errors show only the broken rule, and model-state errors such as an empty roster or out-of-range index give the next step. Indices are described as positive whole numbers and parsed through shared `ParserUtil` helpers, and roster lookups go through `Command#getRosterEntry`. | 2026-10-27 | n/a |
 | Session-note text prefix | `note` and `edit note` reject a second `nt/` after a space as a repeated prefix, like every other command, so all commands share one prefix rule. Users who need to mention `nt/` write it without a preceding space, such as `(nt/)`, which the tokenizer does not treat as a prefix. | 2026-10-28 | n/a |
 | Atomic data-file replacement | `FileUtil#writeToFile` writes content to a temporary file beside the target and atomically replaces the target, so a failed save preserves the previous data file. | 2026-10-11 | n/a |
-| Unreadable data recovery | Storage preserves each unreadable data file in a distinct sibling backup before a command can replace it, so no earlier recovery copy can hide later invalid content. | 2026-10-12 | n/a |
+| Unreadable data recovery | Storage rejects unknown top-level roster fields except the legacy `_comment` field and preserves each unreadable data file in a distinct sibling backup before a command can replace it, so no earlier recovery copy can hide later invalid content. Legacy files without `students` remain valid. | 2026-11-01 | n/a |
 
 ## Pressure Points
 
