@@ -59,8 +59,10 @@ public class ParserUtil {
         requireNonNull(word);
         requireNonNull(target);
         boolean isParameter = word.contains(PARAMETER_PREFIX_SEPARATOR);
-        boolean isCloseToTarget = EditDistance.between(word, target) <= MAX_TARGET_TYPO_DISTANCE;
-        return !word.isEmpty() && !word.equals(target) && !isParameter && isCloseToTarget;
+        if (word.isEmpty() || word.equals(target) || isParameter) {
+            return false;
+        }
+        return EditDistance.between(word, target) <= MAX_TARGET_TYPO_DISTANCE;
     }
 
     /**

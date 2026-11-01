@@ -1177,6 +1177,48 @@ public class StudentRosterUiTest {
         });
     }
 
+    // Boundary values of the profile pane's scroll range: paging past either end stays at that end.
+    @Test
+    public void mainWindow_pageKeysBeyondProfilePaneEnds_keepScrollWithinRange() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, sessionNotes(12))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            stage.setWidth(900);
+            stage.setHeight(360);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                stage.getScene().getRoot().layout();
+                TextField commandTextField = (TextField) stage.getScene().lookup("#commandTextField");
+                ScrollPane profileScrollPane = (ScrollPane) stage.getScene().lookup("#profileScrollPane");
+
+                pressKey(commandTextField, KeyCode.PAGE_UP);
+                assertEquals(profileScrollPane.getVmin(), profileScrollPane.getVvalue());
+
+                for (int i = 0; i < 20; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                    assertTrue(profileScrollPane.getVvalue() >= profileScrollPane.getVmin());
+                    assertTrue(profileScrollPane.getVvalue() <= profileScrollPane.getVmax());
+                }
+                for (int i = 0; i < 20; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
+                assertEquals(profileScrollPane.getVmin(), profileScrollPane.getVvalue());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
     @Test
     public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
         List<String> executedCommands = new ArrayList<>();
