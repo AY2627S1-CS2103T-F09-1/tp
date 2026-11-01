@@ -31,7 +31,8 @@ import seedu.address.storage.Storage;
  */
 public class LogicManager implements Logic {
     /** Sentence ending every save error, because a command whose data cannot be saved is rolled back */
-    public static final String MESSAGE_COMMAND_CANCELLED = " The command was cancelled and no data was changed.";
+    public static final String MESSAGE_COMMAND_CANCELLED =
+            " The command was cancelled and no data was changed.";
     public static final String FILE_OPS_ERROR_FORMAT =
             "Could not save data to file %s (%s)." + MESSAGE_COMMAND_CANCELLED;
 

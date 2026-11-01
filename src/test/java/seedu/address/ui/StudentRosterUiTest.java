@@ -1329,7 +1329,8 @@ public class StudentRosterUiTest {
 
     @Test
     public void statusBarFooter_dataFileOutsideHomeFolder_showsFullPath() throws Exception {
-        Path dataFile = Path.of("").toAbsolutePath().getRoot().resolve("other-folder").resolve("tutortrack.json");
+        Path dataFile = Path.of("").toAbsolutePath().getRoot()
+                .resolve("other-folder").resolve("tutortrack.json");
 
         String shownLocation = onFxThread(() -> getSaveLocationText(new StatusBarFooter(dataFile)));
 
@@ -2008,13 +2009,15 @@ public class StudentRosterUiTest {
     @Test
     public void formatSessionNote_editState_showsEditTimeWithoutOffsets() {
         OffsetDateTime recordedAt = OffsetDateTime.parse("2026-10-20T18:30:00+08:00");
+        OffsetDateTime editedAtSameOffset = OffsetDateTime.parse("2026-10-29T23:44:00+08:00");
+        OffsetDateTime editedInUtc = OffsetDateTime.parse("2026-10-29T15:44:00Z");
 
         assertEquals("20 Oct 2026, 6:30 PM", SessionNoteCard.formatSessionNote(
                 new SessionNote("Unedited note.", recordedAt)));
         assertEquals("20 Oct 2026, 6:30 PM · edited 29 Oct 2026, 11:44 PM", SessionNoteCard.formatSessionNote(
-                new SessionNote("Edited note.", recordedAt, OffsetDateTime.parse("2026-10-29T23:44:00+08:00"))));
+                new SessionNote("Edited note.", recordedAt, editedAtSameOffset)));
         assertEquals("20 Oct 2026, 6:30 PM · edited 29 Oct 2026, 3:44 PM", SessionNoteCard.formatSessionNote(
-                new SessionNote("Edited in UTC.", recordedAt, OffsetDateTime.parse("2026-10-29T15:44:00Z"))));
+                new SessionNote("Edited in UTC.", recordedAt, editedInUtc)));
     }
 
     // Boundary values of the 12-hour clock: midnight and noon.

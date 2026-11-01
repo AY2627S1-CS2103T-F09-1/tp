@@ -162,7 +162,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      * Removes the student with {@code studentId} and that student's session history.
      *
      * @return The number of session notes removed with the student.
-     * @throws IllegalArgumentException if no student in the roster has {@code studentId}.
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
      */
     public int removeStudent(StudentId studentId) {
         requireNonNull(studentId);

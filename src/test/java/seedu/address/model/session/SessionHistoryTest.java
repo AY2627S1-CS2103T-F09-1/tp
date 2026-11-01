@@ -62,7 +62,7 @@ public class SessionHistoryTest {
     }
 
     @Test
-    public void empty_noNotes() {
+    public void empty_returnsHistoryWithNoNotes() {
         SessionHistory history = SessionHistory.empty();
 
         assertTrue(history.isEmpty());

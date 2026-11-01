@@ -119,7 +119,8 @@ public class ParserUtilTest {
     public void parseNoteText_overlongInvisibleCharacters_throwsEmptyNoteMessage() {
         String overlongInvisibleNote = " ".repeat(SessionNote.MAX_TEXT_LENGTH + 1);
 
-        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText(overlongInvisibleNote));
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () ->
+                ParserUtil.parseNoteText(overlongInvisibleNote));
     }
 
     @Test
@@ -142,7 +143,8 @@ public class ParserUtilTest {
         String overlongNoteWithTab = "a\t" + "a".repeat(SessionNote.MAX_TEXT_LENGTH);
         String expectedMessage = String.format(MESSAGE_NOTE_TOO_LONG, SessionNote.MAX_TEXT_LENGTH + 2);
 
-        assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseNoteText(overlongNoteWithTab));
+        assertThrows(ParseException.class, expectedMessage, () ->
+                ParserUtil.parseNoteText(overlongNoteWithTab));
     }
 
     @Test

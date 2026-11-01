@@ -18,6 +18,7 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.session.SessionHistory;
 import seedu.address.model.student.Student;
 
 /**
@@ -117,7 +118,8 @@ class JsonSerializableAddressBook {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_STUDENT);
             }
             addressBook.addStudent(student);
-            addressBook.setSessionHistory(student.getId(), jsonAdaptedStudent.toModelSessionHistory(loadedAt));
+            SessionHistory sessionHistory = jsonAdaptedStudent.toModelSessionHistory(loadedAt);
+            addressBook.setSessionHistory(student.getId(), sessionHistory);
         }
     }
 }

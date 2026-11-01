@@ -157,8 +157,8 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_textResemblingWrongCasePrefix_throwsMissingNote() {
-        // Boundary: without the slash, or not at the start of a word, the text is not a prefix. A lowercase nt/
-        // after a tab is not a prefix either, and it is not in the wrong case.
+        // Boundary: without the slash, or not at the start of a word, the text is not a prefix. A lowercase
+        // nt/ after a tab is not a prefix either, and it is not in the wrong case.
         String missingNoteMessage = Messages.withFormat("Missing nt/NOTE.",
                 NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
 
@@ -168,7 +168,6 @@ public class NoteCommandParserTest {
     }
 
     private static String wrongCaseNotePrefixMessage(String typedPrefix) {
-        return Messages.withFormat(String.format(NoteCommandParser.MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix),
-                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+        return withNoteFormat(String.format(NoteCommandParser.MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix));
     }
 }

@@ -41,7 +41,8 @@ public class NoteCommand extends Command {
         requireNonNull(model);
         StudentRosterEntry targetEntry = getRosterEntry(model, targetIndex);
         model.addSessionNote(targetEntry.getStudentId(), noteText);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, targetEntry.getName()), targetEntry.getStudentId());
+        return new CommandResult(String.format(MESSAGE_SUCCESS, targetEntry.getName()),
+                targetEntry.getStudentId());
     }
 
     @Override
