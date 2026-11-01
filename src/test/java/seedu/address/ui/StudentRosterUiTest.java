@@ -735,10 +735,7 @@ public class StudentRosterUiTest {
             selectableText.setText("Selectable profile text");
             Stage stage = new Stage();
             Clipboard systemClipboard = Clipboard.getSystemClipboard();
-            ClipboardContent originalClipboardContent = new ClipboardContent();
-            for (DataFormat dataFormat : systemClipboard.getContentTypes()) {
-                originalClipboardContent.put(dataFormat, systemClipboard.getContent(dataFormat));
-            }
+            ClipboardContent originalClipboardContent = copyClipboardContent();
             try {
                 stage.setScene(new Scene(new StackPane(selectableText), 280, 80));
                 stage.show();
@@ -767,11 +764,7 @@ public class StudentRosterUiTest {
                 try {
                     stage.hide();
                 } finally {
-                    if (originalClipboardContent.isEmpty()) {
-                        systemClipboard.clear();
-                    } else {
-                        assertTrue(systemClipboard.setContent(originalClipboardContent));
-                    }
+                    restoreClipboardContent(originalClipboardContent);
                 }
             }
             return null;
@@ -2067,6 +2060,60 @@ public class StudentRosterUiTest {
         });
     }
 
+    // Regression for #357: TextField deleted pasted tabs and line breaks, so the note was saved with joined words.
+    @Test
+    public void commandBox_pastedNoteWithTabOrLineBreak_submitsSpacesInsteadOfJoinedWords() throws Exception {
+        List<String> executedCommands = new ArrayList<>();
+        CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
+            executedCommands.add(commandText);
+            return new CommandResult("Command executed.");
+        }));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            pasteCommandText(commandTextField, "note 1 nt/Line one\ttabbed");
+            commandTextField.fireEvent(new ActionEvent());
+            pasteCommandText(commandTextField, "edit note 1 1 nt/First line\r\nSecond line");
+            commandTextField.fireEvent(new ActionEvent());
+            return null;
+        });
+
+        assertEquals(List.of("note 1 nt/Line one tabbed", "edit note 1 1 nt/First line Second line"),
+                executedCommands);
+    }
+
+    @Test
+    public void commandBox_lineBreakPastedIntoTypedText_keepsSurroundingTextAndMovesCaretPastPaste()
+            throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed.")));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            commandTextField.setText("note 1 nt/Start end");
+            commandTextField.positionCaret("note 1 nt/Start ".length());
+            pasteCommandText(commandTextField, "middle\r\n");
+            assertEquals("note 1 nt/Start middle end", commandTextField.getText());
+            assertEquals("note 1 nt/Start middle ".length(), commandTextField.getCaretPosition());
+            return null;
+        });
+    }
+
+    // Text set as a whole, rather than inserted at the caret, goes through the same replacement.
+    @Test
+    public void commandBox_textSetWithWindowsLineBreak_replacesLineBreakWithOneSpace() throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed.")));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            commandTextField.setText("note 1 nt/First line\r\nSecond line");
+            assertEquals("note 1 nt/First line Second line", commandTextField.getText());
+            assertTrue(commandTextField.getCaretPosition() <= commandTextField.getLength());
+            return null;
+        });
+    }
+
     @Test
     public void selectableText_negativeLineSpacing_throwsAssertionError() throws Exception {
         onFxThread(() -> {
@@ -2204,6 +2251,39 @@ public class StudentRosterUiTest {
     private void pressKey(TextField commandTextField, KeyCode keyCode) {
         commandTextField.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode,
                 false, false, false, false));
+    }
+
+    /**
+     * Pastes {@code text} through the system clipboard, as a user would, then restores the clipboard.
+     */
+    private void pasteCommandText(TextField commandTextField, String text) {
+        ClipboardContent originalClipboardContent = copyClipboardContent();
+        try {
+            ClipboardContent pastedContent = new ClipboardContent();
+            pastedContent.putString(text);
+            assertTrue(Clipboard.getSystemClipboard().setContent(pastedContent));
+            commandTextField.paste();
+        } finally {
+            restoreClipboardContent(originalClipboardContent);
+        }
+    }
+
+    private ClipboardContent copyClipboardContent() {
+        Clipboard systemClipboard = Clipboard.getSystemClipboard();
+        ClipboardContent clipboardContent = new ClipboardContent();
+        for (DataFormat dataFormat : systemClipboard.getContentTypes()) {
+            clipboardContent.put(dataFormat, systemClipboard.getContent(dataFormat));
+        }
+        return clipboardContent;
+    }
+
+    private void restoreClipboardContent(ClipboardContent clipboardContent) {
+        Clipboard systemClipboard = Clipboard.getSystemClipboard();
+        if (clipboardContent.isEmpty()) {
+            systemClipboard.clear();
+        } else {
+            assertTrue(systemClipboard.setContent(clipboardContent));
+        }
     }
 
     private ScrollBar getVerticalScrollBar(ListView<?> listView) {
