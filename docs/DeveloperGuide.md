@@ -76,7 +76,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/se-
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`. `StudentRosterPanel` shows each student in a `StudentRosterCard`, and `StudentProfilePanel` shows each session note in a `SessionNoteCard`.
 
 * All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 * The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
@@ -89,7 +89,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 The `UI` component,
 
 * executes user commands using the `Logic` component.
-* listens for changes to `Model` data so that the UI can be updated with the modified data.
+* refreshes the roster and any open profile from `Logic` after each successful command, rather than listening for changes to `Model` data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on `Logic#getStudentRoster()` and immutable `StudentRosterEntry` values because it displays TutorTrack student data.
 
@@ -241,7 +241,7 @@ The next sequence shows the detailed UI interactions after Logic returns a succe
 
 <img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
 
-`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, and `edit note` return that stable ID in `CommandResult`, so a successful cross-student edit immediately opens the edited student's profile. `note` refreshes the currently open profile without selecting its target. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
+`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, `edit note`, and the `delete` and `delete note` previews return that stable ID in `CommandResult`, so a successful cross-student edit or a deletion preview immediately opens the affected student's profile. A `delete note` preview also returns the note number, which `StudentProfilePanel` scrolls to and highlights while the preview is active. `note` refreshes the currently open profile without selecting its target. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
 
 A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
