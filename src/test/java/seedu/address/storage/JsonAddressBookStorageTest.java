@@ -39,7 +39,8 @@ import seedu.address.model.session.SessionNote;
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
     private static final String FUTURE_SESSION_NOTE_FILE = "futureSessionNoteAddressBook.json";
-    private static final OffsetDateTime FUTURE_RECORDED_AT = OffsetDateTime.parse("2099-01-01T00:00:00+08:00");
+    private static final OffsetDateTime FUTURE_RECORDED_AT =
+            OffsetDateTime.parse("2099-01-01T00:00:00+08:00");
 
     @TempDir
     public Path testFolder;
@@ -107,14 +108,16 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_recordedAtEqualToLoadTime_loadsNote() throws Exception {
         Path dataFile = TEST_DATA_FOLDER.resolve(FUTURE_SESSION_NOTE_FILE);
-        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile, fixedClockAt(FUTURE_RECORDED_AT));
+        JsonAddressBookStorage storage =
+                new JsonAddressBookStorage(dataFile, fixedClockAt(FUTURE_RECORDED_AT));
 
         assertTrue(storage.readAddressBook().isPresent());
     }
 
     @Test
     public void constructor_nullClock_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> new JsonAddressBookStorage(Paths.get("data.json"), null));
+        assertThrows(NullPointerException.class, () ->
+                new JsonAddressBookStorage(Paths.get("data.json"), null));
     }
 
     private static Clock fixedClockAt(OffsetDateTime dateTime) {

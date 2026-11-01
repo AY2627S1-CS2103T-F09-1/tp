@@ -162,7 +162,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      * Removes the student with {@code studentId} and that student's session history.
      *
      * @return The number of session notes removed with the student.
-     * @throws IllegalArgumentException if no student in the roster has {@code studentId}.
+     * @throws IllegalArgumentException If no student in the roster has {@code studentId}.
      */
     public int removeStudent(StudentId studentId) {
         requireNonNull(studentId);
@@ -220,16 +220,6 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireAllNonNull(studentId, noteNumber, text, lastEditedAt);
         checkArgument(hasStudentWithId(studentId), MESSAGE_UNKNOWN_STUDENT);
         return sessionHistories.editNote(studentId, noteNumber, text, lastEditedAt);
-    }
-
-    /**
-     * Removes the session history of the student with {@code studentId}.
-     *
-     * @return The number of session notes removed, which is zero if the student had none.
-     */
-    public int removeSessionHistory(StudentId studentId) {
-        requireNonNull(studentId);
-        return sessionHistories.removeHistory(studentId);
     }
 
     @Override

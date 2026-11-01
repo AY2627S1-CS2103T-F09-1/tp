@@ -27,7 +27,9 @@ public class JsonAdaptedSessionNoteTest {
 
     @Test
     public void toModelType_validNote_returnsNote() throws Exception {
-        assertEquals(FACTORISATION_NOTE, new JsonAdaptedSessionNote(FACTORISATION_NOTE).toModelType(LOADED_AT));
+        JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(FACTORISATION_NOTE);
+
+        assertEquals(FACTORISATION_NOTE, note.toModelType(LOADED_AT));
     }
 
     @Test
@@ -50,7 +52,8 @@ public class JsonAdaptedSessionNoteTest {
 
     @Test
     public void toModelType_utcTimestamp_keepsOffset() throws Exception {
-        SessionNote note = new JsonAdaptedSessionNote("2026-09-18T10:35:00Z", VALID_TEXT).toModelType(LOADED_AT);
+        SessionNote note = new JsonAdaptedSessionNote("2026-09-18T10:35:00Z", VALID_TEXT)
+                .toModelType(LOADED_AT);
 
         assertEquals(OffsetDateTime.parse("2026-09-18T10:35:00Z"), note.getRecordedAt());
     }
@@ -59,7 +62,8 @@ public class JsonAdaptedSessionNoteTest {
     public void toModelType_maximumLengthText_returnsNote() throws Exception {
         String maximumLengthText = "a".repeat(SessionNote.MAX_TEXT_LENGTH);
 
-        SessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, maximumLengthText).toModelType(LOADED_AT);
+        SessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, maximumLengthText)
+                .toModelType(LOADED_AT);
 
         assertEquals(maximumLengthText, note.getText());
     }
@@ -138,8 +142,8 @@ public class JsonAdaptedSessionNoteTest {
 
         assertEquals(LOADED_AT, new JsonAdaptedSessionNote(loadedAt, VALID_TEXT).toModelType(LOADED_AT)
                 .getRecordedAt());
-        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(sameInstantInUtc, VALID_TEXT).toModelType(LOADED_AT)
-                .getRecordedAt().withOffsetSameInstant(LOADED_AT.getOffset()));
+        assertEquals(LOADED_AT, new JsonAdaptedSessionNote(sameInstantInUtc, VALID_TEXT)
+                .toModelType(LOADED_AT).getRecordedAt().withOffsetSameInstant(LOADED_AT.getOffset()));
         assertEquals(LOADED_AT, new JsonAdaptedSessionNote(VALID_RECORDED_AT, VALID_TEXT, loadedAt)
                 .toModelType(LOADED_AT).getLastEditedAt().orElseThrow());
     }
@@ -187,6 +191,7 @@ public class JsonAdaptedSessionNoteTest {
 
     private void assertInvalidText(String text) {
         JsonAdaptedSessionNote note = new JsonAdaptedSessionNote(VALID_RECORDED_AT, text);
-        assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS, () -> note.toModelType(LOADED_AT));
+        assertThrows(IllegalValueException.class, SessionNote.MESSAGE_CONSTRAINTS, () ->
+                note.toModelType(LOADED_AT));
     }
 }

@@ -75,6 +75,9 @@ public final class SessionNote {
         return text.codePoints().anyMatch(codePoint -> !isInvisible(codePoint));
     }
 
+    /**
+     * Returns whether {@code codePoint} is whitespace, a space separator or an invisible format character.
+     */
     private static boolean isInvisible(int codePoint) {
         return Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)
                 || Character.getType(codePoint) == Character.FORMAT;

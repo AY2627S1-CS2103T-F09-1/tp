@@ -16,13 +16,11 @@ import seedu.address.logic.parser.exceptions.ParseException;
  */
 public class NoteCommandParser implements Parser<NoteCommand> {
 
-    static final String MESSAGE_MISSING_NOTE = withFormat("Missing " + PREFIX_NOTE + "NOTE.",
-            NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+    static final String MESSAGE_MISSING_NOTE = withNoteFormat("Missing " + PREFIX_NOTE + "NOTE.");
     static final String MESSAGE_WRONG_CASE_NOTE_PREFIX =
             "Parameter prefixes must be typed in lowercase: %1$s should be " + PREFIX_NOTE + ".";
-    static final String MESSAGE_MISSING_SPACE_BEFORE_NOTE_PREFIX = withFormat(
-            "Put a space before " + PREFIX_NOTE + ", after the student INDEX.",
-            NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
+    static final String MESSAGE_MISSING_SPACE_BEFORE_NOTE_PREFIX = withNoteFormat(
+            "Put a space before " + PREFIX_NOTE + ", after the student INDEX.");
 
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final String WHOLE_NUMBER_PATTERN = "\\d+";
@@ -56,15 +54,14 @@ public class NoteCommandParser implements Parser<NoteCommand> {
         try {
             argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
         } catch (ParseException exception) {
-            throw new ParseException(withFormat(exception.getMessage(),
-                    NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE), exception);
+            throw new ParseException(withNoteFormat(exception.getMessage()), exception);
         }
         return new NoteCommand(index, ParserUtil.parseNoteText(noteText.get()));
     }
 
     /**
-     * Verifies that no word of {@code args} starts with {@code nt/} typed in another case, such as {@code NT/},
-     * so that a note whose prefix is in the wrong case is not reported as missing.
+     * Verifies that no word of {@code args} starts with {@code nt/} typed in another case, such as
+     * {@code NT/}, so that a note whose prefix is in the wrong case is not reported as missing.
      *
      * @throws ParseException If a word starts with {@code nt/} in another case, naming the prefix as typed.
      */
@@ -75,8 +72,8 @@ public class NoteCommandParser implements Parser<NoteCommand> {
                     notePrefix.length());
             if (startsWithNotePrefixIgnoringCase && !word.startsWith(notePrefix)) {
                 String typedPrefix = word.substring(0, notePrefix.length());
-                throw new ParseException(withFormat(String.format(MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix),
-                        NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
+                throw new ParseException(withNoteFormat(String.format(MESSAGE_WRONG_CASE_NOTE_PREFIX,
+                        typedPrefix)));
             }
         }
     }
@@ -96,10 +93,16 @@ public class NoteCommandParser implements Parser<NoteCommand> {
         for (int i = 1; i < words.length; i++) {
             if (!words[i].matches(WHOLE_NUMBER_PATTERN)) {
                 String strayText = String.join(" ", Arrays.copyOfRange(words, i, words.length));
-                throw new ParseException(withFormat(
-                        String.format(AddCommandParser.MESSAGE_UNEXPECTED_PREAMBLE, strayText),
-                        NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE));
+                throw new ParseException(withNoteFormat(
+                        String.format(AddCommandParser.MESSAGE_UNEXPECTED_PREAMBLE, strayText)));
             }
         }
+    }
+
+    /**
+     * Returns {@code message} followed by the note command's format and example.
+     */
+    private static String withNoteFormat(String message) {
+        return withFormat(message, NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
     }
 }
