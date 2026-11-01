@@ -168,8 +168,7 @@ public class StudentProfilePanel extends UiPart<Region> {
         }
         double pageFraction = getViewportHeight() / scrollablePixels;
         double newValue = profileScrollPane.getVvalue() + pageCount * pageFraction * getScrollValueRange();
-        profileScrollPane.setVvalue(Math.max(profileScrollPane.getVmin(),
-                Math.min(profileScrollPane.getVmax(), newValue)));
+        profileScrollPane.setVvalue(Math.clamp(newValue, profileScrollPane.getVmin(), profileScrollPane.getVmax()));
     }
 
     private void updateNotesEmptyState() {
