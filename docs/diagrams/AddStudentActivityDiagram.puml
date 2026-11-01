@@ -1,0 +1,29 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+title Successful student addition
+
+|UI|
+start
+:User enters
+add command;
+|Logic|
+:Parse and validate
+student details;
+:Check for a
+duplicate student;
+|Model|
+:Add student
+to roster;
+|Logic|
+:Save changed
+address book;
+|Storage|
+:Write data file;
+|UI|
+:Refresh roster and
+show result;
+stop
+@enduml

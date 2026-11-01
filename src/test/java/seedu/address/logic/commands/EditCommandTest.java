@@ -40,6 +40,7 @@ public class EditCommandTest {
 
         StudentProfile profile = model.getStudentProfile(ALEX.getId()).orElseThrow();
         assertEquals("Edited student: Alexis Tan (Physics, Secondary 4).", result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
         assertEquals(ALEX.getId(), profile.getStudentId());
         assertEquals(new StudentName("Alexis Tan"), profile.getName());
         assertEquals(new ParentGuardianContact("8000 0001", Optional.of("guardian@example.com")),
@@ -85,8 +86,9 @@ public class EditCommandTest {
         EditStudentDescriptor descriptor = new EditStudentDescriptor();
         descriptor.setName(new StudentName("Aaron Tan"));
 
-        new EditCommand(INDEX_SECOND_PERSON, descriptor).execute(model);
+        CommandResult result = new EditCommand(INDEX_SECOND_PERSON, descriptor).execute(model);
 
+        assertEquals(BEA.getId(), result.getProfileStudentId().orElseThrow());
         assertEquals(List.of(BEA.getId(), ALEX.getId()), model.getStudentRoster().getEntries().stream()
                 .map(entry -> entry.getStudentId()).toList());
         assertEquals(new StudentName("Aaron Tan"), model.getStudentProfile(BEA.getId()).orElseThrow().getName());

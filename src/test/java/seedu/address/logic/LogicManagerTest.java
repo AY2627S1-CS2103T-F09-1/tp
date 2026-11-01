@@ -437,6 +437,7 @@ public class LogicManagerTest {
                 + "e/guardian@example.com sub/Physics l/Secondary 4");
 
         assertEquals("Edited student: Alexis Tan (Physics, Secondary 4).", result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
         assertEquals(ALEX.getId(), model.getStudentProfile(ALEX.getId()).orElseThrow().getStudentId());
         assertEquals(1, model.getSessionHistory(ALEX.getId()).size());
         ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
@@ -628,6 +629,7 @@ public class LogicManagerTest {
 
         assertEquals(String.format(EditCommand.MESSAGE_SUCCESS, ALEX.getName(), ALEX.getSubject(),
                 ALEX.getCurrentLevel()), result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
     }
 
     @Test
