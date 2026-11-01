@@ -2268,11 +2268,18 @@ public class StudentRosterUiTest {
         }
     }
 
+    /**
+     * Returns a copy of the system clipboard's content, leaving out formats that hold no data.
+     * On Linux the clipboard can list such formats, and {@code Clipboard#setContent} rejects a null value.
+     */
     private ClipboardContent copyClipboardContent() {
         Clipboard systemClipboard = Clipboard.getSystemClipboard();
         ClipboardContent clipboardContent = new ClipboardContent();
         for (DataFormat dataFormat : systemClipboard.getContentTypes()) {
-            clipboardContent.put(dataFormat, systemClipboard.getContent(dataFormat));
+            Object content = systemClipboard.getContent(dataFormat);
+            if (content != null) {
+                clipboardContent.put(dataFormat, content);
+            }
         }
         return clipboardContent;
     }
