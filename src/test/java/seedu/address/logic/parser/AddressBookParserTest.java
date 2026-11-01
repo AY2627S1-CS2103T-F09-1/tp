@@ -138,6 +138,23 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_wrongCaseEditNoteTarget_reportsLowercaseRule() {
+        String expectedMessage = "note must be typed in lowercase.\n"
+                + "Format: edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE\n"
+                + "Example: edit note 1 2 nt/Corrected lesson summary.";
+        List<String> wrongCaseTargets = List.of("NOTE", "Note", "nOtE");
+        for (String wrongCaseTarget : wrongCaseTargets) {
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    parser.parseCommand("edit " + wrongCaseTarget + " 1 1 nt/x"));
+        }
+        // A typo that differs by more than case keeps the suggestion.
+        String expectedTypoMessage = Messages.withFormat(
+                String.format(AddressBookParser.MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, "notes", "edit note"),
+                EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
+        assertThrows(ParseException.class, expectedTypoMessage, () -> parser.parseCommand("edit notes 1 1 nt/x"));
+    }
+
+    @Test
     public void parseCommand_editWithoutTarget_usesStudentEditParser() {
         String expectedMessage = Messages.withFormat("Missing INDEX.", EditCommand.COMMAND_FORMAT,
                 EditCommand.COMMAND_EXAMPLE);

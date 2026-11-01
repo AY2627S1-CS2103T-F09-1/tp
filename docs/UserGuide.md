@@ -196,7 +196,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 
-If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty, too long, or not on one line, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format; a missing or malformed student index such as `edit n/Bob` reports the student-index rule instead.
+If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty, too long, or not on one line, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. If you type `note` in another case, such as `edit NOTE 1 1 nt/text`, TutorTrack shows `note must be typed in lowercase.` with the same format. A missing or malformed student index such as `edit n/Bob` reports the student-index rule instead.
 
 Editing records the time of the latest edit only; entering the same text still updates that time, while the original recorded time and note number remain unchanged. A failed save also restores the original note.
 

@@ -315,7 +315,7 @@ Index handling is shared so that every command words index errors the same way:
 * `ParserUtil#parseStudentIndex` and `ParserUtil#parseNoteNumber` report a value that is not a positive whole number, or that is above `Integer.MAX_VALUE`, as a value error named after the placeholder in the format, such as `STUDENT_INDEX` or `NOTE_NUMBER`.
 * `Command#getRosterEntry` resolves an index against the current roster for every index-based command, and reports an empty roster or the valid range `1` to `N`.
 
-Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive and must be typed in lowercase; the team chose one accepted form so that parsing stays predictable and consistent with `/confirm`. Prefix-like text in another case, such as `P/` after `sub/`, therefore stays part of the value instead of starting a parameter. A wrong-case command word, a wrong-case `/confirm`, or a wrong-case `nt/` in `note` has its own lowercase error. Other wrong-case input gets the error for what the parser sees, such as a missing prefix.
+Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive and must be typed in lowercase; the team chose one accepted form so that parsing stays predictable and consistent with `/confirm`. Prefix-like text in another case, such as `P/` after `sub/`, therefore stays part of the value instead of starting a parameter. A wrong-case command word, a wrong-case `note` target in `edit note`, a wrong-case `/confirm`, or a wrong-case `nt/` in `note` has its own lowercase error. Other wrong-case input gets the error for what the parser sees, such as a missing prefix.
 
 Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. `AddressBookParser` names an unknown command word and lists the available commands. A word that names a command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
 
@@ -1047,6 +1047,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
 1. Enter `edit notes 1 1 nt/text`.
    Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note?`, followed by `Format: edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE` and `Example: edit note 1 2 nt/Corrected lesson summary.`, and leaves the note unchanged.
+1. Enter `edit NOTE 1 1 nt/text` and `edit Note 1 1 nt/text`.
+   Expected: Both report `note must be typed in lowercase.` followed by the same `edit note` format and example, and leave the note unchanged.
 1. With two students in the roster, enter `edit note 3 1 nt/text`.
    Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
 1. Enter `edit note 1 nt/text`.
