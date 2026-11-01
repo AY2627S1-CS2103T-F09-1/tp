@@ -367,9 +367,9 @@ A missing `nt/`, a missing index, or several words before `nt/` are reported as 
 
 The `edit note` command replaces the text of one existing session note without changing when it was recorded. Its format is `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`, where `STUDENT_INDEX` selects a student in the current roster and `NOTE_NUMBER` selects a note in that student's displayed chronological numbering.
 
-The sequence below shows how the command preserves the selected note's timestamp while saving the replacement text and refreshing the displayed profile.
+The activity diagram below shows how the command preserves the selected note's timestamp while saving the replacement text and refreshing the displayed profile.
 
-![Session-note edit sequence diagram](images/EditNoteSequenceDiagram.png)
+![Session-note edit activity diagram](images/EditNoteSequenceDiagram.png)
 
 `EditNoteCommandParser` validates the student index, note number, `nt/` prefix, and new note text before creating an `EditNoteCommand`. The parser rejects a missing or malformed selector, an empty or overlong replacement, control characters, and duplicate `nt/` prefixes without changing the model. The command resolves the roster index to the student's stable `StudentId`, just as the existing note and deletion commands do.
 
