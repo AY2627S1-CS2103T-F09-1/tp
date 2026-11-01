@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
@@ -28,9 +29,12 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
     public static final String MESSAGE_DUPLICATE_STUDENT_ID = "Students list contains duplicate student IDs.";
     public static final String MESSAGE_DUPLICATE_STUDENT = "Students list contains duplicate student(s).";
+    public static final String MESSAGE_UNKNOWN_FIELDS = "Data file contains unknown top-level field(s): ";
+    private static final String LEGACY_COMMENT_FIELD = "_comment";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
     private final List<JsonAdaptedStudent> students = new ArrayList<>();
+    private final Set<String> unknownFields = new HashSet<>();
 
     /**
      * Constructs a {@code JsonSerializableAddressBook} with the given persons.
@@ -58,6 +62,13 @@ class JsonSerializableAddressBook {
                 .collect(Collectors.toList()));
     }
 
+    @JsonAnySetter
+    private void addUnknownField(String fieldName, Object ignoredValue) {
+        if (!LEGACY_COMMENT_FIELD.equals(fieldName)) {
+            unknownFields.add(fieldName);
+        }
+    }
+
     /**
      * Converts this address book into the model's {@code AddressBook} object.
      *
@@ -66,6 +77,9 @@ class JsonSerializableAddressBook {
      */
     public AddressBook toModelType(OffsetDateTime loadedAt) throws IllegalValueException {
         requireNonNull(loadedAt);
+        if (!unknownFields.isEmpty()) {
+            throw new IllegalValueException(MESSAGE_UNKNOWN_FIELDS + String.join(", ", unknownFields));
+        }
         AddressBook addressBook = new AddressBook();
         addPersons(addressBook);
         addStudents(addressBook, loadedAt);
