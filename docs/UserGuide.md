@@ -194,7 +194,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 * `NEW_NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed. A note made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty.
 * As with `note`, each tab or line break in a pasted replacement becomes a space.
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside the replacement is saved as part of the note.
-* `nt/` must be typed in lowercase. A wrong-case prefix such as `NT/` is not recognized, so TutorTrack reports `Missing nt/NEW_NOTE.`
+* `nt/` must be typed in lowercase. A wrong-case prefix such as `NT/` reports `Parameter prefixes must be typed in lowercase: NT/ should be nt/.` with the format and example above.
 * As with `note`, `nt/` may appear only once. To mention `nt/` in the replacement, write it without a space before it, such as `(nt/)` or `"nt/"`.
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`

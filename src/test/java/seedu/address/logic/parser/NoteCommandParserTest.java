@@ -186,6 +186,7 @@ public class NoteCommandParserTest {
     }
 
     private static String wrongCaseNotePrefixMessage(String typedPrefix) {
-        return withNoteFormat(String.format(NoteCommandParser.MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix));
+        return Messages.withFormat(String.format(ParserUtil.MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix),
+                NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
     }
 }
