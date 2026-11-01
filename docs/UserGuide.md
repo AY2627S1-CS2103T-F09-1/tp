@@ -89,7 +89,7 @@ When a command cannot run, TutorTrack names the specific problem and does not ch
 * **Invalid value:** a value that breaks a rule, such as a phone number that is too short, shows only that rule. An index such as `0`, `-1`, or `abc` shows `INDEX must be a positive whole number, e.g. 1.` A number too large to be any index, such as `99999999999`, is reported as too large.
 * **Index outside the roster:** the error gives the valid range, for example `Student index [3] is outside the roster. Enter a student index from 1 to 2.` If the roster is empty, TutorTrack asks you to add a student first.
 * **Note number outside the history:** `edit note` and `delete note` give the valid note-number range for that student.
-* **Unknown command:** Command words must be typed in lowercase. An uppercase command such as `ADD` or a misspelled command such as `veiw 1` is rejected and named in the error together with the list of available commands.
+* **Unknown command:** Command words must be typed in lowercase. A command word in another case, such as `ADD` or `Delete`, shows `Command words must be typed in lowercase.` followed by the lowercase word to use, for example `Did you mean add?`. A misspelled command such as `veiw 1` is named in the error together with the list of available commands.
 * **Mistyped keyword or prefix:** a mistyped `note`, `/confirm`, or parameter prefix is named in the error. Each command's section below describes these errors.
 
 ### Viewing help: `help`
@@ -157,7 +157,7 @@ Students are sorted by name, ignoring case and accents, with numbers in names co
 
 Adds a short note about a lesson to a student, such as what was covered, where the student struggled, or what to do next time. TutorTrack records the current date and time with the note and adds one to the student's session-note count in the roster.
 
-If that student's profile is open, the new note appears there immediately after the command succeeds.
+After the command succeeds, TutorTrack opens that student's profile, with the new note at the top, and highlights their roster card, even if another student's profile was open.
 
 Format: `note INDEX nt/NOTE`
 
@@ -196,7 +196,7 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 
-If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty, too long, or not on one line, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format; a missing or malformed student index such as `edit n/Bob` reports the student-index rule instead.
+If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty, too long, or not on one line, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. If you type `note` in another case, such as `edit NOTE 1 1 nt/text`, TutorTrack shows `note must be typed in lowercase.` with the same format. A missing or malformed student index such as `edit n/Bob` reports the student-index rule instead.
 
 Editing records the time of the latest edit only; entering the same text still updates that time, while the original recorded time and note number remain unchanged. A failed save also restores the original note.
 
@@ -210,7 +210,7 @@ Each note also has a number in square brackets. The oldest note is `[1]`, and ea
 
 Long profile fields and notes wrap within the panel, and the note history can be scrolled. Press `PageDown` or `PageUp` in the command box to scroll the profile and notes by one page (in a short window, the profile scrolls first so the notes come into view) without losing what you have typed. Profile text is read-only, but you can select profile values, session-note headers, and note text and copy them with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
 
-The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command; a successful `edit` or `edit note` opens the target student's profile even when another profile was previously open. The profile closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
+The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command; a successful `edit`, `note`, or `edit note` opens the target student's profile even when another profile was previously open. The profile closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
 
 Format: `view INDEX`
 
@@ -256,7 +256,7 @@ Confirmation format: `delete note STUDENT_INDEX NOTE_NUMBER /confirm`
 * `NOTE_NUMBER` is the positive number in square brackets beside the note in that student's profile.
 * The preview opens the selected student's profile, scrolls the targeted note into view, and highlights its card. Check the note text and number before confirming. The prompt displays the exact confirmation command. No data is deleted or saved during the preview.
 * To delete the note, enter the exact confirmation command shown in the preview as your next correctly formatted command. As with `delete`, `/confirm` must be in lowercase.
-* If you type a likely misspelling of `note`, such as `delete notes 1 1`, TutorTrack points you to the `delete note` format.
+* If you type a likely misspelling of `note`, such as `delete notes 1 1`, TutorTrack points you to the `delete note` format. If you type `note` in another case, such as `delete NOTE 1 1`, TutorTrack shows `note must be typed in lowercase.` with the same format.
 * If TutorTrack rejects a command because its format is wrong, correct the typo and try again; the preview and note highlight stay active. A different correctly formatted command cancels the preview and clears the highlight while the profile stays open, even if that command then fails. Starting another deletion preview replaces it and highlights the new target.
 * A confirmation for the wrong student or note, or without an active preview, does not delete anything. Start a new preview to try again.
 * After a matching confirmation, TutorTrack removes only that note, reports `Successfully deleted session note [NOTE_NUMBER] for STUDENT_NAME.`, refreshes an open profile, and numbers the remaining notes consecutively.

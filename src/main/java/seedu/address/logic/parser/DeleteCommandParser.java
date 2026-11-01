@@ -44,6 +44,9 @@ public class DeleteCommandParser implements Parser<Command> {
             MESSAGE_MISTYPED_CONFIRMATION_FLAG,
             DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_MISTYPED_NOTE_TARGET_FORMAT = "Unknown delete target: %s. Did you mean %s?";
+    static final String MESSAGE_WRONG_CASE_NOTE_TARGET = withFormat(
+            DeleteSessionNoteCommand.NOTE_TARGET + " must be typed in lowercase.",
+            DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE);
     static final String MESSAGE_MISSING_STUDENT_INDEX = withFormat(
             String.format(MESSAGE_MISSING_INDEX, INDEX_LABEL),
                     DeleteCommand.COMMAND_FORMAT, DeleteCommand.COMMAND_EXAMPLE);
@@ -66,7 +69,8 @@ public class DeleteCommandParser implements Parser<Command> {
      * Parses the given {@code String} of arguments in the context of the delete command.
      *
      * @throws ParseException If an index is missing, repeated, or invalid, if {@code /confirm} is misplaced or
-     *         typed in the wrong case, or if the first word looks like a typo of {@code note}.
+     *         typed in the wrong case, or if the first word is {@code note} in the wrong case or looks like a typo
+     *         of it.
      */
     public Command parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
@@ -81,20 +85,25 @@ public class DeleteCommandParser implements Parser<Command> {
     }
 
     /**
-     * Checks that the first word is not a typo of {@code note}, such as {@code notes}, which would otherwise be
-     * reported as a second student index.
+     * Checks that the first word is neither {@code note} in the wrong case, such as {@code NOTE}, nor a typo of
+     * {@code note}, such as {@code notes}, either of which would otherwise be reported as a student index.
      *
-     * @throws ParseException If the first word looks like a typo of {@code note}.
+     * @throws ParseException If the first word is {@code note} in the wrong case or looks like a typo of it.
      */
     private static void verifyNoMistypedNoteTarget(List<String> arguments) throws ParseException {
-        if (arguments.isEmpty()
-                || !ParserUtil.isMistypedTarget(arguments.get(NOTE_TARGET_POSITION),
-                        DeleteSessionNoteCommand.NOTE_TARGET)) {
+        if (arguments.isEmpty()) {
+            return;
+        }
+        String firstWord = arguments.get(NOTE_TARGET_POSITION);
+        if (DeleteSessionNoteCommand.NOTE_TARGET.equalsIgnoreCase(firstWord)) {
+            throw new ParseException(MESSAGE_WRONG_CASE_NOTE_TARGET);
+        }
+        if (!ParserUtil.isMistypedTarget(firstWord, DeleteSessionNoteCommand.NOTE_TARGET)) {
             return;
         }
         String suggestion = DeleteCommand.COMMAND_WORD + " " + DeleteSessionNoteCommand.NOTE_TARGET;
         throw new ParseException(withFormat(
-                String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, arguments.get(NOTE_TARGET_POSITION), suggestion),
+                String.format(MESSAGE_MISTYPED_NOTE_TARGET_FORMAT, firstWord, suggestion),
                 DeleteSessionNoteCommand.COMMAND_FORMAT, DeleteSessionNoteCommand.COMMAND_EXAMPLE));
     }
 

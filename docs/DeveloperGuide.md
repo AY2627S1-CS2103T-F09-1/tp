@@ -88,7 +88,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/se-
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`. `StudentRosterPanel` shows each student in a `StudentRosterCard`, and `StudentProfilePanel` shows each session note in a `SessionNoteCard`.
 
 * All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 * The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
@@ -101,7 +101,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 The `UI` component,
 
 * executes user commands using the `Logic` component.
-* listens for changes to `Model` data so that the UI can be updated with the modified data.
+* refreshes the roster and any open profile from `Logic` after each successful command, rather than listening for changes to `Model` data.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
 * depends on `Logic#getStudentRoster()` and immutable `StudentRosterEntry` values because it displays TutorTrack student data.
 
@@ -173,7 +173,7 @@ TutorTrack keeps its files in the _home folder_, the folder containing the JAR f
 
 * `HomeFolder` locates the home folder and places the data file `data/tutortrack.json`, `preferences.json`, and the `tutortrack.log` files there.
 * When TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, `HomeFolder` uses the working directory instead.
-* If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. It reports the failure through the base logger rather than `LogsCenter`'s own static logger, which is not yet assigned while the base logger is being set up. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
+* If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
 
 In the data file:
 
@@ -253,7 +253,7 @@ The next sequence shows the detailed UI interactions after Logic returns a succe
 
 <img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
 
-`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, and `edit note` return that stable ID in `CommandResult`, so a successful cross-student edit immediately opens the edited student's profile. `note` refreshes the currently open profile without selecting its target. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
+`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, `note`, `edit note`, and the `delete` and `delete note` previews return that stable ID in `CommandResult`, so a successful command on another student or a deletion preview immediately opens the affected student's profile. A `delete note` preview also returns the note number, which `StudentProfilePanel` scrolls to and highlights while the preview is active. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
 
 A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
 
@@ -327,9 +327,9 @@ Index handling is shared so that every command words index errors the same way:
 * `ParserUtil#parseStudentIndex` and `ParserUtil#parseNoteNumber` report a value that is not a positive whole number, or that is above `Integer.MAX_VALUE`, as a value error named after the placeholder in the format, such as `STUDENT_INDEX` or `NOTE_NUMBER`.
 * `Command#getRosterEntry` resolves an index against the current roster for every index-based command, and reports an empty roster or the valid range `1` to `N`.
 
-Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive and must be typed in lowercase; the team chose one accepted form so that parsing stays predictable and consistent with `/confirm`. Prefix-like text in another case, such as `P/` after `sub/`, therefore stays part of the value instead of starting a parameter. A wrong-case `/confirm`, or a wrong-case `nt/` in `note`, has its own lowercase error. Other wrong-case input gets the error for what the parser sees, such as a missing prefix or an unknown command.
+Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive and must be typed in lowercase; the team chose one accepted form so that parsing stays predictable and consistent with `/confirm`. Prefix-like text in another case, such as `P/` after `sub/`, therefore stays part of the value instead of starting a parameter. A wrong-case command word, a wrong-case `note` target in `edit note` or `delete note`, a wrong-case `/confirm`, or a wrong-case `nt/` in `note` has its own lowercase error. Other wrong-case input gets the error for what the parser sees, such as a missing prefix.
 
-Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. `AddressBookParser` names an unknown command word and lists the available commands. The unknown word is shown to the user but never logged.
+Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. `AddressBookParser` names an unknown command word and lists the available commands. A word that names a command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
 
 ### Adding a student
 
@@ -371,7 +371,7 @@ The sequence below shows how `view INDEX` resolves a temporary position in the s
 
 A missing `nt/`, a missing index, or several words before `nt/` are reported as structure errors with the `note` format. A single word that is not a positive whole number, such as `0` or `x`, or a number too large for an index, is reported as a value error through the shared index parsing described in [Command error messages](#command-error-messages), and the note text is checked with `ParserUtil#parseNoteText` before a `NoteCommand` is created. Empty, overlong, and non-printable note text are each reported as a separate value error, and text made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty; an overlong note's error states the length entered.
 
-`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book, and `MainWindow` refreshes the roster panel, which shows the new note count. An index beyond the roster raises a `CommandException` before the model changes.
+`NoteCommand#execute` resolves `INDEX` against `Model#getStudentRoster()`, the same sorted roster that the roster panel shows, and then works with the selected student's `StudentId`. It adds the note through `Model#addSessionNote`, which timestamps it. `LogicManager` then saves the address book. The `CommandResult` carries the student's `StudentId`, so `MainWindow` refreshes the roster panel, which shows the new note count, and opens that student's profile with the new note. An index beyond the roster raises a `CommandException` before the model changes.
 
 `NoteCommand#toString` omits the note text, because notes may contain private lesson details.
 
@@ -399,7 +399,7 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 `DeleteCommandParser` supports `delete STUDENT_INDEX [/confirm]` for a whole student and `delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` for one session note. `/confirm` is an exact, case-sensitive terminal token. Duplicated, misplaced, differently cased, concatenated, or value-bearing confirmation tokens are rejected during parsing, before the model can change.
 
-A word that matches `/confirm` only when case is ignored, such as `/CONFIRM`, is reported in both forms as `/confirm must be typed in lowercase.`, before the argument count is checked, so that it is not reported as an extra index. A first word that looks like a typo of `note`, such as `notes`, is reported as `Unknown delete target`, with the suggestion `delete note`, using the same `ParserUtil#isMistypedTarget` check that `edit` uses for `edit note`. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
+A word that matches `/confirm` only when case is ignored, such as `/CONFIRM`, is reported in both forms as `/confirm must be typed in lowercase.`, before the argument count is checked, so that it is not reported as an extra index. A first word that matches `note` only when case is ignored, such as `NOTE`, is reported as `note must be typed in lowercase.` with the `delete note` format, as `edit` does for `edit note`. A first word that looks like a typo of `note`, such as `notes`, is reported as `Unknown delete target`, with the suggestion `delete note`, using the same `ParserUtil#isMistypedTarget` check that `edit` uses for `edit note`. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
 The [architecture sequence diagram](#architecture) illustrates student deletion. The sequence below shows the successful path for deleting one session note; confirmation checks and failure handling are explained in the following sections.
 
@@ -899,7 +899,6 @@ testers are expected to do more *exploratory* testing.
    1. Enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`.
       Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Dev Patel is not added to the roster.
    1. Restore write access to the folder.
-5. _{ more test cases … }_
 
 ### UI theme and scaling
 
@@ -948,8 +947,10 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: TutorTrack reports `Duplicate student: alicia lim already has this parent phone. Use a different name or phone, or edit the existing student.` and preserves the existing record.
 1. Enter `add n/Bea Lim p/+65 9123 4567 sub/English l/Secondary 2`.
    Expected: TutorTrack accepts the sibling because the student name differs.
-1. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/` and `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
-   Expected: The first reports `Missing l/CURRENT_LEVEL.` and the second reports `x/` as an unknown parameter. Both responses include the `add` format and example, and neither changes the roster or data file.
+1. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/`.
+   Expected: TutorTrack reports `Missing l/CURRENT_LEVEL.` followed by the `add` format and example, and does not change the roster or data file.
+1. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
+   Expected: TutorTrack reports `Added student: Alex Tan (Mathematics, Secondary 3 x/value).` Prefix-like text that is not a recognized parameter stays part of the value before it, as the User Guide describes.
 1. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
    Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
 1. Enter `add n/Alex Tan p/10101010 sub/Mathematics l/Secondary 3`, then enter `edit 1 p/10101010` for an existing student.
@@ -959,8 +960,8 @@ When manually testing roster resizing, start with a populated roster containing 
 
 1. Enter `add n/Raj s/o Kumar p/91234567 sub/C++ l/P6+ e/guardian@example.com`.
    Expected: TutorTrack adds the student. Names may contain slashes, and subject and level values must each contain a letter or number.
-1. Enter `ADD n/Raj s/o Kumar p/91234567 sub/C++ l/P6+` and `HELP`.
-   Expected: Both report an unknown command because command words must be lowercase.
+1. Enter `ADD n/Raj s/o Kumar p/91234567 sub/C++ l/P6+`, `HELP`, and `veiw 1`.
+   Expected: The first two report `Command words must be typed in lowercase. Did you mean add?` and `Command words must be typed in lowercase. Did you mean help?`. `veiw 1` reports `Unknown command: veiw.` followed by the list of available commands. None changes the roster or data file.
 1. Enter `edit 1 sub/Math P/81234567`.
    Expected: The subject becomes `Math P/81234567`; the phone does not change because `P/` is not a recognized parameter prefix.
 1. Enter `add n/Bob p/91234567 sub/!!! l/???` and `add n/Bob p/91234567 e/a@b sub/Math l/Sec 1`.
@@ -1028,15 +1029,15 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Adding a session note
 
-1. Prerequisites: add at least two students.
+1. Prerequisites: add at least two students, and enter `view 2` to open student 2's profile.
 1. Enter `note 1 nt/Reviewed factorisation.`
-   Expected: TutorTrack reports `Added session note for <name of student 1>.` and that student's session-note count increases by one.
+   Expected: TutorTrack reports `Added session note for <name of student 1>.`, that student's session-note count increases by one, and their profile replaces student 2's with the new note at the top and their roster card highlighted.
 1. Close and relaunch TutorTrack.
    Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
 1. Enter `note 1 nt/Next: 3 sub/topics`.
    Expected: The note is added with `sub/topics` as part of its text.
 1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
-   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
+   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count, open profile, or roster highlight changes.
 1. Enter `note 1 NT/text` and `note 1 Nt/text`.
    Expected: Each reports `Parameter prefixes must be typed in lowercase:` naming the prefix as typed, such as `NT/ should be nt/.`, followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
 1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
@@ -1059,6 +1060,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
 1. Enter `edit notes 1 1 nt/text`.
    Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note?`, followed by `Format: edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE` and `Example: edit note 1 2 nt/Corrected lesson summary.`, and leaves the note unchanged.
+1. Enter `edit NOTE 1 1 nt/text` and `edit Note 1 1 nt/text`.
+   Expected: Both report `note must be typed in lowercase.` followed by the same `edit note` format and example, and leave the note unchanged.
 1. With two students in the roster, enter `edit note 3 1 nt/text`.
    Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
 1. Enter `edit note 1 nt/text`.
@@ -1085,8 +1088,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: TutorTrack rejects the repeated confirmation because no matching deletion is pending, and Bea remains unchanged.
 1. Close and relaunch TutorTrack.
    Expected: Ari and the notes remain absent, while Bea remains at index 1.
-1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /CONFIRM`, `delete 1 /confirm /confirm`, `delete 1 /confirm extra`, and `delete notes 1 1`.
-   Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` reports that `delete` takes only one `INDEX`; `delete 1 /Confirm` and `delete 1 /CONFIRM` report `/confirm must be typed in lowercase.`; `delete notes 1 1` reports `Unknown delete target: notes. Did you mean delete note?` followed by the `delete note` format and example; and the remaining inputs report that `/confirm` must appear at most once and at the end. Every error except the invalid-index ones ends with `Format: delete INDEX [/confirm]` and `Example: delete 1`. None changes the roster, notes, open profile, or data file.
+1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /CONFIRM`, `delete 1 /confirm /confirm`, `delete 1 /confirm extra`, `delete notes 1 1`, `delete NOTE 1 1`, and `delete Note 1 1`.
+   Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` reports that `delete` takes only one `INDEX`; `delete 1 /Confirm` and `delete 1 /CONFIRM` report `/confirm must be typed in lowercase.`; `delete notes 1 1` reports `Unknown delete target: notes. Did you mean delete note?` and `delete NOTE 1 1` and `delete Note 1 1` report `note must be typed in lowercase.`, each followed by the `delete note` format and example; and the remaining inputs report that `/confirm` must appear at most once and at the end. Apart from these `note` errors and the invalid-index ones, every error ends with `Format: delete INDEX [/confirm]` and `Example: delete 1`. None changes the roster, notes, open profile, or data file.
 1. Enter `delete N`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster, gives the valid range, and makes no changes.
 1. Enter `delete 1`, then `delete 1 /confir`, then `delete 1 /confirm`.

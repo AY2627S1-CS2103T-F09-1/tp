@@ -291,6 +291,19 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_note_returnsTargetStudentIdAndSaves() throws Exception {
+        model.addStudent(ALEX);
+
+        CommandResult result = logic.execute(NOTE_FIRST_STUDENT_COMMAND);
+
+        assertEquals(String.format(NoteCommand.MESSAGE_SUCCESS, ALEX.getName()), result.getFeedbackToUser());
+        assertEquals(ALEX.getId(), result.getProfileStudentId().orElseThrow());
+        ReadOnlyAddressBook savedData = new JsonAddressBookStorage(addressBookFile)
+                .readAddressBook().orElseThrow();
+        assertEquals(model.getSessionHistory(ALEX.getId()), savedData.getSessionHistory(ALEX.getId()));
+    }
+
+    @Test
     public void execute_editNote_replacesTextPreservesTimestampAndSaves() throws Exception {
         model.addStudent(ALEX);
         SessionNote originalNote = model.addSessionNote(ALEX.getId(), "Original summary.");

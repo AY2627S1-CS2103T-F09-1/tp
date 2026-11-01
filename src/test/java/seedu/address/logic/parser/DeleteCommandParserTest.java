@@ -172,6 +172,24 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_wrongCaseNoteTarget_throwsLowercaseMessage() {
+        String expectedMessage = "note must be typed in lowercase.\n"
+                + "Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]\n"
+                + "Example: delete note 1 2";
+        String[] wrongCaseTargets = {"NOTE", "Note", "nOtE"};
+
+        for (String wrongCaseTarget : wrongCaseTargets) {
+            assertParseFailure(parser, wrongCaseTarget + " 1 1", expectedMessage);
+            assertParseFailure(parser, wrongCaseTarget + " 1 1 /confirm", expectedMessage);
+            assertParseFailure(parser, wrongCaseTarget, expectedMessage);
+        }
+        // A typo that differs by more than case keeps the suggestion.
+        assertParseFailure(parser, "notes 1 1", "Unknown delete target: notes. Did you mean delete note?\n"
+                + "Format: delete note STUDENT_INDEX NOTE_NUMBER [/confirm]\n"
+                + "Example: delete note 1 2");
+    }
+
+    @Test
     public void parse_wordsFarFromNoteTarget_areNotTreatedAsMistypedNoteTarget() {
         assertParseFailure(parser, "abc", MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, "x 1", DeleteCommandParser.MESSAGE_TOO_MANY_STUDENT_INDICES);
