@@ -1,5 +1,7 @@
 package seedu.address.commons.util;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
@@ -55,6 +57,8 @@ public class FileUtil {
      * @throws IOException if the temporary file cannot be written or moved into place.
      */
     public static void writeToFile(Path file, String content) throws IOException {
+        requireNonNull(file);
+        requireNonNull(content);
         if (Files.exists(file) && !Files.isWritable(file)) {
             throw new AccessDeniedException(file.toString());
         }

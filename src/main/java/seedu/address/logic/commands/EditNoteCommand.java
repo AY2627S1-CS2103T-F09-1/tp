@@ -76,10 +76,11 @@ public class EditNoteCommand extends Command {
         if (history.isEmpty()) {
             throw new CommandException(String.format(MESSAGE_NO_SESSION_NOTES, student.getName()));
         }
-        if (noteNumber.getOneBased() > history.size()) {
-            throw new CommandException(String.format(MESSAGE_INVALID_NOTE_NUMBER,
-                    noteNumber.getOneBased(), student.getName(), history.size()));
+        if (noteNumber.getOneBased() <= history.size()) {
+            return;
         }
+        throw new CommandException(String.format(MESSAGE_INVALID_NOTE_NUMBER,
+                noteNumber.getOneBased(), student.getName(), history.size()));
     }
 
     @Override

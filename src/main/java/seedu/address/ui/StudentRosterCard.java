@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -36,6 +38,7 @@ public class StudentRosterCard extends UiPart<Region> {
      */
     public StudentRosterCard(StudentRosterEntry entry) {
         super(FXML);
+        requireNonNull(entry);
         rosterIndex.setText(String.valueOf(entry.getRosterIndex()));
         name.setText(entry.getName().getValue());
         subject.setText(SUBJECT_LABEL + entry.getSubject().getValue());

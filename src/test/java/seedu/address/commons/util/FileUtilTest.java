@@ -25,6 +25,12 @@ public class FileUtilTest {
     private Path temporaryDirectory;
 
     @Test
+    public void writeToFile_nullArguments_throwNullPointerException() {
+        assertThrows(NullPointerException.class, () -> FileUtil.writeToFile(null, "content"));
+        assertThrows(NullPointerException.class, () -> FileUtil.writeToFile(temporaryDirectory.resolve("file"), null));
+    }
+
+    @Test
     public void writeToFile_existingFile_replacesContents() throws IOException {
         Path dataFile = temporaryDirectory.resolve("addressbook.json");
         Files.writeString(dataFile, "old data");
