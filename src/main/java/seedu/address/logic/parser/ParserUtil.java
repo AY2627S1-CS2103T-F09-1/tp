@@ -44,6 +44,8 @@ public class ParserUtil {
             + " characters or fewer.";
     public static final String MESSAGE_NOTE_NON_PRINTABLE = "Session note contains a tab, line break or other"
             + " non-printable character. Enter the note on one line without them.";
+    public static final String MESSAGE_WRONG_CASE_NOTE_PREFIX =
+            "Parameter prefixes must be typed in lowercase: %1$s should be " + PREFIX_NOTE + ".";
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
     private static final String WHITESPACE_PATTERN = "\\s+";
     private static final List<Prefix> LEGACY_PERSON_PREFIXES = List.of(PREFIX_ADDRESS, PREFIX_TAG);
@@ -82,6 +84,28 @@ public class ParserUtil {
         requireNonNull(args);
         return ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL,
                 PREFIX_ADDRESS, PREFIX_TAG);
+    }
+
+    /**
+     * Verifies that no word starts with {@code nt/} typed in another case, such as {@code NT/}.
+     *
+     * @param args Arguments containing the possible note prefix.
+     * @param commandFormat Format to include in a wrong-case error.
+     * @param commandExample Example to include in a wrong-case error.
+     * @throws ParseException If a word starts with {@code nt/} in another case.
+     */
+    public static void verifyNoWrongCaseNotePrefix(String args, String commandFormat, String commandExample)
+            throws ParseException {
+        requireNonNull(args);
+        for (String word : args.trim().split(WHITESPACE_PATTERN)) {
+            boolean startsWithNotePrefixIgnoringCase = word.regionMatches(true, 0, PREFIX_NOTE.getPrefix(), 0,
+                    PREFIX_NOTE.getPrefix().length());
+            if (startsWithNotePrefixIgnoringCase && !word.startsWith(PREFIX_NOTE.getPrefix())) {
+                String typedPrefix = word.substring(0, PREFIX_NOTE.getPrefix().length());
+                throw new ParseException(Messages.withFormat(
+                        String.format(MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix), commandFormat, commandExample));
+            }
+        }
     }
 
     /**

@@ -47,6 +47,8 @@ public class EditNoteCommandParser implements Parser<EditNoteCommand> {
             throw new ParseException(MESSAGE_MISSING_NOTE_TARGET);
         }
         if (noteText.isEmpty()) {
+            ParserUtil.verifyNoWrongCaseNotePrefix(args, EditNoteCommand.COMMAND_FORMAT,
+                    EditNoteCommand.COMMAND_EXAMPLE);
             throw new ParseException(MESSAGE_MISSING_NEW_NOTE);
         }
         verifyIndexCount(preamble.length);
