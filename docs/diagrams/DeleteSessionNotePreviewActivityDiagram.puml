@@ -1,0 +1,24 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+title Preview a session-note deletion
+
+start
+:Tutor requests note deletion;
+:Logic parses the request and checks the target
+using the model's roster and session history;
+if (Request and target valid?) then (yes)
+  :Logic retains the student, note,
+  and history as the pending target;
+  :UI opens the profile, highlights the note,
+  and shows the confirmation command;
+  note right
+    Preview does not change
+    or save model data.
+  end note
+else (no)
+  :UI shows an error;
+endif
+stop
+@enduml

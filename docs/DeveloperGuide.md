@@ -102,7 +102,7 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="550"/>
 
-The [architecture sequence diagram](#architecture) shows how the main components interact when a student is added. A [session-note deletion sequence](#session-note-deletion-sequence) appears below.
+The [architecture sequence diagram](#architecture) shows how the main components interact when a student is added. The [session-note deletion activity diagrams](#session-note-deletion-activities) show the preview and confirmation flows.
 
 How the `Logic` component works:
 
@@ -382,11 +382,17 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 A word that matches `/confirm` only when case is ignored, such as `/CONFIRM`, is reported in both forms as `/confirm must be typed in lowercase.`, before the argument count is checked, so that it is not reported as an extra index. A first word that matches `note` only when case is ignored, such as `NOTE`, is reported as `note must be typed in lowercase.` with the `delete note` format, as `edit` does for `edit note`. A first word that looks like a typo of `note`, such as `notes`, is reported as `Unknown delete target`, with the suggestion `delete note`, using the same `ParserUtil#isMistypedTarget` check that `edit` uses for `edit note`. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
-The sequence below shows the successful path for deleting one session note; confirmation checks and failure handling are explained in the following sections.
+The activity diagrams below show the preview and confirmation flows for deleting one session note. The following sections explain the pending-target checks, cancellation, and failure handling in more detail.
 
-#### Session-note deletion sequence
+#### Session-note deletion activities
 
-![Session-note deletion sequence diagram](images/DeleteSessionNoteSequenceDiagram.png)
+The preview validates the selected student and note, then shows the note and confirmation command without changing saved data.
+
+![Session-note deletion preview activity diagram](images/DeleteSessionNotePreviewActivityDiagram.png)
+
+The next input either keeps the preview pending, cancels it, or attempts confirmation. A matching confirmation deletes the note and saves the updated data; a save failure restores the model.
+
+![Session-note deletion confirmation activity diagram](images/DeleteSessionNoteConfirmationActivityDiagram.png)
 
 #### Preview and pending target
 
