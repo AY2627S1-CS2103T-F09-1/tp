@@ -52,6 +52,18 @@ public class EditNoteCommandParserTest {
     }
 
     @Test
+    public void parse_wrongCaseNotePrefix_throwsLowercaseRequiredWithFormat() {
+        assertParseFailure(parser, "note 1 1 NT/Reviewed summary.", wrongCaseNotePrefixMessage("NT/"));
+        assertParseFailure(parser, "note 1 1 Nt/Reviewed summary.", wrongCaseNotePrefixMessage("Nt/"));
+        assertParseFailure(parser, "note 1 1 nT/Reviewed summary.", wrongCaseNotePrefixMessage("nT/"));
+    }
+
+    @Test
+    public void parse_missingNotePrefix_throwsMissingNewNoteWithFormat() {
+        assertParseFailure(parser, "note 1 1 Reviewed summary.", EditNoteCommandParser.MESSAGE_MISSING_NEW_NOTE);
+    }
+
+    @Test
     public void parse_missingIndices_throwsMissingIndicesWithFormat() {
         assertParseFailure(parser, "note nt/Corrected summary.", Messages.withFormat(
                 "Missing STUDENT_INDEX and NOTE_NUMBER.",
@@ -132,6 +144,11 @@ public class EditNoteCommandParserTest {
     public void parse_notePrefixWithoutLeadingSpace_keptAsText() {
         assertParseSuccess(parser, "note 1 1 nt/Remember (nt/) notation",
                 new EditNoteCommand(INDEX_FIRST_PERSON, INDEX_FIRST_PERSON, "Remember (nt/) notation"));
+    }
+
+    private static String wrongCaseNotePrefixMessage(String typedPrefix) {
+        return Messages.withFormat(String.format(ParserUtil.MESSAGE_WRONG_CASE_NOTE_PREFIX, typedPrefix),
+                EditNoteCommand.COMMAND_FORMAT, EditNoteCommand.COMMAND_EXAMPLE);
     }
 
     // Error precedence: target, then new note, then index count, then indices, then duplicate prefix.

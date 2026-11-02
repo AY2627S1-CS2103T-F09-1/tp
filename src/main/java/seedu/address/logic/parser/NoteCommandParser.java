@@ -17,8 +17,6 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class NoteCommandParser implements Parser<NoteCommand> {
 
     static final String MESSAGE_MISSING_NOTE = withNoteFormat("Missing " + PREFIX_NOTE + "NOTE.");
-    static final String MESSAGE_WRONG_CASE_NOTE_PREFIX =
-            "Parameter prefixes must be typed in lowercase: %1$s should be " + PREFIX_NOTE + ".";
     static final String MESSAGE_MISSING_SPACE_BEFORE_NOTE_PREFIX = withNoteFormat(
             "Put a space before " + PREFIX_NOTE + ", after the student INDEX.");
 
@@ -43,13 +41,14 @@ public class NoteCommandParser implements Parser<NoteCommand> {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTE);
         Optional<String> noteText = argMultimap.getValue(PREFIX_NOTE);
         if (noteText.isEmpty()) {
-            verifyNoWrongCaseNotePrefix(args);
+            ParserUtil.verifyNoWrongCaseNotePrefix(args, NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
             throw new ParseException(NOTE_PREFIX_GLUED_TO_INDEX.matcher(args).find()
                     ? MESSAGE_MISSING_SPACE_BEFORE_NOTE_PREFIX
                     : MESSAGE_MISSING_NOTE);
         }
 
-        verifyNoWrongCaseNotePrefix(argMultimap.getPreamble());
+        ParserUtil.verifyNoWrongCaseNotePrefix(argMultimap.getPreamble(), NoteCommand.COMMAND_FORMAT,
+                NoteCommand.COMMAND_EXAMPLE);
         verifyNoStrayText(argMultimap.getPreamble());
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), NoteCommand.COMMAND_WORD,
                 NoteCommand.COMMAND_FORMAT, NoteCommand.COMMAND_EXAMPLE);
@@ -59,25 +58,6 @@ public class NoteCommandParser implements Parser<NoteCommand> {
             throw new ParseException(withNoteFormat(exception.getMessage()), exception);
         }
         return new NoteCommand(index, ParserUtil.parseNoteText(noteText.get()));
-    }
-
-    /**
-     * Verifies that no word of {@code args} starts with {@code nt/} typed in another case, such as
-     * {@code NT/}, so that a note whose prefix is in the wrong case is not reported as missing.
-     *
-     * @throws ParseException If a word starts with {@code nt/} in another case, naming the prefix as typed.
-     */
-    private static void verifyNoWrongCaseNotePrefix(String args) throws ParseException {
-        String notePrefix = PREFIX_NOTE.getPrefix();
-        for (String word : args.trim().split(WHITESPACE_PATTERN)) {
-            boolean startsWithNotePrefixIgnoringCase = word.regionMatches(true, 0, notePrefix, 0,
-                    notePrefix.length());
-            if (startsWithNotePrefixIgnoringCase && !word.startsWith(notePrefix)) {
-                String typedPrefix = word.substring(0, notePrefix.length());
-                throw new ParseException(withNoteFormat(String.format(MESSAGE_WRONG_CASE_NOTE_PREFIX,
-                        typedPrefix)));
-            }
-        }
     }
 
     /**
