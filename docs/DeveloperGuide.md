@@ -669,6 +669,8 @@ The current MVP stories are listed first. Future user stories follow in a separa
 | `* *`    | tutor new to TutorTrack                             | see the exact format of a specific command                                       | enter it correctly without trial and error                                                 |
 | `* *`    | tutor                                               | enter a parent phone with spaces or hyphens                                      | copy numbers from messages without reformatting them                                       |
 | `* *`    | tutor                                               | see my roster sorted by student name                                             | locate a student quickly                                                                   |
+| `* *`    | tutor who types fast                                | recall my previous commands                                                      | fix or repeat a command without retyping it                                                |
+| `* *`    | tutor preparing for a lesson                        | scroll a long session-note history from the keyboard                             | read past notes without reaching for the mouse                                             |
 | `* *`    | tutor                                               | back up my roster and session notes by copying a single data file                | avoid losing my students' history if my computer fails                                     |
 
 #### Future user stories
@@ -700,33 +702,29 @@ the tutor and the system.
 
 **Preconditions:** The system is running and ready to accept requests.
 
-**Guarantees:** A valid student record is saved locally and appears in the
-student roster.
+**Guarantees:** A valid student record is saved locally and appears in the student roster.
 
 **MSS**
 
 1. Tutor requests to add a student.
-2. Tutor provides the student's name, parent or guardian phone number, subject,
-   and current level, and optionally an email address.
+2. Tutor provides the student's name, parent or guardian phone number, subject, and current level, and optionally an email address.
 3. Tutor submits the student details.
 4. TutorTrack validates the details and creates the student record.
-5. TutorTrack saves the record and displays the updated roster in
-   case-insensitive alphabetical order.
+5. TutorTrack saves the record and displays the updated roster in case-insensitive alphabetical order.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. One or more required details are missing or invalid.
+* 4a. One or more required details are missing or invalid.
 
-  * 2a1. TutorTrack reports the relevant validation error and makes no changes.
-  * 2a2. Tutor corrects the details.
+  * 4a1. TutorTrack reports the relevant validation error and makes no changes.
+  * 4a2. Tutor corrects the details.
 
     Use case resumes at step 2.
-* 4a. A student with the same normalized name and normalized parent or guardian
-  phone number already exists.
+* 4b. A student with the same normalized name and normalized parent or guardian phone number already exists.
 
-  * 4a1. TutorTrack reports the duplicate and does not add the student.
+  * 4b1. TutorTrack reports the duplicate and does not add the student.
 
     Use case ends.
 * 5a. TutorTrack cannot save the updated data.
@@ -752,9 +750,11 @@ student roster.
 
 **Extensions**
 
-* 1a. Tutor supplies `e/` without a value.
+* 1a. Tutor asks to remove the optional parent or guardian email.
 
-  * 1a1. TutorTrack removes the optional parent or guardian email and continues at step 2.
+  * 1a1. TutorTrack marks the email for removal.
+
+    Use case resumes at step 2.
 * 1b. Tutor supplies no field to edit, repeats a field, or supplies an unsupported field.
 
   * 1b1. TutorTrack reports the command error and makes no changes.
@@ -778,17 +778,16 @@ student roster.
 
 **Use case: Display the student roster**
 
-**Preconditions:** The system is running and the student roster is available.
+**Preconditions:** None.
 
 **Guarantees:** The complete roster is displayed with stable indices that can
 be used to select a student in a subsequent use case. No data is changed.
 
 **MSS**
 
-1. TutorTrack displays every student sorted by normalized name, together with
-   an index, subject, current level, and session-note count.
-2. TutorTrack establishes the displayed indices as the current selection
-   context.
+1. Tutor launches TutorTrack.
+2. TutorTrack displays every student sorted by normalized name, together with an index, subject, current level, and session-note count.
+3. TutorTrack establishes the displayed indices as the current selection context.
 
    Use case ends.
 
@@ -796,10 +795,10 @@ be used to select a student in a subsequent use case. No data is changed.
 
 * 2a. The roster is empty.
 
-  * 2a1. TutorTrack reports that there are no students and shows how to add
-    one.
+  * 2a1. TutorTrack reports that there are no students and shows how to add one.
 
     Use case ends.
+
 **Use case: View a student profile**
 
 **Preconditions:** The system is running and the current roster index context
@@ -860,8 +859,12 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the index error and makes no changes.
 
     Use case ends.
-* 2a. The note is missing, empty, too long, or contains a line break or control
-  character.
+* 1b. The note is missing or given more than once.
+
+  * 1b1. TutorTrack reports the command-format error and makes no changes.
+
+    Use case ends.
+* 2a. The note is empty, too long, or contains a line break or control character.
 
   * 2a1. TutorTrack reports the note validation error and makes no changes.
 
@@ -881,7 +884,7 @@ history and saved locally. No other student record is changed.
 **MSS**
 
 1. Tutor requests deletion using a student's roster index and, for one session note, its displayed note number.
-1. TutorTrack displays the target, exact confirmation command, and instruction that another correctly formatted command cancels the deletion. For a note, it also opens the selected student's profile and highlights the targeted note.
+1. TutorTrack displays the target, exact confirmation command, and instruction that another correctly formatted command cancels the deletion. It also opens the selected student's profile and, for a note, highlights the targeted note.
 1. Tutor submits the matching confirmation as the next correctly formatted command.
 1. TutorTrack verifies that the index still identifies the same stable student ID and, for a note, that the displayed history is unchanged.
 1. TutorTrack removes the previewed student and complete history, or removes only the previewed note, and saves the updated data.
@@ -906,7 +909,7 @@ history and saved locally. No other student record is changed.
   * 3b1. TutorTrack reports that the confirmation does not match or that no deletion is pending, and makes no deletion.
 
     Use case ends.
-* 3c. Tutor duplicates or misplaces `/confirm` or adds extra arguments.
+* 3c. Tutor submits a malformed confirmation, such as one with the confirmation given twice, in the wrong place, or with extra arguments.
 
   * 3c1. TutorTrack reports the command-format error, makes no deletion, and keeps the preview pending so the tutor can correct the command.
 
@@ -944,7 +947,7 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the applicable selector error and makes no changes.
 
     Use case ends.
-* 1b. The `nt/` prefix is missing, duplicated, or followed by invalid note text.
+* 1b. The replacement text is missing, given more than once, or invalid.
 
   * 1b1. TutorTrack reports the note validation error and makes no changes.
 
@@ -962,7 +965,10 @@ history and saved locally. No other student record is changed.
 3. A roster search, filter, or student-profile view should respond within two seconds for a roster of up to 1000 student records.
 4. Saving or loading the local data file should complete within five seconds for a roster of up to 1000 student records on a typical modern computer.
 5. The application should start within ten seconds on a typical modern computer when loading a data file containing up to 1000 student records.
-6. The user interface should be intuitive for users who generally prefer only using a keyboard.
+6. A user with above-average typing speed for regular English text should be able to accomplish most tasks faster using commands than using the mouse.
+7. Should store its data locally in a human-editable JSON file, so that an advanced user can back up or correct the data with a text editor.
+8. Should work without an internet connection.
+9. Is intended for a single user on one computer; concurrent use by several users is not supported.
 
 ### Glossary
 
@@ -973,6 +979,7 @@ history and saved locally. No other student record is changed.
 * **Current level**: The student’s current stage of study in the recorded subject.
 * **Session note**: A timestamped record of the student’s progress, difficulties, or next steps from a lesson.
 * **Session history**: All session notes belonging to one student, displayed newest first.
+* **Note number**: The positive, one-based number of a session note in a student's history, counting from the oldest note. Note numbers are reassigned after a note is deleted.
 * **Roster index**: The positive, one-based number assigned to a student in the currently displayed roster.
 * **Current selection context**: The mapping between the displayed roster indices and their students; it changes when the roster is redrawn.
 * **Duplicate student**: Two student records whose normalized names and normalized parent phone numbers both match.
@@ -981,8 +988,7 @@ history and saved locally. No other student record is changed.
 * **Active student**: A student currently receiving tuition and included in the normal roster.
 * **Archived student**: A former or inactive student whose details and session history are retained but excluded from the active roster.
 * **Home folder**: The folder containing the TutorTrack JAR file, where TutorTrack keeps its data file, preferences, and log files wherever it is launched from.
-* **Typical modern computer**: A computer that can run Java `25` comfortably
-  and has at least 8 GB of memory.
+* **Typical modern computer**: A computer that can run Java `25` comfortably and has at least 8 GB of memory.
 
 ---
 
