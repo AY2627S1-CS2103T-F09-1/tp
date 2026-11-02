@@ -1,0 +1,44 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+title Respond to a session-note deletion preview
+
+start
+:Tutor enters next command;
+if (Command parses?) then (no)
+  :UI shows error and keeps preview pending;
+  stop
+else (yes)
+endif
+:Logic consumes pending deletion;
+if (Confirmation?) then (no)
+  :Logic executes the new command;
+  :UI clears or replaces the highlight;
+  note right
+    A new valid deletion preview
+    establishes a new pending target.
+  end note
+  stop
+else (yes)
+endif
+:Logic checks the pending target and history;
+if (Target matches and is current?) then (no)
+  :UI clears highlight and rejects confirmation;
+  stop
+else (yes)
+endif
+:Logic snapshots data;
+:Model deletes selected note;
+:Storage saves updated data;
+if (Save succeeds?) then (yes)
+  :UI refreshes profile and shows success;
+else (no)
+  :Model restores snapshot;
+  :UI shows save error;
+  note right
+    Preview again before retrying.
+  end note
+endif
+stop
+@enduml
