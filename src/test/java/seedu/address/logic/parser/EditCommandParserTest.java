@@ -169,7 +169,15 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_legacyPrefix_failure() {
+    public void parse_addressLikeTextInName_success() {
+        EditStudentDescriptor descriptor = new EditStudentDescriptor();
+        descriptor.setName(new StudentName("Raj a/l Kumar"));
+
+        assertParseSuccess(parser, " 1 n/Raj a/l Kumar", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_addressOrTagPrefixStraightAfterIndex_failure() {
         assertParseFailure(parser, " 1 a/Block 1", unknownParameterMessage("a/"));
         assertParseFailure(parser, " 1 t/friend", unknownParameterMessage("t/"));
     }

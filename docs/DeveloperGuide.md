@@ -293,7 +293,7 @@ Notes are nested in the student record so the file remains hand-editable while t
 
 * It registers TutorTrack's `add`, `edit`, `edit note`, `view`, `note`, `delete`, `help`, and `exit` routes. Unsupported legacy commands receive the standard unknown-command error.
 * It sends the exact `note` target and note-like misspellings after `edit` to `EditNoteCommandParser`; other edit arguments go to `EditCommandParser`, so a malformed student edit receives the correct usage.
-* `AddCommandParser` and `EditCommandParser` accept only documented fields and reject inherited person parameters before mutation or saving. Legacy person types remain only for persisted-data compatibility, not as part of the TutorTrack command surface.
+* `AddCommandParser` and `EditCommandParser` accept only documented fields. Other prefix-like text, including the inherited `a/` and `t/`, is not treated as a parameter, so a name such as `Raj a/l Kumar` stays intact. Legacy person types remain only for persisted-data compatibility, not as part of the TutorTrack command surface.
 
 ### Command error messages
 
@@ -975,6 +975,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: TutorTrack reports `Missing l/CURRENT_LEVEL.` followed by the `add` format and example, and does not change the roster or data file.
 1. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
    Expected: TutorTrack reports `Added student: Alex Tan (Mathematics, Secondary 3 x/value).` Prefix-like text that is not a recognized parameter stays part of the value before it, as the User Guide describes.
+1. Enter `add n/Raj a/l Kumar p/91234568 sub/English l/JC 1`.
+   Expected: TutorTrack reports `Added student: Raj a/l Kumar (English, JC 1).` The name keeps `a/l` because `a/` is not a recognized parameter.
 1. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
    Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
 1. Enter `add n/Alex Tan p/10101010 sub/Mathematics l/Secondary 3`, then enter `edit 1 p/10101010` for an existing student.
@@ -1019,7 +1021,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter each of `find Changed` and `clear`.
    Expected: Each input names its unknown command word and lists the available commands. The student, session note, roster display, and saved data remain unchanged.
 1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
-   Expected: TutorTrack reports `a/` as an unknown parameter, lists the supported add parameters, and shows the add format. It does not create a hidden person or change the roster, session notes, or saved data.
+   Expected: TutorTrack reports `Missing sub/SUBJECT.` followed by the `add` format and example. It does not create a hidden person or change the roster, session notes, or saved data.
 1. Enter `add n/Bea Lim p/9876 5432 sub/English l/JC 1`.
    Expected: The valid student form still adds Bea Lim normally.
 

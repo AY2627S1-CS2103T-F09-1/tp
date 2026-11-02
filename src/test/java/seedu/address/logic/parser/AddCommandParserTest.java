@@ -152,18 +152,36 @@ public class AddCommandParserTest {
                 " n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
         assertParseFailure(parser, legacyPersonArguments,
-                getUnknownParameterMessage("a/"));
+                withAddFormat(String.format(AddCommandParser.MESSAGE_MISSING_VALUE, "sub/", "SUBJECT")));
     }
 
     @Test
-    public void parse_studentArgumentsWithLegacyPersonPrefix_failure() {
-        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " a/Block 312, Amy Street 1 t/friend",
-                getUnknownParameterMessage("a/"));
+    public void parse_nameContainingAddressLikeText_success() {
+        Student student = new Student(new StudentName("Raj a/l Kumar"),
+                new ParentGuardianContact("91234567", Optional.empty()),
+                new Subject("Mathematics"), new CurrentLevel("Secondary 3"));
+
+        assertParseSuccess(parser, " n/Raj a/l Kumar p/91234567 sub/Mathematics l/Secondary 3",
+                new AddCommand(student));
     }
 
     @Test
-    public void parse_studentArgumentsWithLegacyTagPrefix_failure() {
-        assertParseFailure(parser, VALID_REQUIRED_ARGUMENTS + " t/friend", getUnknownParameterMessage("t/"));
+    public void parse_subjectContainingTagLikeText_success() {
+        Student student = new Student(new StudentName("Alicia Lim"),
+                new ParentGuardianContact("91234567", Optional.empty()),
+                new Subject("Art t/shirts"), new CurrentLevel("Secondary 3"));
+
+        assertParseSuccess(parser, " n/Alicia Lim p/91234567 sub/Art t/shirts l/Secondary 3",
+                new AddCommand(student));
+    }
+
+    @Test
+    public void parse_addressAndTagLikeTextAfterLevel_success() {
+        Student student = new Student(new StudentName("Alicia Lim"),
+                new ParentGuardianContact("+65 9123 4567", Optional.empty()),
+                new Subject("Mathematics"), new CurrentLevel("Secondary 3 a/Block 312 t/friend"));
+
+        assertParseSuccess(parser, VALID_REQUIRED_ARGUMENTS + " a/Block 312 t/friend", new AddCommand(student));
     }
 
     @Test
@@ -173,11 +191,6 @@ public class AddCommandParserTest {
                 new Subject("Mathematics"), new CurrentLevel("Secondary 3 x/value"));
 
         assertParseSuccess(parser, VALID_REQUIRED_ARGUMENTS + " x/value", new AddCommand(student));
-    }
-
-    private static String getUnknownParameterMessage(String prefix) {
-        return withAddFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, prefix,
-                AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS));
     }
 
     private static String withAddFormat(String message) {

@@ -42,12 +42,6 @@ public class EditCommandParser implements Parser<EditCommand> {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ParserUtil.tokenizeStudentFields(args);
 
-        Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
-        if (legacyPrefix.isPresent()) {
-            throw new ParseException(withEditFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
-                    legacyPrefix.get(), AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)));
-        }
-
         verifyNoStrayText(argMultimap.getPreamble());
         Index index = ParserUtil.parseOnlyStudentIndex(argMultimap.getPreamble(), EditCommand.COMMAND_WORD,
                 EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE);

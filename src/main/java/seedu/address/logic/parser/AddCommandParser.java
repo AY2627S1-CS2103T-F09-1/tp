@@ -54,18 +54,12 @@ public class AddCommandParser implements Parser<AddCommand> {
     }
 
     /**
-     * Verifies that {@code argMultimap} has no legacy prefix, no preamble, every required value,
+     * Verifies that {@code argMultimap} has no preamble, every required value,
      * and no duplicated prefix, in that order.
      *
      * @throws ParseException If any shape rule is violated, with the add format appended.
      */
     private static void verifyCommandShape(ArgumentMultimap argMultimap) throws ParseException {
-        Optional<Prefix> legacyPrefix = ParserUtil.findLegacyPersonPrefix(argMultimap);
-        if (legacyPrefix.isPresent()) {
-            throw new ParseException(withAddFormat(
-                    String.format(MESSAGE_UNKNOWN_PARAMETER, legacyPrefix.get(), MESSAGE_SUPPORTED_PARAMETERS)));
-        }
-
         if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(withAddFormat(
                     String.format(MESSAGE_UNEXPECTED_PREAMBLE, argMultimap.getPreamble())));

@@ -495,8 +495,7 @@ public class LogicManagerTest {
                 "add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend";
 
         assertParseException(legacyAddCommand, Messages.withFormat(
-                String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER, "a/",
-                        AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS),
+                String.format(AddCommandParser.MESSAGE_MISSING_VALUE, "sub/", "SUBJECT"),
                                 AddCommand.COMMAND_FORMAT, AddCommand.COMMAND_EXAMPLE));
     }
 

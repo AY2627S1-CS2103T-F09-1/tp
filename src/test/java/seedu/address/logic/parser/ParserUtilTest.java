@@ -158,21 +158,9 @@ public class ParserUtilTest {
     }
 
     @Test
-    public void findLegacyPersonPrefix_legacyPrefixPresent_returnsFirstLegacyPrefix() {
-        ArgumentMultimap arguments = ParserUtil.tokenizeStudentFields(" n/Alex a/Address t/friend");
-
-        assertEquals(Optional.of(CliSyntax.PREFIX_ADDRESS), ParserUtil.findLegacyPersonPrefix(arguments));
-    }
-
-    @Test
-    public void findLegacyPersonPrefix_nullArguments_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> ParserUtil.findLegacyPersonPrefix(null));
-    }
-
-    @Test
-    public void tokenizeStudentFields_studentAndLegacyPrefixes_tokenizesEveryKnownField() {
+    public void tokenizeStudentFields_studentPrefixes_tokenizesEveryField() {
         ArgumentMultimap arguments = ParserUtil.tokenizeStudentFields(
-                "1 n/Alex p/9123 e/a@b.com sub/Math l/Sec 3 a/Legacy t/old");
+                "1 n/Alex p/9123 e/a@b.com sub/Math l/Sec 3");
 
         assertEquals("1", arguments.getPreamble());
         assertEquals(Optional.of("Alex"), arguments.getValue(CliSyntax.PREFIX_NAME));
@@ -180,8 +168,14 @@ public class ParserUtilTest {
         assertEquals(Optional.of("a@b.com"), arguments.getValue(CliSyntax.PREFIX_EMAIL));
         assertEquals(Optional.of("Math"), arguments.getValue(CliSyntax.PREFIX_SUBJECT));
         assertEquals(Optional.of("Sec 3"), arguments.getValue(CliSyntax.PREFIX_LEVEL));
-        assertEquals(Optional.of("Legacy"), arguments.getValue(CliSyntax.PREFIX_ADDRESS));
-        assertEquals(Optional.of("old"), arguments.getValue(CliSyntax.PREFIX_TAG));
+    }
+
+    @Test
+    public void tokenizeStudentFields_addressAndTagLikeText_staysInPrecedingValue() {
+        ArgumentMultimap arguments = ParserUtil.tokenizeStudentFields(" n/Raj a/l Kumar l/Sec 3 t/old");
+
+        assertEquals(Optional.of("Raj a/l Kumar"), arguments.getValue(CliSyntax.PREFIX_NAME));
+        assertEquals(Optional.of("Sec 3 t/old"), arguments.getValue(CliSyntax.PREFIX_LEVEL));
     }
 
     @Test
