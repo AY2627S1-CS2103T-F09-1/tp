@@ -1,0 +1,55 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+title Proposed archive and restore flow
+
+actor Tutor as tutor USER_COLOR
+participant ":MainWindow" as window UI_COLOR
+participant ":LogicManager" as logic LOGIC_COLOR
+participant ":Model" as model MODEL_COLOR
+participant ":Storage" as storage STORAGE_COLOR
+database "tutortrack.json" as data STORAGE_COLOR
+
+alt Archive an active student
+    tutor -> window : archive INDEX
+    activate window
+    window -> logic : execute("archive INDEX")
+    activate logic
+    logic -> model : resolve active index
+    activate model
+    model --> logic : StudentId
+    logic -> model : archiveStudent(StudentId)
+    model --> logic : archived roster
+    deactivate model
+    logic -> storage : saveAddressBook(addressBook)
+    activate storage
+    storage -> data : replace data file
+    data --> storage
+    storage --> logic
+    deactivate storage
+    logic --> window : success result
+    deactivate logic
+    window --> tutor : active roster refreshed
+    deactivate window
+else Restore an archived student
+    tutor -> window : restore archived student
+    activate window
+    window -> logic : restore selected StudentId
+    activate logic
+    logic -> model : restoreStudent(StudentId)
+    activate model
+    model --> logic : active roster
+    deactivate model
+    logic -> storage : saveAddressBook(addressBook)
+    activate storage
+    storage -> data : replace data file
+    data --> storage
+    storage --> logic
+    deactivate storage
+    logic --> window : success result
+    deactivate logic
+    window --> tutor : active roster refreshed
+    deactivate window
+end
+@enduml
