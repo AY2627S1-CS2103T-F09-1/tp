@@ -6,25 +6,21 @@ skinparam classBackgroundColor UI_COLOR
 
 package UI <<Rectangle>>{
 Class "<<interface>>\nUi" as Ui
-Class "{abstract}\nUiPart" as UiPart
 Class UiManager
 Class MainWindow
-Class HelpWindow
-Class ResultDisplay
 Class StudentRosterPanel
-Class StudentProfilePanel
-Class StudentRosterCard
-Class SessionNoteCard
-Class StatusBarFooter
 Class CommandBox
-}
-
-package Model <<Rectangle>> {
-Class HiddenModel #FFFFFF
+Class ResultDisplay
+Class StudentProfilePanel
+Class "{abstract}\nUiPart" as UiPart
 }
 
 package Logic <<Rectangle>> {
 Class HiddenLogic #FFFFFF
+}
+
+package Model <<Rectangle>> {
+Class HiddenModel #FFFFFF
 }
 
 Class HiddenOutside #FFFFFF
@@ -32,36 +28,24 @@ HiddenOutside ..> Ui
 
 UiManager .left.|> Ui
 UiManager -down-> "1" MainWindow
-MainWindow *-down->  "1" CommandBox
-MainWindow *-down-> "1" ResultDisplay
+UiManager -down-> Logic
+MainWindow -right-> Logic
+
 MainWindow *-down-> "1" StudentRosterPanel
+MainWindow *-down-> "1" CommandBox
+MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" StudentProfilePanel
-MainWindow *-down-> "1" StatusBarFooter
-MainWindow --> "0..1" HelpWindow
 
-StudentRosterPanel -down-> "*" StudentRosterCard : displays students
-StudentProfilePanel -down-> "*" SessionNoteCard : displays notes
+StudentRosterPanel -[hidden]right- CommandBox
+CommandBox -[hidden]right- ResultDisplay
+ResultDisplay -[hidden]right- StudentProfilePanel
 
-MainWindow -left-|> UiPart
+MainWindow -down-|> UiPart
+StudentRosterPanel -down-|> UiPart
+CommandBox -down-|> UiPart
+ResultDisplay -down-|> UiPart
+StudentProfilePanel -down-|> UiPart
 
-ResultDisplay --|> UiPart
-CommandBox --|> UiPart
-StudentRosterPanel --|> UiPart
-StudentProfilePanel --|> UiPart
-StudentRosterCard --|> UiPart
-SessionNoteCard --|> UiPart
-StatusBarFooter --|> UiPart
-HelpWindow --|> UiPart
-
-StudentRosterCard ..> Model
-SessionNoteCard ..> Model
-UiManager -right-> Logic
-MainWindow -left-> Logic
-
-StudentRosterPanel -[hidden]left- HelpWindow
-HelpWindow -[hidden]left- CommandBox
-CommandBox -[hidden]left- ResultDisplay
-ResultDisplay -[hidden]left- StatusBarFooter
-
-MainWindow -[hidden]-|> UiPart
+UI ..> Model
+Logic -[hidden]down- Model
 @enduml

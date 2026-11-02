@@ -74,25 +74,18 @@ The sections below give more details of each component.
 
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
-![Structure of the UI Component](images/UiClassDiagram.png)
+<img src="images/UiClassDiagram.png" width="800" alt="Structure of the UI Component" />
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`. `StudentRosterPanel` shows each student in a `StudentRosterCard`, and `StudentProfilePanel` shows each session note in a `SessionNoteCard`.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, and `StudentProfilePanel`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts. The diagram omits minor parts, such as `HelpWindow`, `StatusBarFooter`, and the cards inside the two panels.
 
-* All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
-* The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
-* `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before passing it to a `CommandExecutor` callback supplied by `MainWindow`, which delegates execution to `Logic`. Successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
-* `CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which pages the profile: while the outer profile pane (added for short windows) can still scroll down, `PageDown` moves that pane, and only once its end is visible does it page the session-note list by the list's visible height. `PageUp` pages the list back to its top first, then moves the outer pane back up.
-* Keyboard focus and any draft stay in the command box while paging, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
-* A JavaFX `TextField` silently deletes tabs, line breaks and other control characters from inserted text, so a pasted two-line note would be saved with its words joined. `CommandBox` therefore gives the field a `TextFormatter` that replaces each control character with a space, counting a Windows line break (CRLF) as one, before the field sees the text. The replacement happens in the UI because the parser never receives the original characters; `ParserUtil#parseNoteText` still rejects control characters that reach `Logic` by another route, such as a test.
-* `MainWindow.fxml` gives the result display the same minimum, preferred, and maximum height of 100 px, enough for the four lines of the longest messages, such as the deletion previews. The minimum matters because the window's `VBox` shrinks each child toward its minimum height when the window is short, and a lower minimum cut off the last line of those previews; the roster and profile workspace absorbs the shrinkage instead. Messages longer than four lines scroll.
-* `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
-* executes user commands using the `Logic` component.
-* refreshes the roster and any open profile from `Logic` after each successful command, rather than listening for changes to `Model` data.
+* executes user commands using the `Logic` component: `CommandBox` passes each command to `MainWindow`, which calls `Logic#execute()`.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on `Logic#getStudentRoster()` and immutable `StudentRosterEntry` values because it displays TutorTrack student data.
+* refreshes the roster and any open profile after each successful command, rather than listening for changes to `Model` data.
+* depends on classes in the `Model` component, such as `StudentRosterEntry` and `SessionNote`, because it displays student data.
 
 ### Logic component
 
