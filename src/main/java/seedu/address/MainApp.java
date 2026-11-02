@@ -88,23 +88,34 @@ public class MainApp extends Application {
         Path dataFilePath = HomeFolder.toDisplayPath(storage.getAddressBookFilePath());
         logger.info("Using data file : " + dataFilePath);
 
-        Optional<ReadOnlyAddressBook> addressBookOptional;
-        ReadOnlyAddressBook initialData;
+        return new ModelManager(loadInitialAddressBook(storage, dataFilePath), userPrefs);
+    }
+
+    /**
+     * Returns the address book read from {@code storage}, or an empty one if the data file is missing
+     * or cannot be loaded.
+     */
+    private ReadOnlyAddressBook loadInitialAddressBook(Storage storage, Path dataFilePath) {
         try {
-            addressBookOptional = storage.readAddressBook();
+            Optional<ReadOnlyAddressBook> addressBookOptional = storage.readAddressBook();
             if (addressBookOptional.isEmpty()) {
                 logger.info("No data file found at " + dataFilePath
                         + ". Starting with an empty roster; the file is created when the first change is saved.");
             }
-            initialData = addressBookOptional.orElseGet(AddressBook::new);
+            return addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
-            logger.warning("Data file at " + dataFilePath + " could not be loaded."
-                    + " Will be starting with an empty roster.");
-            dataLoadErrorMessage = createDataLoadErrorMessage(storage);
-            initialData = new AddressBook();
+            return handleDataLoadingFailure(storage, dataFilePath);
         }
+    }
 
-        return new ModelManager(initialData, userPrefs);
+    /**
+     * Returns an empty address book after recording a user-facing error message about the unreadable data file.
+     */
+    private ReadOnlyAddressBook handleDataLoadingFailure(Storage storage, Path dataFilePath) {
+        logger.warning("Data file at " + dataFilePath + " could not be loaded."
+                + " Will be starting with an empty roster.");
+        dataLoadErrorMessage = createDataLoadErrorMessage(storage);
+        return new AddressBook();
     }
 
     /**
