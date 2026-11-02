@@ -100,7 +100,7 @@ The `UI` component,
 
 Here's a (partial) class diagram of the `Logic` component:
 
-<img src="images/LogicClassDiagram.png" width="550"/>
+<img src="images/LogicClassDiagram.png" width="600"/>
 
 The [architecture sequence diagram](#architecture) shows how the main components interact when a student is added. The [session-note deletion activity diagrams](#session-note-deletion-activities) show the preview and confirmation flows.
 
@@ -111,7 +111,7 @@ How the `Logic` classes work together when a student is added:
 1. `LogicManager` executes the command. `AddCommand` checks for a duplicate and adds the student through `Model`.
 1. `LogicManager` saves the changed data through `Storage` and returns a `CommandResult`. If saving fails, it restores the previous data (see [Save-failure rollback](#save-failure-rollback)).
 
-The class diagram shows the relationships between these classes; the [adding-a-student sequence diagram](#adding-a-student) shows the interaction order in more detail. Other commands may have different flows, such as the preview and confirmation described under [Confirmed deletion](#confirmed-deletion).
+The class diagram shows the relationships between these classes; the [adding-a-student activity diagram](#adding-a-student) shows the flow in more detail. Other commands may have different flows, such as the preview and confirmation described under [Confirmed deletion](#confirmed-deletion).
 
 The following class diagram zooms in on the parser classes involved in an `add` command. It shows their relationships; the explanation below describes how they turn the command text into an `AddCommand`:
 

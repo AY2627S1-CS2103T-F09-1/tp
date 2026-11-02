@@ -1,44 +1,41 @@
 @startuml
 !include style.puml
-!pragma layout smetana
 skinparam arrowThickness 1.1
 skinparam arrowColor LOGIC_COLOR_T4
 skinparam classBackgroundColor LOGIC_COLOR
 
 package Logic as LogicPackage {
 
-package "Parser Classes" as ParserClasses{
+package "Parser classes" as ParserClasses{
 }
-Class AddCommand
-Class EditCommand
-Class EditNoteCommand
-Class CommandResult
-Class "{abstract}\nCommand" as Command
-
-
 Class "<<interface>>\nLogic" as Logic
 Class LogicManager
+Class "{abstract}\nCommand" as Command
+Class XYZCommand
+Class CommandResult
+}
+
+package Storage {
 }
 
 package Model {
 Class HiddenModel #FFFFFF
 }
 
-package Storage {
-}
-
-LogicManager .right.|> Logic
-LogicManager -right->"1" ParserClasses
-ParserClasses ..> AddCommand : <<create>>
-
-AddCommand -up-|> Command
-EditCommand -up-|> Command
-EditNoteCommand -up-|> Command
-LogicManager .left.> Command : <<call>>
-
+LogicManager .up.|> Logic
+LogicManager -right-> "1" ParserClasses
+LogicManager -left-> Storage
 LogicManager --> Model
-LogicManager --> Storage
-Command ..> Model
+Storage -[hidden]down- Model
+LogicManager .down.> Command : <<call>>
 
-Command .up.> CommandResult : <<create>>
+ParserClasses .down.> XYZCommand : <<create>>
+XYZCommand -right-|> Command
+Command .left.> Model
+Command .down.> CommandResult : <<create>>
+
+note bottom of XYZCommand
+XYZCommand = AddCommand,
+NoteCommand, etc
+end note
 @enduml
