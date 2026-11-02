@@ -84,19 +84,6 @@ TutorTrack keeps the latest 100 non-blank commands from the current app session,
 * Press `Down` to move toward newer commands. Moving past the newest command restores any draft that was in the command box before history navigation started.
 * Edit a recalled command and press `Enter` to run it and add the edited command as a new history entry.
 
-### Fixing command errors
-
-When a command cannot run, TutorTrack names the specific problem and does not change the roster, session notes, open profile, or saved data. Recall the command with `Up`, correct it, and press `Enter` again.
-
-* **Missing or extra parts:** if a required part such as an index, `nt/`, or `n/NAME` is missing, an unknown or repeated parameter is entered, text appears before the first parameter, or more values are entered than the command takes, the error ends with a `Format:` line showing the correct command and an `Example:` line you can adapt. For example, `view 1 2` shows `view takes only one INDEX.` followed by `Format: view INDEX` and `Example: view 1`. Similarly, an `add` command without `n/NAME` shows:<br>
-  <img src="images/UiCommandError1.png" alt="Error for an add command without n/NAME, followed by the Format and Example lines" width="500">
-* **Invalid value:** a value that breaks a rule, such as a phone number that is too short, shows only that rule. An index such as `0`, `-1`, or `abc` shows `INDEX must be a positive whole number, e.g. 1.` A number too large to be any index, such as `99999999999`, is reported as too large.
-* **Index outside the roster:** the error gives the valid range, for example `Student index 3 is outside the roster. Enter a student index from 1 to 2.` If the roster is empty, TutorTrack asks you to add a student first.
-* **Note number outside the history:** `edit note` and `delete note` give the valid note-number range for that student.
-* **Unknown command:** Command words must be typed in lowercase. A command word in another case, such as `ADD` or `Delete`, shows `Command words must be typed in lowercase.` followed by the lowercase word to use, for example `Did you mean add?`. A misspelled command such as `veiw 1` is named in the error together with the list of available commands.<br>
-  <img src="images/UiCommandError2.png" alt="Error for DELETE 1 asking the user to type the command word in lowercase" width="450">
-* **Mistyped keyword or prefix:** a mistyped `note`, `/confirm`, or parameter prefix is named in the error. Each command's section describes the relevant recovery.
-
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
@@ -121,7 +108,7 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * A prefix typed in another case, such as `P/` for `p/`, is not recognized. A required one is reported as missing, such as `Missing p/PARENT_PHONE.`, or as unexpected text if it comes first. A wrong-case `E/` stays in the value before it, so `l/Sec 3 E/parent@example.com` saves the level `Sec 3 E/parent@example.com` and no email.
 * A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student, and `+65 9123 4567` matches `91234567`.
 * After a successful addition, TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
-* Missing values, invalid values, duplicate students, text before the first parameter, and the unsupported prefixes `a/` and `t/` leave the roster unchanged and explain the problem. See [Fixing command errors](#fixing-command-errors) for generic error handling.
+* Missing values, invalid values, duplicate students, text before the first parameter, and the unsupported prefixes `a/` and `t/` leave the roster unchanged and explain the problem.
 
 Examples:
 
@@ -157,7 +144,7 @@ For example, after `edit 1 l/Secondary 4`, the student's updated profile opens a
 
 <img src="images/UiEditStudent.png" alt="Alicia Lim's updated profile after the level was edited to Secondary 4" width="670">
 
-Invalid indices, missing edit fields, repeated parameters, the unsupported prefixes `a/` and `t/`, and invalid values leave the student, session notes, open profile, and saved data unchanged. See [Fixing command errors](#fixing-command-errors) for generic error handling. If saving fails, TutorTrack restores the complete original record.
+Invalid indices, missing edit fields, repeated parameters, the unsupported prefixes `a/` and `t/`, and invalid values leave the student, session notes, open profile, and saved data unchanged. If saving fails, TutorTrack restores the complete original record.
 
 ### Viewing the student roster
 
@@ -171,28 +158,21 @@ Adds a short note about a lesson to a student, such as what was covered, where t
 
 Format: `note INDEX nt/NOTE`
 
-* `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number, such as 1, 2, or 3.
-* `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed. A note made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty.
-* An empty note shows `Session note is empty. Enter the note text after nt/.` A note that is too long reports its length, for example `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.`
-* If you paste a note that contains tabs or line breaks, each one becomes a space, so `Line one`, a tab and `tabbed` are saved as `Line one tabbed`. Two line breaks in a row, as around a blank line, leave two spaces.
-* Put a space between `INDEX` and `nt/`. `note 1nt/Reviewed` shows `Put a space before nt/, after the student INDEX.`, and other text after the index, as in `note 1 hello nt/Reviewed`, shows `Unexpected text before the first parameter: hello.`
-* Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
-* `nt/` must be typed in lowercase. If it is typed in another case, as in `note 1 NT/Reviewed factorisation.`, TutorTrack shows `Parameter prefixes must be typed in lowercase: NT/ should be nt/.` and does not add the note.
-* `nt/` may appear only once. A second `nt/` after a space, as in `note 1 nt/Remember nt/ notation`, is reported as a repeated parameter and the note is not added. To mention `nt/` in a note, write it without a space before it, such as `(nt/)` or `"nt/"`.
-* You can add the same note text more than once, because each note records a separate lesson.
-* The date and time are recorded to the second, together with your computer's time zone. The profile shows them in that time zone without naming it, such as `18 Sep 2026, 6:35 PM`.
-* The new note gets the next note number. Note numbers count from the oldest note, `[1]`, so they follow the order in which you added the notes, even for notes added within the same second. See [Viewing a student profile](#viewing-a-student-profile-view) for where the numbers appear.
+* `INDEX` is the student's number in the displayed roster.
+* `NOTE` must be 1 to 500 characters. Spaces at the start and end are removed.
+* `nt/` can appear only once. Other prefixes inside the note, such as `sub/`, are saved as part of the note text. To write `nt/` itself in a note, leave no space before it, such as `(nt/)`.
+* Each new note gets the next note number, so the oldest note is `[1]`. See [Viewing a student profile](#viewing-a-student-profile-view) for where the numbers appear.
 
 Examples:
 
-* `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.`
-* `note 3 nt/Completed past-year paper 2 (scored 34/40).`
+* `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.` adds a session note to the 1st student in the displayed roster, recording the topic covered and what to revise next.
+* `note 3 nt/Completed past-year paper 2 (scored 34/40).` adds a session note to the 3rd student in the displayed roster, recording their past-year paper score.
 
 On success, TutorTrack shows `Added session note for STUDENT_NAME.` and opens that student's profile with the new note at the top, even if another student's profile was open. When you add a student's first session note, the profile shows it as `[1]` with its recorded date and time:
 
-<img src="images/UiAddNote.png" alt="Alicia Lim's profile showing the new session note 1" width="670">
+<img src="images/UiAddNote.png" alt="Bea Lim's profile showing the new session note 1" width="540">
 
-If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note. See [Fixing command errors](#fixing-command-errors) for generic error handling.
+If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note.
 
 ### Editing a session note: `edit note`
 
@@ -212,7 +192,7 @@ Examples:
 
 * `edit note 1 2 nt/Corrected lesson summary.`
 
-If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. If you type `note` in another case, such as `edit NOTE 1 1 nt/text`, TutorTrack shows `note must be typed in lowercase.` and the format `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE` with the example `edit note 1 2 nt/Corrected lesson summary.` A missing or malformed student index such as `edit n/Bob` reports the student-index rule instead. See [Fixing command errors](#fixing-command-errors) for generic error handling.
+If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. If you type `note` in another case, such as `edit NOTE 1 1 nt/text`, TutorTrack shows `note must be typed in lowercase.` and the format `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE` with the example `edit note 1 2 nt/Corrected lesson summary.` A missing or malformed student index such as `edit n/Bob` reports the student-index rule instead.
 
 On success, TutorTrack refreshes the student's profile. Editing records the time of the latest edit only; entering the same text still updates that time, while the original recorded time and note number remain unchanged. A failed save also restores the original note.
 
@@ -242,7 +222,7 @@ The result of `view 2` shows a student without an email or session notes, so the
 
 <img src="images/UiViewStudent.png" alt="Dev Patel's profile with the email shown as Not provided and no session notes" width="670">
 
-If the index is missing, not a positive whole number, or outside the roster, TutorTrack shows an error and keeps the current display unchanged. See [Fixing command errors](#fixing-command-errors) for generic error handling.
+If the index is missing, not a positive whole number, or outside the roster, TutorTrack shows an error and keeps the current display unchanged.
 
 ### Deleting a student: `delete`
 
@@ -268,7 +248,7 @@ Example:
 
 <img src="images/UiDeleteStudent1.png" alt="Deletion preview prompt for Dev Patel showing the confirmation command" width="500">
 
-If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. See [Fixing command errors](#fixing-command-errors) for generic error handling. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
+If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
 
 ### Deleting one session note: `delete note`
 
@@ -302,7 +282,7 @@ After `delete note 1 1 /confirm`, the remaining note is renumbered from `[2]` to
 
 <img src="images/UiDeleteNote2.png" alt="Alicia Lim's profile after deletion, with the remaining note renumbered to 1" width="670">
 
-If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and leaves stored data unchanged. An input that TutorTrack cannot parse keeps any pending preview and highlight active. An input that parses but fails validation cancels the preview and clears the highlight while the profile stays open. See [Fixing command errors](#fixing-command-errors) for generic error handling. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
+If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and leaves stored data unchanged. An input that TutorTrack cannot parse keeps any pending preview and highlight active. An input that parses but fails validation cancels the preview and clears the highlight while the profile stays open. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
 
 ### Exiting the program: `exit`
 
@@ -312,17 +292,16 @@ Format: `exit`
 
 ### Saving the data
 
-TutorTrack automatically saves data-changing commands. You do not need to save manually. Student and session-note deletion previews do not save because they do not change any data.
+There is no need to save manually. TutorTrack saves your data automatically, but only after a command that changes it.
 
-TutorTrack saves your students and session notes in `data/tutortrack.json` inside your TutorTrack home folder, the folder containing `tutortrack.jar`. It creates this file the first time you run a command that changes data, such as `add`. To back up your roster, copy this file while TutorTrack is closed.
-
-If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command. Commands that do not change data, such as `view` and `help`, still work while saving fails.
+* Commands that change the data: `add`, `edit`, `note`, `edit note`, and a confirmed `delete` or `delete note` (with `/confirm`).
+* Commands that do not change the data: `help`, `view`, `exit`, and a `delete` or `delete note` preview (without `/confirm`).
 
 ### Editing the data file
 
-TutorTrack stores its data as JSON in `data/tutortrack.json`. Advanced users can update the data by editing this file with a text editor while TutorTrack is closed. If you edit the file while TutorTrack is running, TutorTrack does not see your changes, and the next command that changes data replaces them.
+TutorTrack stores its data as JSON in `data/tutortrack.json`. Advanced users can edit this file with a text editor while TutorTrack is closed. Changes made while TutorTrack is running are replaced by the next command that changes data.
 
-Each student's session notes are in that student's `sessionNotes` list, for example:
+Each student's session notes are in their `sessionNotes` list, for example:
 
 ```json
 "sessionNotes": [ {
@@ -331,16 +310,12 @@ Each student's session notes are in that student's `sessionNotes` list, for exam
 } ]
 ```
 
-* `recordedAt` is the date and time the note was recorded, followed by the time zone as an offset from UTC, in the form `YYYY-MM-DDThh:mm:ss+hh:mm`. Use `Z` for UTC. It must not be later than the time TutorTrack starts, and neither may an edited note's `lastEditedAt`, because notes are always saved at the current time.
-* `text` follows the same rules as `NOTE` in [Adding a session note](#adding-a-session-note-note): 1 to 500 characters on one line, without tabs or line breaks such as `\t` or `\n`. Spaces at the start and end are removed.
-* A student without session notes may leave out `sessionNotes` or use an empty list, `[]`.
-* Notes may be listed in any order. TutorTrack numbers them by `recordedAt`, starting from the oldest. For notes with the same `recordedAt`, the one listed first in the file is treated as the newer note.
+* `recordedAt` is the date, time and UTC offset when the note was recorded. Neither `recordedAt` nor an edited note's `lastEditedAt` can be later than the time TutorTrack starts, and `lastEditedAt` cannot be earlier than `recordedAt`.
+* `text` must be 1 to 500 characters. Spaces, tabs and line breaks at the start or end are removed, but a tab or line break anywhere else makes the file invalid.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If an edit makes the data file invalid, such as mistyping a top-level field name or leaving extra content after the closing `}`, TutorTrack starts with an empty roster and shows a message saying that it could not load your data file. It also tries to keep a copy of the file in the `data` folder, with a name such as `tutortrack.json.backup-123456.bak`, and the message gives the copy's location if it succeeds. Correct the original file and restart TutorTrack **before** running any command that changes data, because such a command replaces the original file with the empty roster. Back up the data file before editing it.
+If an edit makes the data file invalid, TutorTrack starts with an empty roster, shows the following message, and tries to keep a backup copy of the file in the `data` folder. Fix the file and restart TutorTrack **before** running any command that changes data, or TutorTrack overwrites it. Back up the data file before editing it.
 </div>
-
-TutorTrack shows the following message when it cannot load the data file:
 
 <img src="images/UiDataError.png" alt="Data recovery dialog saying TutorTrack could not load the data file and giving the location of the backup copy" width="377">
 
