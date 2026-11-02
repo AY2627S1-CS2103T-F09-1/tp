@@ -104,11 +104,11 @@ Format: `add n/NAME p/PARENT_PHONE sub/SUBJECT l/CURRENT_LEVEL [e/PARENT_EMAIL]`
 * For the parent or guardian phone, use an 8-digit Singapore number beginning with `6`, `8`, or `9`, such as `9123 4567`, or an international number beginning with `+` and containing 8 to 15 digits. Spaces and hyphens are allowed. TutorTrack removes the `+65` prefix and separators from a valid Singapore number, so `+65 9123 4567` is saved and displayed as `91234567`. TutorTrack validates the format only; it cannot confirm ownership or reachability.
 * The parent or guardian email is optional. It may be included with `e/`. It must include `@` and a domain with a dot, such as `guardian@example.com`.
 * Only `n/`, `p/`, `sub/`, `l/`, and optional `e/` are supported, in any order.
-* Only lowercase command parameter prefixes are recognized. Prefix-like text that is not one of the obsolete AddressBook prefixes, such as `P/81234567` after `sub/Math`, stays in the subject value; it does not change the phone. Obsolete AddressBook prefixes `a/` and `t/` are rejected with an error.
+* Only lowercase command parameter prefixes are recognized. Other prefix-like text, such as `P/81234567` after `sub/Math`, stays in the subject value; it does not change the phone. The exception is `a/` and `t/`: these prefixes are not supported, and a command containing either is rejected as having an unknown parameter.
 * A prefix typed in another case, such as `P/` for `p/`, is not recognized. A required one is reported as missing, such as `Missing p/PARENT_PHONE.`, or as unexpected text if it comes first. A wrong-case `E/` stays in the value before it, so `l/Sec 3 E/parent@example.com` saves the level `Sec 3 E/parent@example.com` and no email.
 * A student is considered a duplicate when the normalized name and parent phone match an existing student. Spaces and hyphens in the phone number do not create a distinct student, and `+65 9123 4567` matches `91234567`.
 * After a successful addition, TutorTrack preserves the student's identity when the data is saved and reloaded, and reports the student's name, subject, and current level.
-* Missing values, invalid values, duplicate students, text before the first parameter, and obsolete AddressBook prefixes `a/` and `t/` leave the roster unchanged and explain the problem.
+* Missing values, invalid values, duplicate students, text before the first parameter, and the unsupported prefixes `a/` and `t/` leave the roster unchanged and explain the problem.
 
 Examples:
 
@@ -129,7 +129,7 @@ Format: `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/
 * Supply at least one field. Details you omit keep their existing values.
 * Use `e/` without a value to remove the parent or guardian email. Other supplied fields cannot be empty.
 * The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order.
-* Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. Obsolete AddressBook prefixes `a/` and `t/` are rejected. A mistyped or wrong-case prefix straight after the index, such as `em/` or the `N/` in `edit 1 N/Bob`, is reported as an unknown parameter together with the list of supported parameters.
+* Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. The unsupported prefixes `a/` and `t/` are rejected as unknown parameters. A mistyped or wrong-case prefix straight after the index, such as `em/` or the `N/` in `edit 1 N/Bob`, is reported as an unknown parameter together with the list of supported parameters.
 * Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts and preserves that student's internal identity and session notes.
 
 Examples:
@@ -144,7 +144,7 @@ For example, after `edit 1 l/Secondary 4`, the student's updated profile opens a
 
 <img src="images/UiEditStudent.png" alt="Alicia Lim's updated profile after the level was edited to Secondary 4" width="670">
 
-Invalid indices, missing edit fields, repeated parameters, obsolete AddressBook prefixes `a/` and `t/`, and invalid values leave the student, session notes, open profile, and saved data unchanged. If saving fails, TutorTrack restores the complete original record.
+Invalid indices, missing edit fields, repeated parameters, the unsupported prefixes `a/` and `t/`, and invalid values leave the student, session notes, open profile, and saved data unchanged. If saving fails, TutorTrack restores the complete original record.
 
 ### Viewing the student roster
 
