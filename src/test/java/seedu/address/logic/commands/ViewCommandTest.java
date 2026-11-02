@@ -58,6 +58,12 @@ public class ViewCommandTest {
     }
 
     @Test
+    public void execute_indexOutOfRange_showsIndexWithoutBrackets() {
+        assertCommandFailure(new ViewCommand(Index.fromOneBased(3)), model,
+                "Student index 3 is outside the roster. Enter a student index from 1 to 2.");
+    }
+
+    @Test
     public void execute_emptyRoster_throwsCommandException() {
         ModelManager emptyModel = new ModelManager();
 

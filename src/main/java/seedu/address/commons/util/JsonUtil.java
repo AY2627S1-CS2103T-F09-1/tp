@@ -10,11 +10,15 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 
@@ -24,6 +28,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 public class JsonUtil {
 
     private static final Logger logger = LogsCenter.getLogger(JsonUtil.class);
+    private static final String MESSAGE_TRAILING_CONTENT = "Unexpected content after the JSON value";
 
     private static ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules()
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
@@ -55,18 +60,35 @@ public class JsonUtil {
         if (!Files.exists(filePath)) {
             return Optional.empty();
         }
-        logger.info("JSON file " + filePath + " found.");
+        Path displayPath = HomeFolder.toDisplayPath(filePath);
+        logger.info("JSON file " + displayPath + " found.");
 
         T jsonFile;
 
         try {
             jsonFile = deserializeObjectFromJsonFile(filePath, classOfObjectToDeserialize);
         } catch (IOException e) {
-            logger.warning("Error reading from jsonFile file " + filePath + ": " + e);
+            logger.warning("Error reading from JSON file " + displayPath + ": " + describeReadFailure(e));
             throw new DataLoadingException(e);
         }
 
         return Optional.of(jsonFile);
+    }
+
+    /**
+     * Returns the type of {@code readFailure} and, if known, where in the file it occurred. Leaves out the
+     * exception's message because Jackson's messages can quote the file's contents and file-system messages
+     * can contain absolute paths.
+     */
+    private static String describeReadFailure(IOException readFailure) {
+        String failureType = readFailure.getClass().getSimpleName();
+        JsonLocation location = readFailure instanceof JsonProcessingException jsonFailure
+                ? jsonFailure.getLocation()
+                : null;
+        if (location == null) {
+            return failureType;
+        }
+        return failureType + " at line " + location.getLineNr() + ", column " + location.getColumnNr();
     }
 
     /**
@@ -88,9 +110,17 @@ public class JsonUtil {
      * Converts a given string representation of JSON data to an instance of a class
      * @param <T> The generic type to create an instance of
      * @return The instance of T with the specified values in the JSON string
+     * @throws IOException if the string is not a single JSON value of the expected structure. Content after the
+     *         value is rejected because it would otherwise be lost the next time the data is saved.
      */
     public static <T> T fromJsonString(String json, Class<T> instanceClass) throws IOException {
-        return objectMapper.readValue(json, instanceClass);
+        try (JsonParser parser = objectMapper.getFactory().createParser(json)) {
+            T instance = objectMapper.readValue(parser, instanceClass);
+            if (parser.nextToken() != null) {
+                throw new JsonParseException(parser, MESSAGE_TRAILING_CONTENT, parser.getTokenLocation());
+            }
+            return instance;
+        }
     }
 
     /**

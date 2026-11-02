@@ -11,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.logging.Logger;
 
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -107,7 +108,8 @@ public class JsonAddressBookStorage {
         try {
             return Optional.of(jsonAddressBook.get().toModelType(OffsetDateTime.now(clock)));
         } catch (IllegalValueException ive) {
-            logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
+            logger.info("Illegal values found in " + HomeFolder.toDisplayPath(filePath)
+                    + ": " + ive.getMessage());
             throw new DataLoadingException(ive);
         }
     }

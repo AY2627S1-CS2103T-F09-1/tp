@@ -9,4 +9,5 @@ title: Logging guide
 * Log messages are written to the console and a `.log` file.
 * The output logging level can be controlled by changing the `LOG_LEVEL` constant in the `LogsCenter` class.
 * To log a user command, log only its command word, as returned by `AddressBookParser#getLoggableCommandWord(String)`. Never log the full command text, because its arguments can contain parent or guardian contact details and lesson notes.
+* To log a failed read of a file, log the exception type and its location, as `JsonUtil#readJsonFile` does. Never log a third-party exception or its message as is, because a parser message can quote the file's contents, such as lesson notes. Log file paths through `HomeFolder#toDisplayPath`, because absolute paths can contain the OS user name.
 * **When choosing a level for a log message**, follow the conventions given in [_[se-edu/guides] Java: Logging conventions_](https://se-education.org/guides/conventions/java/logging.html).

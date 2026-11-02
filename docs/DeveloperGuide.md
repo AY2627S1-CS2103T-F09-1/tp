@@ -39,7 +39,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
 
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
@@ -72,14 +72,14 @@ The sections below give more details of each component.
 
 ### UI component
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`. `StudentRosterPanel` shows each student in a `StudentRosterCard`, and `StudentProfilePanel` shows each session note in a `SessionNoteCard`.
 
 * All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
-* The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+* The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 * `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
 * `CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which pages the profile: while the outer profile pane (added for short windows) can still scroll down, `PageDown` moves that pane, and only once its end is visible does it page the session-note list by the list's visible height. `PageUp` pages the list back to its top first, then moves the outer pane back up.
 * Keyboard focus and any draft stay in the command box while paging, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
@@ -96,7 +96,7 @@ The `UI` component,
 
 ### Logic component
 
-**API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
+**API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
 
 Here's a (partial) class diagram of the `Logic` component:
 
@@ -124,7 +124,7 @@ How the parsing works:
 
 ### Model component
 
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
 <img src="images/ModelClassDiagram.png" width="800" />
 
@@ -145,7 +145,7 @@ The `Model` component,
 
 ### Storage component
 
-**API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <img src="images/StorageClassDiagram.png" width="550" />
 
@@ -170,7 +170,7 @@ In the data file:
 * Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`.
 * Displayed note numbers and pending deletion confirmations are transient UI and command state, so they are not persisted.
 
-The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields except the legacy `_comment` field. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
+The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields except the legacy `_comment` field. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid, as is any content other than whitespace after the first JSON value, because `JsonUtil` would otherwise ignore that content and the next save would discard it. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
 
 Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
 
@@ -1028,7 +1028,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Start with an empty roster and enter `view 1`.
    Expected: TutorTrack reports `There are no students in the roster yet. Add a student with add first.` and the profile stays empty.
 1. Add two students, then enter `view 3`.
-   Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.`
+   Expected: TutorTrack reports `Student index 3 is outside the roster. Enter a student index from 1 to 2.`
 1. Enter each of `view 0`, `view -1`, and `view abc`.
    Expected: Each reports `INDEX must be a positive whole number, e.g. 1.` without a format line.
 1. Enter `view`, then `view 1 2`.
@@ -1073,7 +1073,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter, then enter `view 1`.
    Expected: The note is added with the text `First line Second line`; the words are not joined.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
+   Expected: TutorTrack reports that student index `N` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 
 ### Editing a session note
 
@@ -1091,7 +1091,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter `edit NOTE 1 1 nt/text` and `edit Note 1 1 nt/text`.
    Expected: Both report `note must be typed in lowercase.` followed by the same `edit note` format and example, and leave the note unchanged.
 1. With two students in the roster, enter `edit note 3 1 nt/text`.
-   Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
+   Expected: TutorTrack reports `Student index 3 is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
 1. Enter `edit note 1 nt/text`.
    Expected: TutorTrack reports the missing NOTE_NUMBER and explains that it is the number shown beside the note in the profile.
 1. Enter `edit note 1 1 nt/first nt/second`.
@@ -1119,7 +1119,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /CONFIRM`, `delete 1 /confirm /confirm`, `delete 1 /confirm extra`, `delete notes 1 1`, `delete NOTE 1 1`, and `delete Note 1 1`.
    Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` reports that `delete` takes only one `INDEX`; `delete 1 /Confirm` and `delete 1 /CONFIRM` report `/confirm must be typed in lowercase.`; `delete notes 1 1` reports `Unknown delete target: notes. Did you mean delete note?` and `delete NOTE 1 1` and `delete Note 1 1` report `note must be typed in lowercase.`, each followed by the `delete note` format and example; and the remaining inputs report that `/confirm` must appear at most once and at the end. Apart from these `note` errors and the invalid-index ones, every error ends with `Format: delete INDEX [/confirm]` and `Example: delete 1`. None changes the roster, notes, open profile, or data file.
 1. Enter `delete N`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that student index `[N]` is outside the roster, gives the valid range, and makes no changes.
+   Expected: TutorTrack reports that student index `N` is outside the roster, gives the valid range, and makes no changes.
 1. Enter `delete 1`, then `delete 1 /confir`, then `delete 1 /confirm`.
    Expected: The misspelled flag reports a format error and does not delete Bea or cancel the preview. The corrected confirmation then deletes Bea without another preview.
 
@@ -1192,6 +1192,8 @@ When manually testing roster resizing, start with a populated roster containing 
       Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`.
    1. Close TutorTrack without entering a command, replace the original data file with different invalid content, and start TutorTrack again.
       Expected: TutorTrack preserves the new content in a second uniquely named backup and leaves the first backup unchanged.
+   1. Close TutorTrack without entering a command, and replace the data file with two complete JSON documents, one after the other: `{"students":[]}` on one line and `{"students":[]}` on the next. Start TutorTrack again.
+      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves both documents in a new uniquely named backup.
 1. Saving fails while TutorTrack is running
 
    1. Prerequisites: at least one student in the roster, so that `data/tutortrack.json` exists. Run the `chmod` or `attrib` commands below in a terminal opened in the folder containing the JAR file.
