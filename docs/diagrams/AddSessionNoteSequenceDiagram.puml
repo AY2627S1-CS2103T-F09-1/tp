@@ -1,0 +1,53 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+participant ":Model\nManager" as ModelManager MODEL_COLOR
+participant "note:\nSessionNote" as SessionNote MODEL_COLOR
+participant ":Address\nBook" as AddressBook MODEL_COLOR
+participant ":StudentSession\nHistories" as Histories MODEL_COLOR
+participant "h:Session\nHistory" as History MODEL_COLOR
+participant "h2:Session\nHistory" as NewHistory MODEL_COLOR
+
+[-> ModelManager : addSessionNote(\nstudentId, text)
+activate ModelManager
+
+note left of ModelManager
+  recordedAt is read
+  from the injected
+  Clock.
+end note
+
+create SessionNote
+ModelManager -> SessionNote : SessionNote(\ntext, recordedAt)
+activate SessionNote
+SessionNote --> ModelManager
+deactivate SessionNote
+
+ModelManager -> AddressBook : addSessionNote(\nstudentId, note)
+activate AddressBook
+
+AddressBook -> Histories : addNote(\nstudentId, note)
+activate Histories
+
+Histories -> History : withNote(note)
+activate History
+
+create NewHistory
+History -> NewHistory
+activate NewHistory
+NewHistory --> History
+deactivate NewHistory
+
+History --> Histories : h2
+deactivate History
+
+Histories --> AddressBook
+deactivate Histories
+
+AddressBook --> ModelManager
+deactivate AddressBook
+
+[<-- ModelManager : note
+deactivate ModelManager
+@enduml

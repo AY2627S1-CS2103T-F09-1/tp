@@ -360,36 +360,49 @@ A tutor records, edits, and deletes short notes about each student's lessons. No
 
 #### Session note types
 
-Session notes live in `seedu.address.model.session`, separate from the student roster because the roster consumes note counts but does not own note data:
-
-* `SessionNote` is immutable. It trims surrounding whitespace, preserves internal spaces, accepts 1 to 500 Unicode code points, rejects control characters and line or paragraph separators, and receives its `OffsetDateTime` from the caller so tests can control time.
-* `SessionHistory` is immutable and keeps its notes newest first, exposing them through an unmodifiable list. Notes with equal timestamps keep their saved order.
-* Note numbers are chronological: `1` is the oldest note, and the history converts a note number to the index `history size - NOTE_NUMBER` in its newest-first list. Editing keeps the recorded time and number while updating the text and latest edit time.
-* `ParserUtil#parseNoteText` is shared by `NoteCommandParser` and `EditNoteCommandParser`, so both commands name the same empty, overlong, non-printable, and invisible-only value errors.
-
-The object diagram below shows a student's `SessionHistory` with three notes. They are stored newest first, so note 1, the oldest, is last in the list.
+Session notes live in `seedu.address.model.session`, separate from the student roster because the roster consumes note counts but does not own note data. The object diagram below shows a student's `SessionHistory` with three notes.
 
 <img src="images/SessionHistoryObjectDiagram.png" width="750" />
 
+How note numbers map to the stored notes:
+
+1. A `SessionHistory` keeps its notes newest first, so the newest note, `note3`, is at index 0.
+1. Note numbers count from the oldest note, so note 1, `note1`, is last in the list.
+1. To find note `N`, the history uses the index `history size - N`. For note 1 in this history of three notes, that is index 2.
+
+The diagram does not show the rules each type enforces:
+
+* `SessionNote` is immutable. It trims surrounding whitespace, preserves internal spaces, accepts 1 to 500 Unicode code points, rejects control characters and line or paragraph separators, and receives its `OffsetDateTime` from the caller so tests can control time.
+* `SessionHistory` is immutable and exposes its notes through an unmodifiable list. Notes with equal timestamps keep their saved order.
+* Editing a note keeps its recorded time and number while updating the text and latest edit time.
+* `ParserUtil#parseNoteText` is shared by `NoteCommandParser` and `EditNoteCommandParser`, so both commands name the same empty, overlong, non-printable, and invisible-only value errors.
+
 #### Session note model and persistence
 
-The [Model class diagram](#model-component) shows where session-note classes sit. `AddressBook` stores a `StudentSessionHistories` map from `StudentId` to `SessionHistory` beside the student list, so adding or editing a note does not replace `Student`, change student equality, or alter duplicate detection.
+`AddressBook` stores a `StudentSessionHistories` map from `StudentId` to `SessionHistory` beside the student list, as the [Model class diagram](#model-component) shows. The model boundary owns the lifecycle and keeps histories attached to existing students:
 
-The model boundary owns the lifecycle and keeps histories attached to existing students:
-
-* `Model#addSessionNote` validates and timestamps a note through an injected `Clock`; `getSessionHistory` returns a newest-first snapshot; `editSessionNote` and `deleteSessionNote` preserve the selected student's identity and unrelated notes.
+* `Model#addSessionNote` timestamps a new note through an injected `Clock` (see [Session note command](#session-note-command)); `getSessionHistory` returns a newest-first snapshot; `editSessionNote` and `deleteSessionNote` preserve the selected student's identity and unrelated notes.
 * `Model#deleteStudent` removes the student and its history together, so a failed deletion cannot leave an orphaned student or history.
 * `AddressBook#resetData` and `ReadOnlyAddressBook#getSessionHistory` copy or expose histories without returning mutable collections.
 
-Each student's notes are saved inside its JSON record as a `sessionNotes` list, newest first:
+Each student's notes are saved inside its JSON record as a `sessionNotes` list, newest first, so the file remains hand-editable:
 
 ```json
 "sessionNotes": [ { "recordedAt": "2026-09-18T18:35:00+08:00", "text": "Reviewed factorisation." } ]
 ```
 
-Notes are nested in the student record so the file remains hand-editable while the model keeps histories beside the student list. `JsonSerializableAddressBook` writes each history through `ReadOnlyAddressBook#getSessionHistory`, and loading adds students first before restoring each complete history through `AddressBook#setSessionHistory`. `SessionHistory#of` preserves equal-timestamp order instead of treating file iteration order as a sequence of new additions.
+When saving, `JsonSerializableAddressBook` writes each student's history through `ReadOnlyAddressBook#getSessionHistory`. The sequence diagram below shows how loading restores the histories. Duplicate checks and load errors are left out.
 
-`JsonAdaptedSessionNote` writes an offset timestamp with `ISO_OFFSET_DATE_TIME` and rebuilds every note through `SessionNote`. A missing note field, timestamp without an offset, future timestamp, invalid text, or empty entry is a load error. A missing `sessionNotes` field means an empty history, keeping data files created before session notes were introduced loadable; all other failures use the normal data-file recovery path.
+<img src="images/LoadSessionNotesSequenceDiagram.png" width="750" />
+
+How loading works:
+
+1. `JsonSerializableAddressBook` creates an empty `AddressBook`.
+1. For each student, it rebuilds the `Student` from its `JsonAdaptedStudent` and adds it, so the student exists before its history.
+1. The `JsonAdaptedStudent` rebuilds each note through its `JsonAdaptedSessionNote`, and `SessionHistory#of` then builds the whole history at once, keeping the saved order of notes with equal timestamps.
+1. `AddressBook#setSessionHistory` attaches the history to the student.
+
+The diagram does not show failures. Each note is rebuilt through `SessionNote`, so a missing field, a timestamp without an offset, a future timestamp, invalid text, or an empty entry is a load error. A missing `sessionNotes` field means an empty history, so data files created before session notes were introduced still load.
 
 **Design considerations:**
 
@@ -404,11 +417,22 @@ Notes are nested in the student record so the file remains hand-editable while t
 
 #### Session note command
 
-`note INDEX nt/NOTE` follows the same parser boundary as other commands:
+`note INDEX nt/NOTE` adds a note to a student's history. The sequence diagram below shows what happens inside the `Model` component when `NoteCommand` calls `Model#addSessionNote`. Logic and Storage are left out; the command's path through Logic is the same as the [`add` example](#logic-component).
+
+<img src="images/AddSessionNoteSequenceDiagram.png" width="800" />
+
+How adding a note works:
+
+1. `ModelManager` reads `recordedAt` from its injected `Clock` and creates the `SessionNote`.
+1. `AddressBook` checks that the student exists and passes the note to `StudentSessionHistories`.
+1. Because `SessionHistory` is immutable, `withNote` returns a new history `h2` containing the note.
+1. `StudentSessionHistories` replaces the student's old history with `h2`. The `Student` record is not touched.
+
+The diagram does not show the steps before and after the model call:
 
 * `NoteCommandParser` recognizes only `nt/`; a second prefix after a space is rejected, while `(nt/)` without a preceding space remains note text.
 * It validates structure, the shared positive-index rules, and note text through `ParserUtil#parseNoteText` before creating a command. Empty, invisible-only, overlong, and non-printable values receive specific value errors.
-* `NoteCommand#execute` resolves the displayed index to a `StudentId`, calls `Model#addSessionNote`, and lets `LogicManager` save the changed address book. The result carries the ID so `MainWindow` refreshes the count and opens the updated profile.
+* `NoteCommand#execute` resolves the displayed index to a `StudentId` before calling the model, and `LogicManager` saves the changed address book afterwards. The result carries the ID so `MainWindow` refreshes the count and opens the updated profile.
 * `NoteCommand#toString` omits note text because lesson notes may contain private details.
 
 #### Edit note command
