@@ -39,7 +39,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/MainApp.java)) handles app launch and shut down.
 
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
@@ -170,7 +170,7 @@ In the data file:
 * Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`.
 * Displayed note numbers and pending deletion confirmations are transient UI and command state, so they are not persisted.
 
-The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields except the legacy `_comment` field. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid, as is any content other than whitespace after the first JSON value, because `JsonUtil` would otherwise ignore that content and the next save would discard it. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
+The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid. Any content other than whitespace after the first JSON value is also invalid, because otherwise `JsonUtil` would ignore that extra content and the next save would discard it. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. As later commands could replace that file, storage preserves the unreadable content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
 
 Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
 
@@ -293,7 +293,7 @@ Notes are nested in the student record so the file remains hand-editable while t
 
 * It registers TutorTrack's `add`, `edit`, `edit note`, `view`, `note`, `delete`, `help`, and `exit` routes. Unsupported legacy commands receive the standard unknown-command error.
 * It sends the exact `note` target and note-like misspellings after `edit` to `EditNoteCommandParser`; other edit arguments go to `EditCommandParser`, so a malformed student edit receives the correct usage.
-* `AddCommandParser` and `EditCommandParser` accept only documented fields and reject inherited person parameters before mutation or saving. Legacy person types remain only for persisted-data compatibility, not as part of the TutorTrack command surface.
+* `AddCommandParser` and `EditCommandParser` accept only documented fields. Other prefix-like text, including the inherited `a/` and `t/`, is not treated as a parameter, so a name such as `Raj a/l Kumar` stays intact. Legacy person types remain only for persisted-data compatibility, not as part of the TutorTrack command surface.
 
 ### Command error messages
 
@@ -311,7 +311,7 @@ Index handling is shared so every command reports index errors consistently:
 
 Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive. Prefix-like text in another case stays part of the value unless it occurs where the parser must identify a keyword; the parser then reports a targeted lowercase error. This single accepted form keeps command routing predictable.
 
-Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. `AddressBookParser` names an unknown command word and lists the available commands. A word that names a command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
+Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. If an unknown command like `sort` is entered, `AddressBookParser` lists all the available commands. Otherwise, a word that matches a valid command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
 
 ### Adding a student
 
@@ -380,7 +380,7 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 `DeleteCommandParser` supports `delete STUDENT_INDEX [/confirm]` for a whole student and `delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` for one session note. `/confirm` is an exact, case-sensitive terminal token. Duplicated, misplaced, differently cased, concatenated, or value-bearing confirmation tokens are rejected during parsing, before the model can change.
 
-A word that matches `/confirm` only when case is ignored, such as `/CONFIRM`, is reported in both forms as `/confirm must be typed in lowercase.`, before the argument count is checked, so that it is not reported as an extra index. A first word that matches `note` only when case is ignored, such as `NOTE`, is reported as `note must be typed in lowercase.` with the `delete note` format, as `edit` does for `edit note`. A first word that looks like a typo of `note`, such as `notes`, is reported as `Unknown delete target`, with the suggestion `delete note`, using the same `ParserUtil#isMistypedTarget` check that `edit` uses for `edit note`. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
+A word matching `/confirm` only when case is ignored, such as `/CONFIRM`, is reported in both delete student and delete session note scenarios as `/confirm must be typed in lowercase.`, before the argument count is checked. A first word that matches `note` only when ignoring case, such as `NOTE`, is reported as `note must be typed in lowercase.` with the `delete note` format, as `edit` does for `edit note`. A typo of `note`, such as `notes`, is reported as `Unknown delete target`, with the suggestion `delete note`, using the same `ParserUtil#isMistypedTarget` check that `edit` uses for `edit note`. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
 The sequence below shows the successful path for deleting one session note; confirmation checks and failure handling are explained in the following sections.
 
@@ -917,9 +917,9 @@ testers are expected to do more *exploratory* testing.
       Expected: Dev Patel is still in the roster.
 1. Launching from a write-protected folder
 
-   1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows, run `icacls <folder> /deny "%USERNAME%:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d %USERNAME%`.
+   1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows PowerShell, run `icacls <folder> /deny "${env:USERNAME}:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d $env:USERNAME`.
    1. Run `java -jar tutortrack.jar` from that folder.
-      Expected: The GUI opens with an empty roster, the terminal shows one-line warnings that the file handler could not be added and that the preference file could not be saved, and no stack trace or crash occurs. The folder contains no new files.
+      Expected: The GUI opens with an empty roster, the terminal shows one-line warnings that the file handler could not be added and that the preference file could not be saved, without a crash. The folder contains no new files.
    1. Enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`.
       Expected: TutorTrack reports `Could not save data to file` followed by the data file path and an insufficient-permissions explanation. Dev Patel is not added to the roster.
    1. Restore write access to the folder.
@@ -940,7 +940,7 @@ When manually testing roster resizing, start with a populated roster containing 
 
 1. Start with an empty data file.
    Expected: The roster displays `No students yet` with an instruction to use `add`, while the profile displays `No student selected` with an instruction to use `view INDEX`.
-1. Enter `add n/Alicia Alexandra Lim Wei Xuan p/8000 0001 e/guardian.with.a.long.address@example.com sub/Additional Mathematics and Mathematical Modelling l/Secondary 4 Express`, followed by `add n/Blair Tan p/8000 0002 sub/English Literature l/JC 1`.
+1. Enter `add n/Alicia Alexandra Lim Wei Xuan p/8000 0001 e/guardian.with.a.long.address@example.com sub/Additional Mathematics in addition to Elementary Mathematics l/Secondary 4 Express`, followed by `add n/Blair Tan p/8000 0002 sub/English Literature l/JC 1`.
    Expected: Both roster cards remain within the left pane. Long values wrap vertically instead of being clipped or creating a horizontal scrollbar.
 1. Enter `view 1`.
    Expected: Alicia's roster card has the teal profile-selection treatment. Her name, phone, email, subject, and level appear in the profile and wrap within the value column where needed. The `Parent/guardian phone` and `Parent/guardian email` labels are shown in full.
@@ -952,7 +952,7 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: Hovering or clicking Blair's card leaves it unchanged, and clicking the result/error display does not add a focus border. Neither region opens a profile or otherwise behaves like a clickable control.
 1. Click the command box and type `view 2` without submitting it.
    Expected: The command box regains focus and accepts the text. The profile remains contained within the right pane and does not cover the command box or result display.
-1. Enter a valid `note 1 nt/NOTE` command after replacing `NOTE` with one line of exactly 500 characters, then enter `view 1` again.
+1. Clear the command box. Enter a valid `note 1 nt/NOTE` command where `NOTE` is one line of 500 characters, then enter `view 1` again.
    Expected: The timestamp and note wrap inside one session-note card, the last wrapped line is fully visible above the bottom edge of the card at narrow and wide window widths, the history scrolls vertically when needed, and no disruptive horizontal scrolling appears.
 1. Enter the same `note 1 nt/NOTE` command with one more character, then `edit note 1 1 nt/NOTE` with that 501-character text.
    Expected: Both commands show `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.` No note is added or changed.
@@ -975,6 +975,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: TutorTrack reports `Missing l/CURRENT_LEVEL.` followed by the `add` format and example, and does not change the roster or data file.
 1. Enter `add n/Alex Tan p/91234567 sub/Mathematics l/Secondary 3 x/value`.
    Expected: TutorTrack reports `Added student: Alex Tan (Mathematics, Secondary 3 x/value).` Prefix-like text that is not a recognized parameter stays part of the value before it, as the User Guide describes.
+1. Enter `add n/Raj a/l Kumar p/91234568 sub/English l/JC 1`.
+   Expected: TutorTrack reports `Added student: Raj a/l Kumar (English, JC 1).` The name keeps `a/l` because `a/` is not a recognized parameter.
 1. Enter `add aaaaaa` and `add n/Alex Tan p/12 sub/Mathematics l/Secondary 3`.
    Expected: The first reports `Unexpected text before the first parameter: aaaaaa.` followed by the `add` format and example. The second reports only the phone-number rule, without them. Neither changes the roster or data file.
 1. Enter `add n/Alex Tan p/10101010 sub/Mathematics l/Secondary 3`, then enter `edit 1 p/10101010` for an existing student.
@@ -999,11 +1001,11 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter `edit 2 e/` for a student with an email.
    Expected: The email is removed, every omitted field and session note is unchanged, and the target's profile opens and displays `Not provided`.
 1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
-   Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the one-line `edit` format and example, while `edit 1 l/` shows only the level rule.
+   Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the `edit` format and example, while `edit 1 l/` shows only the level rule.
 1. Enter `edit 1 hello n/Zara Lim`, `edit 1 2 n/Zara Lim`, and `edit x hello n/Zara Lim`.
-   Expected: The first reports `Unexpected text before the first parameter: hello.` the second reports `edit takes only one INDEX.`, and the third reports that `INDEX` must be a positive whole number. All but the last are followed by the one-line `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
+   Expected: The first reports `Unexpected text before the first parameter: hello.` The second reports `edit takes only one INDEX.`, and the third reports that `INDEX` must be a positive whole number. All but the last are followed by the `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
 1. Enter `edit 1 em/parent@example.com` and `edit 1 P/81234567`.
-   Expected: The first reports `Unknown parameter: em/.` and the second `Unknown parameter: P/.`, each followed by `Supported parameters:` with the supported parameters, then the one-line `edit` format and example. The roster, profile, notes, and data file stay unchanged.
+   Expected: The first reports `Unknown parameter: em/.` and the second `Unknown parameter: P/.`, each followed by `Supported parameters:` with the supported parameters, then the `edit` format and example. The roster, profile, notes, and data file stay unchanged.
 1. Enter `edit n/Bob` and `edit a n/Bob`.
    Expected: The first reports `Missing INDEX.` followed by the `edit` format and example. The second reports `INDEX must be a positive whole number, e.g. 1.` Neither suggests `edit note`.
 1. Try to edit one student so that both the normalized name and parent phone match the other student.
@@ -1019,7 +1021,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter each of `find Changed` and `clear`.
    Expected: Each input names its unknown command word and lists the available commands. The student, session note, roster display, and saved data remain unchanged.
 1. Enter `add n/Amy Bee p/11111111 e/amy@example.com a/Block 312, Amy Street 1 t/friend`.
-   Expected: TutorTrack reports `a/` as an unknown parameter, lists the supported add parameters, and shows the add format. It does not create a hidden person or change the roster, session notes, or saved data.
+   Expected: TutorTrack reports `Missing sub/SUBJECT.` followed by the `add` format and example. It does not create a hidden person or change the roster, session notes, or saved data.
 1. Enter `add n/Bea Lim p/9876 5432 sub/English l/JC 1`.
    Expected: The valid student form still adds Bea Lim normally.
 
@@ -1090,7 +1092,7 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note?`, followed by `Format: edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE` and `Example: edit note 1 2 nt/Corrected lesson summary.`, and leaves the note unchanged.
 1. Enter `edit NOTE 1 1 nt/text` and `edit Note 1 1 nt/text`.
    Expected: Both report `note must be typed in lowercase.` followed by the same `edit note` format and example, and leave the note unchanged.
-1. With two students in the roster, enter `edit note 3 1 nt/text`.
+1. Add another student into the roster, then enter `edit note 3 1 nt/text`.
    Expected: TutorTrack reports `Student index 3 is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
 1. Enter `edit note 1 nt/text`.
    Expected: TutorTrack reports the missing NOTE_NUMBER and explains that it is the number shown beside the note in the profile.
@@ -1155,16 +1157,20 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Navigating command history
 
-1. Restart TutorTrack, type `unfinished command` without pressing `Enter`, and press `Up`.
+1. Prerequisites: at least one student in the roster. Restart TutorTrack, type `unfinished command` without pressing `Enter`, and press `Up`.
    Expected: The draft remains unchanged because the new session has no command history.
-1. Submit `help`, `invalid`, and `help` in that order, then type `unfinished command` without submitting it.
-   Expected: The first and third submissions succeed, the second fails, and the draft remains in the command box.
+1. Clear the command box and submit `view 1`. Then submit `invalid`.
+   Expected: `view 1` succeeds and the command box empties. `invalid` fails and stays in the command box.
+1. Clear the command box and submit `view 1` again, then type `unfinished command` without submitting it.
+   Expected: `view 1` succeeds, and the draft remains in the command box.
 1. Press `Up` repeatedly.
-   Expected: The command box shows `help`, then `invalid`, then the older `help`; another `Up` leaves the oldest `help` displayed.
+   Expected: The command box shows `view 1`, then `invalid`, then the older `view 1`; another `Up` leaves the oldest `view 1` displayed.
 1. Press `Down` repeatedly.
-   Expected: The command box moves through `invalid` and the newer `help`, then restores `unfinished command`; another `Down` leaves the draft displayed.
-1. Press `Up` twice to recall `invalid`, change it to `help`, submit it, and press `Up` again.
-   Expected: `help` opens the help window and is recalled as the newest history entry.
+   Expected: The command box moves through `invalid` and the newer `view 1`, then restores `unfinished command`; another `Down` leaves the draft displayed.
+1. Press `Up` twice to recall `invalid`, change it to `view 1`, submit it, and press `Up` again.
+   Expected: `view 1` succeeds and is recalled as the newest history entry.
+1. Press `Up` twice more.
+   Expected: The command box shows the earlier `view 1`, then `invalid`, because editing a recalled command adds a new entry and keeps the original.
 1. Close and relaunch TutorTrack, then press `Up` in an empty command box.
    Expected: No command is recalled because history is kept only for the app session.
 

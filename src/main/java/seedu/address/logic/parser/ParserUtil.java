@@ -1,18 +1,14 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LEVEL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
@@ -48,7 +44,6 @@ public class ParserUtil {
             "Parameter prefixes must be typed in lowercase: %1$s should be " + PREFIX_NOTE + ".";
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
     private static final String WHITESPACE_PATTERN = "\\s+";
-    private static final List<Prefix> LEGACY_PERSON_PREFIXES = List.of(PREFIX_ADDRESS, PREFIX_TAG);
     private static final String PARAMETER_PREFIX_SEPARATOR = "/";
     /** Largest number of single-character edits from a target such as {@code note} still treated as a typo */
     private static final int MAX_TARGET_TYPO_DISTANCE = 2;
@@ -68,22 +63,12 @@ public class ParserUtil {
     }
 
     /**
-     * Returns the first legacy person prefix present in {@code arguments}.
-     */
-    public static Optional<Prefix> findLegacyPersonPrefix(ArgumentMultimap arguments) {
-        requireNonNull(arguments);
-        return LEGACY_PERSON_PREFIXES.stream()
-                .filter(prefix -> arguments.getValue(prefix).isPresent())
-                .findFirst();
-    }
-
-    /**
-     * Returns student command arguments tokenized with supported and legacy person prefixes.
+     * Returns student command arguments tokenized with the student field prefixes.
      */
     public static ArgumentMultimap tokenizeStudentFields(String args) {
         requireNonNull(args);
-        return ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL,
-                PREFIX_ADDRESS, PREFIX_TAG);
+        return ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
+                PREFIX_SUBJECT, PREFIX_LEVEL);
     }
 
     /**
