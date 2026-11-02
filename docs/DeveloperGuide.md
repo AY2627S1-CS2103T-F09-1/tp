@@ -577,11 +577,31 @@ Restoring the model does not by itself protect the data file from a write that f
 
 Student archiving is planned for v2.0 and is not implemented. It covers archiving a student who has stopped lessons, viewing archived details, and restoring the student without losing contact details or session history. The User Guide lists it under [Archiving students](UserGuide.md#archiving-students-coming-soon).
 
-The proposed design keeps archived students in the same `AddressBook` and data file: an archived-ID set sits beside `StudentSessionHistories`, `Model#getStudentRoster()` excludes those IDs, duplicate detection still includes them, and an optional `archived` field keeps older files active by default. The archive and restore operations use the normal save and [save-failure rollback](#save-failure-rollback) path.
+The proposed design keeps archived students in the same `AddressBook` and data file: an archived-ID set sits beside `StudentSessionHistories`, `Model#getStudentRoster()` excludes those IDs, duplicate detection still includes them, and an optional `archived` field keeps older files active by default. A separate archived roster, with its own one-based indices, would list archived students so that the tutor can view or restore one by its index.
 
-The sequence below shows the proposed boundary interactions. It deliberately omits UI controls and persistence DTO details; the design question is how both operations preserve the stable ID and use the existing save path.
+The sequence diagram below shows the proposed `archive 2` command inside the `Logic` component, with `Model` and `Storage` as black boxes. Parsing is left out, as it follows the [`add` example](#logic-component).
 
-<img src="images/StudentArchivingSequenceDiagram.png" width="760" />
+<img src="images/StudentArchivingSequenceDiagram.png" width="630" />
+
+How archiving would work:
+
+1. `LogicManager` executes the `ArchiveCommand`, like any other command.
+1. The command resolves the displayed index against `Model#getStudentRoster()` to the student's stable `StudentId`, as existing commands do through `Command#getRosterEntry`.
+1. The command calls `Model#archiveStudent(studentId)`, which adds the ID to the archived-ID set. The student's details and session history are not changed.
+1. `LogicManager` saves the changed address book through the usual [save-failure rollback](#save-failure-rollback) path.
+
+`restore INDEX` would follow the same flow, resolving the index against the archived roster and calling `Model#restoreStudent(studentId)`.
+
+**Design considerations:**
+
+**Aspect: Where archived students are kept**
+
+* **In the same `AddressBook`, marked by an archived-ID set (current proposal):** Archiving only adds the student's ID to a set.
+  * Pros: Keeps one data file, keeps each student's stable ID and session history attached, lets duplicate detection still see archived students, and reuses the existing save and rollback path.
+  * Cons: Every roster query must leave out archived IDs.
+* **In a separate archive file:** Archiving would move the student's record to another file.
+  * Pros: The main data file holds only active students.
+  * Cons: Moving a student needs two file writes, which could fail halfway, and duplicate detection would have to check both files.
 
 --------------------------------------------------------------------------------------------------------------------
 
