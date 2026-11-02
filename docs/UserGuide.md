@@ -158,26 +158,19 @@ Adds a short note about a lesson to a student, such as what was covered, where t
 
 Format: `note INDEX nt/NOTE`
 
-* `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number, such as 1, 2, or 3.
-* `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed. A note made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty.
-* An empty note shows `Session note is empty. Enter the note text after nt/.` A note that is too long reports its length, for example `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.`
-* If you paste a note that contains tabs or line breaks, each one becomes a space, so `Line one`, a tab and `tabbed` are saved as `Line one tabbed`. Two line breaks in a row, as around a blank line, leave two spaces.
-* Put a space between `INDEX` and `nt/`. `note 1nt/Reviewed` shows `Put a space before nt/, after the student INDEX.`, and other text after the index, as in `note 1 hello nt/Reviewed`, shows `Unexpected text before the first parameter: hello.`
-* Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
-* `nt/` must be typed in lowercase. If it is typed in another case, as in `note 1 NT/Reviewed factorisation.`, TutorTrack shows `Parameter prefixes must be typed in lowercase: NT/ should be nt/.` and does not add the note.
-* `nt/` may appear only once. A second `nt/` after a space, as in `note 1 nt/Remember nt/ notation`, is reported as a repeated parameter and the note is not added. To mention `nt/` in a note, write it without a space before it, such as `(nt/)` or `"nt/"`.
-* You can add the same note text more than once, because each note records a separate lesson.
-* The date and time are recorded to the second, together with your computer's time zone. The profile shows them in that time zone without naming it, such as `18 Sep 2026, 6:35 PM`.
-* The new note gets the next note number. Note numbers count from the oldest note, `[1]`, so they follow the order in which you added the notes, even for notes added within the same second. See [Viewing a student profile](#viewing-a-student-profile-view) for where the numbers appear.
+* `INDEX` is the student's number in the displayed roster.
+* `NOTE` must be 1 to 500 characters. Spaces at the start and end are removed.
+* `nt/` can appear only once. Other prefixes inside the note, such as `sub/`, are saved as part of the note text. To write `nt/` itself in a note, leave no space before it, such as `(nt/)`.
+* Each new note gets the next note number, so the oldest note is `[1]`. See [Viewing a student profile](#viewing-a-student-profile-view) for where the numbers appear.
 
 Examples:
 
-* `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.`
-* `note 3 nt/Completed past-year paper 2 (scored 34/40).`
+* `note 1 nt/Reviewed factorisation; revise negative coefficients next lesson.` adds a session note to the 1st student in the displayed roster, recording the topic covered and what to revise next.
+* `note 3 nt/Completed past-year paper 2 (scored 34/40).` adds a session note to the 3rd student in the displayed roster, recording their past-year paper score.
 
 On success, TutorTrack shows `Added session note for STUDENT_NAME.` and opens that student's profile with the new note at the top, even if another student's profile was open. When you add a student's first session note, the profile shows it as `[1]` with its recorded date and time:
 
-<img src="images/UiAddNote.png" alt="Alicia Lim's profile showing the new session note 1" width="670">
+<img src="images/UiAddNote.png" alt="Bea Lim's profile showing the new session note 1" width="540">
 
 If the index is missing, not a positive whole number, or larger than the number of students in the roster, or if the note is empty or too long, TutorTrack shows an error and does not add the note.
 
