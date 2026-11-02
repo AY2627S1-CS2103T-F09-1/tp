@@ -1,5 +1,6 @@
 @startuml
 skin rose
+!pragma useVerticalIf on
 skinparam ActivityFontSize 15
 skinparam ArrowFontSize 12
 start

@@ -192,7 +192,7 @@ Every command passes through `AddressBookParser`, which chooses the command's pa
 
 The activity diagram below shows how `AddressBookParser` handles the command word.
 
-<img src="images/CommandRoutingActivityDiagram.png" width="700" />
+<img src="images/CommandRoutingActivityDiagram.png" width="336" />
 
 #### TutorTrack command routing
 
