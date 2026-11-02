@@ -299,9 +299,9 @@ There is no need to save manually. TutorTrack saves your data automatically, but
 
 ### Editing the data file
 
-TutorTrack stores its data as JSON in `data/tutortrack.json`. Advanced users can update the data by editing this file with a text editor while TutorTrack is closed. If you edit the file while TutorTrack is running, TutorTrack does not see your changes, and the next command that changes data replaces them.
+TutorTrack stores its data as JSON in `data/tutortrack.json`. Advanced users can edit this file with a text editor while TutorTrack is closed. Changes made while TutorTrack is running are replaced by the next command that changes data.
 
-Each student's session notes are in that student's `sessionNotes` list, for example:
+Each student's session notes are in their `sessionNotes` list, for example:
 
 ```json
 "sessionNotes": [ {
@@ -310,16 +310,12 @@ Each student's session notes are in that student's `sessionNotes` list, for exam
 } ]
 ```
 
-* `recordedAt` is the date and time the note was recorded, followed by the time zone as an offset from UTC, in the form `YYYY-MM-DDThh:mm:ss+hh:mm`. Use `Z` for UTC. It must not be later than the time TutorTrack starts, and neither may an edited note's `lastEditedAt`, because notes are always saved at the current time.
-* `text` follows the same rules as `NOTE` in [Adding a session note](#adding-a-session-note-note): 1 to 500 characters on one line, without tabs or line breaks such as `\t` or `\n`. Spaces at the start and end are removed.
-* A student without session notes may leave out `sessionNotes` or use an empty list, `[]`.
-* Notes may be listed in any order. TutorTrack numbers them by `recordedAt`, starting from the oldest. For notes with the same `recordedAt`, the one listed first in the file is treated as the newer note.
+* `recordedAt` is the date, time and UTC offset when the note was recorded. Neither `recordedAt` nor an edited note's `lastEditedAt` can be later than the time TutorTrack starts, and `lastEditedAt` cannot be earlier than `recordedAt`.
+* `text` must be 1 to 500 characters. Spaces, tabs and line breaks at the start or end are removed, but a tab or line break anywhere else makes the file invalid.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If an edit makes the data file invalid, such as mistyping a top-level field name or leaving extra content after the closing `}`, TutorTrack starts with an empty roster and shows a message saying that it could not load your data file. It also tries to keep a copy of the file in the `data` folder, with a name such as `tutortrack.json.backup-123456.bak`, and the message gives the copy's location if it succeeds. Correct the original file and restart TutorTrack **before** running any command that changes data, because such a command replaces the original file with the empty roster. Back up the data file before editing it.
+If an edit makes the data file invalid, TutorTrack starts with an empty roster, shows the following message, and tries to keep a backup copy of the file in the `data` folder. Fix the file and restart TutorTrack **before** running any command that changes data, or TutorTrack overwrites it. Back up the data file before editing it.
 </div>
-
-TutorTrack shows the following message when it cannot load the data file:
 
 <img src="images/UiDataError.png" alt="Data recovery dialog saying TutorTrack could not load the data file and giving the location of the backup copy" width="377">
 
