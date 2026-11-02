@@ -55,7 +55,7 @@ The bulk of the app's work is done by the following four components:
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact when the user previews deletion with `delete 1` and then completes it with `delete 1 /confirm`.
+The _Sequence Diagram_ below illustrates how the four main components interact when a student is added. It shows the successful path at the architecture level; parsing, validation, and other internal interactions are omitted.
 
 <img src="images/ArchitectureSequenceDiagram.png" width="574" />
 
@@ -102,7 +102,7 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="550"/>
 
-The [architecture sequence diagram](#architecture) shows the two-command workflow for deleting a student. A similarly high-level [session-note deletion sequence](#session-note-deletion-sequence) appears below.
+The [architecture sequence diagram](#architecture) shows how the main components interact when a student is added. A [session-note deletion sequence](#session-note-deletion-sequence) appears below.
 
 How the `Logic` component works:
 
@@ -382,7 +382,7 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 A word that matches `/confirm` only when case is ignored, such as `/CONFIRM`, is reported in both forms as `/confirm must be typed in lowercase.`, before the argument count is checked, so that it is not reported as an extra index. A first word that matches `note` only when case is ignored, such as `NOTE`, is reported as `note must be typed in lowercase.` with the `delete note` format, as `edit` does for `edit note`. A first word that looks like a typo of `note`, such as `notes`, is reported as `Unknown delete target`, with the suggestion `delete note`, using the same `ParserUtil#isMistypedTarget` check that `edit` uses for `edit note`. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
-The [architecture sequence diagram](#architecture) illustrates student deletion. The sequence below shows the successful path for deleting one session note; confirmation checks and failure handling are explained in the following sections.
+The sequence below shows the successful path for deleting one session note; confirmation checks and failure handling are explained in the following sections.
 
 #### Session-note deletion sequence
 
