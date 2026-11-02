@@ -170,7 +170,7 @@ In the data file:
 * Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`.
 * Displayed note numbers and pending deletion confirmations are transient UI and command state, so they are not persisted.
 
-The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields except the legacy `_comment` field. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
+The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields except the legacy `_comment` field. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid, as is any content other than whitespace after the first JSON value, because `JsonUtil` would otherwise ignore that content and the next save would discard it. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. Before a later command can replace that file, storage preserves the unreadable content in a uniquely named sibling backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
 
 Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
 
@@ -1156,6 +1156,8 @@ When manually testing roster resizing, start with a populated roster containing 
       Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`.
    1. Close TutorTrack without entering a command, replace the original data file with different invalid content, and start TutorTrack again.
       Expected: TutorTrack preserves the new content in a second uniquely named backup and leaves the first backup unchanged.
+   1. Close TutorTrack without entering a command, and replace the data file with two complete JSON documents, one after the other: `{"students":[]}` on one line and `{"students":[]}` on the next. Start TutorTrack again.
+      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves both documents in a new uniquely named backup.
 1. Saving fails while TutorTrack is running
 
    1. Prerequisites: at least one student in the roster, so that `data/tutortrack.json` exists. Run the `chmod` or `attrib` commands below in a terminal opened in the folder containing the JAR file.

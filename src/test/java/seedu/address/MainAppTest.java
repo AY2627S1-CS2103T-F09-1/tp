@@ -137,36 +137,27 @@ public class MainAppTest {
         Storage storage = createStorage();
         String invalidData = "{\"persons\":[{\"name\":\"\",\"phone\":\"123\","
                 + "\"email\":\"a@example.com\",\"address\":\"Example\",\"tags\":[]}],\"students\":[]}";
-        Files.writeString(storage.getAddressBookFilePath(), invalidData);
 
-        Model model = new MainApp().initModelManager(storage, new UserPrefs());
-
-        assertTrue(model.getAddressBook().getStudentList().isEmpty());
-        assertEquals(invalidData, Files.readString(storage.getAddressBookFilePath()));
-        try (var files = Files.list(testFolder)) {
-            List<Path> backups = files.filter(path -> path.getFileName().toString()
-                    .startsWith("addressbook.json.backup-")).toList();
-            assertEquals(1, backups.size());
-            assertEquals(invalidData, Files.readString(backups.get(0)));
-        }
+        assertStartsEmptyAndPreservesFileInBackup(storage, invalidData);
     }
 
     @Test
     public void initModelManager_unknownTopLevelField_preservesFileInBackup() throws Exception {
         Storage storage = createStorage();
         String invalidData = "{\"persons\": [], \"student\": []}";
-        Files.writeString(storage.getAddressBookFilePath(), invalidData);
 
-        Model model = new MainApp().initModelManager(storage, new UserPrefs());
+        assertStartsEmptyAndPreservesFileInBackup(storage, invalidData);
+    }
 
-        assertTrue(model.getAddressBook().getStudentList().isEmpty());
-        assertEquals(invalidData, Files.readString(storage.getAddressBookFilePath()));
-        try (var files = Files.list(testFolder)) {
-            List<Path> backups = files.filter(path -> path.getFileName().toString()
-                    .startsWith("addressbook.json.backup-")).toList();
-            assertEquals(1, backups.size());
-            assertEquals(invalidData, Files.readString(backups.get(0)));
-        }
+    @Test
+    public void initModelManager_trailingJsonDocument_preservesFileInBackup() throws Exception {
+        Storage storage = createStorage();
+        String invalidData = "{\"students\":[{\"name\":\"Alex\",\"parentPhone\":\"91234567\","
+                + "\"subject\":\"Math\",\"currentLevel\":\"P6\"}]}\n"
+                + "{\"students\":[{\"name\":\"Blair\",\"parentPhone\":\"92345678\","
+                + "\"subject\":\"English\",\"currentLevel\":\"P5\"}]}\n";
+
+        assertStartsEmptyAndPreservesFileInBackup(storage, invalidData);
     }
 
     @Test
@@ -218,6 +209,25 @@ public class MainAppTest {
                         .getStudentList().isEmpty()));
 
         assertTrue(logMessages.contains("Failed to back up data file : java.io.IOException: backup failed"));
+    }
+
+    /**
+     * Asserts that loading {@code invalidData} starts with an empty roster, leaves the data file unchanged, and
+     * copies the file to exactly one backup.
+     */
+    private void assertStartsEmptyAndPreservesFileInBackup(Storage storage, String invalidData) throws IOException {
+        Files.writeString(storage.getAddressBookFilePath(), invalidData);
+
+        Model model = new MainApp().initModelManager(storage, new UserPrefs());
+
+        assertTrue(model.getAddressBook().getStudentList().isEmpty());
+        assertEquals(invalidData, Files.readString(storage.getAddressBookFilePath()));
+        try (var files = Files.list(testFolder)) {
+            List<Path> backups = files.filter(path -> path.getFileName().toString()
+                    .startsWith("addressbook.json.backup-")).toList();
+            assertEquals(1, backups.size());
+            assertEquals(invalidData, Files.readString(backups.get(0)));
+        }
     }
 
     private Storage createStorage() {
