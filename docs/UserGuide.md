@@ -269,8 +269,8 @@ Example:
 1. Check that the target student's profile is open and their roster card is highlighted, then verify the name and session-note count in the prompt.<br>
    ![Deletion preview for Dev Patel, showing the confirmation prompt with the student's profile open and roster card highlighted](images/UiDeleteStudent1.png)
 1. Enter the displayed `delete 2 /confirm` as the next correctly formatted command to delete that student, or enter another correctly formatted command to cancel.<br>
-   After the deletion is confirmed, the student is removed from the roster and their profile closes:<br>
-   ![Roster after Dev Patel was deleted, with no student profile open](images/UiDeleteStudent2.png)
+   After the deletion is confirmed, the student is removed from the roster. Their profile is also closed.<br>
+   ![Roster after Dev Patel was deleted](images/UiDeleteStudent2.png)
 
 If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. See [Fixing command errors](#fixing-command-errors) for the messages. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
 
