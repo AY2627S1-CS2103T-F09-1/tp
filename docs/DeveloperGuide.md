@@ -992,7 +992,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Start with an empty roster and enter `view 1`.
    Expected: TutorTrack reports `There are no students in the roster yet. Add a student with add first.` and the profile stays empty.
 1. Add two students, then enter `view 3`.
-   Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.`
+   Expected: TutorTrack reports `Student index 3 is outside the roster. Enter a student index from 1 to 2.`
 1. Enter each of `view 0`, `view -1`, and `view abc`.
    Expected: Each reports `INDEX must be a positive whole number, e.g. 1.` without a format line.
 1. Enter `view`, then `view 1 2`.
@@ -1037,7 +1037,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter, then enter `view 1`.
    Expected: The note is added with the text `First line Second line`; the words are not joined.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
+   Expected: TutorTrack reports that student index `N` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 
 ### Editing a session note
 
@@ -1055,7 +1055,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter `edit NOTE 1 1 nt/text` and `edit Note 1 1 nt/text`.
    Expected: Both report `note must be typed in lowercase.` followed by the same `edit note` format and example, and leave the note unchanged.
 1. With two students in the roster, enter `edit note 3 1 nt/text`.
-   Expected: TutorTrack reports `Student index [3] is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
+   Expected: TutorTrack reports `Student index 3 is outside the roster. Enter a student index from 1 to 2.` and leaves all data unchanged.
 1. Enter `edit note 1 nt/text`.
    Expected: TutorTrack reports the missing NOTE_NUMBER and explains that it is the number shown beside the note in the profile.
 1. Enter `edit note 1 1 nt/first nt/second`.
@@ -1083,7 +1083,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter each of `delete`, `delete 0`, `delete -1`, `delete x`, `delete 1 2`, `delete 1-2`, `delete 1/confirm`, `delete /confirm 1`, `delete 1 /Confirm`, `delete 1 /CONFIRM`, `delete 1 /confirm /confirm`, `delete 1 /confirm extra`, `delete notes 1 1`, `delete NOTE 1 1`, and `delete Note 1 1`.
    Expected: `delete` reports `Missing INDEX.`; `delete 0`, `delete -1`, `delete x`, `delete 1-2`, and `delete 1/confirm` report that `INDEX` must be a positive whole number; `delete 1 2` reports that `delete` takes only one `INDEX`; `delete 1 /Confirm` and `delete 1 /CONFIRM` report `/confirm must be typed in lowercase.`; `delete notes 1 1` reports `Unknown delete target: notes. Did you mean delete note?` and `delete NOTE 1 1` and `delete Note 1 1` report `note must be typed in lowercase.`, each followed by the `delete note` format and example; and the remaining inputs report that `/confirm` must appear at most once and at the end. Apart from these `note` errors and the invalid-index ones, every error ends with `Format: delete INDEX [/confirm]` and `Example: delete 1`. None changes the roster, notes, open profile, or data file.
 1. Enter `delete N`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that student index `[N]` is outside the roster, gives the valid range, and makes no changes.
+   Expected: TutorTrack reports that student index `N` is outside the roster, gives the valid range, and makes no changes.
 1. Enter `delete 1`, then `delete 1 /confir`, then `delete 1 /confirm`.
    Expected: The misspelled flag reports a format error and does not delete Bea or cancel the preview. The corrected confirmation then deletes Bea without another preview.
 

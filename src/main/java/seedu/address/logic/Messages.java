@@ -17,7 +17,7 @@ public class Messages {
     public static final String MESSAGE_EMPTY_ROSTER =
             "There are no students in the roster yet. Add a student with add first.";
     public static final String MESSAGE_STUDENT_INDEX_OUT_OF_RANGE =
-            "Student index [%1$d] is outside the roster. Enter a student index from 1 to %2$d.";
+            "Student index %1$d is outside the roster. Enter a student index from 1 to %2$d.";
     public static final String MESSAGE_FORMAT = "Format: %1$s";
     public static final String MESSAGE_EXAMPLE = "Example: %1$s";
     public static final String MESSAGE_DUPLICATE_FIELD = "%1$s must appear at most once.";
