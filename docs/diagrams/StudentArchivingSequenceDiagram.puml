@@ -33,10 +33,14 @@ alt Archive an active student
     window --> tutor : active roster refreshed
     deactivate window
 else Restore an archived student
-    tutor -> window : restore archived student
+    tutor -> window : restore INDEX
     activate window
-    window -> logic : restore selected StudentId
+    window -> logic : execute("restore INDEX")
     activate logic
+    logic -> model : resolve archived index
+    activate model
+    model --> logic : StudentId
+    deactivate model
     logic -> model : restoreStudent(StudentId)
     activate model
     model --> logic : active roster

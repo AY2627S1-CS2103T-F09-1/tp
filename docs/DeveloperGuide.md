@@ -274,7 +274,7 @@ The [Model class diagram](#model-component) shows where session-note classes sit
 The model boundary owns the lifecycle and keeps histories attached to existing students:
 
 * `Model#addSessionNote` validates and timestamps a note through an injected `Clock`; `getSessionHistory` returns a newest-first snapshot; `editSessionNote` and `deleteSessionNote` preserve the selected student's identity and unrelated notes.
-* `Model#deleteStudent` removes the student and its history together, preventing an orphaned history when deletion validation succeeds.
+* `Model#deleteStudent` removes the student and its history together, so a failed deletion cannot leave an orphaned student or history.
 * `AddressBook#resetData` and `ReadOnlyAddressBook#getSessionHistory` copy or expose histories without returning mutable collections.
 
 Each student's notes are saved inside its JSON record as a `sessionNotes` list, newest first:
