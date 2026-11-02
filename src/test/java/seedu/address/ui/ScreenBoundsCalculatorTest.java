@@ -164,6 +164,42 @@ public class ScreenBoundsCalculatorTest {
                 windowEndingAtSharedEdge, List.of(leftScreen, rightScreen)));
     }
 
+    // Equivalence partitions of the overlap on each axis: partial, full containment, and none on one axis only.
+    @Test
+    public void findLargestOverlapIndex_partialOverlapOnBothAxes_comparesAreas() {
+        Rectangle2D topLeftScreen = new Rectangle2D(0, 0, 1000, 1000);
+        Rectangle2D bottomRightScreen = new Rectangle2D(1000, 1000, 1000, 1000);
+        // Overlaps the first screen by 100 x 100 and the second by 300 x 300.
+        Rectangle2D window = new Rectangle2D(900, 900, 400, 400);
+
+        assertEquals(1, ScreenBoundsCalculator.findLargestOverlapIndex(
+                window, List.of(topLeftScreen, bottomRightScreen)));
+    }
+
+    @Test
+    public void findLargestOverlapIndex_windowInsideLaterScreen_returnsContainingScreen() {
+        Rectangle2D leftScreen = new Rectangle2D(0, 0, 1920, 1080);
+        Rectangle2D rightScreen = new Rectangle2D(1920, 0, 1920, 1080);
+        Rectangle2D windowInsideRightScreen = new Rectangle2D(2000, 100, 800, 600);
+
+        assertEquals(1, ScreenBoundsCalculator.findLargestOverlapIndex(
+                windowInsideRightScreen, List.of(leftScreen, rightScreen)));
+    }
+
+    @Test
+    public void findLargestOverlapIndex_overlapOnOneAxisOnly_hasNoArea() {
+        Rectangle2D window = new Rectangle2D(100, 100, 800, 600);
+        Rectangle2D containingScreen = new Rectangle2D(0, 0, 1920, 1080);
+        // Each shares the window's span on one axis only, so its overlap area is 0 and it must not win.
+        Rectangle2D screenBelow = new Rectangle2D(0, 2000, 1920, 1080);
+        Rectangle2D screenToRight = new Rectangle2D(2000, 0, 1920, 1080);
+
+        assertEquals(1, ScreenBoundsCalculator.findLargestOverlapIndex(
+                window, List.of(screenBelow, containingScreen)));
+        assertEquals(1, ScreenBoundsCalculator.findLargestOverlapIndex(
+                window, List.of(screenToRight, containingScreen)));
+    }
+
     @Test
     public void findLargestOverlapIndex_singleScreen_returnsZero() {
         Rectangle2D onlyScreen = new Rectangle2D(0, 0, 1920, 1080);

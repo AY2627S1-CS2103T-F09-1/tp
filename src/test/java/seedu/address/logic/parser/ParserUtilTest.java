@@ -1,6 +1,8 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.parser.ParserUtil.INDEX_LABEL;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_EMPTY_NOTE;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
@@ -119,7 +121,8 @@ public class ParserUtilTest {
     public void parseNoteText_overlongInvisibleCharacters_throwsEmptyNoteMessage() {
         String overlongInvisibleNote = " ".repeat(SessionNote.MAX_TEXT_LENGTH + 1);
 
-        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () -> ParserUtil.parseNoteText(overlongInvisibleNote));
+        assertThrows(ParseException.class, MESSAGE_EMPTY_NOTE, () ->
+                ParserUtil.parseNoteText(overlongInvisibleNote));
     }
 
     @Test
@@ -142,7 +145,8 @@ public class ParserUtilTest {
         String overlongNoteWithTab = "a\t" + "a".repeat(SessionNote.MAX_TEXT_LENGTH);
         String expectedMessage = String.format(MESSAGE_NOTE_TOO_LONG, SessionNote.MAX_TEXT_LENGTH + 2);
 
-        assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseNoteText(overlongNoteWithTab));
+        assertThrows(ParseException.class, expectedMessage, () ->
+                ParserUtil.parseNoteText(overlongNoteWithTab));
     }
 
     @Test
@@ -209,6 +213,47 @@ public class ParserUtilTest {
 
         assertThrows(ParseException.class, repeatedIndexMessage, ()
             -> ParserUtil.parseOnlyStudentIndex("1\t2", "view", "view INDEX", "view 1"));
+    }
+
+    // Equivalence partitions of isMistypedTarget's word: close typo, exact target, empty, parameter-like,
+    // and distant word. Each non-typo partition must be rejected even when its edit distance is small.
+    @Test
+    public void isMistypedTarget_closeTypo_returnsTrue() {
+        assertTrue(ParserUtil.isMistypedTarget("notes", "note"));
+        assertTrue(ParserUtil.isMistypedTarget("nte", "note"));
+        assertTrue(ParserUtil.isMistypedTarget("Note", "note"));
+    }
+
+    @Test
+    public void isMistypedTarget_exactTarget_returnsFalse() {
+        assertFalse(ParserUtil.isMistypedTarget("note", "note"));
+    }
+
+    @Test
+    public void isMistypedTarget_emptyWord_returnsFalse() {
+        // An empty word is only 2 edits from no, but the empty partition is rejected first.
+        assertFalse(ParserUtil.isMistypedTarget("", "no"));
+    }
+
+    @Test
+    public void isMistypedTarget_parameterLikeWord_returnsFalse() {
+        // n/ is one edit from no, but a word containing / is a parameter, not a typo.
+        assertFalse(ParserUtil.isMistypedTarget("n/", "no"));
+        assertFalse(ParserUtil.isMistypedTarget("nt/", "note"));
+    }
+
+    // Boundary values of the typo distance: 2 edits is still a typo, 3 edits is not.
+    @Test
+    public void isMistypedTarget_typoDistanceBoundary_acceptsTwoRejectsThree() {
+        assertTrue(ParserUtil.isMistypedTarget("no", "note"));
+        assertFalse(ParserUtil.isMistypedTarget("n", "note"));
+        assertFalse(ParserUtil.isMistypedTarget("NOTE", "note"));
+    }
+
+    @Test
+    public void isMistypedTarget_nullArgument_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.isMistypedTarget(null, "note"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.isMistypedTarget("note", null));
     }
 
 }

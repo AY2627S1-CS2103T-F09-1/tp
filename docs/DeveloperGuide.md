@@ -20,18 +20,6 @@ title: Developer Guide
 
 Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
-### PlantUML diagrams
-
-The repository stores PlantUML source files in `docs/diagrams` and exported diagram images in `docs/images`. VS Code users should install the recommended `PlantUML` extension when prompted. The recommendation is recorded in `.vscode/extensions.json`.
-
-Install Graphviz to enable local diagram rendering:
-
-* macOS: `brew install graphviz`
-* Ubuntu/Debian: `sudo apt install graphviz`
-* Windows: install Graphviz from [graphviz.org](https://graphviz.org/download/) and add its `bin` directory to `PATH`.
-
-Open any `.puml` file and run `PlantUML: Preview Current Diagram` from the Command Palette. If Java is not detected automatically, set the PlantUML extension's `plantuml.java` setting to the path of the Java executable. Use `dot -V` in a terminal to verify that Graphviz is available before previewing a diagram.
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Design**
@@ -95,6 +83,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 * `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
 * `CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which pages the profile: while the outer profile pane (added for short windows) can still scroll down, `PageDown` moves that pane, and only once its end is visible does it page the session-note list by the list's visible height. `PageUp` pages the list back to its top first, then moves the outer pane back up.
 * Keyboard focus and any draft stay in the command box while paging, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
+* A JavaFX `TextField` silently deletes tabs, line breaks and other control characters from inserted text, so a pasted two-line note would be saved with its words joined. `CommandBox` therefore gives the field a `TextFormatter` that replaces each control character with a space, counting a Windows line break (CRLF) as one, before the field sees the text. The replacement happens in the UI because the parser never receives the original characters; `ParserUtil#parseNoteText` still rejects control characters that reach `Logic` by another route, such as a test.
 * `MainWindow.fxml` gives the result display the same minimum, preferred, and maximum height of 100 px, enough for the four lines of the longest messages, such as the deletion previews. The minimum matters because the window's `VBox` shrinks each child toward its minimum height when the window is short, and a lower minimum cut off the last line of those previews; the roster and profile workspace absorbs the shrinkage instead. Messages longer than four lines scroll.
 * `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
 
@@ -283,13 +272,12 @@ The [Model class diagram](#model-component) shows where the session note classes
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
-The `Model` API offers five session-note operations:
+The `Model` API offers four session-note operations:
 
 * `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
 * `Model#editSessionNote(StudentId, Index, String)` replaces one note's text while preserving its recorded timestamp and chronological number.
 * `Model#deleteSessionNote(StudentId, Index)` removes and returns one note selected by its chronological note number while preserving the student and every other session note.
-* `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed.
 
 Student deletion crosses the roster and session-history contexts through one model boundary. `Model#deleteStudent(StudentId)` validates that the stable ID identifies a roster student, then removes the student and session history together and returns the removed-note count. Keeping this coordination inside the model prevents commands from leaving an orphaned student or history if validation fails.
 
@@ -327,7 +315,7 @@ Index handling is shared so that every command words index errors the same way:
 * `ParserUtil#parseStudentIndex` and `ParserUtil#parseNoteNumber` report a value that is not a positive whole number, or that is above `Integer.MAX_VALUE`, as a value error named after the placeholder in the format, such as `STUDENT_INDEX` or `NOTE_NUMBER`.
 * `Command#getRosterEntry` resolves an index against the current roster for every index-based command, and reports an empty roster or the valid range `1` to `N`.
 
-Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive and must be typed in lowercase; the team chose one accepted form so that parsing stays predictable and consistent with `/confirm`. Prefix-like text in another case, such as `P/` after `sub/`, therefore stays part of the value instead of starting a parameter. A wrong-case command word, a wrong-case `note` target in `edit note` or `delete note`, a wrong-case `/confirm`, or a wrong-case `nt/` in `note` has its own lowercase error. Other wrong-case input gets the error for what the parser sees, such as a missing prefix.
+Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive and must be typed in lowercase; the team chose one accepted form so that parsing stays predictable and consistent with `/confirm`. Prefix-like text in another case, such as `P/` after `sub/`, therefore stays part of the value instead of starting a parameter. A wrong-case command word, a wrong-case `note` target in `edit note` or `delete note`, a wrong-case `/confirm`, or a wrong-case `nt/` in `note` or `edit note` has its own lowercase error. Other wrong-case input gets the error for what the parser sees, such as a missing prefix.
 
 Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. `AddressBookParser` names an unknown command word and lists the available commands. A word that names a command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
 
@@ -379,9 +367,9 @@ A missing `nt/`, a missing index, or several words before `nt/` are reported as 
 
 The `edit note` command replaces the text of one existing session note without changing when it was recorded. Its format is `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`, where `STUDENT_INDEX` selects a student in the current roster and `NOTE_NUMBER` selects a note in that student's displayed chronological numbering.
 
-The sequence below shows how the command preserves the selected note's timestamp while saving the replacement text and refreshing the displayed profile.
+The activity diagram below shows how the command preserves the selected note's timestamp while saving the replacement text and refreshing the displayed profile.
 
-![Session-note edit sequence diagram](images/EditNoteSequenceDiagram.png)
+![Session-note edit activity diagram](images/EditNoteSequenceDiagram.png)
 
 `EditNoteCommandParser` validates the student index, note number, `nt/` prefix, and new note text before creating an `EditNoteCommand`. The parser rejects a missing or malformed selector, an empty or overlong replacement, control characters, and duplicate `nt/` prefixes without changing the model. The command resolves the roster index to the student's stable `StudentId`, just as the existing note and deletion commands do.
 
@@ -1046,6 +1034,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: The first reports `Session note is empty. Enter the note text after nt/.` and the second a duplicate prefix error; no note count changes.
 1. Enter `note 1 nt/Remember (nt/) notation`, then `view 1`.
    Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
+1. Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter, then enter `view 1`.
+   Expected: The note is added with the text `First line Second line`; the words are not joined.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 
@@ -1058,6 +1048,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: The corrected note remains saved with the same timestamp and number.
 1. Enter each of `edit note`, `edit note 1`, `edit note 1 1`, `edit note 0 1 nt/text`, `edit note 1 0 nt/text`, `edit note x 1 nt/text`, `edit note 1 x nt/text`, `edit note 99999999999 1 nt/text`, `edit note 1 99999999999 nt/text`, and `edit note 1 1 nt/`.
    Expected: Each command reports the applicable format or validation error and leaves the note, profile, roster count, and data file unchanged.
+1. Enter `edit note 1 1 NT/text` and `edit note 1 1 Nt/text`.
+   Expected: Both report `Parameter prefixes must be typed in lowercase:` naming the prefix as typed, such as `NT/ should be nt/.`, followed by the same `edit note` format and example, and leave the note unchanged.
 1. Enter `edit notes 1 1 nt/text`.
    Expected: TutorTrack says `Unknown edit target: notes. Did you mean edit note?`, followed by `Format: edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE` and `Example: edit note 1 2 nt/Corrected lesson summary.`, and leaves the note unchanged.
 1. Enter `edit NOTE 1 1 nt/text` and `edit Note 1 1 nt/text`.

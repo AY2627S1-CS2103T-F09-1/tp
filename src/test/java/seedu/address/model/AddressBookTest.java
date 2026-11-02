@@ -302,18 +302,6 @@ public class AddressBookTest {
         assertThrows(NullPointerException.class, () -> addressBook.editSessionNote(ALEX.getId(),
                 Index.fromOneBased(1), "text", null));
         assertThrows(NullPointerException.class, () -> addressBook.getSessionHistory(null));
-        assertThrows(NullPointerException.class, () -> addressBook.removeSessionHistory(null));
-    }
-
-    @Test
-    public void removeSessionHistory_studentWithNotes_returnsRemovedCount() {
-        addressBook.addStudent(ALEX);
-        addressBook.addSessionNote(ALEX.getId(), INDICES_NOTE);
-        addressBook.addSessionNote(ALEX.getId(), FACTORISATION_NOTE);
-
-        assertEquals(2, addressBook.removeSessionHistory(ALEX.getId()));
-        assertTrue(addressBook.getSessionHistory(ALEX.getId()).isEmpty());
-        assertEquals(0, addressBook.removeSessionHistory(ALEX.getId()));
     }
 
     @Test

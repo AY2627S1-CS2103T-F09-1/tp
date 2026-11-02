@@ -134,11 +134,6 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public int removeSessionHistory(StudentId studentId) {
-        return addressBook.removeSessionHistory(studentId);
-    }
-
-    @Override
     public boolean equals(Object other) {
         if (other == this) {
             return true;

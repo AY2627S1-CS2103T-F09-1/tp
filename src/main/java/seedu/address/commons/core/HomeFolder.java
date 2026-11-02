@@ -61,8 +61,8 @@ public class HomeFolder {
     }
 
     /**
-     * Returns the home folder for code loaded from {@code codeLocation}: the folder containing it when it is a
-     * JAR file, or the working directory when it is not a JAR file or cannot be converted to a local path.
+     * Returns the home folder for code loaded from {@code codeLocation}: the folder containing it when it is
+     * a JAR file, or the working directory when it is not a JAR file or cannot be converted to a local path.
      *
      * @param codeLocation The location the code was loaded from, or null if it is unknown.
      */
@@ -79,6 +79,9 @@ public class HomeFolder {
         }
     }
 
+    /**
+     * Returns whether {@code path} names an existing regular file with a {@code .jar} extension in any case.
+     */
     private static boolean isJarFile(Path path) {
         Path fileName = path.getFileName();
         boolean hasJarExtension = fileName != null

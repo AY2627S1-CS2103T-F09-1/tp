@@ -5,8 +5,6 @@ title: About Us
 
 We are a team based in the [School of Computing, National University of Singapore](https://www.comp.nus.edu.sg).
 
-You can reach us at the email `seer[at]comp.nus.edu.sg`
-
 ## Project team
 
 ### Roger Zhang
@@ -15,7 +13,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[homepage](http://rogerzhang888.github.io)]
 [[github](https://github.com/rogerzhang888)]
-[[portfolio](team/rogerzhang888.md)]
 
 * Role: Project Advisor
 
@@ -52,7 +49,6 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 <img src="images/jiahw4ng.png" width="200px">
 
 [[github](http://github.com/jiahw4ng)]
-[[portfolio](team/jiahw4ng.md)]
 
 * Role: Developer
 * Responsibilities: UI

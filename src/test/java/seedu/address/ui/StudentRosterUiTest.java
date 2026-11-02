@@ -735,10 +735,7 @@ public class StudentRosterUiTest {
             selectableText.setText("Selectable profile text");
             Stage stage = new Stage();
             Clipboard systemClipboard = Clipboard.getSystemClipboard();
-            ClipboardContent originalClipboardContent = new ClipboardContent();
-            for (DataFormat dataFormat : systemClipboard.getContentTypes()) {
-                originalClipboardContent.put(dataFormat, systemClipboard.getContent(dataFormat));
-            }
+            ClipboardContent originalClipboardContent = copyClipboardContent();
             try {
                 stage.setScene(new Scene(new StackPane(selectableText), 280, 80));
                 stage.show();
@@ -767,11 +764,7 @@ public class StudentRosterUiTest {
                 try {
                     stage.hide();
                 } finally {
-                    if (originalClipboardContent.isEmpty()) {
-                        systemClipboard.clear();
-                    } else {
-                        assertTrue(systemClipboard.setContent(originalClipboardContent));
-                    }
+                    restoreClipboardContent(originalClipboardContent);
                 }
             }
             return null;
@@ -1184,6 +1177,48 @@ public class StudentRosterUiTest {
         });
     }
 
+    // Boundary values of the profile pane's scroll range: paging past either end stays at that end.
+    @Test
+    public void mainWindow_pageKeysBeyondProfilePaneEnds_keepScrollWithinRange() throws Exception {
+        StudentRoster roster = new StudentRoster(List.of(student("Alex Tan")));
+        TestLogic logic = new TestLogic(roster, roster,
+                new CommandResult("Displaying profile for Alex Tan.", ALEX_ID),
+                Optional.of(profile(null, sessionNotes(12))));
+
+        onFxThread(() -> {
+            Stage stage = new Stage();
+            MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
+            mainWindow.fillInnerParts();
+            mainWindow.executeCommand("view 1");
+            stage.setWidth(900);
+            stage.setHeight(360);
+            stage.show();
+            try {
+                stage.getScene().getRoot().applyCss();
+                stage.getScene().getRoot().layout();
+                stage.getScene().getRoot().layout();
+                TextField commandTextField = (TextField) stage.getScene().lookup("#commandTextField");
+                ScrollPane profileScrollPane = (ScrollPane) stage.getScene().lookup("#profileScrollPane");
+
+                pressKey(commandTextField, KeyCode.PAGE_UP);
+                assertEquals(profileScrollPane.getVmin(), profileScrollPane.getVvalue());
+
+                for (int i = 0; i < 20; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_DOWN);
+                    assertTrue(profileScrollPane.getVvalue() >= profileScrollPane.getVmin());
+                    assertTrue(profileScrollPane.getVvalue() <= profileScrollPane.getVmax());
+                }
+                for (int i = 0; i < 20; i++) {
+                    pressKey(commandTextField, KeyCode.PAGE_UP);
+                }
+                assertEquals(profileScrollPane.getVmin(), profileScrollPane.getVvalue());
+            } finally {
+                stage.hide();
+            }
+            return null;
+        });
+    }
+
     @Test
     public void commandHistory_successfulAndFailedCommands_areRecalled() throws Exception {
         List<String> executedCommands = new ArrayList<>();
@@ -1329,7 +1364,8 @@ public class StudentRosterUiTest {
 
     @Test
     public void statusBarFooter_dataFileOutsideHomeFolder_showsFullPath() throws Exception {
-        Path dataFile = Path.of("").toAbsolutePath().getRoot().resolve("other-folder").resolve("tutortrack.json");
+        Path dataFile = Path.of("").toAbsolutePath().getRoot()
+                .resolve("other-folder").resolve("tutortrack.json");
 
         String shownLocation = onFxThread(() -> getSaveLocationText(new StatusBarFooter(dataFile)));
 
@@ -2008,13 +2044,15 @@ public class StudentRosterUiTest {
     @Test
     public void formatSessionNote_editState_showsEditTimeWithoutOffsets() {
         OffsetDateTime recordedAt = OffsetDateTime.parse("2026-10-20T18:30:00+08:00");
+        OffsetDateTime editedAtSameOffset = OffsetDateTime.parse("2026-10-29T23:44:00+08:00");
+        OffsetDateTime editedInUtc = OffsetDateTime.parse("2026-10-29T15:44:00Z");
 
         assertEquals("20 Oct 2026, 6:30 PM", SessionNoteCard.formatSessionNote(
                 new SessionNote("Unedited note.", recordedAt)));
         assertEquals("20 Oct 2026, 6:30 PM · edited 29 Oct 2026, 11:44 PM", SessionNoteCard.formatSessionNote(
-                new SessionNote("Edited note.", recordedAt, OffsetDateTime.parse("2026-10-29T23:44:00+08:00"))));
+                new SessionNote("Edited note.", recordedAt, editedAtSameOffset)));
         assertEquals("20 Oct 2026, 6:30 PM · edited 29 Oct 2026, 3:44 PM", SessionNoteCard.formatSessionNote(
-                new SessionNote("Edited in UTC.", recordedAt, OffsetDateTime.parse("2026-10-29T15:44:00Z"))));
+                new SessionNote("Edited in UTC.", recordedAt, editedInUtc)));
     }
 
     // Boundary values of the 12-hour clock: midnight and noon.
@@ -2063,6 +2101,60 @@ public class StudentRosterUiTest {
 
             commandTextField.setText("good");
             assertFalse(commandTextField.getStyleClass().contains(CommandBox.ERROR_STYLE_CLASS));
+            return null;
+        });
+    }
+
+    // Regression for #357: TextField deleted pasted tabs and line breaks, so the note was saved with joined words.
+    @Test
+    public void commandBox_pastedNoteWithTabOrLineBreak_submitsSpacesInsteadOfJoinedWords() throws Exception {
+        List<String> executedCommands = new ArrayList<>();
+        CommandBox commandBox = onFxThread(() -> new CommandBox(commandText -> {
+            executedCommands.add(commandText);
+            return new CommandResult("Command executed.");
+        }));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            pasteCommandText(commandTextField, "note 1 nt/Line one\ttabbed");
+            commandTextField.fireEvent(new ActionEvent());
+            pasteCommandText(commandTextField, "edit note 1 1 nt/First line\r\nSecond line");
+            commandTextField.fireEvent(new ActionEvent());
+            return null;
+        });
+
+        assertEquals(List.of("note 1 nt/Line one tabbed", "edit note 1 1 nt/First line Second line"),
+                executedCommands);
+    }
+
+    @Test
+    public void commandBox_lineBreakPastedIntoTypedText_keepsSurroundingTextAndMovesCaretPastPaste()
+            throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed.")));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            commandTextField.setText("note 1 nt/Start end");
+            commandTextField.positionCaret("note 1 nt/Start ".length());
+            pasteCommandText(commandTextField, "middle\r\n");
+            assertEquals("note 1 nt/Start middle end", commandTextField.getText());
+            assertEquals("note 1 nt/Start middle ".length(), commandTextField.getCaretPosition());
+            return null;
+        });
+    }
+
+    // Text set as a whole, rather than inserted at the caret, goes through the same replacement.
+    @Test
+    public void commandBox_textSetWithWindowsLineBreak_replacesLineBreakWithOneSpace() throws Exception {
+        CommandBox commandBox = onFxThread(() -> new CommandBox(
+                commandText -> new CommandResult("Command executed.")));
+        TextField commandTextField = getCommandTextField(commandBox);
+
+        onFxThread(() -> {
+            commandTextField.setText("note 1 nt/First line\r\nSecond line");
+            assertEquals("note 1 nt/First line Second line", commandTextField.getText());
+            assertTrue(commandTextField.getCaretPosition() <= commandTextField.getLength());
             return null;
         });
     }
@@ -2204,6 +2296,46 @@ public class StudentRosterUiTest {
     private void pressKey(TextField commandTextField, KeyCode keyCode) {
         commandTextField.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", keyCode,
                 false, false, false, false));
+    }
+
+    /**
+     * Pastes {@code text} through the system clipboard, as a user would, then restores the clipboard.
+     */
+    private void pasteCommandText(TextField commandTextField, String text) {
+        ClipboardContent originalClipboardContent = copyClipboardContent();
+        try {
+            ClipboardContent pastedContent = new ClipboardContent();
+            pastedContent.putString(text);
+            assertTrue(Clipboard.getSystemClipboard().setContent(pastedContent));
+            commandTextField.paste();
+        } finally {
+            restoreClipboardContent(originalClipboardContent);
+        }
+    }
+
+    /**
+     * Returns a copy of the system clipboard's content, leaving out formats that hold no data.
+     * On Linux the clipboard can list such formats, and {@code Clipboard#setContent} rejects a null value.
+     */
+    private ClipboardContent copyClipboardContent() {
+        Clipboard systemClipboard = Clipboard.getSystemClipboard();
+        ClipboardContent clipboardContent = new ClipboardContent();
+        for (DataFormat dataFormat : systemClipboard.getContentTypes()) {
+            Object content = systemClipboard.getContent(dataFormat);
+            if (content != null) {
+                clipboardContent.put(dataFormat, content);
+            }
+        }
+        return clipboardContent;
+    }
+
+    private void restoreClipboardContent(ClipboardContent clipboardContent) {
+        Clipboard systemClipboard = Clipboard.getSystemClipboard();
+        if (clipboardContent.isEmpty()) {
+            systemClipboard.clear();
+        } else {
+            assertTrue(systemClipboard.setContent(clipboardContent));
+        }
     }
 
     private ScrollBar getVerticalScrollBar(ListView<?> listView) {

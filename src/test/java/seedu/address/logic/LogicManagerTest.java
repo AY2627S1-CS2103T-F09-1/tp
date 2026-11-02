@@ -612,7 +612,8 @@ public class LogicManagerTest {
     public void execute_addStudentWithStorageFailure_restoresRoster() {
         Model studentModel = createModelWithAlex();
         Logic failingLogic = createLogicWithFailingSaves(studentModel, 1);
-        assertThrows(CommandException.class, getSaveFailureMessage(), () -> failingLogic.execute(ADD_BEA_COMMAND));
+        assertThrows(CommandException.class, getSaveFailureMessage(), () ->
+                failingLogic.execute(ADD_BEA_COMMAND));
 
         assertEquals(List.of(ALEX.getId()), failingLogic.getStudentRoster().getEntries().stream()
                 .map(StudentRosterEntry::getStudentId).toList());

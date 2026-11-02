@@ -72,7 +72,6 @@ public class ModelTest {
                 "Reviewed indices."));
         assertThrows(UnsupportedOperationException.class, () -> model.deleteSessionNote(ALEX.getId(),
                 Index.fromOneBased(1)));
-        assertThrows(UnsupportedOperationException.class, () -> model.removeSessionHistory(ALEX.getId()));
         assertThrows(UnsupportedOperationException.class, () -> model.deleteStudent(ALEX.getId()));
         assertThrows(UnsupportedOperationException.class, () -> model.setStudent(ALEX.getId(), ALEX));
     }

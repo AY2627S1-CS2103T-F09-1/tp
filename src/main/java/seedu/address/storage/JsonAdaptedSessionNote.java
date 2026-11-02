@@ -33,9 +33,10 @@ class JsonAdaptedSessionNote {
     private static final String LAST_EDITED_AT_FIELD = "lastEditedAt";
 
     /**
-     * Always writes seconds, unlike {@link OffsetDateTime#toString()}, which omits them when they are zero.
+     * Formats and parses both timestamps. Always writes seconds, unlike {@link OffsetDateTime#toString()},
+     * which omits them when they are zero.
      */
-    private static final DateTimeFormatter RECORDED_AT_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+    private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private final String recordedAt;
     private final String text;
@@ -62,9 +63,9 @@ class JsonAdaptedSessionNote {
      */
     JsonAdaptedSessionNote(SessionNote source) {
         requireNonNull(source);
-        recordedAt = source.getRecordedAt().format(RECORDED_AT_FORMAT);
+        recordedAt = source.getRecordedAt().format(TIMESTAMP_FORMAT);
         text = source.getText();
-        lastEditedAt = source.getLastEditedAt().map(value -> value.format(RECORDED_AT_FORMAT)).orElse(null);
+        lastEditedAt = source.getLastEditedAt().map(value -> value.format(TIMESTAMP_FORMAT)).orElse(null);
     }
 
     /**
@@ -107,7 +108,7 @@ class JsonAdaptedSessionNote {
             throw createMissingFieldException(RECORDED_AT_FIELD);
         }
         try {
-            return OffsetDateTime.parse(recordedAt, RECORDED_AT_FORMAT);
+            return OffsetDateTime.parse(recordedAt, TIMESTAMP_FORMAT);
         } catch (DateTimeParseException exception) {
             throw new IllegalValueException(INVALID_RECORDED_AT_MESSAGE, exception);
         }
@@ -118,7 +119,7 @@ class JsonAdaptedSessionNote {
             return null;
         }
         try {
-            OffsetDateTime parsedLastEditedAt = OffsetDateTime.parse(lastEditedAt, RECORDED_AT_FORMAT);
+            OffsetDateTime parsedLastEditedAt = OffsetDateTime.parse(lastEditedAt, TIMESTAMP_FORMAT);
             if (parsedLastEditedAt.isBefore(modelRecordedAt)) {
                 throw new IllegalValueException(INVALID_LAST_EDITED_AT_MESSAGE);
             }

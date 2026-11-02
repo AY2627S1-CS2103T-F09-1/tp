@@ -109,7 +109,8 @@ public class JsonAdaptedStudentTest {
                 "Mathematics", "Secondary 3", null);
 
         assertEquals(SessionHistory.empty(), student.toModelSessionHistory(LOADED_AT));
-        assertEquals(SessionHistory.empty(), new JsonAdaptedStudent(VALID_STUDENT).toModelSessionHistory(LOADED_AT));
+        assertEquals(SessionHistory.empty(),
+                new JsonAdaptedStudent(VALID_STUDENT).toModelSessionHistory(LOADED_AT));
     }
 
     @Test
@@ -158,8 +159,8 @@ public class JsonAdaptedStudentTest {
                 .map(SessionNote::getText)
                 .toList();
 
-        assertEquals(List.of("Finished algebra worksheet.", "Started algebra worksheet.", "Reviewed indices."),
-                noteTexts);
+        assertEquals(List.of("Finished algebra worksheet.", "Started algebra worksheet.",
+                "Reviewed indices."), noteTexts);
     }
 
     /**
