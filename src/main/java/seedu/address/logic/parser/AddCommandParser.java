@@ -80,8 +80,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
 
         try {
-            argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT,
-                    PREFIX_LEVEL);
+            argMultimap.verifyNoDuplicatePrefixesFor(SUPPORTED_PREFIXES.toArray(Prefix[]::new));
         } catch (ParseException exception) {
             throw new ParseException(withAddFormat(exception.getMessage()), exception);
         }
@@ -106,10 +105,12 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     /**
      * Returns the value of a required {@code prefix} that {@link #verifyCommandShape} has already checked.
-     * Fails fast with {@link java.util.NoSuchElementException} if that precondition is ever broken.
+     *
+     * @throws IllegalStateException If that precondition is broken, which indicates a parser bug.
      */
     private static String getVerifiedValue(ArgumentMultimap argMultimap, Prefix prefix) {
-        return argMultimap.getValue(prefix).orElseThrow();
+        return argMultimap.getValue(prefix).orElseThrow(() -> new IllegalStateException(
+                "Required prefix " + prefix + " has no value after verification"));
     }
 
     /**

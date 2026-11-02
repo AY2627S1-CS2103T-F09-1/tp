@@ -18,6 +18,7 @@ public final class ParentGuardianContact {
     public static final String EMAIL_MESSAGE_CONSTRAINTS =
             "Parent or guardian email addresses must contain one '@' and a domain with at least one dot.";
     private static final String PHONE_CHARACTERS_REGEX = "\\+?[0-9][0-9 -]*";
+    private static final String PHONE_SEPARATOR_REGEX = "[ -]";
     private static final String LOCAL_PHONE_REGEX = "[689][0-9]{7}";
     private static final String SINGAPORE_COUNTRY_CODE = "+65";
     private static final String INTERNATIONAL_PHONE_REGEX = "\\+[1-9][0-9]{7,14}";
@@ -45,7 +46,7 @@ public final class ParentGuardianContact {
      * Returns whether {@code email} is empty or holds a valid email address.
      */
     private static boolean hasValidOptionalEmail(Optional<String> email) {
-        return email.isEmpty() || isValidEmail(email.get());
+        return email.map(ParentGuardianContact::isValidEmail).orElse(true);
     }
 
     /**
@@ -73,7 +74,7 @@ public final class ParentGuardianContact {
      */
     public static String normalizePhone(String phone) {
         requireNonNull(phone);
-        return phone.replaceAll("[ -]", "");
+        return phone.replaceAll(PHONE_SEPARATOR_REGEX, "");
     }
 
     /**

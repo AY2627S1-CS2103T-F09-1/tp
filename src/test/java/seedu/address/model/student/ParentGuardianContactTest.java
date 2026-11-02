@@ -45,20 +45,48 @@ public class ParentGuardianContactTest {
     }
 
     @Test
-    public void isValidPhone() {
+    public void isValidPhone_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> ParentGuardianContact.isValidPhone(null));
+    }
+
+    @Test
+    public void isValidPhone_localNumberDigitBoundaries_acceptsOnlyEightDigits() {
+        assertFalse(ParentGuardianContact.isValidPhone("9123456")); // seven digits
+        assertTrue(ParentGuardianContact.isValidPhone("91234567")); // eight digits
+        assertFalse(ParentGuardianContact.isValidPhone("912345678")); // nine digits
+    }
+
+    @Test
+    public void isValidPhone_localNumberLeadingDigit_acceptsOnlySixEightOrNine() {
+        assertFalse(ParentGuardianContact.isValidPhone("10101010"));
+        assertFalse(ParentGuardianContact.isValidPhone("7123 4567"));
+        assertTrue(ParentGuardianContact.isValidPhone("61234567"));
+        assertTrue(ParentGuardianContact.isValidPhone("81234567"));
+    }
+
+    @Test
+    public void isValidPhone_internationalNumberDigitBoundaries_acceptsEightToFifteenDigits() {
+        assertFalse(ParentGuardianContact.isValidPhone("+1234567")); // seven digits
+        assertTrue(ParentGuardianContact.isValidPhone("+12345678")); // eight digits
+        assertTrue(ParentGuardianContact.isValidPhone("+123456789012345")); // fifteen digits
+        assertFalse(ParentGuardianContact.isValidPhone("+1234567890123456")); // sixteen digits
+    }
+
+    @Test
+    public void isValidPhone_separators_areIgnoredForLengthButMustFollowDigits() {
+        assertTrue(ParentGuardianContact.isValidPhone("9123 4567"));
+        assertTrue(ParentGuardianContact.isValidPhone("+65-9123-4567"));
+        assertFalse(ParentGuardianContact.isValidPhone("+ 9123"));
+        assertFalse(ParentGuardianContact.isValidPhone("+65 9123 4567 8901 23"));
+    }
+
+    @Test
+    public void isValidPhone_tooShortOrInvalidCharacters_returnsFalse() {
         assertFalse(ParentGuardianContact.isValidPhone(""));
         assertFalse(ParentGuardianContact.isValidPhone("12"));
         assertFalse(ParentGuardianContact.isValidPhone("+12"));
         assertFalse(ParentGuardianContact.isValidPhone("+65 91234"));
-        assertFalse(ParentGuardianContact.isValidPhone("10101010"));
-        assertFalse(ParentGuardianContact.isValidPhone("7123 4567"));
-        assertFalse(ParentGuardianContact.isValidPhone("+65 9123 4567 8901 23"));
         assertFalse(ParentGuardianContact.isValidPhone("9123abc"));
-        assertFalse(ParentGuardianContact.isValidPhone("+ 9123"));
-        assertTrue(ParentGuardianContact.isValidPhone("9123 4567"));
-        assertTrue(ParentGuardianContact.isValidPhone("+65-9123-4567"));
-        assertTrue(ParentGuardianContact.isValidPhone("+123456789012345"));
     }
 
     @Test
