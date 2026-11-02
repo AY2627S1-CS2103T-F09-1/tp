@@ -28,7 +28,7 @@ TutorTrack is a **desktop application for private tutors managing a student rost
    <img src="images/Ui.png" alt="TutorTrack with a roster of students and one student's profile open" width="800">
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
-   Some example commands you can try:
+   Some example commands you can try, in order:
 
    * `add n/John p/98765432 sub/Math l/Sec 3` : Adds a student named `John` to TutorTrack.
 
@@ -42,7 +42,7 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 
    * `delete note 1 2` : Shows a confirmation prompt for deleting session note `[2]` from the first student. Enter `delete note 1 2 /confirm` next to complete the deletion.
 
-   * `delete 1` : Shows a confirmation prompt for deleting the first student and the remaining session note. Enter `delete 1 /confirm` next to complete the deletion.
+   * `delete 1` : Shows a confirmation prompt for deleting the first student, together with its session note. Enter `delete 1 /confirm` next to complete the deletion.
 
    * `exit` : Exits the app.
 
@@ -86,7 +86,7 @@ TutorTrack keeps the latest 100 non-blank commands from the current app session,
 
 ### Fixing command errors
 
-When a command cannot run, TutorTrack names the specific problem and does not change the roster, session notes, open profile, or saved data. Recall the command with `Up`, correct it, and press `Enter` again.
+When a command cannot run, TutorTrack names the specific problem and does not change the roster, session notes, open profile, or saved data. The failed command remains in the command box. Correct it and press `Enter` again.
 
 * **Missing or extra parts:** if a required part such as an index, `nt/`, or `n/NAME` is missing, an unknown or repeated parameter is entered, text appears before the first parameter, or more values are entered than the command takes, the error ends with a `Format:` line showing the correct command and an `Example:` line you can adapt. For example, `view 1 2` shows `view takes only one INDEX.` followed by `Format: view INDEX` and `Example: view 1`. Similarly, an `add` command without `n/NAME` shows:<br>
   <img src="images/UiCommandError1.png" alt="Error for an add command without n/NAME, followed by the Format and Example lines" width="500">
