@@ -104,23 +104,20 @@ Here's a (partial) class diagram of the `Logic` component:
 
 The [architecture sequence diagram](#architecture) shows how the main components interact when a student is added. A [session-note deletion sequence](#session-note-deletion-sequence) appears below.
 
-How the `Logic` component works:
+How the `Logic` classes work together when a student is added:
 
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand` or `DeleteSessionNoteCommand`) which is coordinated by the `LogicManager`.
-1. An unconfirmed deletion command resolves its student or session-note target and returns a preview. `LogicManager` retains at most one pending deletion in memory and returns without saving because no model data changed.
-1. `LogicManager` parses the next input before consuming the pending deletion, so malformed input leaves the preview active. A correctly formatted command consumes it. A matching confirmed command must still resolve to the same stable student and, for a session note, the same immutable history snapshot before the applicable model deletion operation can run.
-1. Commands that enter the persistence path and change the address book are saved by `LogicManager`; commands that leave it unchanged, such as `view`, `help`, and `exit`, are not saved. If saving fails, it restores the address book as it was before the command (see [Save-failure rollback](#save-failure-rollback)) and reports the error.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+1. `LogicManager` receives the command text and passes it to `AddressBookParser`, which delegates to `AddCommandParser`.
+1. `AddCommandParser` validates the input and creates an `AddCommand`, a subclass of `Command`.
+1. `LogicManager` executes the command. `AddCommand` checks for a duplicate and adds the student through `Model`.
+1. `LogicManager` saves the changed data through `Storage` and returns a `CommandResult`. If saving fails, it restores the previous data (see [Save-failure rollback](#save-failure-rollback)).
 
-Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
+The class diagram shows the relationships between these classes; the [adding-a-student sequence diagram](#adding-a-student) shows the interaction order in more detail. Other commands may have different flows, such as the preview and confirmation described under [Confirmed deletion](#confirmed-deletion).
 
-<img src="images/ParserClasses.png" width="600"/>
+The following class diagram zooms in on the parser classes involved in an `add` command. It shows their relationships; the explanation below describes how they turn the command text into an `AddCommand`:
 
-How the parsing works:
+<img src="images/ParserClasses.png" width="400"/>
 
-* To parse a command, `AddressBookParser` creates the matching command parser, represented by `XYZCommandParser` in the diagram. For example, `add` uses `AddCommandParser` and `delete` uses `DeleteCommandParser`. The command parser returns an `XYZCommand` (such as `AddCommand` or `DeleteCommand`), which `AddressBookParser` returns as a `Command`.
-* Command parsers such as `AddCommandParser` and `DeleteCommandParser` implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
+For `add`, `AddressBookParser` creates an `AddCommandParser`, which implements the `Parser` interface. `AddCommandParser` uses `ParserUtil` to tokenize the student fields into an `ArgumentMultimap`, checks the values, and creates an `AddCommand`. `CliSyntax` defines the `Prefix` values used to identify fields such as `n/` and `p/`. The other command-specific parsers follow their own validation rules.
 
 ### Model component
 

@@ -1,20 +1,17 @@
 @startuml
 !include style.puml
+!pragma layout smetana
 skinparam arrowThickness 1.1
 skinparam arrowColor LOGIC_COLOR_T4
 skinparam classBackgroundColor LOGIC_COLOR
 
 Class "{abstract}\nCommand" as Command
-Class XYZCommand
-Class EditCommand
-Class EditNoteCommand
+Class AddCommand
 
 package "Parser classes"{
 Class "<<interface>>\nParser" as Parser
 Class AddressBookParser
-Class XYZCommandParser
-Class EditCommandParser
-Class EditNoteCommandParser
+Class AddCommandParser
 Class CliSyntax
 Class ParserUtil
 Class ArgumentMultimap
@@ -22,33 +19,19 @@ Class ArgumentTokenizer
 Class Prefix
 }
 
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> AddressBookParser
 
-AddressBookParser .down.> XYZCommandParser: <<create>>
-AddressBookParser .down.> EditCommandParser: <<create>>
-AddressBookParser .down.> EditNoteCommandParser: <<create>>
+AddressBookParser .down.> AddCommandParser: <<create>>
 
-XYZCommandParser ..> XYZCommand : <<create>>
-EditCommandParser ..> EditCommand : <<create>>
-EditNoteCommandParser ..> EditNoteCommand : <<create>>
+AddCommandParser ..> AddCommand : <<create>>
 AddressBookParser ..> Command : <<use>>
-XYZCommandParser .up.|> Parser
-EditCommandParser .up.|> Parser
-EditNoteCommandParser .up.|> Parser
-XYZCommandParser ..> ArgumentMultimap
-EditCommandParser ..> ArgumentMultimap
-EditNoteCommandParser ..> ArgumentMultimap
-XYZCommandParser ..> ArgumentTokenizer
-EditCommandParser ..> ArgumentTokenizer
-EditNoteCommandParser ..> ArgumentTokenizer
+AddCommandParser .up.|> Parser
+AddCommandParser ..> ArgumentMultimap
 ArgumentTokenizer .left.> ArgumentMultimap
-XYZCommandParser ..> CliSyntax
+AddCommandParser ..> CliSyntax
 CliSyntax ..> Prefix
-XYZCommandParser ..> ParserUtil
+AddCommandParser ..> ParserUtil
 ParserUtil .down.> Prefix
+ParserUtil ..> ArgumentTokenizer
 ArgumentTokenizer .down.> Prefix
-XYZCommand -up-|> Command
-EditCommand -up-|> Command
-EditNoteCommand -up-|> Command
+AddCommand -up-|> Command
 @enduml
