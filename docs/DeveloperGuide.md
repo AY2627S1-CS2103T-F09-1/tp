@@ -95,22 +95,34 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <img src="images/LogicClassDiagram.png" width="600"/>
 
-The [architecture sequence diagram](#architecture) shows how the main components interact when a student is added. The [session-note deletion activity diagrams](#session-note-deletion-activities) show the preview and confirmation flows.
+The sequence diagram below shows the interactions within the `Logic` component, taking the `execute("add ...")` API call as an example. `Model` and `Storage` are treated as black boxes.
 
-How the `Logic` classes work together when a student is added:
+<img src="images/AddSequenceDiagram.png" width="570" />
 
-1. `LogicManager` receives the command text and passes it to `AddressBookParser`, which delegates to `AddCommandParser`.
-1. `AddCommandParser` validates the input and creates an `AddCommand`, a subclass of `Command`.
-1. `LogicManager` executes the command. `AddCommand` checks for a duplicate and adds the student through `Model`.
-1. `LogicManager` saves the changed data through `Storage` and returns a `CommandResult`. If saving fails, it restores the previous data (see [Save-failure rollback](#save-failure-rollback)).
+How the `Logic` component works:
 
-The class diagram shows the relationships between these classes; the [adding-a-student activity diagram](#adding-a-student) shows the flow in more detail. Other commands may have different flows, such as the preview and confirmation described under [Confirmed deletion](#confirmed-deletion).
+1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `AddCommandParser`) and uses it to parse the command. Commands without arguments, such as `help` and `exit`, are created directly by `AddressBookParser`.
+1. This results in a `Command` object (more precisely, an object of one of its subclasses, e.g., `AddCommand`), which is executed by the `LogicManager`.
+1. The command can communicate with the `Model` when it is executed (e.g., to check for a duplicate and add a student).
+1. The result of the command execution is encapsulated as a `CommandResult` object, which is returned from `Logic` after any changed data is saved through `Storage`. If saving fails, `LogicManager` restores the previous data (see [Save-failure rollback](#save-failure-rollback)).
 
-The following class diagram zooms in on the parser classes involved in an `add` command. It shows their relationships; the explanation below describes how they turn the command text into an `AddCommand`:
+Deletions differ: `LogicManager` handles their preview and confirmation itself, as described under [Confirmed deletion](#confirmed-deletion).
+
+The sequence diagram below shows how the `add` command is parsed:
+
+<img src="images/ParseAddCommandSequenceDiagram.png" width="600" />
+
+<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `AddCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
+</div>
+
+The following partial class diagram expands the parser classes, using `AddCommandParser` as a representative example. `AddCommandParser` uses `ParserUtil` to tokenize the student fields into an `ArgumentMultimap`, with `CliSyntax` defining the `Prefix` values (such as `n/` and `p/`) that identify each field. It then validates the values and constructs an `AddCommand`.
 
 <img src="images/ParserClasses.png" width="400"/>
 
-For `add`, `AddressBookParser` creates an `AddCommandParser`, which implements the `Parser` interface. `AddCommandParser` uses `ParserUtil` to tokenize the student fields into an `ArgumentMultimap`, checks the values, and creates an `AddCommand`. `CliSyntax` defines the `Prefix` values used to identify fields such as `n/` and `p/`. The other command-specific parsers follow their own validation rules.
+How the parsing works:
+
+* For commands with a dedicated parser, `AddressBookParser` creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the helper classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`), which `AddressBookParser` returns as a `Command` object.
+* All `XYZCommandParser` classes, such as `AddCommandParser` and `NoteCommandParser`, implement the `Parser` interface so that they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
 

@@ -1,0 +1,35 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+mainframe **sd** Parse add command
+
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":AddCommandParser" as AddCommandParser LOGIC_COLOR
+participant "c:AddCommand" as AddCommand LOGIC_COLOR
+
+[-> AddressBookParser : parseCommand("add ...")
+activate AddressBookParser
+
+create AddCommandParser
+AddressBookParser -> AddCommandParser
+activate AddCommandParser
+AddCommandParser --> AddressBookParser
+deactivate AddCommandParser
+
+AddressBookParser -> AddCommandParser : parse(arguments)
+activate AddCommandParser
+
+create AddCommand
+AddCommandParser -> AddCommand
+activate AddCommand
+AddCommand --> AddCommandParser
+deactivate AddCommand
+
+AddCommandParser --> AddressBookParser : c
+deactivate AddCommandParser
+destroy AddCommandParser
+
+[<-- AddressBookParser : c
+deactivate AddressBookParser
+@enduml
