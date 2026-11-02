@@ -1,0 +1,22 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+start
+:Split input into command word
+and arguments;
+if () then ([input is blank])
+    :Report empty command
+    and list commands;
+elseif () then ([command word is known])
+    :Create the command, through
+    its parser if it takes arguments;
+elseif () then ([known when case is ignored])
+    :Report that the command word
+    must be lowercase;
+else ([else])
+    :Report unknown command
+    and list commands;
+endif
+stop
+@enduml

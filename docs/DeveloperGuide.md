@@ -184,9 +184,58 @@ The `seedu.address.commons` package contains cross-cutting services rather than 
 
 ## **Implementation**
 
-This section describes some noteworthy details on how certain features are implemented. It first explains how students are stored and identified, how they are displayed, and how session notes are handled, and then describes each command in turn.
+This section describes noteworthy details on how certain features are implemented, grouped by feature. It starts with how commands are parsed, then covers student records, the roster and profile display, session notes, confirmed deletion, and save-failure rollback, and ends with a proposed feature.
 
-### Student identity
+### Parsing commands and reporting errors
+
+Every command passes through `AddressBookParser`, which chooses the command's parser and reports input mistakes before anything runs. The [Logic component](#logic-component) shows how an `add` command is parsed; this section covers the routing and error reporting that all commands share.
+
+The activity diagram below shows how `AddressBookParser` handles the command word.
+
+<img src="images/CommandRoutingActivityDiagram.png" width="700" />
+
+#### TutorTrack command routing
+
+`AddressBookParser` is the command-routing boundary:
+
+* It registers TutorTrack's `add`, `edit`, `edit note`, `view`, `note`, `delete`, `help`, and `exit` routes. Unsupported legacy commands receive the standard unknown-command error.
+* After `edit`, it sends an exact lowercase `note` target to `EditNoteCommandParser` and any other arguments to `EditCommandParser`. A `note` target in another case, or a near-miss such as `notes`, is rejected by `AddressBookParser` itself with a targeted error and the `edit note` format, so a mistyped note edit is not parsed as a student edit.
+* `AddCommandParser` and `EditCommandParser` accept only documented fields. Other prefix-like text, including the inherited `a/` and `t/`, is not treated as a parameter, so a name such as `Raj a/l Kumar` stays intact. Legacy person types remain only for persisted-data compatibility, not as part of the TutorTrack command surface.
+
+#### Command error messages
+
+Each rejected command names one specific problem so that the user can correct it without rereading the User Guide. The parser separates errors by responsibility:
+
+* **Structure errors** describe the shape of the command: a missing index or prefix, an unknown or repeated prefix, text before the first prefix, or extra values. Parsers build these with `Messages#withFormat`, which appends a `Format:` line with the command's one-line `COMMAND_FORMAT` and an `Example:` line with its `COMMAND_EXAMPLE`, for example `Format: view INDEX` and `Example: view 1`.
+* **Value errors** describe one value that breaks a rule, such as a short phone number or the index `0`. They show only that rule, so the problem stays visible in the result display.
+* **Model-state errors** describe a well-formed command that does not fit the current data, such as an index past the end of the roster or an empty roster. They say what to do next instead of repeating the format.
+
+Index handling is shared so every command reports index errors consistently:
+
+* `ParserUtil#parseOnlyStudentIndex` checks that the arguments hold exactly one `INDEX`, and reports a missing or repeated value as a structure error. `view`, `note`, and `edit` use it.
+* `ParserUtil#parseStudentIndex` and `ParserUtil#parseNoteNumber` report a value that is not a positive whole number, or that is above `Integer.MAX_VALUE`, as a value error named after the placeholder in the format, such as `STUDENT_INDEX` or `NOTE_NUMBER`.
+* `Command#getRosterEntry` resolves an index against the current roster for every index-based command, and reports an empty roster or the valid range `1` to `N`.
+
+Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive. Prefix-like text in another case stays part of the value unless it occurs where the parser must identify a keyword; the parser then reports a targeted lowercase error. This single accepted form keeps command routing predictable.
+
+Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. If an unknown command like `sort` is entered, `AddressBookParser` lists all the available commands. Otherwise, a word that matches a valid command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
+
+**Design considerations:**
+
+**Aspect: How a command word typed in another case is handled**
+
+* **Accept only lowercase, with a targeted error (current choice):** `NOTE` is rejected with a message naming `note`.
+  * Pros: One accepted form keeps routing predictable, and the error tells the user the exact fix.
+  * Cons: A user who types the wrong case must retype the command.
+* **Accept any case:** `NOTE` would run `note`.
+  * Pros: Fewer rejected commands.
+  * Cons: Prefixes, the `note` target, and `/confirm` would need the same rule, or the case rules would differ between parts of a command.
+
+### Student records
+
+Each student is an immutable `Student` with a stable `StudentId`. `add` and `edit` share field parsing and validation, and one identity rule decides duplicates for commands and stored data alike.
+
+#### Student identity
 
 TutorTrack keeps identity rules in immutable domain values so command parsing and storage cannot disagree:
 
@@ -199,6 +248,8 @@ The command and storage layers therefore delegate normalization and validation t
 
 **Design considerations:**
 
+**Aspect: How a command identifies its target student**
+
 * **Stable `StudentId` (current choice):** Commands resolve the displayed index once and then use the stable ID, so sorting cannot redirect the operation and histories can remain beside `Student`.
   * Pros: Keeps identity stable across edits, reloads, and profile refreshes; supports safe cross-context references.
   * Cons: Adds a persisted field and requires deterministic migration for older records.
@@ -209,18 +260,48 @@ The command and storage layers therefore delegate normalization and validation t
   * Pros: Avoids deriving IDs from user data.
   * Cons: Older data would lose identity or need a destructive one-time migration; deterministic derivation keeps reload behavior compatible.
 
-### Student roster contract and integration
+#### Adding a student
+
+The activity diagram below shows the successful `add` path across the components. `AddressBookParser` delegates to `AddCommandParser`, `AddCommand` checks duplicate identity through the model, and `LogicManager` saves only after the model changes. Invalid, missing, repeated, or unsupported parameters fail before mutation; other prefix-like text remains in a value when the parser treats it as ordinary text.
+
+A duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
+
+![Student add activity diagram](images/AddStudentActivityDiagram.png)
+
+The class diagrams in [Logic](#logic-component), [Model](#model-component), [Storage](#storage-component), and [UI](#ui-component) show the corresponding relationships. A newly added student appears in `StudentRosterPanel` as a `StudentRosterCard`; `JsonAdaptedStudent` stores the student when the address book is saved.
+
+#### Student editing
+
+`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. It requires one positive roster index and at least one edit, rejects repeated or unsupported fields, and applies the same value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization rule, while other prefix-like text remains in its field value.
+
+An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
+
+The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile.
+
+![Student edit sequence diagram](images/EditStudentSequenceDiagram.png)
+
+`EditCommand#execute` resolves the displayed index once through `Model#getStudentRoster()` and then works with the selected student's stable `StudentId`. It reads the immutable roster record through `Model#getStudent(StudentId)` rather than the presentation-facing `StudentProfile`, then composes a replacement immutable `Student` that retains every omitted field and the original ID. `Model#findConflictingStudent(StudentId, Student)` delegates to the roster's single duplicate-conflict lookup so the command can format a useful error without reproducing identity rules.
+
+`Model#setStudent(StudentId, Student)` uses the same lookup authoritatively while also checking that the target exists and the replacement retains its ID. `AddressBook` replaces only the roster entry, so the session history keyed by the same ID is untouched.
+
+Changing a name or phone may reorder the roster. A successful `edit` returns the target's stable ID, so `MainWindow` opens the updated profile and highlights the correct card at its new index. `LogicManager` uses its normal persistence snapshot and rollback path; a failed save restores the original student and session history. Edit command string representations and command-routing logs omit supplied field values because contact and lesson context can contain private information.
+
+### Roster and profile display
+
+TutorTrack shows a sorted roster beside the selected student's profile. Both are immutable snapshots that `MainWindow` requests through `Logic` after each successful command, and commands identify students by stable `StudentId`, so a reordered roster never changes which profile is shown.
+
+#### Student roster contract and integration
 
 `Model#getStudentRoster()` is the public projection boundary between the roster domain and JavaFX:
 
 * It returns an immutable `StudentRoster` snapshot with one-based indices and immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and note count.
-* `StudentRoster#BY_NORMALIZED_NAME` sorts by accent-insensitive name, natural numeric order, case-insensitive name, normalized parent or guardian phone, and stable ID as the final tie-breaker. Thus `Kid 2` precedes `Kid 10`, and equal-looking records still have deterministic indices.
+* `StudentNameComparator` sorts by accent-insensitive name, natural numeric order, case-insensitive name, normalized parent or guardian phone, and stable ID as the final tie-breaker. Thus `Kid 2` precedes `Kid 10`, and equal-looking records still have deterministic indices.
 * Note counts are projection data from each student's `SessionHistory`; the roster context does not own note storage.
 * `Model#getStudent`, `Model#findConflictingStudent`, and `Model#setStudent` provide domain operations for editing without exposing mutable roster state or replacing the student's stable ID.
 
 `MainWindow` creates the roster panel from a snapshot at launch and refreshes it after each successful command. `RosterListingIntegrationTest` protects the boundary by checking persisted reloads, normalized ordering, one-based indices, stable IDs, and projected note counts.
 
-### Student roster UI
+#### Student roster UI
 
 `StudentRosterPanel` renders the immutable projection without owning roster rules:
 
@@ -228,17 +309,23 @@ The command and storage layers therefore delegate normalization and validation t
 * A width change refreshes virtualized cells so wrapped cards recalculate their height and remain visible in a narrow pane. An empty snapshot replaces the list with an actionable message explaining how to use `add`.
 * Profile selection is keyed by stable `StudentId`, not the displayed index. The dedicated `profile-selected` state is separate from temporary pointer or keyboard focus, and CSS selectors are scoped to `student-roster-list` so note cards cannot inherit roster hover styling.
 
-### Student profile projection
+#### Student profile model
 
 The profile feature separates temporary roster selection from stable student identity. The command resolves the displayed index once, while later profile retrieval and UI refreshes use the student's `StudentId`.
-
-#### Student profile model
 
 `Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
 
 <img src="images/StudentProfileClassDiagram.png" width="700" />
 
 `Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary.
+
+#### View command execution
+
+The sequence below shows how `view INDEX` resolves a temporary position in the sorted roster to a stable `StudentId`. It shows the detailed interactions inside the Logic component while treating UI and Model as black boxes.
+
+<img src="images/ViewCommandSequenceDiagram.png" width="950" />
+
+`ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks through `Command#getRosterEntry` that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
 
 #### Profile display and refresh
 
@@ -256,7 +343,22 @@ Each `SessionNoteCard` shows the recorded time, and the latest edit time if any,
 
 `MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
 
-### Session note types
+**Design considerations:**
+
+**Aspect: How the UI stays up to date**
+
+* **Request fresh snapshots after each successful command (current choice):** `MainWindow` asks `Logic` for a new roster and profile after every successful command.
+  * Pros: The UI receives immutable projections and never observes mutable model collections.
+  * Cons: The roster and profile are rebuilt after every successful command, even one that changes no data.
+* **Observe model lists, as AB3 does:** The UI would listen for changes to observable lists in the model.
+  * Pros: Updates happen without the UI asking.
+  * Cons: The UI would depend on mutable model state, and the profile, which combines a student with its session history, has no single list to observe.
+
+### Session notes
+
+A tutor records, edits, and deletes short notes about each student's lessons. Notes are kept per student in an immutable `SessionHistory`, and commands select a note by its chronological number.
+
+#### Session note types
 
 Session notes live in `seedu.address.model.session`, separate from the student roster because the roster consumes note counts but does not own note data:
 
@@ -269,7 +371,7 @@ The object diagram below shows a student's `SessionHistory` with three notes. Th
 
 <img src="images/SessionHistoryObjectDiagram.png" width="750" />
 
-### Session note model and persistence
+#### Session note model and persistence
 
 The [Model class diagram](#model-component) shows where session-note classes sit. `AddressBook` stores a `StudentSessionHistories` map from `StudentId` to `SessionHistory` beside the student list, so adding or editing a note does not replace `Student`, change student equality, or alter duplicate detection.
 
@@ -289,67 +391,18 @@ Notes are nested in the student record so the file remains hand-editable while t
 
 `JsonAdaptedSessionNote` writes an offset timestamp with `ISO_OFFSET_DATE_TIME` and rebuilds every note through `SessionNote`. A missing note field, timestamp without an offset, future timestamp, invalid text, or empty entry is a load error. A missing `sessionNotes` field means an empty history, keeping data files created before session notes were introduced loadable; all other failures use the normal data-file recovery path.
 
-### TutorTrack command routing
+**Design considerations:**
 
-`AddressBookParser` is the command-routing boundary:
+**Aspect: Where session histories are stored**
 
-* It registers TutorTrack's `add`, `edit`, `edit note`, `view`, `note`, `delete`, `help`, and `exit` routes. Unsupported legacy commands receive the standard unknown-command error.
-* It sends the exact `note` target and note-like misspellings after `edit` to `EditNoteCommandParser`; other edit arguments go to `EditCommandParser`, so a malformed student edit receives the correct usage.
-* `AddCommandParser` and `EditCommandParser` accept only documented fields. Other prefix-like text, including the inherited `a/` and `t/`, is not treated as a parameter, so a name such as `Raj a/l Kumar` stays intact. Legacy person types remain only for persisted-data compatibility, not as part of the TutorTrack command surface.
+* **Beside the student list, keyed by `StudentId` (current choice):** `AddressBook` holds a `StudentSessionHistories` map next to its students.
+  * Pros: Adding, editing, or deleting a note does not replace `Student`, change student equality, or affect duplicate detection.
+  * Cons: The model must keep histories in step with students, for example by removing both together when a student is deleted.
+* **Inside each `Student`:** Each student would own its list of notes.
+  * Pros: One object holds everything about a student, matching how the data file nests `sessionNotes` in each student record.
+  * Cons: Every note change would replace the `Student`, and note data would take part in student equality.
 
-### Command error messages
-
-Each rejected command names one specific problem so that the user can correct it without rereading the User Guide. The parser separates errors by responsibility:
-
-* **Structure errors** describe the shape of the command: a missing index or prefix, an unknown or repeated prefix, text before the first prefix, or extra values. Parsers build these with `Messages#withFormat`, which appends a `Format:` line with the command's one-line `COMMAND_FORMAT` and an `Example:` line with its `COMMAND_EXAMPLE`, for example `Format: view INDEX` and `Example: view 1`.
-* **Value errors** describe one value that breaks a rule, such as a short phone number or the index `0`. They show only that rule, so the problem stays visible in the result display.
-* **Model-state errors** describe a well-formed command that does not fit the current data, such as an index past the end of the roster or an empty roster. They say what to do next instead of repeating the format.
-
-Index handling is shared so every command reports index errors consistently:
-
-* `ParserUtil#parseOnlyStudentIndex` checks that the arguments hold exactly one `INDEX`, and reports a missing or repeated value as a structure error. `view`, `note`, and `edit` use it.
-* `ParserUtil#parseStudentIndex` and `ParserUtil#parseNoteNumber` report a value that is not a positive whole number, or that is above `Integer.MAX_VALUE`, as a value error named after the placeholder in the format, such as `STUDENT_INDEX` or `NOTE_NUMBER`.
-* `Command#getRosterEntry` resolves an index against the current roster for every index-based command, and reports an empty roster or the valid range `1` to `N`.
-
-Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive. Prefix-like text in another case stays part of the value unless it occurs where the parser must identify a keyword; the parser then reports a targeted lowercase error. This single accepted form keeps command routing predictable.
-
-Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. If an unknown command like `sort` is entered, `AddressBookParser` lists all the available commands. Otherwise, a word that matches a valid command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
-
-### Adding a student
-
-The activity diagram below shows the successful `add` path across the components. `AddressBookParser` delegates to `AddCommandParser`, `AddCommand` checks duplicate identity through the model, and `LogicManager` saves only after the model changes. Invalid, missing, repeated, or unsupported parameters fail before mutation; other prefix-like text remains in a value when the parser treats it as ordinary text.
-
-A duplicate produces a command error. If saving fails, `LogicManager` restores its pre-command snapshot. After a successful save, the UI refreshes the roster.
-
-![Student add activity diagram](images/AddStudentActivityDiagram.png)
-
-The class diagrams in [Logic](#logic-component), [Model](#model-component), [Storage](#storage-component), and [UI](#ui-component) show the corresponding relationships. A newly added student appears in `StudentRosterPanel` as a `StudentRosterCard`; `JsonAdaptedStudent` stores the student when the address book is saved.
-
-### Student editing
-
-`edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. It requires one positive roster index and at least one edit, rejects repeated or unsupported fields, and applies the same value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization rule, while other prefix-like text remains in its field value.
-
-An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
-
-The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile.
-
-![Student edit sequence diagram](images/EditStudentSequenceDiagram.png)
-
-`EditCommand#execute` resolves the displayed index once through `Model#getStudentRoster()` and then works with the selected student's stable `StudentId`. It reads the immutable roster record through `Model#getStudent(StudentId)` rather than the presentation-facing `StudentProfile`, then composes a replacement immutable `Student` that retains every omitted field and the original ID. `Model#findConflictingStudent(StudentId, Student)` delegates to the roster's single duplicate-conflict lookup so the command can format a useful error without reproducing identity rules.
-
-`Model#setStudent(StudentId, Student)` uses the same lookup authoritatively while also checking that the target exists and the replacement retains its ID. `AddressBook` replaces only the roster entry, so the session history keyed by the same ID is untouched.
-
-Changing a name or phone may reorder the roster. A successful `edit` returns the target's stable ID, so `MainWindow` opens the updated profile and highlights the correct card at its new index. `LogicManager` uses its normal persistence snapshot and rollback path; a failed save restores the original student and session history. Edit command string representations and command-routing logs omit supplied field values because contact and lesson context can contain private information.
-
-### View command execution
-
-The sequence below shows how `view INDEX` resolves a temporary position in the sorted roster to a stable `StudentId`. It shows the detailed interactions inside the Logic component while treating UI and Model as black boxes.
-
-<img src="images/ViewCommandSequenceDiagram.png" width="950" />
-
-`ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks through `Command#getRosterEntry` that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
-
-### Session note command
+#### Session note command
 
 `note INDEX nt/NOTE` follows the same parser boundary as other commands:
 
@@ -358,7 +411,7 @@ The sequence below shows how `view INDEX` resolves a temporary position in the s
 * `NoteCommand#execute` resolves the displayed index to a `StudentId`, calls `Model#addSessionNote`, and lets `LogicManager` save the changed address book. The result carries the ID so `MainWindow` refreshes the count and opens the updated profile.
 * `NoteCommand#toString` omits note text because lesson notes may contain private details.
 
-### Edit note command
+#### Edit note command
 
 The `edit note` command replaces the text of one existing session note without changing when it was recorded. Its format is `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`, where `STUDENT_INDEX` selects a student in the current roster and `NOTE_NUMBER` selects a note in that student's displayed chronological numbering.
 
@@ -374,9 +427,16 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 **Design considerations:**
 
+**Aspect: How editing treats the note's recorded time**
+
 * **Preserve the original timestamp (current choice):** Editing corrects the note's text while retaining its lesson context and chronological position. The replacement is reconstructed with the old `recordedAt` value rather than being treated as a new lesson note.
-* **Delete and add a new note:** This would reuse existing operations, but it would assign a new timestamp and could move the edited note in the history. It would also make an edit look like a second lesson, so it is not suitable.
-* **Use a persistent note ID:** A stored ID would require a storage-schema and migration change. The current chronological note number is sufficient when paired with the current roster context and the immutable history used for the edit operation.
+  * Pros: The note keeps its number and its place in the history, and an edit is not mistaken for a new lesson.
+  * Cons: Needs its own model operation instead of reusing the add and delete operations.
+* **Delete and add a new note:** The edit would remove the old note and record the new text as a new note.
+  * Pros: Reuses existing operations.
+  * Cons: Assigns a new timestamp, can move the edited note in the history, and makes an edit look like a second lesson.
+
+Selecting a note by its chronological number rather than a persistent note ID is discussed under [Confirmed deletion](#confirmed-deletion).
 
 ### Confirmed deletion
 
@@ -426,6 +486,8 @@ Neither preview changes model or saved data. A rejected confirmation keeps the d
 
 **Design considerations:**
 
+**Aspect: How a deletion is confirmed**
+
 * **Trailing `/confirm` flag (current choice):** The confirmation repeats the complete destructive command and target in the same keyboard-first workflow.
   * Pros: Requires no extra command vocabulary, lets the parser reject malformed placement, and keeps the exact target visible.
   * Cons: The tutor must retype or recall the complete command.
@@ -435,9 +497,19 @@ Neither preview changes model or saved data. A rejected confirmation keeps the d
 * **JavaFX confirmation dialog:** A modal dialog would confirm the pending operation outside the command path.
   * Pros: Makes the destructive action visually prominent.
   * Cons: Duplicates state, introduces mouse-oriented workflow, and makes parser and end-to-end testing less representative.
+**Aspect: How a session note is selected**
+
+* **Chronological note number (current choice):** A note is selected by its displayed number, oldest first.
+  * Pros: Needs no storage-schema change, and the numbers match what the profile shows.
+  * Cons: Numbers are reassigned after a deletion, so a confirmation must be checked against the history it previewed.
 * **Persistent session-note IDs:** A stored ID would replace chronological note selectors.
   * Pros: Gives each note a durable selector.
   * Cons: Requires a schema and migration change; the current immutable-history binding already makes stale display numbers fail safely.
+**Aspect: Where pending deletions are managed**
+
+* **One pending-deletion slot in `LogicManager` (current choice):** Student and note deletions share a single pending state.
+  * Pros: Both deletion types share one save and rollback path, and only one confirmation can be pending at a time.
+  * Cons: `LogicManager` holds state specific to deletions.
 * **Separate student and note coordinators:** Each deletion type would own its preview and confirmation lifecycle.
   * Pros: Keeps the two command classes independent.
   * Cons: Duplicates pending-state, matching, save, and rollback logic; one pending-deletion slot already prevents ambiguous confirmations.
@@ -463,6 +535,8 @@ Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying th
 
 **Design considerations:**
 
+**Aspect: How the model is restored after a failed save**
+
 * **Snapshot restore in `LogicManager` (current choice):** `LogicManager` copies the address book before persistence-path commands and restores it when saving fails.
   * Pros: Covers current and future persisted commands in one place while allowing non-mutating previews to opt out.
   * Cons: Copies and compares the address book for commands that ultimately do not change it.
@@ -484,7 +558,6 @@ The proposed design keeps archived students in the same `AddressBook` and data f
 The sequence below shows the proposed boundary interactions. It deliberately omits UI controls and persistence DTO details; the design question is how both operations preserve the stable ID and use the existing save path.
 
 <img src="images/StudentArchivingSequenceDiagram.png" width="760" />
-
 
 --------------------------------------------------------------------------------------------------------------------
 
