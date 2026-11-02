@@ -1,14 +1,20 @@
 package seedu.address.commons.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.testutil.LogRecorder;
 import seedu.address.testutil.SerializableTestClass;
 import seedu.address.testutil.TestUtil;
 
@@ -66,6 +72,38 @@ public class JsonUtilTest {
                 .readJsonFile(SERIALIZATION_FILE, SerializableTestClass.class).orElseThrow();
 
         assertEquals(SerializableTestClass.getNameTestValue(), serializableTestClass.getName());
+    }
+
+    @Test
+    public void readJsonFile_unquotedValue_logsLocationWithoutFileContents() throws IOException {
+        String syntheticValue = "SyntheticNoteText";
+        FileUtil.writeToFile(SERIALIZATION_FILE, "{\n  \"name\": " + syntheticValue + "\n}");
+
+        String warning = captureReadWarning(SERIALIZATION_FILE);
+
+        assertFalse(warning.contains(syntheticValue));
+        assertTrue(warning.contains("line 2, column "));
+    }
+
+    @Test
+    public void readJsonFile_fileInHomeFolderCannotBeRead_logsDisplayPathOnly() throws IOException {
+        Path directory = TestUtil.getFilePathInSandboxFolder("directoryInsteadOfFile");
+        Files.createDirectories(directory);
+
+        String warning = captureReadWarning(directory);
+
+        assertTrue(warning.contains(HomeFolder.toDisplayPath(directory).toString()));
+        assertFalse(warning.contains(directory.toAbsolutePath().toString()));
+    }
+
+    /**
+     * Returns the last message logged while reading {@code file}, which must fail to load.
+     */
+    private String captureReadWarning(Path file) {
+        List<String> messages = LogRecorder.captureMessages(JsonUtil.class, () ->
+                assertThrows(DataLoadingException.class, () ->
+                        JsonUtil.readJsonFile(file, SerializableTestClass.class)));
+        return messages.get(messages.size() - 1);
     }
 
     //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()

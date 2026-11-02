@@ -85,19 +85,20 @@ public class MainApp extends Application {
      * An empty address book will be used instead if {@code storage}'s address book is not found or cannot be read.
      */
     Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
-        logger.info("Using data file : " + storage.getAddressBookFilePath());
+        Path dataFilePath = HomeFolder.toDisplayPath(storage.getAddressBookFilePath());
+        logger.info("Using data file : " + dataFilePath);
 
         Optional<ReadOnlyAddressBook> addressBookOptional;
         ReadOnlyAddressBook initialData;
         try {
             addressBookOptional = storage.readAddressBook();
             if (addressBookOptional.isEmpty()) {
-                logger.info("No data file found at " + storage.getAddressBookFilePath()
+                logger.info("No data file found at " + dataFilePath
                         + ". Starting with an empty roster; the file is created when the first change is saved.");
             }
             initialData = addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
-            logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
+            logger.warning("Data file at " + dataFilePath + " could not be loaded."
                     + " Will be starting with an empty roster.");
             dataLoadErrorMessage = createDataLoadErrorMessage(storage);
             initialData = new AddressBook();
@@ -125,7 +126,7 @@ public class MainApp extends Application {
      * reading from the file.
      */
     protected UserPrefs initPrefs(JsonUserPrefsStorage storage) {
-        Path prefsFilePath = storage.getUserPrefsFilePath();
+        Path prefsFilePath = HomeFolder.toDisplayPath(storage.getUserPrefsFilePath());
         logger.info("Using preference file : " + prefsFilePath);
 
         UserPrefs initializedPrefs;

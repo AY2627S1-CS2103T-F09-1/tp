@@ -29,12 +29,14 @@ import org.junit.jupiter.api.io.TempDir;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.session.SessionHistory;
 import seedu.address.model.session.SessionNote;
+import seedu.address.testutil.LogRecorder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -78,6 +80,20 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void readAddressBook_illegalValueInHomeFolder_logsDisplayPath() {
+        Path dataFile = TEST_DATA_FOLDER.resolve("invalidPersonAddressBook.json");
+
+        List<String> logMessages = LogRecorder.captureMessages(JsonAddressBookStorage.class, () ->
+                Assertions.assertThrows(DataLoadingException.class, () ->
+                        new JsonAddressBookStorage(dataFile).readAddressBook()));
+
+        assertTrue(logMessages.stream()
+                .anyMatch(message -> message.contains(HomeFolder.toDisplayPath(dataFile).toString())));
+        assertTrue(logMessages.stream()
+                .noneMatch(message -> message.contains(dataFile.toAbsolutePath().toString())));
     }
 
     @Test

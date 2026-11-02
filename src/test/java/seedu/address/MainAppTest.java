@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.HomeFolder;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -30,6 +31,7 @@ import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
 import seedu.address.storage.StorageManager;
 import seedu.address.testutil.LogRecorder;
+import seedu.address.testutil.TestUtil;
 
 public class MainAppTest {
 
@@ -158,6 +160,20 @@ public class MainAppTest {
                 + "\"subject\":\"English\",\"currentLevel\":\"P5\"}]}\n";
 
         assertStartsEmptyAndPreservesFileInBackup(storage, invalidData);
+    }
+
+    @Test
+    public void initModelManager_dataFileInHomeFolder_logsDisplayPath() {
+        Path dataFile = TestUtil.getFilePathInSandboxFolder("missingDataFile.json");
+        Storage storage = new StorageManager(new JsonAddressBookStorage(dataFile),
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
+
+        List<String> logMessages = LogRecorder.captureMessages(MainApp.class, () ->
+                new MainApp().initModelManager(storage, new UserPrefs()));
+
+        assertTrue(logMessages.contains("Using data file : " + HomeFolder.toDisplayPath(dataFile)));
+        assertTrue(logMessages.stream()
+                .noneMatch(message -> message.contains(dataFile.toAbsolutePath().toString())));
     }
 
     @Test
