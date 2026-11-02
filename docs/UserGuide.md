@@ -71,7 +71,8 @@ TutorTrack is a **desktop application for private tutors managing a student rost
 * Extraneous parameters for commands that take no parameters, such as `help` and `exit`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
+* A tab or line break in text you paste into the command box becomes a space, so a command or note copied across several lines arrives on one line with its words still apart.<br>
+  For example, pasting `note 1 nt/First line` and `Second line` on two lines enters `note 1 nt/First line Second line`.
 
 </div>
 
@@ -175,7 +176,8 @@ Format: `note INDEX nt/NOTE`
 
 * `INDEX` is the student's number in the currently displayed roster. It must be a positive whole number, such as 1, 2, or 3.
 * `NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed. A note made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty.
-* An empty note shows `Session note is empty. Enter the note text after nt/.` A note that is too long reports its length, for example `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.` A note containing a tab or line break shows `Session note contains a tab, line break or other non-printable character. Enter the note on one line without them.`
+* An empty note shows `Session note is empty. Enter the note text after nt/.` A note that is too long reports its length, for example `Session note has 501 characters, more than the 500-character limit. Shorten it to 500 characters or fewer.`
+* If you paste a note that contains tabs or line breaks, each one becomes a space, so `Line one`, a tab and `tabbed` are saved as `Line one tabbed`. Two line breaks in a row, as around a blank line, leave two spaces.
 * Put a space between `INDEX` and `nt/`. `note 1nt/Reviewed` shows `Put a space before nt/, after the student INDEX.`, and other text after the index, as in `note 1 hello nt/Reviewed`, shows `Unexpected text before the first parameter: hello.`
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside a note is saved as part of the note.
 * `nt/` must be typed in lowercase. If it is typed in another case, as in `note 1 NT/Reviewed factorisation.`, TutorTrack shows `Parameter prefixes must be typed in lowercase: NT/ should be nt/.` and does not add the note.
@@ -206,13 +208,14 @@ Format: `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`
 * `STUDENT_INDEX` is the student's number in the currently displayed roster.
 * `NOTE_NUMBER` is the number shown beside the note in the student's profile. The oldest note is `[1]`.
 * `NEW_NOTE` must be 1 to 500 characters on one line. Spaces at the start and end are removed; spaces inside the note are kept as typed. A note made only of invisible characters, such as non-breaking or zero-width spaces, counts as empty.
+* As with `note`, each tab or line break in a pasted replacement becomes a space.
 * Only `nt/` is treated as a prefix, so text such as `sub/` or `n/` inside the replacement is saved as part of the note.
 * `nt/` must be typed in lowercase. A wrong-case prefix such as `NT/` is not recognized, so TutorTrack reports `Missing nt/NEW_NOTE.`
 * As with `note`, `nt/` may appear only once. To mention `nt/` in the replacement, write it without a space before it, such as `(nt/)` or `"nt/"`.
 
 Example: `edit note 1 2 nt/Corrected lesson summary.`
 
-If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty, too long, or not on one line, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. If you type `note` in another case, such as `edit NOTE 1 1 nt/text`, TutorTrack shows `note must be typed in lowercase.` with the same format. A missing or malformed student index such as `edit n/Bob` reports the student-index rule instead.
+If either selector is missing, invalid, outside the current range, or too large for a supported index, or if the replacement is empty or too long, TutorTrack shows an error and leaves the note unchanged. An out-of-range student index includes the valid roster range. If NOTE_NUMBER is missing, the error explains that it is the number shown beside the note in the profile. If you type a likely misspelling of `note`, such as `edit notes` or `edit nte`, TutorTrack points you to the correct `edit note` format. If you type `note` in another case, such as `edit NOTE 1 1 nt/text`, TutorTrack shows `note must be typed in lowercase.` with the same format. A missing or malformed student index such as `edit n/Bob` reports the student-index rule instead.
 
 Editing records the time of the latest edit only; entering the same text still updates that time, while the original recorded time and note number remain unchanged. A failed save also restores the original note.
 

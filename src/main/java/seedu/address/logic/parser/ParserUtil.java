@@ -59,8 +59,10 @@ public class ParserUtil {
         requireNonNull(word);
         requireNonNull(target);
         boolean isParameter = word.contains(PARAMETER_PREFIX_SEPARATOR);
-        boolean isCloseToTarget = EditDistance.between(word, target) <= MAX_TARGET_TYPO_DISTANCE;
-        return !word.isEmpty() && !word.equals(target) && !isParameter && isCloseToTarget;
+        if (word.isEmpty() || word.equals(target) || isParameter) {
+            return false;
+        }
+        return EditDistance.between(word, target) <= MAX_TARGET_TYPO_DISTANCE;
     }
 
     /**
@@ -151,8 +153,8 @@ public class ParserUtil {
      * and only the first broken rule is reported, so an overlong note with a tab reports its length.
      *
      * @throws ParseException If the text is empty or has no visible character, is longer than
-     *         {@link SessionNote#MAX_TEXT_LENGTH} characters, or contains a non-printable character; the message
-     *         names the rule that was broken.
+     *         {@link SessionNote#MAX_TEXT_LENGTH} characters, or contains a non-printable character; the
+     *         message names the rule that was broken.
      */
     public static String parseNoteText(String noteText) throws ParseException {
         requireNonNull(noteText);

@@ -4,13 +4,17 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -25,7 +29,11 @@ public class CommandBox extends UiPart<Region> {
     private static final int MAX_HISTORY_SIZE = 100;
     private static final int PAGE_UP_COUNT = -1;
     private static final int PAGE_DOWN_COUNT = 1;
+    /** A Windows line break (CRLF), or one control character such as a tab, line feed or carriage return */
+    private static final Pattern CONTROL_CHARACTER_PATTERN = Pattern.compile("\r\n|\\p{Cntrl}");
+    private static final String CONTROL_CHARACTER_REPLACEMENT = " ";
 
+    private final Logger logger = LogsCenter.getLogger(getClass());
     private final CommandExecutor commandExecutor;
     private final PageScroller pageScroller;
     private final List<String> commandHistory = new ArrayList<>();
@@ -50,6 +58,9 @@ public class CommandBox extends UiPart<Region> {
         super(FXML);
         this.commandExecutor = commandExecutor;
         this.pageScroller = requireNonNull(pageScroller);
+        // TextField silently deletes tabs and line breaks, joining the words around them, so turn them into
+        // spaces before it sees them.
+        commandTextField.setTextFormatter(new TextFormatter<String>(this::replaceControlCharacters));
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleHistoryNavigation);
@@ -77,6 +88,46 @@ public class CommandBox extends UiPart<Region> {
         } catch (CommandException | ParseException e) {
             setStyleToIndicateCommandFailure();
         }
+    }
+
+    /**
+     * Returns {@code text} with each control character, such as a tab, line feed or carriage return, replaced by
+     * one space. A Windows line break (CRLF) counts as one line break, so it also becomes one space.
+     */
+    static String replaceControlCharactersWithSpaces(String text) {
+        requireNonNull(text);
+        String result = CONTROL_CHARACTER_PATTERN.matcher(text).replaceAll(CONTROL_CHARACTER_REPLACEMENT);
+        assert !CONTROL_CHARACTER_PATTERN.matcher(result).find() : "Control character left in command text";
+        return result;
+    }
+
+    private TextFormatter.Change replaceControlCharacters(TextFormatter.Change change) {
+        String insertedText = change.getText();
+        String replacedText = replaceControlCharactersWithSpaces(insertedText);
+        if (replacedText.equals(insertedText)) {
+            return change;
+        }
+
+        logger.fine("Replaced control characters in command box input with spaces");
+        // A CRLF shrinks to one space, and Change#setText does not move the caret or anchor to match.
+        int insertedEnd = change.getRangeStart() + insertedText.length();
+        int lengthChange = replacedText.length() - insertedText.length();
+        int anchor = adjustForReplacement(change.getAnchor(), insertedEnd, lengthChange);
+        int caretPosition = adjustForReplacement(change.getCaretPosition(), insertedEnd, lengthChange);
+        change.setText(replacedText);
+        change.selectRange(anchor, caretPosition);
+        return change;
+    }
+
+    /**
+     * Returns where {@code position} lies after the inserted text ending at {@code insertedEnd} changes length by
+     * {@code lengthChange}. A position inside the inserted text is kept within the shorter text.
+     */
+    private static int adjustForReplacement(int position, int insertedEnd, int lengthChange) {
+        if (position >= insertedEnd) {
+            return position + lengthChange;
+        }
+        return Math.min(position, insertedEnd + lengthChange);
     }
 
     private void handleHistoryNavigation(KeyEvent event) {

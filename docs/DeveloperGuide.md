@@ -83,6 +83,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 * `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before delegating execution to `Logic`, so successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
 * `CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which pages the profile: while the outer profile pane (added for short windows) can still scroll down, `PageDown` moves that pane, and only once its end is visible does it page the session-note list by the list's visible height. `PageUp` pages the list back to its top first, then moves the outer pane back up.
 * Keyboard focus and any draft stay in the command box while paging, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
+* A JavaFX `TextField` silently deletes tabs, line breaks and other control characters from inserted text, so a pasted two-line note would be saved with its words joined. `CommandBox` therefore gives the field a `TextFormatter` that replaces each control character with a space, counting a Windows line break (CRLF) as one, before the field sees the text. The replacement happens in the UI because the parser never receives the original characters; `ParserUtil#parseNoteText` still rejects control characters that reach `Logic` by another route, such as a test.
 * `MainWindow.fxml` gives the result display the same minimum, preferred, and maximum height of 100 px, enough for the four lines of the longest messages, such as the deletion previews. The minimum matters because the window's `VBox` shrinks each child toward its minimum height when the window is short, and a lower minimum cut off the last line of those previews; the roster and profile workspace absorbs the shrinkage instead. Messages longer than four lines scroll.
 * `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
 
@@ -271,13 +272,12 @@ The [Model class diagram](#model-component) shows where the session note classes
 
 `AddressBook#addSessionNote(StudentId, SessionNote)` rejects a note for a student who is not in the roster, so every stored history belongs to an existing student. `AddressBook#resetData` copies the history of each student it copies, so `Model#setAddressBook` and `new AddressBook(ReadOnlyAddressBook)` keep session notes. `ReadOnlyAddressBook#getSessionHistory(StudentId)` exposes a read-only history for each student.
 
-The `Model` API offers five session-note operations:
+The `Model` API offers four session-note operations:
 
 * `Model#addSessionNote(StudentId, String)` validates the text, timestamps it, stores the note, and returns it. `ModelManager` reads the time from an injected `java.time.Clock`, which defaults to the system clock, and truncates it to whole seconds. Tests supply a fixed clock to keep timestamps deterministic.
 * `Model#getSessionHistory(StudentId)` returns a student's newest-first history, which the student profile uses to display notes.
 * `Model#editSessionNote(StudentId, Index, String)` replaces one note's text while preserving its recorded timestamp and chronological number.
 * `Model#deleteSessionNote(StudentId, Index)` removes and returns one note selected by its chronological note number while preserving the student and every other session note.
-* `Model#removeSessionHistory(StudentId)` removes a student's history and returns the number of notes removed.
 
 Student deletion crosses the roster and session-history contexts through one model boundary. `Model#deleteStudent(StudentId)` validates that the stable ID identifies a roster student, then removes the student and session history together and returns the removed-note count. Keeping this coordination inside the model prevents commands from leaving an orphaned student or history if validation fails.
 
@@ -1034,6 +1034,8 @@ When manually testing roster resizing, start with a populated roster containing 
    Expected: The first reports `Session note is empty. Enter the note text after nt/.` and the second a duplicate prefix error; no note count changes.
 1. Enter `note 1 nt/Remember (nt/) notation`, then `view 1`.
    Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
+1. Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter, then enter `view 1`.
+   Expected: The note is added with the text `First line Second line`; the words are not joined.
 1. Enter `note N nt/text`, where `N` is one more than the number of students.
    Expected: TutorTrack reports that student index `[N]` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
 

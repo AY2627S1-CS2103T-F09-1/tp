@@ -269,15 +269,6 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void removeSessionHistory_studentWithNotes_returnsCountAndResetsRosterCount() {
-        modelManager.addStudent(ALEX);
-        modelManager.addSessionNote(ALEX.getId(), "Reviewed indices.");
-
-        assertEquals(1, modelManager.removeSessionHistory(ALEX.getId()));
-        assertEquals(0, modelManager.getStudentRoster().getEntries().get(0).getNoteCount());
-    }
-
-    @Test
     public void deleteStudent_studentWithNotes_removesStudentAndReturnsNoteCount() {
         modelManager.addStudent(ALEX);
         modelManager.addStudent(BEA);

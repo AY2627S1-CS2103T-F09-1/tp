@@ -72,12 +72,21 @@ final class ScreenBoundsCalculator {
     }
 
     private static double calculateIntersectionArea(Rectangle2D firstBounds, Rectangle2D secondBounds) {
-        double intersectionWidth = Math.max(0,
-                Math.min(firstBounds.getMaxX(), secondBounds.getMaxX())
-                        - Math.max(firstBounds.getMinX(), secondBounds.getMinX()));
-        double intersectionHeight = Math.max(0,
-                Math.min(firstBounds.getMaxY(), secondBounds.getMaxY())
-                        - Math.max(firstBounds.getMinY(), secondBounds.getMinY()));
+        double intersectionWidth = calculateOverlapLength(firstBounds.getMinX(), firstBounds.getMaxX(),
+                secondBounds.getMinX(), secondBounds.getMaxX());
+        double intersectionHeight = calculateOverlapLength(firstBounds.getMinY(), firstBounds.getMaxY(),
+                secondBounds.getMinY(), secondBounds.getMaxY());
         return intersectionWidth * intersectionHeight;
+    }
+
+    /**
+     * Returns the length shared by the ranges from {@code firstMin} to {@code firstMax} and from
+     * {@code secondMin} to {@code secondMax}, or 0 when they do not overlap.
+     */
+    private static double calculateOverlapLength(double firstMin, double firstMax, double secondMin,
+            double secondMax) {
+        double overlapStart = Math.max(firstMin, secondMin);
+        double overlapEnd = Math.min(firstMax, secondMax);
+        return Math.max(0, overlapEnd - overlapStart);
     }
 }

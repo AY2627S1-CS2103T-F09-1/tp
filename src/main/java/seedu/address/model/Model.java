@@ -156,13 +156,4 @@ public interface Model {
         throw new UnsupportedOperationException("Session note editing is not supported by this model.");
     }
 
-    /**
-     * Removes the session history of the student with {@code studentId}.
-     *
-     * @return The number of session notes removed, which is zero if the student had none.
-     */
-    default int removeSessionHistory(StudentId studentId) {
-        throw new UnsupportedOperationException("Session history removal is not supported by this model.");
-    }
-
 }
