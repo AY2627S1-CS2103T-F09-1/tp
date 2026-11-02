@@ -917,7 +917,7 @@ testers are expected to do more *exploratory* testing.
       Expected: Dev Patel is still in the roster.
 1. Launching from a write-protected folder
 
-   1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows PowerShell, run `icacls <folder> /deny "%USERNAME%:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d %USERNAME%`.
+   1. Copy the JAR file into an empty folder and make the folder read-only. On Linux or macOS, run `chmod a-w <folder>`. On Windows PowerShell, run `icacls <folder> /deny "${env:USERNAME}:(WD,AD,DC)"`, and undo it later with `icacls <folder> /remove:d $env:USERNAME`.
    1. Run `java -jar tutortrack.jar` from that folder.
       Expected: The GUI opens with an empty roster, the terminal shows one-line warnings that the file handler could not be added and that the preference file could not be saved, without a crash. The folder contains no new files.
    1. Enter `add n/Dev Patel p/91234567 sub/Mathematics l/Secondary 3`.
@@ -1003,7 +1003,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter `edit 1`, `edit 1 l/`, `edit 1 n/Zara Lim n/Other Name`, and `edit 1 x/value`.
    Expected: Each command reports the applicable error without changing the roster, profile, notes, or data file. `edit 1`, the repeated `n/`, and `x/` also show the `edit` format and example, while `edit 1 l/` shows only the level rule.
 1. Enter `edit 1 hello n/Zara Lim`, `edit 1 2 n/Zara Lim`, and `edit x hello n/Zara Lim`.
-   Expected: The first reports `Unexpected text before the first parameter: hello.`. the second reports `edit takes only one INDEX.`, and the third reports that `INDEX` must be a positive whole number. All but the last are followed by the `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
+   Expected: The first reports `Unexpected text before the first parameter: hello.` The second reports `edit takes only one INDEX.`, and the third reports that `INDEX` must be a positive whole number. All but the last are followed by the `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
 1. Enter `edit 1 em/parent@example.com` and `edit 1 P/81234567`.
    Expected: The first reports `Unknown parameter: em/.` and the second `Unknown parameter: P/.`, each followed by `Supported parameters:` with the supported parameters, then the `edit` format and example. The roster, profile, notes, and data file stay unchanged.
 1. Enter `edit n/Bob` and `edit a n/Bob`.
