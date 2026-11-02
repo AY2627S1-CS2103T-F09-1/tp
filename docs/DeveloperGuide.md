@@ -143,14 +143,16 @@ The `Model` component,
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
-<img src="images/StorageClassDiagram.png" width="550" />
+<img src="images/StorageClassDiagram.png" width="450" />
 
 The `Storage` component,
 
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
-* serializes added students through `JsonSerializableAddressBook` and `JsonAdaptedStudent`, including their optional session notes.
+* serializes students through `JsonSerializableAddressBook` and `JsonAdaptedStudent`, and each student's session notes through `JsonAdaptedSessionNote`.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+`JsonSerializableAddressBook` also still reads and writes the `persons` list inherited from AB3 (through `JsonAdaptedPerson` and `JsonAdaptedTag`). The diagram above omits these classes because no command uses that list.
 
 #### Data-file format and recovery
 
@@ -158,17 +160,17 @@ TutorTrack keeps its files in the _home folder_, the folder containing the JAR f
 
 * `HomeFolder` locates the home folder and places the data file `data/tutortrack.json`, `preferences.json`, and the `tutortrack.log` files there.
 * When TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, `HomeFolder` uses the working directory instead.
-* If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
+* If the home folder is not writable, TutorTrack still starts and logs to the console only, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
 
 In the data file:
 
 * Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list.
-* Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`.
+* Each session note stores its `text` and `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`. An edited note also stores `lastEditedAt` in the same format.
 * Displayed note numbers and pending deletion confirmations are transient UI and command state, so they are not persisted.
 
 The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid. Any content other than whitespace after the first JSON value is also invalid, because otherwise `JsonUtil` would ignore that extra content and the next save would discard it. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. As later commands could replace that file, storage preserves the unreadable content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
 
-Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
+Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected.
 
 ### Common classes
 
