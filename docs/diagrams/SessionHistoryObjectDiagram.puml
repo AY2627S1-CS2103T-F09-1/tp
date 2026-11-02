@@ -1,0 +1,36 @@
+@startuml
+!include style.puml
+show members
+skinparam arrowThickness 1.1
+skinparam arrowColor MODEL_COLOR
+skinparam objectBackgroundColor MODEL_COLOR
+skinparam objectFontColor #FFFFFF
+skinparam objectAttributeFontColor #FFFFFF
+
+object "<u>:SessionHistory</u>" as History
+
+object "<u>note3:SessionNote</u>" as Note3 {
+  recordedAt = 2026-10-20T16:00+08:00
+}
+
+object "<u>note2:SessionNote</u>" as Note2 {
+  recordedAt = 2026-10-13T16:00+08:00
+}
+
+object "<u>note1:SessionNote</u>" as Note1 {
+  recordedAt = 2026-10-06T16:00+08:00
+}
+
+History --> Note3
+History --> Note2
+History --> Note1
+
+Note3 -[hidden]right- Note2
+Note2 -[hidden]right- Note1
+
+note right of History
+  Notes are stored newest first (left to right).
+  Note numbers count from the oldest note,
+  so note N is at index (size - N).
+end note
+@enduml

@@ -261,9 +261,13 @@ Each `SessionNoteCard` shows the recorded time, and the latest edit time if any,
 Session notes live in `seedu.address.model.session`, separate from the student roster because the roster consumes note counts but does not own note data:
 
 * `SessionNote` is immutable. It trims surrounding whitespace, preserves internal spaces, accepts 1 to 500 Unicode code points, rejects control characters and line or paragraph separators, and receives its `OffsetDateTime` from the caller so tests can control time.
-* `SessionHistory` is immutable and newest-first. `withNote` places a newly added note before equal timestamps, `of` preserves saved order for equal timestamps, and `getNotes` exposes an unmodifiable list.
-* Note selectors are chronological: `1` is the oldest note, and the history converts that display number to `history size - NOTE_NUMBER` in its newest-first list. Editing keeps the recorded time and number while updating the text and latest edit time.
+* `SessionHistory` is immutable and keeps its notes newest first, exposing them through an unmodifiable list. Notes with equal timestamps keep their saved order.
+* Note numbers are chronological: `1` is the oldest note, and the history converts a note number to the index `history size - NOTE_NUMBER` in its newest-first list. Editing keeps the recorded time and number while updating the text and latest edit time.
 * `ParserUtil#parseNoteText` is shared by `NoteCommandParser` and `EditNoteCommandParser`, so both commands name the same empty, overlong, non-printable, and invisible-only value errors.
+
+The object diagram below shows a student's `SessionHistory` with three notes. They are stored newest first, so note 1, the oldest, is last in the list.
+
+<img src="images/SessionHistoryObjectDiagram.png" width="750" />
 
 ### Session note model and persistence
 
