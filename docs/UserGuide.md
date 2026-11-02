@@ -292,11 +292,10 @@ Format: `exit`
 
 ### Saving the data
 
-TutorTrack automatically saves data-changing commands. You do not need to save manually. Student and session-note deletion previews do not save because they do not change any data.
+There is no need to save manually. TutorTrack saves your data automatically, but only after a command that changes it.
 
-TutorTrack saves your students and session notes in `data/tutortrack.json` inside your TutorTrack home folder, the folder containing `tutortrack.jar`. It creates this file the first time you run a command that changes data, such as `add`. To back up your roster, copy this file while TutorTrack is closed.
-
-If TutorTrack cannot save the data, for example because the data file is read-only, it shows an error and cancels the command, so the roster, session notes, and previously saved data file stay as they were before the command. Commands that do not change data, such as `view` and `help`, still work while saving fails.
+* Commands that change the data: `add`, `edit`, `note`, `edit note`, and a confirmed `delete` or `delete note` (with `/confirm`).
+* Commands that do not change the data: `help`, `view`, `exit`, and a `delete` or `delete note` preview (without `/confirm`).
 
 ### Editing the data file
 
