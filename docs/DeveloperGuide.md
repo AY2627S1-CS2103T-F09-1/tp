@@ -1160,27 +1160,35 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Adding a session note
 
-1. Prerequisites: add at least two students, and enter `view 2` to open student 2's profile.
-1. Enter `note 1 nt/Reviewed factorisation.`
-   Expected: TutorTrack reports `Added session note for <name of student 1>.`, that student's session-note count increases by one, and their profile replaces student 2's with the new note at the top and their roster card highlighted.
-1. Close and relaunch TutorTrack.
-   Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
-1. Enter `note 1 nt/Next: 3 sub/topics`.
-   Expected: The note is added with `sub/topics` as part of its text.
-1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
-   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count, open profile, or roster highlight changes.
-1. Enter `note 1 NT/text` and `note 1 Nt/text`.
-   Expected: Each reports `Parameter prefixes must be typed in lowercase:` naming the prefix as typed, such as `NT/ should be nt/.`, followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
-1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
-   Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
-1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
-   Expected: The first reports `Session note is empty. Enter the note text after nt/.` and the second a duplicate prefix error; no note count changes.
-1. Enter `note 1 nt/Remember (nt/) notation`, then `view 1`.
-   Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
-1. Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter, then enter `view 1`.
-   Expected: The note is added with the text `First line Second line`; the words are not joined.
-1. Enter `note N nt/text`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that student index `N` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
+1. Adding a note to a student
+
+   1. Prerequisites: Start with an empty roster. Enter `add n/Ari Tan p/9123 4567 sub/Mathematics l/Secondary 3` and `add n/Bea Tan p/9876 5432 sub/English l/Secondary 3`, then enter `view 2` to open Bea's profile.
+   1. Test case: `note 1 nt/Reviewed factorisation.`<br>
+      Expected: TutorTrack reports `Added session note for Ari Tan.` Ari's session-note count increases by one, and Ari's profile replaces Bea's with the new note at the top and Ari's roster card highlighted.
+   1. Test case: Close and relaunch TutorTrack, then enter `view 1`.<br>
+      Expected: The note is still shown, and `data/tutortrack.json` contains it under Ari's `sessionNotes`.
+
+1. Note text that looks like a parameter
+
+   1. Test case: `note 1 nt/Next: 3 sub/topics`<br>
+      Expected: The note is added with `sub/topics` as part of its text.
+   1. Test case: `note 1 nt/Remember (nt/) notation`<br>
+      Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
+   1. Test case: Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter.<br>
+      Expected: The note is added with the text `First line Second line`; the words are not joined.
+
+1. Rejecting invalid notes
+
+   1. Test case: `note 1`<br>
+      Expected: TutorTrack reports `Missing nt/NOTE.` followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`
+   1. Test case: `note 0 nt/text`<br>
+      Expected: TutorTrack reports `INDEX must be a positive whole number, e.g. 1.` without the format.
+   1. Test case: `note 3 nt/text`<br>
+      Expected: TutorTrack reports `Student index 3 is outside the roster. Enter a student index from 1 to 2.`
+   1. Test case: `note 1 nt/`<br>
+      Expected: TutorTrack reports `Session note is empty. Enter the note text after nt/.`
+
+   For each invalid note, no note is added and no session-note count changes. Other incorrect inputs to try: a repeated `nt/`, a prefix in another case such as `NT/`, and a note longer than 500 characters.
 
 ### Editing a session note
 
@@ -1296,24 +1304,28 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+1. Dealing with a missing data file
 
-   1. Replace the contents of `data/tutortrack.json` with invalid JSON, such as `invalid`.
-   1. Start TutorTrack.
-      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`.
-   1. Close TutorTrack without entering a command, replace the original data file with different invalid content, and start TutorTrack again.
-      Expected: TutorTrack preserves the new content in a second uniquely named backup and leaves the first backup unchanged.
-   1. Close TutorTrack without entering a command, and replace the data file with two complete JSON documents, one after the other: `{"students":[]}` on one line and `{"students":[]}` on the next. Start TutorTrack again.
-      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves both documents in a new uniquely named backup.
+   1. Prerequisites: Close TutorTrack and move `data/tutortrack.json` out of the `data` folder.
+   1. Test case: Start TutorTrack.<br>
+      Expected: TutorTrack starts with an empty roster and no error. The data file is created again when the first change is saved, such as after an `add`.
+
+1. Dealing with a corrupted data file
+
+   1. Prerequisites: Close TutorTrack and keep a copy of `data/tutortrack.json`.
+   1. Test case: Replace the contents of `data/tutortrack.json` with `invalid`, then start TutorTrack.<br>
+      Expected: TutorTrack starts with an empty roster and reports `TutorTrack could not load your data file. A copy was kept at` followed by the backup path, which ends in `data/tutortrack.json.backup-<unique>.bak`. The backup holds the original content.
+   1. Test case: Close TutorTrack without entering a command, replace the data file with `{"students":[]}` on one line and `{"students":[]}` again on the next, then start TutorTrack.<br>
+      Expected: TutorTrack again starts with an empty roster and reports the data-load error, because content after the first JSON value is not allowed. The content is kept in a new backup, and the earlier backup is unchanged.
+
 1. Saving fails while TutorTrack is running
 
-   1. Prerequisites: at least one student in the roster, so that `data/tutortrack.json` exists. Run the `chmod` or `attrib` commands below in a terminal opened in the folder containing the JAR file.
-   1. With TutorTrack still running, make the data file read-only. On Linux or macOS, run `chmod a-w data/tutortrack.json`. On Windows, run `attrib +r data\tutortrack.json`.
-   1. Enter `note 1 nt/Reviewed factorisation.`
+   1. Prerequisites: At least one student in the roster, so that `data/tutortrack.json` exists. With TutorTrack still running, open a terminal in the folder containing the JAR file and make the data file read-only: `chmod a-w data/tutortrack.json` on Linux or macOS, or `attrib +r data\tutortrack.json` on Windows.
+   1. Test case: `note 1 nt/Reviewed factorisation.`<br>
       Expected: TutorTrack reports `Could not save data to file ./data/tutortrack.json because TutorTrack cannot write to the file or its folder. The command was cancelled and no data was changed.` Student 1's session-note count is unchanged.
-   1. Enter `view 1`.
-      Expected: Student 1's profile is shown without the rejected note and without a save error, because commands that change no data are not saved.
-   1. Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.
+   1. Test case: `view 1`<br>
+      Expected: Student 1's profile opens without the rejected note and without a save error, because commands that change no data are not saved.
+   1. Test case: Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.<br>
       Expected: The note is added and student 1's session-note count increases by one.
 
 ---
