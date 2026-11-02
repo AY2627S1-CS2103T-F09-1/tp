@@ -992,32 +992,6 @@ history and saved locally. No other student record is changed.
 
 ---
 
-## **Appendix: Effort**
-
-TutorTrack required more design effort than a direct AB3 extension because the product keeps the brownfield command and storage boundaries while introducing a tutor-specific student roster, profile, and session-history model. The following summary is qualitative rather than a claim of exact hours.
-
-### Difficulty
-
-* The main difficulty was changing the meaning of the application without breaking the supplied JavaFX, persistence, testing, and build structure.
-* The most demanding work crossed boundaries: a displayed roster index is temporary, while `StudentId` must remain stable across sorting, editing, deletion, and reload.
-* Session notes add a second entity type and a chronological selector model, so UI numbering, immutable histories, JSON order, and command parsing must agree.
-
-### Challenges
-
-* Keeping duplicate identity in one domain value object while accepting hand-edited JSON and migrating legacy records required validation at both command and storage boundaries.
-* Confirmed deletion had to preview without saving, bind the confirmation to the original stable target and immutable note history, and recover safely when a later command or save fails.
-* The JavaFX UI had to refresh profiles after cross-student commands while separating the open-profile identity from temporary list focus and preserving keyboard-first scrolling.
-* Documentation and diagrams had to explain these decisions to a new developer without repeating every method or storage field already visible in the source.
-
-### Effort and achievements compared with AB3
-
-* The AB3 baseline supplied the component structure, command routing, JavaFX shell, JSON adapter pattern, and test harness. TutorTrack work extended those foundations with `StudentId`, parent or guardian contact validation, subjects, current levels, profile projections, and session histories.
-* The team added domain and integration coverage for stable identity, natural roster ordering, note chronology, persistence and reload, malformed data recovery, confirmed deletion, save rollback, and profile refresh. These checks protect interactions that a simple contact list does not need.
-* The resulting product supports the tutor's core loop: maintain a roster, retrieve one student's lesson context, and record what mattered after a session. The remaining proposed archive flow is documented separately so future work has a bounded design rather than an undocumented promise.
-
-
----
-
 ## **Appendix: Instructions for manual testing**
 
 Given below are instructions to test the app manually.
@@ -1341,3 +1315,28 @@ When manually testing roster resizing, start with a populated roster containing 
       Expected: Student 1's profile is shown without the rejected note and without a save error, because commands that change no data are not saved.
    1. Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.
       Expected: The note is added and student 1's session-note count increases by one.
+
+---
+
+## **Appendix: Effort**
+
+TutorTrack required more design effort than a direct AB3 extension because the product keeps the brownfield command and storage boundaries while introducing a tutor-specific student roster, profile, and session-history model. The following summary is qualitative rather than a claim of exact hours.
+
+### Difficulty
+
+* The main difficulty was changing the meaning of the application without breaking the supplied JavaFX, persistence, testing, and build structure.
+* The most demanding work crossed boundaries: a displayed roster index is temporary, while `StudentId` must remain stable across sorting, editing, deletion, and reload.
+* Session notes add a second entity type and a chronological selector model, so UI numbering, immutable histories, JSON order, and command parsing must agree.
+
+### Challenges
+
+* Keeping duplicate identity in one domain value object while accepting hand-edited JSON and migrating legacy records required validation at both command and storage boundaries.
+* Confirmed deletion had to preview without saving, bind the confirmation to the original stable target and immutable note history, and recover safely when a later command or save fails.
+* The JavaFX UI had to refresh profiles after cross-student commands while separating the open-profile identity from temporary list focus and preserving keyboard-first scrolling.
+* Documentation and diagrams had to explain these decisions to a new developer without repeating every method or storage field already visible in the source.
+
+### Effort and achievements compared with AB3
+
+* The AB3 baseline supplied the component structure, command routing, JavaFX shell, JSON adapter pattern, and test harness. TutorTrack work extended those foundations with `StudentId`, parent or guardian contact validation, subjects, current levels, profile projections, and session histories.
+* The team added domain and integration coverage for stable identity, natural roster ordering, note chronology, persistence and reload, malformed data recovery, confirmed deletion, save rollback, and profile refresh. These checks protect interactions that a simple contact list does not need.
+* The resulting product supports the tutor's core loop: maintain a roster, retrieve one student's lesson context, and record what mattered after a session. The remaining proposed archive flow is documented separately so future work has a bounded design rather than an undocumented promise.
