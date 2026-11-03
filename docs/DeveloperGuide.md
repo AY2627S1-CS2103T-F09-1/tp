@@ -947,9 +947,14 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the applicable selector error and makes no changes.
 
     Use case ends.
-* 1b. The replacement text is missing, given more than once, or invalid.
+* 1b. The replacement text is missing or given more than once.
 
-  * 1b1. TutorTrack reports the note validation error and makes no changes.
+  * 1b1. TutorTrack reports the command format error and makes no changes.
+
+    Use case ends.
+* 1c. The replacement text is invalid.
+
+  * 1c1. TutorTrack reports the note validation error and makes no changes.
 
     Use case ends.
 * 3a. TutorTrack cannot save the updated data.
@@ -965,7 +970,7 @@ history and saved locally. No other student record is changed.
 3. A roster search, filter, or student-profile view should respond within two seconds for a roster of up to 1000 student records.
 4. Saving or loading the local data file should complete within five seconds for a roster of up to 1000 student records on a typical modern computer.
 5. The application should start within ten seconds on a typical modern computer when loading a data file containing up to 1000 student records.
-6. A user with above-average typing speed for regular English text should be able to accomplish most tasks faster using commands than using the mouse.
+6. A user who types at least 40 words per minute should be able to add a student with all required fields, open that student's profile, and add a session note to that student, each within 30 seconds using only the keyboard.
 7. Should store its data locally in a human-editable JSON file, so that an advanced user can back up or correct the data with a text editor.
 8. Should work without an internet connection.
 9. Is intended for a single user on one computer; concurrent use by several users is not supported.
