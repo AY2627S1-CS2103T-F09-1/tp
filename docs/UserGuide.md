@@ -3,7 +3,11 @@ layout: page
 title: User Guide
 ---
 
-TutorTrack is a **desktop application for private tutors managing a student roster, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). It keeps each student's contact details and lesson context together, so tutors can prepare quickly, record what matters after each lesson, and manage their roster from one place.
+TutorTrack is a **desktop application for private tutors managing a student roster, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI).
+
+**Who it is for:** private tutors who manage a small roster of students, can type fast, and prefer typing to using the mouse.
+
+**What it does for you:** keeps each student's contact details, subject, level and session notes in one place, so you can find a student, review their profile, and record or correct a note right after each lesson, faster than with a spreadsheet or a mouse-driven app.
 
 * Table of Contents
 {:toc}
