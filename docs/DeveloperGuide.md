@@ -475,19 +475,13 @@ Selecting a note by its chronological number rather than a persistent note ID is
 
 For valid input, the parser creates a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
-The activity diagrams below show the preview and confirmation flows for deleting one session note. The following sections explain the pending-target checks, cancellation, and failure handling in more detail.
+The activity diagrams below show the preview and confirmation flows for deleting one session note. The explanations also cover whole-student deletion.
 
-#### Session-note deletion activities
+#### Preview and pending target
 
 The preview validates the selected student and note, then shows the note and confirmation command without changing saved data.
 
 ![Session-note deletion preview activity diagram](images/DeleteSessionNotePreviewActivityDiagram.png)
-
-The next input either keeps the preview pending, cancels it, or attempts confirmation. A matching confirmation deletes the note and saves the updated data; a save failure restores the model.
-
-![Session-note deletion confirmation activity diagram](images/DeleteSessionNoteConfirmationActivityDiagram.png)
-
-#### Preview and pending target
 
 For `delete STUDENT_INDEX`, `DeleteCommand#execute` resolves the index against `Model#getStudentRoster()`, the same sorted snapshot displayed by the roster panel. Its `CommandResult` contains the student's stable `StudentId` alongside the student's name, session-note count, exact confirmation command, and the instruction `To cancel, enter another valid command. Typos keep this preview.` without changing or saving the model. After a successful preview, `LogicManager` retains a `PendingStudentDeletion` containing the displayed index and resolved stable `StudentId`.
 
@@ -500,6 +494,10 @@ After returning the preview, `LogicManager` retains a `PendingSessionNoteDeletio
 Both pending types occupy the same single `PendingDeletion` slot in `LogicManager`. Starting either valid preview after another preview consumes the earlier pending state and replaces it with the new target. Pending state contains no private student fields, is not part of the model or JSON schema, and is never persisted.
 
 #### Confirmation, cancellation, and mutation
+
+The next input either keeps the preview pending, cancels it, or attempts confirmation. A matching confirmation deletes the note and saves the updated data; a save failure restores the model.
+
+![Session-note deletion confirmation activity diagram](images/DeleteSessionNoteConfirmationActivityDiagram.png)
 
 `LogicManager#execute` parses the new input before copying and clearing the pending deletion. A `ParseException` therefore leaves the preview active; `MainWindow` keeps the temporary note highlight so the tutor can correct the input and confirm the same target. Any input that parses into a command consumes the pending deletion before execution, even if the command later fails validation; `MainWindow` then clears the highlight.
 
