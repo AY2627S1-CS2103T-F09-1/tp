@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SUBJECT;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +32,10 @@ public class EditCommandParser implements Parser<EditCommand> {
     private static final Pattern WHOLE_NUMBER_PATTERN = Pattern.compile("\\d+");
     /** The start of a word that looks like a parameter prefix, such as the {@code em/} in {@code em/a@b.com} */
     private static final Pattern PREFIX_LIKE_PATTERN = Pattern.compile("[A-Za-z]+/");
+    private static final List<Prefix> STUDENT_PREFIXES = List.of(
+            PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_SUBJECT, PREFIX_LEVEL);
+    private static final String MESSAGE_WRONG_CASE_PREFIX =
+            "Parameter prefixes must be typed in lowercase: %1$s should be %2$s.";
 
     /**
      * Parses {@code args} as a student roster index and one or more replacement fields.
@@ -69,8 +74,16 @@ public class EditCommandParser implements Parser<EditCommand> {
             if (!WHOLE_NUMBER_PATTERN.matcher(words[i]).matches()) {
                 Matcher unknownPrefix = PREFIX_LIKE_PATTERN.matcher(words[i]);
                 if (unknownPrefix.lookingAt()) {
+                    String typedPrefix = unknownPrefix.group();
+                    Optional<Prefix> matchingPrefix = STUDENT_PREFIXES.stream()
+                            .filter(prefix -> prefix.toString().equalsIgnoreCase(typedPrefix))
+                            .findFirst();
+                    if (matchingPrefix.isPresent()) {
+                        throw new ParseException(withEditFormat(String.format(MESSAGE_WRONG_CASE_PREFIX,
+                                typedPrefix, matchingPrefix.get())));
+                    }
                     throw new ParseException(withEditFormat(String.format(AddCommandParser.MESSAGE_UNKNOWN_PARAMETER,
-                            unknownPrefix.group(), AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)));
+                            typedPrefix, AddCommandParser.MESSAGE_SUPPORTED_PARAMETERS)));
                 }
                 String strayText = String.join(" ", Arrays.copyOfRange(words, i, words.length));
                 throw new ParseException(withEditFormat(

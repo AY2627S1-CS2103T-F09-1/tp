@@ -217,7 +217,7 @@ Index handling is shared so every command reports index errors consistently:
 * `ParserUtil#parseStudentIndex` and `ParserUtil#parseNoteNumber` report a value that is not a positive whole number, or that is above `Integer.MAX_VALUE`, as a value error named after the placeholder in the format, such as `STUDENT_INDEX` or `NOTE_NUMBER`.
 * `Command#getRosterEntry` resolves an index against the current roster for every index-based command, and reports an empty roster or the valid range `1` to `N`.
 
-Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive. Prefix-like text in another case stays part of the value unless it occurs where the parser must identify a keyword; the parser then reports a targeted lowercase error. This single accepted form keeps command routing predictable.
+Command words, parameter prefixes, the `note` target of `edit note` and `delete note`, and `/confirm` are case-sensitive. Prefix-like text in another case stays part of a field value. For student edits, a supported prefix in another case before the first field receives a targeted lowercase error; an unknown prefix receives an unknown-parameter error. This single accepted form keeps command routing predictable.
 
 Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. If an unknown command like `sort` is entered, `AddressBookParser` lists all the available commands. Otherwise, a word that matches a valid command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
 
@@ -1122,7 +1122,7 @@ When manually testing roster resizing, start with a populated roster containing 
 1. Enter `edit 1 hello n/Zara Lim`, `edit 1 2 n/Zara Lim`, and `edit x hello n/Zara Lim`.
    Expected: The first reports `Unexpected text before the first parameter: hello.` The second reports `edit takes only one INDEX.`, and the third reports that `INDEX` must be a positive whole number. All but the last are followed by the `edit` format and example, and the roster, profile, notes, and data file stay unchanged.
 1. Enter `edit 1 em/parent@example.com` and `edit 1 P/81234567`.
-   Expected: The first reports `Unknown parameter: em/.` and the second `Unknown parameter: P/.`, each followed by `Supported parameters:` with the supported parameters, then the `edit` format and example. The roster, profile, notes, and data file stay unchanged.
+   Expected: The first reports `Unknown parameter: em/.` followed by the supported parameters. The second reports `Parameter prefixes must be typed in lowercase: P/ should be p/.` Both show the `edit` format and example. The roster, profile, notes, and data file stay unchanged.
 1. Enter `edit n/Bob` and `edit a n/Bob`.
    Expected: The first reports `Missing INDEX.` followed by the `edit` format and example. The second reports `INDEX must be a positive whole number, e.g. 1.` Neither suggests `edit note`.
 1. Try to edit one student so that both the normalized name and parent phone match the other student.

@@ -133,7 +133,7 @@ Format: `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/
 * Supply at least one field. Details you omit keep their existing values.
 * Use `e/` without a value to remove the parent or guardian email. Other supplied fields cannot be empty.
 * The supported parameters are `n/`, `p/`, `e/`, `sub/`, and `l/`. Each parameter can appear at most once and can be supplied in any order.
-* Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. A mistyped or wrong-case prefix straight after the index, such as `em/` or the `N/` in `edit 1 N/Bob`, is reported as an unknown parameter together with the list of supported parameters.
+* Only these lowercase prefixes are recognized. Other prefix-like text after a field is kept in that field's value; for example, `edit 1 sub/Math P/81234567` changes the subject to `Math P/81234567` and leaves the phone unchanged. A supported prefix in another case straight after the index, such as `edit 1 P/81234567`, reports that `P/` should be `p/`. An unknown prefix such as `em/` is reported with the list of supported parameters.
 * Changing the name or phone can move the student to a different roster index. TutorTrack still edits the student selected when the command starts and preserves that student's internal identity and session notes.
 
 Examples:
