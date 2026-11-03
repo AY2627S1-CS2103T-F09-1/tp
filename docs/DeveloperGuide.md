@@ -342,7 +342,7 @@ A failed command leaves the rendered snapshot and roster highlight unchanged. If
 
 Each `SessionNoteCard` shows the recorded time, and the latest edit time if any, as the saved clock reading without its UTC offset, so both times in a header read alike. Notes are still ordered by instant, so in the rare case of notes saved at different offsets, their displayed clock readings may not look in order. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
 
-`MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
+`MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin, but does not impose a runtime maximum size on the stage. The operating system can therefore maximize or full-screen the window using the display's full bounds. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
 
 **Design considerations:**
 
