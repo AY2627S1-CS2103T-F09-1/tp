@@ -463,6 +463,18 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_editStudentWithWrongCasePrefix_leavesStudentUnchanged() {
+        model.addStudent(ALEX);
+
+        assertParseException("edit 1 P/81234567", Messages.withFormat(
+                "Parameter prefixes must be typed in lowercase: P/ should be p/.",
+                EditCommand.COMMAND_FORMAT, EditCommand.COMMAND_EXAMPLE));
+
+        assertEquals(ALEX, model.getStudent(ALEX.getId()).orElseThrow());
+        assertFalse(Files.exists(addressBookFile));
+    }
+
+    @Test
     public void execute_editStudentWithUppercasePhonePrefix_changesSubjectOnly() throws Exception {
         model.addStudent(ALEX);
 

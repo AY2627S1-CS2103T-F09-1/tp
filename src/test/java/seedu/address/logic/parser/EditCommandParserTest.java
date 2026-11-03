@@ -122,9 +122,26 @@ public class EditCommandParserTest {
     @Test
     public void parse_mistypedPrefixAfterIndex_reportsUnknownParameter() {
         assertParseFailure(parser, " 1 em/foo@bar.com", unknownParameterMessage("em/"));
-        assertParseFailure(parser, " 1 P/81234567", unknownParameterMessage("P/"));
         assertParseFailure(parser, " 1 em/foo@bar.com n/Alexis Tan", unknownParameterMessage("em/"));
         assertParseFailure(parser, " 1 2 x/y", unknownParameterMessage("x/"));
+    }
+
+    @Test
+    public void parse_wrongCaseSupportedPrefixAfterIndex_reportsLowercaseForm() {
+        assertWrongCasePrefix("N/", "n/");
+        assertWrongCasePrefix("P/", "p/");
+        assertWrongCasePrefix("E/", "e/");
+        assertWrongCasePrefix("SUB/", "sub/");
+        assertWrongCasePrefix("SuB/", "sub/");
+        assertWrongCasePrefix("L/", "l/");
+        assertParseFailure(parser, " 1 P/81234567 n/Alexis Tan",
+                withEditFormat("Parameter prefixes must be typed in lowercase: P/ should be p/."));
+    }
+
+    private void assertWrongCasePrefix(String typedPrefix, String expectedPrefix) {
+        assertParseFailure(parser, " 1 " + typedPrefix + "value", withEditFormat(
+                "Parameter prefixes must be typed in lowercase: " + typedPrefix + " should be "
+                        + expectedPrefix + "."));
     }
 
     @Test
