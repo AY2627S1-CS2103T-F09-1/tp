@@ -8,7 +8,7 @@ start
 :Tutor requests note deletion;
 :Logic parses the request and checks the target
 using the model's roster and session history;
-if (Request and target valid?) then (yes)
+if () then ([request and target valid])
   :Logic retains the student, note,
   and history as the pending target;
   :UI opens the profile, highlights the note,
@@ -17,7 +17,7 @@ if (Request and target valid?) then (yes)
     Preview does not change
     or save model data.
   end note
-else (no)
+else ([request or target invalid])
   :UI shows an error;
 endif
 stop
