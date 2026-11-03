@@ -5,9 +5,9 @@ skinparam ArrowFontSize 12
 
 title Successful student addition
 
-|UI|
+|Tutor|
 start
-:User enters
+:Tutor enters
 add command;
 |Logic|
 :Parse and validate
