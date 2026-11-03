@@ -1,0 +1,54 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+participant ":JsonSerializable\nAddressBook" as Jsab STORAGE_COLOR
+participant "s:JsonAdapted\nStudent" as Student STORAGE_COLOR
+participant "n:JsonAdapted\nSessionNote" as Note STORAGE_COLOR
+participant "<<class>>\nSessionHistory" as History MODEL_COLOR
+participant "ab:AddressBook" as AddressBook MODEL_COLOR
+
+[-> Jsab : toModelType(loadedAt)
+activate Jsab
+
+create AddressBook
+Jsab -> AddressBook
+activate AddressBook
+AddressBook --> Jsab
+deactivate AddressBook
+
+loop for each student s
+    Jsab -> Student : toModelType()
+    activate Student
+    Student --> Jsab : student
+    deactivate Student
+
+    Jsab -> AddressBook : addStudent(student)
+    activate AddressBook
+    AddressBook --> Jsab
+    deactivate AddressBook
+
+    Jsab -> Student : toModelSessionHistory(loadedAt)
+    activate Student
+    loop for each session note n
+        Student -> Note : toModelType(loadedAt)
+        activate Note
+        Note --> Student : note
+        deactivate Note
+    end
+    Student -> History : of(notes)
+    activate History
+    History --> Student : history
+    deactivate History
+    Student --> Jsab : history
+    deactivate Student
+
+    Jsab -> AddressBook : setSessionHistory(studentId, history)
+    activate AddressBook
+    AddressBook --> Jsab
+    deactivate AddressBook
+end
+
+[<-- Jsab : ab
+deactivate Jsab
+@enduml

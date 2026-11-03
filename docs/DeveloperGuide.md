@@ -75,25 +75,18 @@ The sections below give more details of each component.
 
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
-![Structure of the UI Component](images/UiClassDiagram.png)
+<img src="images/UiClassDiagram.png" width="800" alt="Structure of the UI Component" />
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, `StudentProfilePanel`, and `StatusBarFooter`. `StudentRosterPanel` shows each student in a `StudentRosterCard`, and `StudentProfilePanel` shows each session note in a `SessionNoteCard`.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `StudentRosterPanel`, and `StudentProfilePanel`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts. The diagram omits minor parts, such as `HelpWindow`, `StatusBarFooter`, and the cards inside the two panels.
 
-* All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
-* The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
-* `CommandBox` keeps up to 100 non-blank submitted commands in memory for the current app session. It records a submission before passing it to a `CommandExecutor` callback supplied by `MainWindow`, which delegates execution to `Logic`. Successful commands, failed commands, duplicates, and edited recalled commands are all retained. `Up` and `Down` move through the retained commands, while `CommandBox` separately keeps the draft that must be restored after the user moves past the newest entry. `CommandBox` does not send the history to `Logic`, `Model`, or `Storage`, and it does not log the history.
-* `CommandBox` also consumes `PageUp` and `PageDown` and forwards them, as a signed page count, to a `PageScroller` supplied by `MainWindow`. `MainWindow` connects that callback to `StudentProfilePanel#scrollSessionNotes`, which pages the profile: while the outer profile pane (added for short windows) can still scroll down, `PageDown` moves that pane, and only once its end is visible does it page the session-note list by the list's visible height. `PageUp` pages the list back to its top first, then moves the outer pane back up.
-* Keyboard focus and any draft stay in the command box while paging, so the user can read a long note history without reaching for the mouse. `CommandBox` does not depend on `StudentProfilePanel`; it knows only the callback.
-* A JavaFX `TextField` silently deletes tabs, line breaks and other control characters from inserted text, so a pasted two-line note would be saved with its words joined. `CommandBox` therefore gives the field a `TextFormatter` that replaces each control character with a space, counting a Windows line break (CRLF) as one, before the field sees the text. The replacement happens in the UI because the parser never receives the original characters; `ParserUtil#parseNoteText` still rejects control characters that reach `Logic` by another route, such as a test.
-* `MainWindow.fxml` gives the result display the same minimum, preferred, and maximum height of 100 px, enough for the four lines of the longest messages, such as the deletion previews. The minimum matters because the window's `VBox` shrinks each child toward its minimum height when the window is short, and a lower minimum cut off the last line of those previews; the roster and profile workspace absorbs the shrinkage instead. Messages longer than four lines scroll.
-* `TutorTrackTheme.css` defines the shared light visual system: neutral surfaces, teal accents, system-font typography, borders, hover states, keyboard-focus states, and error states. The main window, Help window, and alert dialogs load this stylesheet so that secondary UI surfaces remain visually consistent without an external styling dependency. The theme is applied to the existing FXML layout and does not change command, keyboard, model, or persistence behavior.
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
-* executes user commands using the `Logic` component.
-* refreshes the roster and any open profile from `Logic` after each successful command, rather than listening for changes to `Model` data.
+* executes user commands using the `Logic` component: `CommandBox` passes each command to `MainWindow`, which calls `Logic#execute()`.
 * keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on `Logic#getStudentRoster()` and immutable `StudentRosterEntry` values because it displays TutorTrack student data.
+* refreshes the roster and any open profile after each successful command, rather than listening for changes to `Model` data.
+* depends on classes in the `Model` component, such as `StudentRosterEntry` and `SessionNote`, because it displays student data.
 
 ### Logic component
 
@@ -101,24 +94,36 @@ The `UI` component,
 
 Here's a (partial) class diagram of the `Logic` component:
 
-<img src="images/LogicClassDiagram.png" width="550"/>
+<img src="images/LogicClassDiagram.png" width="600"/>
 
-The [architecture sequence diagram](#architecture) shows how the main components interact when a student is added. The [session-note deletion activity diagrams](#session-note-deletion-activities) show the preview and confirmation flows.
+The sequence diagram below shows the interactions within the `Logic` component, taking the `execute("add ...")` API call as an example. `Model` and `Storage` are treated as black boxes.
 
-How the `Logic` classes work together when a student is added:
+<img src="images/AddSequenceDiagram.png" width="570" />
 
-1. `LogicManager` receives the command text and passes it to `AddressBookParser`, which delegates to `AddCommandParser`.
-1. `AddCommandParser` validates the input and creates an `AddCommand`, a subclass of `Command`.
-1. `LogicManager` executes the command. `AddCommand` checks for a duplicate and adds the student through `Model`.
-1. `LogicManager` saves the changed data through `Storage` and returns a `CommandResult`. If saving fails, it restores the previous data (see [Save-failure rollback](#save-failure-rollback)).
+How the `Logic` component works:
 
-The class diagram shows the relationships between these classes; the [adding-a-student sequence diagram](#adding-a-student) shows the interaction order in more detail. Other commands may have different flows, such as the preview and confirmation described under [Confirmed deletion](#confirmed-deletion).
+1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `AddCommandParser`) and uses it to parse the command. Commands without arguments, such as `help` and `exit`, are created directly by `AddressBookParser`.
+1. This results in a `Command` object (more precisely, an object of one of its subclasses, e.g., `AddCommand`), which is executed by the `LogicManager`.
+1. The command can communicate with the `Model` when it is executed (e.g., to check for a duplicate and add a student).
+1. The result of the command execution is encapsulated as a `CommandResult` object, which is returned from `Logic` after any changed data is saved through `Storage`. If saving fails, `LogicManager` restores the previous data (see [Save-failure rollback](#save-failure-rollback)).
 
-The following class diagram zooms in on the parser classes involved in an `add` command. It shows their relationships; the explanation below describes how they turn the command text into an `AddCommand`:
+Deletions differ: `LogicManager` handles their preview and confirmation itself, as described under [Confirmed deletion](#confirmed-deletion).
+
+The sequence diagram below shows how the `add` command is parsed:
+
+<img src="images/ParseAddCommandSequenceDiagram.png" width="600" />
+
+<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `AddCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
+</div>
+
+The following partial class diagram expands the parser classes, using `AddCommandParser` as a representative example. `AddCommandParser` uses `ParserUtil` to tokenize the student fields into an `ArgumentMultimap`, with `CliSyntax` defining the `Prefix` values (such as `n/` and `p/`) that identify each field. It then validates the values and constructs an `AddCommand`.
 
 <img src="images/ParserClasses.png" width="400"/>
 
-For `add`, `AddressBookParser` creates an `AddCommandParser`, which implements the `Parser` interface. `AddCommandParser` uses `ParserUtil` to tokenize the student fields into an `ArgumentMultimap`, checks the values, and creates an `AddCommand`. `CliSyntax` defines the `Prefix` values used to identify fields such as `n/` and `p/`. The other command-specific parsers follow their own validation rules.
+How the parsing works:
+
+* For commands with a dedicated parser, `AddressBookParser` creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the helper classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`), which `AddressBookParser` returns as a `Command` object.
+* All `XYZCommandParser` classes, such as `AddCommandParser` and `NoteCommandParser`, implement the `Parser` interface so that they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
 
@@ -128,31 +133,27 @@ For `add`, `AddressBookParser` creates an `AddCommandParser`, which implements t
 
 The `Model` component,
 
-* stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores added `Student` records in `AddressBook`; each student has a stable `StudentId`, name, parent or guardian contact, subject, and current level. The diagram shows these student relationships alongside the inherited person model.
+* stores the address book data, i.e., all `Student` records in `AddressBook`. Each student has a stable `StudentId`, name, parent or guardian contact, subject, and current level.
 * stores each student's session notes in a `StudentSessionHistories` object beside the student list, rather than inside `Student`. It keeps one `SessionHistory` of `SessionNote`s per `StudentId` (see [Session note model and persistence](#session-note-model-and-persistence)).
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
-
-<img src="images/BetterModelClassDiagram.png" width="450" />
-
-</div>
-
+`AddressBook` also still holds a `UniquePersonList` of `Person` objects inherited from AB3. The diagram above omits it because no command uses it, although `Storage` still reads and writes it.
 
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-F09-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
-<img src="images/StorageClassDiagram.png" width="550" />
+<img src="images/StorageClassDiagram.png" width="450" />
 
 The `Storage` component,
 
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
-* serializes added students through `JsonSerializableAddressBook` and `JsonAdaptedStudent`, including their optional session notes.
+* serializes students through `JsonSerializableAddressBook` and `JsonAdaptedStudent`, and each student's session notes through `JsonAdaptedSessionNote`.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+`JsonSerializableAddressBook` also still reads and writes the `persons` list inherited from AB3 (through `JsonAdaptedPerson` and `JsonAdaptedTag`). The diagram above omits these classes because no command uses that list.
 
 #### Data-file format and recovery
 
@@ -160,17 +161,17 @@ TutorTrack keeps its files in the _home folder_, the folder containing the JAR f
 
 * `HomeFolder` locates the home folder and places the data file `data/tutortrack.json`, `preferences.json`, and the `tutortrack.log` files there.
 * When TutorTrack is not running from a JAR, such as with `./gradlew run` or in tests, `HomeFolder` uses the working directory instead.
-* If the home folder is not writable, `LogsCenter#addFileHandler` logs a warning through the base logger and TutorTrack continues with console logging only, because the log file is not essential and a failed start would leave the user with no window. Saving preferences fails with a logged error, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
+* If the home folder is not writable, TutorTrack still starts and logs to the console only, and saving data fails with the usual save error described in [Save-failure rollback](#save-failure-rollback).
 
 In the data file:
 
 * Each student record contains an immutable `studentId`, the student details, and an optional `sessionNotes` list.
-* Each session note stores `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`, together with its `text`.
+* Each session note stores its `text` and `recordedAt` as an offset date-time, such as `2026-09-18T18:35:00+08:00`. An edited note also stores `lastEditedAt` in the same format.
 * Displayed note numbers and pending deletion confirmations are transient UI and command state, so they are not persisted.
 
 The storage adapter validates manually edited records by rebuilding the corresponding domain value types and rejects unknown top-level fields. A timestamp without a UTC offset, such as `2026-09-18T18:35:00`, or a misspelled `students` field is invalid. Any content other than whitespace after the first JSON value is also invalid, because otherwise `JsonUtil` would ignore that extra content and the next save would discard it. An invalid data file causes TutorTrack to start with an empty roster and show a data-load error. As later commands could replace that file, storage preserves the unreadable content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`. Legacy files without `students` remain loadable.
 
-Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected. The User Guide intentionally omits these implementation details.
+Direct data-file editing is an advanced recovery or migration technique, not a normal user workflow. Any edit must preserve each student's unique `studentId` and the persisted field and validation rules; otherwise the file may fail to load or produce behavior that the command interface would have rejected.
 
 ### Common classes
 
@@ -184,116 +185,25 @@ The `seedu.address.commons` package contains cross-cutting services rather than 
 
 ## **Implementation**
 
-This section describes some noteworthy details on how certain features are implemented. It first explains how students are stored and identified, how they are displayed, and how session notes are handled, and then describes each command in turn.
+This section describes noteworthy details on how certain features are implemented, grouped by feature. It starts with how commands are parsed, then covers student records, the roster and profile display, session notes, confirmed deletion, and save-failure rollback, and ends with a proposed feature.
 
-### Student identity
+### Parsing commands and reporting errors
 
-TutorTrack keeps identity rules in immutable domain values so command parsing and storage cannot disagree:
+Every command passes through `AddressBookParser`, which chooses the command's parser and reports input mistakes before anything runs. The [Logic component](#logic-component) shows how an `add` command is parsed; this section covers the routing and error reporting that all commands share.
 
-* `StudentIdentity` normalizes the name by trimming, collapsing internal whitespace, and ignoring case; it normalizes the parent or guardian phone by removing spaces, hyphens, and a valid Singapore `+65` prefix. Subject, current level, and parent email are not identity fields, so siblings may share a parent phone.
-* `Student`, `StudentName`, `ParentGuardianContact`, `Subject`, and `CurrentLevel` validate their own values. `JsonAdaptedStudent` rebuilds these values when loading, then `JsonSerializableAddressBook` applies `Student#hasSameIdentity` to the loaded roster.
-* `StudentId` is an immutable UUID-backed identity generated for new students and preserved across edits and reloads. A legacy record without an ID receives a deterministic migration ID derived from its normalized identity, keeping old data loadable.
-* Session-note fields (`recordedAt`, `text`, and optional `lastEditedAt`) are validated by their own domain types; an edit time cannot precede the recorded time.
+The activity diagram below shows how `AddressBookParser` handles the command word.
 
-The command and storage layers therefore delegate normalization and validation to the domain instead of reproducing the rules.
+<img src="images/CommandRoutingActivityDiagram.png" width="336" />
 
-**Design considerations:**
-
-* **Stable `StudentId` (current choice):** Commands resolve the displayed index once and then use the stable ID, so sorting cannot redirect the operation and histories can remain beside `Student`.
-  * Pros: Keeps identity stable across edits, reloads, and profile refreshes; supports safe cross-context references.
-  * Cons: Adds a persisted field and requires deterministic migration for older records.
-* **Displayed roster index as identity:** The UI index would be the only selector and no extra field would be needed.
-  * Pros: Simple to explain and easy to serialize.
-  * Cons: A reorder could make an edit or deletion target the wrong student, and note histories would have no stable key.
-* **Random IDs without a legacy migration rule:** New records would receive random IDs and old records would be handled separately.
-  * Pros: Avoids deriving IDs from user data.
-  * Cons: Older data would lose identity or need a destructive one-time migration; deterministic derivation keeps reload behavior compatible.
-
-### Student roster contract and integration
-
-`Model#getStudentRoster()` is the public projection boundary between the roster domain and JavaFX:
-
-* It returns an immutable `StudentRoster` snapshot with one-based indices and immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and note count.
-* `StudentRoster#BY_NORMALIZED_NAME` sorts by accent-insensitive name, natural numeric order, case-insensitive name, normalized parent or guardian phone, and stable ID as the final tie-breaker. Thus `Kid 2` precedes `Kid 10`, and equal-looking records still have deterministic indices.
-* Note counts are projection data from each student's `SessionHistory`; the roster context does not own note storage.
-* `Model#getStudent`, `Model#findConflictingStudent`, and `Model#setStudent` provide domain operations for editing without exposing mutable roster state or replacing the student's stable ID.
-
-`MainWindow` creates the roster panel from a snapshot at launch and refreshes it after each successful command. `RosterListingIntegrationTest` protects the boundary by checking persisted reloads, normalized ordering, one-based indices, stable IDs, and projected note counts.
-
-### Student roster UI
-
-`StudentRosterPanel` renders the immutable projection without owning roster rules:
-
-* It copies entries into a scrolling JavaFX `ListView`; each cell creates a wrapping `StudentRosterCard` with the index, name, subject, current level, and note count.
-* A width change refreshes virtualized cells so wrapped cards recalculate their height and remain visible in a narrow pane. An empty snapshot replaces the list with an actionable message explaining how to use `add`.
-* Profile selection is keyed by stable `StudentId`, not the displayed index. The dedicated `profile-selected` state is separate from temporary pointer or keyboard focus, and CSS selectors are scoped to `student-roster-list` so note cards cannot inherit roster hover styling.
-
-### Student profile projection
-
-The profile feature separates temporary roster selection from stable student identity. The command resolves the displayed index once, while later profile retrieval and UI refreshes use the student's `StudentId`.
-
-#### Student profile model
-
-`Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
-
-<img src="images/StudentProfileClassDiagram.png" width="700" />
-
-`Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary.
-
-#### Profile display and refresh
-
-The next sequence shows the detailed UI interactions after Logic returns a successful view result. Logic remains a black box here; its command execution is described in [View command execution](#view-command-execution).
-
-<img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
-
-`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, `note`, `edit note`, and the `delete` and `delete note` previews return that stable ID in `CommandResult`, so a successful command on another student or a deletion preview immediately opens the affected student's profile. A `delete note` preview also returns the note number, which `StudentProfilePanel` scrolls to and highlights while the preview is active. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
-
-A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
-
-`StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider.
-
-Each `SessionNoteCard` shows the recorded time, and the latest edit time if any, as the saved clock reading without its UTC offset, so both times in a header read alike. Notes are still ordered by instant, so in the rare case of notes saved at different offsets, their displayed clock readings may not look in order. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
-
-`MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
-
-### Session note types
-
-Session notes live in `seedu.address.model.session`, separate from the student roster because the roster consumes note counts but does not own note data:
-
-* `SessionNote` is immutable. It trims surrounding whitespace, preserves internal spaces, accepts 1 to 500 Unicode code points, rejects control characters and line or paragraph separators, and receives its `OffsetDateTime` from the caller so tests can control time.
-* `SessionHistory` is immutable and newest-first. `withNote` places a newly added note before equal timestamps, `of` preserves saved order for equal timestamps, and `getNotes` exposes an unmodifiable list.
-* Note selectors are chronological: `1` is the oldest note, and the history converts that display number to `history size - NOTE_NUMBER` in its newest-first list. Editing keeps the recorded time and number while updating the text and latest edit time.
-* `ParserUtil#parseNoteText` is shared by `NoteCommandParser` and `EditNoteCommandParser`, so both commands name the same empty, overlong, non-printable, and invisible-only value errors.
-
-### Session note model and persistence
-
-The [Model class diagram](#model-component) shows where session-note classes sit. `AddressBook` stores a `StudentSessionHistories` map from `StudentId` to `SessionHistory` beside the student list, so adding or editing a note does not replace `Student`, change student equality, or alter duplicate detection.
-
-The model boundary owns the lifecycle and keeps histories attached to existing students:
-
-* `Model#addSessionNote` validates and timestamps a note through an injected `Clock`; `getSessionHistory` returns a newest-first snapshot; `editSessionNote` and `deleteSessionNote` preserve the selected student's identity and unrelated notes.
-* `Model#deleteStudent` removes the student and its history together, so a failed deletion cannot leave an orphaned student or history.
-* `AddressBook#resetData` and `ReadOnlyAddressBook#getSessionHistory` copy or expose histories without returning mutable collections.
-
-Each student's notes are saved inside its JSON record as a `sessionNotes` list, newest first:
-
-```json
-"sessionNotes": [ { "recordedAt": "2026-09-18T18:35:00+08:00", "text": "Reviewed factorisation." } ]
-```
-
-Notes are nested in the student record so the file remains hand-editable while the model keeps histories beside the student list. `JsonSerializableAddressBook` writes each history through `ReadOnlyAddressBook#getSessionHistory`, and loading adds students first before restoring each complete history through `AddressBook#setSessionHistory`. `SessionHistory#of` preserves equal-timestamp order instead of treating file iteration order as a sequence of new additions.
-
-`JsonAdaptedSessionNote` writes an offset timestamp with `ISO_OFFSET_DATE_TIME` and rebuilds every note through `SessionNote`. A missing note field, timestamp without an offset, future timestamp, invalid text, or empty entry is a load error. A missing `sessionNotes` field means an empty history, keeping data files created before session notes were introduced loadable; all other failures use the normal data-file recovery path.
-
-### TutorTrack command routing
+#### TutorTrack command routing
 
 `AddressBookParser` is the command-routing boundary:
 
 * It registers TutorTrack's `add`, `edit`, `edit note`, `view`, `note`, `delete`, `help`, and `exit` routes. Unsupported legacy commands receive the standard unknown-command error.
-* It sends the exact `note` target and note-like misspellings after `edit` to `EditNoteCommandParser`; other edit arguments go to `EditCommandParser`, so a malformed student edit receives the correct usage.
+* After `edit`, it sends an exact lowercase `note` target to `EditNoteCommandParser` and any other arguments to `EditCommandParser`. A `note` target in another case, or a near-miss such as `notes`, is rejected by `AddressBookParser` itself with a targeted error and the `edit note` format, so a mistyped note edit is not parsed as a student edit.
 * `AddCommandParser` and `EditCommandParser` accept only documented fields. Other prefix-like text, including the inherited `a/` and `t/`, is not treated as a parameter, so a name such as `Raj a/l Kumar` stays intact. Legacy person types remain only for persisted-data compatibility, not as part of the TutorTrack command surface.
 
-### Command error messages
+#### Command error messages
 
 Each rejected command names one specific problem so that the user can correct it without rereading the User Guide. The parser separates errors by responsibility:
 
@@ -311,7 +221,47 @@ Command words, parameter prefixes, the `note` target of `edit note` and `delete 
 
 Because every parser finishes before `LogicManager` executes the command, a syntax error is reported without reading or changing the model. If an unknown command like `sort` is entered, `AddressBookParser` lists all the available commands. Otherwise, a word that matches a valid command only when case is ignored, such as `NOTE`, is instead reported as `Command words must be typed in lowercase. Did you mean note?`. The unknown word is shown to the user but never logged.
 
-### Adding a student
+**Design considerations:**
+
+**Aspect: How a command word typed in another case is handled**
+
+* **Accept only lowercase, with a targeted error (current choice):** `NOTE` is rejected with a message naming `note`.
+  * Pros: One accepted form keeps routing predictable, and the error tells the user the exact fix.
+  * Cons: A user who types the wrong case must retype the command.
+* **Accept any case:** `NOTE` would run `note`.
+  * Pros: Fewer rejected commands.
+  * Cons: Prefixes, the `note` target, and `/confirm` would need the same rule, or the case rules would differ between parts of a command.
+
+### Student records
+
+Each student is an immutable `Student` with a stable `StudentId`. `add` and `edit` share field parsing and validation, and one identity rule decides duplicates for commands and stored data alike.
+
+#### Student identity
+
+TutorTrack keeps identity rules in immutable domain values so command parsing and storage cannot disagree:
+
+* `StudentIdentity` normalizes the name by trimming, collapsing internal whitespace, and ignoring case; it normalizes the parent or guardian phone by removing spaces, hyphens, and a valid Singapore `+65` prefix. Subject, current level, and parent email are not identity fields, so siblings may share a parent phone.
+* `Student`, `StudentName`, `ParentGuardianContact`, `Subject`, and `CurrentLevel` validate their own values. `JsonAdaptedStudent` rebuilds these values when loading, then `JsonSerializableAddressBook` applies `Student#hasSameIdentity` to the loaded roster.
+* `StudentId` is an immutable UUID-backed identity generated for new students and preserved across edits and reloads. A legacy record without an ID receives a deterministic migration ID derived from its normalized identity, keeping old data loadable.
+* Session-note fields (`recordedAt`, `text`, and optional `lastEditedAt`) are validated by their own domain types; an edit time cannot precede the recorded time.
+
+The command and storage layers therefore delegate normalization and validation to the domain instead of reproducing the rules.
+
+**Design considerations:**
+
+**Aspect: How a command identifies its target student**
+
+* **Stable `StudentId` (current choice):** Commands resolve the displayed index once and then use the stable ID, so sorting cannot redirect the operation and histories can remain beside `Student`.
+  * Pros: Keeps identity stable across edits, reloads, and profile refreshes; supports safe cross-context references.
+  * Cons: Adds a persisted field and requires deterministic migration for older records.
+* **Displayed roster index as identity:** The UI index would be the only selector and no extra field would be needed.
+  * Pros: Simple to explain and easy to serialize.
+  * Cons: A reorder could make an edit or deletion target the wrong student, and note histories would have no stable key.
+* **Random IDs without a legacy migration rule:** New records would receive random IDs and old records would be handled separately.
+  * Pros: Avoids deriving IDs from user data.
+  * Cons: Older data would lose identity or need a destructive one-time migration; deterministic derivation keeps reload behavior compatible.
+
+#### Adding a student
 
 The activity diagram below shows the successful `add` path across the components. `AddressBookParser` delegates to `AddCommandParser`, `AddCommand` checks duplicate identity through the model, and `LogicManager` saves only after the model changes. Invalid, missing, repeated, or unsupported parameters fail before mutation; other prefix-like text remains in a value when the parser treats it as ordinary text.
 
@@ -321,7 +271,7 @@ A duplicate produces a command error. If saving fails, `LogicManager` restores i
 
 The class diagrams in [Logic](#logic-component), [Model](#model-component), [Storage](#storage-component), and [UI](#ui-component) show the corresponding relationships. A newly added student appears in `StudentRosterPanel` as a `StudentRosterCard`; `JsonAdaptedStudent` stores the student when the address book is saved.
 
-### Student editing
+#### Student editing
 
 `edit INDEX [n/NAME] [p/PARENT_PHONE] [e/PARENT_EMAIL] [sub/SUBJECT] [l/CURRENT_LEVEL]` is parsed by `EditCommandParser`. It requires one positive roster index and at least one edit, rejects repeated or unsupported fields, and applies the same value-object validation used by addition and storage. `ParserUtil#tokenizeStudentFields` gives add and edit one shared tokenization rule, while other prefix-like text remains in its field value.
 
@@ -337,7 +287,40 @@ The sequence below shows a successful student edit with that student's profile o
 
 Changing a name or phone may reorder the roster. A successful `edit` returns the target's stable ID, so `MainWindow` opens the updated profile and highlights the correct card at its new index. `LogicManager` uses its normal persistence snapshot and rollback path; a failed save restores the original student and session history. Edit command string representations and command-routing logs omit supplied field values because contact and lesson context can contain private information.
 
-### View command execution
+### Roster and profile display
+
+TutorTrack shows a sorted roster beside the selected student's profile. Both are immutable snapshots that `MainWindow` requests through `Logic` after each successful command, and commands identify students by stable `StudentId`, so a reordered roster never changes which profile is shown.
+
+#### Student roster contract and integration
+
+`Model#getStudentRoster()` is the public projection boundary between the roster domain and JavaFX:
+
+* It returns an immutable `StudentRoster` snapshot with one-based indices and immutable `StudentRosterEntry` values containing the stable ID, name, subject, current level, and note count.
+* `StudentNameComparator` sorts by accent-insensitive name, natural numeric order, case-insensitive name, normalized parent or guardian phone, and stable ID as the final tie-breaker. Thus `Kid 2` precedes `Kid 10`, and equal-looking records still have deterministic indices.
+* Note counts are projection data from each student's `SessionHistory`; the roster context does not own note storage.
+* `Model#getStudent`, `Model#findConflictingStudent`, and `Model#setStudent` provide domain operations for editing without exposing mutable roster state or replacing the student's stable ID.
+
+`MainWindow` creates the roster panel from a snapshot at launch and refreshes it after each successful command. `RosterListingIntegrationTest` protects the boundary by checking persisted reloads, normalized ordering, one-based indices, stable IDs, and projected note counts.
+
+#### Student roster UI
+
+`StudentRosterPanel` renders the immutable projection without owning roster rules:
+
+* It copies entries into a scrolling JavaFX `ListView`; each cell creates a wrapping `StudentRosterCard` with the index, name, subject, current level, and note count.
+* A width change refreshes virtualized cells so wrapped cards recalculate their height and remain visible in a narrow pane. An empty snapshot replaces the list with an actionable message explaining how to use `add`.
+* Profile selection is keyed by stable `StudentId`, not the displayed index. The dedicated `profile-selected` state is separate from temporary pointer or keyboard focus, and CSS selectors are scoped to `student-roster-list` so note cards cannot inherit roster hover styling.
+
+#### Student profile model
+
+The profile feature separates temporary roster selection from stable student identity. The command resolves the displayed index once, while later profile retrieval and UI refreshes use the student's `StudentId`.
+
+`Model#getStudentProfile(StudentId)` composes one immutable `StudentProfile` from the student record and that student's newest-first session history. The projection exposes domain value objects and an immutable note list, but no JavaFX controls, storage DTOs, or mutable collections. An unknown or deleted student ID returns an empty optional, allowing a displayed profile to be cleared safely when its student no longer exists.
+
+<img src="images/StudentProfileClassDiagram.png" width="700" />
+
+`Logic#getStudentProfile(StudentId)` delegates to the model so UI code stays behind the Logic boundary.
+
+#### View command execution
 
 The sequence below shows how `view INDEX` resolves a temporary position in the sorted roster to a stable `StudentId`. It shows the detailed interactions inside the Logic component while treating UI and Model as black boxes.
 
@@ -345,16 +328,115 @@ The sequence below shows how `view INDEX` resolves a temporary position in the s
 
 `ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks through `Command#getRosterEntry` that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
 
-### Session note command
+#### Profile display and refresh
 
-`note INDEX nt/NOTE` follows the same parser boundary as other commands:
+The next sequence shows the detailed UI interactions after Logic returns a successful view result. Logic remains a black box here; its command execution is described in [View command execution](#view-command-execution).
+
+<img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
+
+`MainWindow` retains the returned `StudentId`, asks `Logic` for a fresh profile snapshot after every successful command, passes it to `StudentProfilePanel`, and asks `StudentRosterPanel` to highlight the matching card. `view`, student `edit`, `note`, `edit note`, and the `delete` and `delete note` previews return that stable ID in `CommandResult`, so a successful command on another student or a deletion preview immediately opens the affected student's profile. A `delete note` preview also returns the note number, which `StudentProfilePanel` scrolls to and highlights while the preview is active. The command layer therefore does not depend on JavaFX, and the UI does not reach into storage or mutable model state.
+
+A failed command leaves the rendered snapshot and roster highlight unchanged. If the retained ID no longer identifies a student after a successful command, `MainWindow` clears both states.
+
+`StudentProfilePanel` preserves the model's newest-first note order. It labels the oldest note `[1]` and assigns each newer note the next number, so the newest note appears first with the history size as its number. These numbers are current-display selectors rather than persisted identifiers and are reassigned consecutively after a deletion. Its bounded label column and growing value column allow names, contact details, subjects, and current levels to wrap without forcing the profile wider.
+
+Each `SessionNoteCard` shows the recorded time, and the latest edit time if any, as the saved clock reading without its UTC offset, so both times in a header read alike. Notes are still ordered by instant, so in the rare case of notes saved at different offsets, their displayed clock readings may not look in order. The notes use wrapping cards inside a `ListView`, so long timestamps and text remain within the profile column and longer histories scroll.
+
+`MainWindow` clamps a restored window size to the usable bounds of the screen containing its saved origin. The FXML keeps flexible result, roster, and profile constraints so the command box, feedback, workspace, and status bar remain reachable when the window is reduced for the supported high-scaling environment.
+
+**Design considerations:**
+
+**Aspect: How the UI stays up to date**
+
+* **Request fresh snapshots after each successful command (current choice):** `MainWindow` asks `Logic` for a new roster and profile after every successful command.
+  * Pros: The UI receives immutable projections and never observes mutable model collections.
+  * Cons: The roster and profile are rebuilt after every successful command, even one that changes no data.
+* **Observe model lists, as AB3 does:** The UI would listen for changes to observable lists in the model.
+  * Pros: Updates happen without the UI asking.
+  * Cons: The UI would depend on mutable model state, and the profile, which combines a student with its session history, has no single list to observe.
+
+### Session notes
+
+A tutor records, edits, and deletes short notes about each student's lessons. Notes are kept per student in an immutable `SessionHistory`, and commands select a note by its chronological number.
+
+#### Session note types
+
+Session notes live in `seedu.address.model.session`, separate from the student roster because the roster consumes note counts but does not own note data. The object diagram below shows a student's `SessionHistory` with three notes.
+
+<img src="images/SessionHistoryObjectDiagram.png" width="750" />
+
+How note numbers map to the stored notes:
+
+1. A `SessionHistory` keeps its notes newest first, so the newest note, `note3`, is at index 0.
+1. Note numbers count from the oldest note, so note 1, `note1`, is last in the list.
+1. To find note `N`, the history uses the index `history size - N`. For note 1 in this history of three notes, that is index 2.
+
+The diagram does not show the rules each type enforces:
+
+* `SessionNote` is immutable. It trims surrounding whitespace, preserves internal spaces, accepts 1 to 500 Unicode code points, rejects control characters and line or paragraph separators, and receives its `OffsetDateTime` from the caller so tests can control time.
+* `SessionHistory` is immutable and exposes its notes through an unmodifiable list. Notes with equal timestamps keep their saved order.
+* Editing a note keeps its recorded time and number while updating the text and latest edit time.
+* `ParserUtil#parseNoteText` is shared by `NoteCommandParser` and `EditNoteCommandParser`, so both commands name the same empty, overlong, non-printable, and invisible-only value errors.
+
+#### Session note model and persistence
+
+`AddressBook` stores a `StudentSessionHistories` map from `StudentId` to `SessionHistory` beside the student list, as the [Model class diagram](#model-component) shows. The model boundary owns the lifecycle and keeps histories attached to existing students:
+
+* `Model#addSessionNote` timestamps a new note through an injected `Clock` (see [Session note command](#session-note-command)); `getSessionHistory` returns a newest-first snapshot; `editSessionNote` and `deleteSessionNote` preserve the selected student's identity and unrelated notes.
+* `Model#deleteStudent` removes the student and its history together, so a failed deletion cannot leave an orphaned student or history.
+* `AddressBook#resetData` and `ReadOnlyAddressBook#getSessionHistory` copy or expose histories without returning mutable collections.
+
+Each student's notes are saved inside its JSON record as a `sessionNotes` list, newest first, so the file remains hand-editable:
+
+```json
+"sessionNotes": [ { "recordedAt": "2026-09-18T18:35:00+08:00", "text": "Reviewed factorisation." } ]
+```
+
+When saving, `JsonSerializableAddressBook` writes each student's history through `ReadOnlyAddressBook#getSessionHistory`. The sequence diagram below shows how loading restores the histories. Duplicate checks and load errors are left out.
+
+<img src="images/LoadSessionNotesSequenceDiagram.png" width="750" />
+
+How loading works:
+
+1. `JsonSerializableAddressBook` creates an empty `AddressBook`.
+1. For each student, it rebuilds the `Student` from its `JsonAdaptedStudent` and adds it, so the student exists before its history.
+1. The `JsonAdaptedStudent` rebuilds each note through its `JsonAdaptedSessionNote`, and `SessionHistory#of` then builds the whole history at once, keeping the saved order of notes with equal timestamps.
+1. `AddressBook#setSessionHistory` attaches the history to the student.
+
+The diagram does not show failures. Each note is rebuilt through `SessionNote`, so a missing field, a timestamp without an offset, a future timestamp, invalid text, or an empty entry is a load error. A missing `sessionNotes` field means an empty history, so data files created before session notes were introduced still load.
+
+**Design considerations:**
+
+**Aspect: Where session histories are stored**
+
+* **Beside the student list, keyed by `StudentId` (current choice):** `AddressBook` holds a `StudentSessionHistories` map next to its students.
+  * Pros: Adding, editing, or deleting a note does not replace `Student`, change student equality, or affect duplicate detection.
+  * Cons: The model must keep histories in step with students, for example by removing both together when a student is deleted.
+* **Inside each `Student`:** Each student would own its list of notes.
+  * Pros: One object holds everything about a student, matching how the data file nests `sessionNotes` in each student record.
+  * Cons: Every note change would replace the `Student`, and note data would take part in student equality.
+
+#### Session note command
+
+`note INDEX nt/NOTE` adds a note to a student's history. The sequence diagram below shows what happens inside the `Model` component when `NoteCommand` calls `Model#addSessionNote`. Logic and Storage are left out; the command's path through Logic is the same as the [`add` example](#logic-component).
+
+<img src="images/AddSessionNoteSequenceDiagram.png" width="800" />
+
+How adding a note works:
+
+1. `ModelManager` reads `recordedAt` from its injected `Clock` and creates the `SessionNote`.
+1. `AddressBook` checks that the student exists and passes the note to `StudentSessionHistories`.
+1. Because `SessionHistory` is immutable, `withNote` returns a new history `h2` containing the note.
+1. `StudentSessionHistories` replaces the student's old history with `h2`. The `Student` record is not touched.
+
+The diagram does not show the steps before and after the model call:
 
 * `NoteCommandParser` recognizes only `nt/`; a second prefix after a space is rejected, while `(nt/)` without a preceding space remains note text.
 * It validates structure, the shared positive-index rules, and note text through `ParserUtil#parseNoteText` before creating a command. Empty, invisible-only, overlong, and non-printable values receive specific value errors.
-* `NoteCommand#execute` resolves the displayed index to a `StudentId`, calls `Model#addSessionNote`, and lets `LogicManager` save the changed address book. The result carries the ID so `MainWindow` refreshes the count and opens the updated profile.
+* `NoteCommand#execute` resolves the displayed index to a `StudentId` before calling the model, and `LogicManager` saves the changed address book afterwards. The result carries the ID so `MainWindow` refreshes the count and opens the updated profile.
 * `NoteCommand#toString` omits note text because lesson notes may contain private details.
 
-### Edit note command
+#### Edit note command
 
 The `edit note` command replaces the text of one existing session note without changing when it was recorded. Its format is `edit note STUDENT_INDEX NOTE_NUMBER nt/NEW_NOTE`, where `STUDENT_INDEX` selects a student in the current roster and `NOTE_NUMBER` selects a note in that student's displayed chronological numbering.
 
@@ -370,9 +452,16 @@ The model operation creates a new immutable `SessionNote` with the replacement t
 
 **Design considerations:**
 
+**Aspect: How editing treats the note's recorded time**
+
 * **Preserve the original timestamp (current choice):** Editing corrects the note's text while retaining its lesson context and chronological position. The replacement is reconstructed with the old `recordedAt` value rather than being treated as a new lesson note.
-* **Delete and add a new note:** This would reuse existing operations, but it would assign a new timestamp and could move the edited note in the history. It would also make an edit look like a second lesson, so it is not suitable.
-* **Use a persistent note ID:** A stored ID would require a storage-schema and migration change. The current chronological note number is sufficient when paired with the current roster context and the immutable history used for the edit operation.
+  * Pros: The note keeps its number and its place in the history, and an edit is not mistaken for a new lesson.
+  * Cons: Needs its own model operation instead of reusing the add and delete operations.
+* **Delete and add a new note:** The edit would remove the old note and record the new text as a new note.
+  * Pros: Reuses existing operations.
+  * Cons: Assigns a new timestamp, can move the edited note in the history, and makes an edit look like a second lesson.
+
+Selecting a note by its chronological number rather than a persistent note ID is discussed under [Confirmed deletion](#confirmed-deletion).
 
 ### Confirmed deletion
 
@@ -422,6 +511,8 @@ Neither preview changes model or saved data. A rejected confirmation keeps the d
 
 **Design considerations:**
 
+**Aspect: How a deletion is confirmed**
+
 * **Trailing `/confirm` flag (current choice):** The confirmation repeats the complete destructive command and target in the same keyboard-first workflow.
   * Pros: Requires no extra command vocabulary, lets the parser reject malformed placement, and keeps the exact target visible.
   * Cons: The tutor must retype or recall the complete command.
@@ -431,9 +522,19 @@ Neither preview changes model or saved data. A rejected confirmation keeps the d
 * **JavaFX confirmation dialog:** A modal dialog would confirm the pending operation outside the command path.
   * Pros: Makes the destructive action visually prominent.
   * Cons: Duplicates state, introduces mouse-oriented workflow, and makes parser and end-to-end testing less representative.
+**Aspect: How a session note is selected**
+
+* **Chronological note number (current choice):** A note is selected by its displayed number, oldest first.
+  * Pros: Needs no storage-schema change, and the numbers match what the profile shows.
+  * Cons: Numbers are reassigned after a deletion, so a confirmation must be checked against the history it previewed.
 * **Persistent session-note IDs:** A stored ID would replace chronological note selectors.
   * Pros: Gives each note a durable selector.
   * Cons: Requires a schema and migration change; the current immutable-history binding already makes stale display numbers fail safely.
+**Aspect: Where pending deletions are managed**
+
+* **One pending-deletion slot in `LogicManager` (current choice):** Student and note deletions share a single pending state.
+  * Pros: Both deletion types share one save and rollback path, and only one confirmation can be pending at a time.
+  * Cons: `LogicManager` holds state specific to deletions.
 * **Separate student and note coordinators:** Each deletion type would own its preview and confirmation lifecycle.
   * Pros: Keeps the two command classes independent.
   * Cons: Duplicates pending-state, matching, save, and rollback logic; one pending-deletion slot already prevents ambiguous confirmations.
@@ -459,6 +560,8 @@ Because `Student`, `SessionHistory`, and `SessionNote` are immutable, copying th
 
 **Design considerations:**
 
+**Aspect: How the model is restored after a failed save**
+
 * **Snapshot restore in `LogicManager` (current choice):** `LogicManager` copies the address book before persistence-path commands and restores it when saving fails.
   * Pros: Covers current and future persisted commands in one place while allowing non-mutating previews to opt out.
   * Cons: Copies and compares the address book for commands that ultimately do not change it.
@@ -475,12 +578,31 @@ Restoring the model does not by itself protect the data file from a write that f
 
 Student archiving is planned for v2.0 and is not implemented. It covers archiving a student who has stopped lessons, viewing archived details, and restoring the student without losing contact details or session history. The User Guide lists it under [Archiving students](UserGuide.md#archiving-students-coming-soon).
 
-The proposed design keeps archived students in the same `AddressBook` and data file: an archived-ID set sits beside `StudentSessionHistories`, `Model#getStudentRoster()` excludes those IDs, duplicate detection still includes them, and an optional `archived` field keeps older files active by default. The archive and restore operations use the normal save and [save-failure rollback](#save-failure-rollback) path.
+The proposed design keeps archived students in the same `AddressBook` and data file: an archived-ID set sits beside `StudentSessionHistories`, `Model#getStudentRoster()` excludes those IDs, duplicate detection still includes them, and an optional `archived` field keeps older files active by default. A separate archived roster, with its own one-based indices, would list archived students so that the tutor can view or restore one by its index.
 
-The sequence below shows the proposed boundary interactions. It deliberately omits UI controls and persistence DTO details; the design question is how both operations preserve the stable ID and use the existing save path.
+The sequence diagram below shows the proposed `archive 2` command inside the `Logic` component, with `Model` and `Storage` as black boxes. Parsing is left out, as it follows the [`add` example](#logic-component).
 
-<img src="images/StudentArchivingSequenceDiagram.png" width="760" />
+<img src="images/StudentArchivingSequenceDiagram.png" width="630" />
 
+How archiving would work:
+
+1. `LogicManager` executes the `ArchiveCommand`, like any other command.
+1. The command resolves the displayed index against `Model#getStudentRoster()` to the student's stable `StudentId`, as existing commands do through `Command#getRosterEntry`.
+1. The command calls `Model#archiveStudent(studentId)`, which adds the ID to the archived-ID set. The student's details and session history are not changed.
+1. `LogicManager` saves the changed address book through the usual [save-failure rollback](#save-failure-rollback) path.
+
+`restore INDEX` would follow the same flow, resolving the index against the archived roster and calling `Model#restoreStudent(studentId)`.
+
+**Design considerations:**
+
+**Aspect: Where archived students are kept**
+
+* **In the same `AddressBook`, marked by an archived-ID set (current proposal):** Archiving only adds the student's ID to a set.
+  * Pros: Keeps one data file, keeps each student's stable ID and session history attached, lets duplicate detection still see archived students, and reuses the existing save and rollback path.
+  * Cons: Every roster query must leave out archived IDs.
+* **In a separate archive file:** Archiving would move the student's record to another file.
+  * Pros: The main data file holds only active students.
+  * Cons: Moving a student needs two file writes, which could fail halfway, and duplicate detection would have to check both files.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -548,6 +670,8 @@ The current MVP stories are listed first. Future user stories follow in a separa
 | `* *`    | tutor new to TutorTrack                             | see the exact format of a specific command                                       | enter it correctly without trial and error                                                 |
 | `* *`    | tutor                                               | enter a parent phone with spaces or hyphens                                      | copy numbers from messages without reformatting them                                       |
 | `* *`    | tutor                                               | see my roster sorted by student name                                             | locate a student quickly                                                                   |
+| `* *`    | tutor who types fast                                | recall my previous commands                                                      | fix or repeat a command without retyping it                                                |
+| `* *`    | tutor preparing for a lesson                        | scroll a long session-note history from the keyboard                             | read past notes without reaching for the mouse                                             |
 | `* *`    | tutor                                               | back up my roster and session notes by copying a single data file                | avoid losing my students' history if my computer fails                                     |
 
 #### Future user stories
@@ -579,33 +703,29 @@ the tutor and the system.
 
 **Preconditions:** The system is running and ready to accept requests.
 
-**Guarantees:** A valid student record is saved locally and appears in the
-student roster.
+**Guarantees:** A valid student record is saved locally and appears in the student roster.
 
 **MSS**
 
 1. Tutor requests to add a student.
-2. Tutor provides the student's name, parent or guardian phone number, subject,
-   and current level, and optionally an email address.
+2. Tutor provides the student's name, parent or guardian phone number, subject, and current level, and optionally an email address.
 3. Tutor submits the student details.
 4. TutorTrack validates the details and creates the student record.
-5. TutorTrack saves the record and displays the updated roster in
-   case-insensitive alphabetical order.
+5. TutorTrack saves the record and displays the updated roster in case-insensitive alphabetical order.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. One or more required details are missing or invalid.
+* 4a. One or more required details are missing or invalid.
 
-  * 2a1. TutorTrack reports the relevant validation error and makes no changes.
-  * 2a2. Tutor corrects the details.
+  * 4a1. TutorTrack reports the relevant validation error and makes no changes.
+  * 4a2. Tutor corrects the details.
 
     Use case resumes at step 2.
-* 4a. A student with the same normalized name and normalized parent or guardian
-  phone number already exists.
+* 4b. A student with the same normalized name and normalized parent or guardian phone number already exists.
 
-  * 4a1. TutorTrack reports the duplicate and does not add the student.
+  * 4b1. TutorTrack reports the duplicate and does not add the student.
 
     Use case ends.
 * 5a. TutorTrack cannot save the updated data.
@@ -631,9 +751,11 @@ student roster.
 
 **Extensions**
 
-* 1a. Tutor supplies `e/` without a value.
+* 1a. Tutor asks to remove the optional parent or guardian email.
 
-  * 1a1. TutorTrack removes the optional parent or guardian email and continues at step 2.
+  * 1a1. TutorTrack marks the email for removal.
+
+    Use case resumes at step 2.
 * 1b. Tutor supplies no field to edit, repeats a field, or supplies an unsupported field.
 
   * 1b1. TutorTrack reports the command error and makes no changes.
@@ -657,17 +779,16 @@ student roster.
 
 **Use case: Display the student roster**
 
-**Preconditions:** The system is running and the student roster is available.
+**Preconditions:** None.
 
 **Guarantees:** The complete roster is displayed with stable indices that can
 be used to select a student in a subsequent use case. No data is changed.
 
 **MSS**
 
-1. TutorTrack displays every student sorted by normalized name, together with
-   an index, subject, current level, and session-note count.
-2. TutorTrack establishes the displayed indices as the current selection
-   context.
+1. Tutor launches TutorTrack.
+2. TutorTrack displays every student sorted by normalized name, together with an index, subject, current level, and session-note count.
+3. TutorTrack establishes the displayed indices as the current selection context.
 
    Use case ends.
 
@@ -675,10 +796,10 @@ be used to select a student in a subsequent use case. No data is changed.
 
 * 2a. The roster is empty.
 
-  * 2a1. TutorTrack reports that there are no students and shows how to add
-    one.
+  * 2a1. TutorTrack reports that there are no students and shows how to add one.
 
     Use case ends.
+
 **Use case: View a student profile**
 
 **Preconditions:** The system is running and the current roster index context
@@ -739,8 +860,12 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the index error and makes no changes.
 
     Use case ends.
-* 2a. The note is missing, empty, too long, or contains a line break or control
-  character.
+* 1b. The note is missing or given more than once.
+
+  * 1b1. TutorTrack reports the command-format error and makes no changes.
+
+    Use case ends.
+* 2a. The note is empty, too long, or contains a line break or control character.
 
   * 2a1. TutorTrack reports the note validation error and makes no changes.
 
@@ -760,7 +885,7 @@ history and saved locally. No other student record is changed.
 **MSS**
 
 1. Tutor requests deletion using a student's roster index and, for one session note, its displayed note number.
-1. TutorTrack displays the target, exact confirmation command, and instruction that another correctly formatted command cancels the deletion. For a note, it also opens the selected student's profile and highlights the targeted note.
+1. TutorTrack displays the target, exact confirmation command, and instruction that another correctly formatted command cancels the deletion. It also opens the selected student's profile and, for a note, highlights the targeted note.
 1. Tutor submits the matching confirmation as the next correctly formatted command.
 1. TutorTrack verifies that the index still identifies the same stable student ID and, for a note, that the displayed history is unchanged.
 1. TutorTrack removes the previewed student and complete history, or removes only the previewed note, and saves the updated data.
@@ -785,7 +910,7 @@ history and saved locally. No other student record is changed.
   * 3b1. TutorTrack reports that the confirmation does not match or that no deletion is pending, and makes no deletion.
 
     Use case ends.
-* 3c. Tutor duplicates or misplaces `/confirm` or adds extra arguments.
+* 3c. Tutor submits a malformed confirmation, such as one with the confirmation given twice, in the wrong place, or with extra arguments.
 
   * 3c1. TutorTrack reports the command-format error, makes no deletion, and keeps the preview pending so the tutor can correct the command.
 
@@ -823,9 +948,14 @@ history and saved locally. No other student record is changed.
   * 1a1. TutorTrack reports the applicable selector error and makes no changes.
 
     Use case ends.
-* 1b. The `nt/` prefix is missing, duplicated, or followed by invalid note text.
+* 1b. The replacement text is missing or given more than once.
 
-  * 1b1. TutorTrack reports the note validation error and makes no changes.
+  * 1b1. TutorTrack reports the command format error and makes no changes.
+
+    Use case ends.
+* 1c. The replacement text is invalid.
+
+  * 1c1. TutorTrack reports the note validation error and makes no changes.
 
     Use case ends.
 * 3a. TutorTrack cannot save the updated data.
@@ -841,7 +971,10 @@ history and saved locally. No other student record is changed.
 3. A roster search, filter, or student-profile view should respond within two seconds for a roster of up to 1000 student records.
 4. Saving or loading the local data file should complete within five seconds for a roster of up to 1000 student records on a typical modern computer.
 5. The application should start within ten seconds on a typical modern computer when loading a data file containing up to 1000 student records.
-6. The user interface should be intuitive for users who generally prefer only using a keyboard.
+6. A user who types at least 40 words per minute should be able to add a student with all required fields, open that student's profile, and add a session note to that student, each within 30 seconds using only the keyboard.
+7. Should store its data locally in a human-editable JSON file, so that an advanced user can back up or correct the data with a text editor.
+8. Should work without an internet connection.
+9. Is intended for a single user on one computer; concurrent use by several users is not supported.
 
 ### Glossary
 
@@ -852,6 +985,7 @@ history and saved locally. No other student record is changed.
 * **Current level**: The student’s current stage of study in the recorded subject.
 * **Session note**: A timestamped record of the student’s progress, difficulties, or next steps from a lesson.
 * **Session history**: All session notes belonging to one student, displayed newest first.
+* **Note number**: The positive, one-based number of a session note in a student's history, counting from the oldest note. Note numbers are reassigned after a note is deleted.
 * **Roster index**: The positive, one-based number assigned to a student in the currently displayed roster.
 * **Current selection context**: The mapping between the displayed roster indices and their students; it changes when the roster is redrawn.
 * **Duplicate student**: Two student records whose normalized names and normalized parent phone numbers both match.
@@ -860,34 +994,7 @@ history and saved locally. No other student record is changed.
 * **Active student**: A student currently receiving tuition and included in the normal roster.
 * **Archived student**: A former or inactive student whose details and session history are retained but excluded from the active roster.
 * **Home folder**: The folder containing the TutorTrack JAR file, where TutorTrack keeps its data file, preferences, and log files wherever it is launched from.
-* **Typical modern computer**: A computer that can run Java `25` comfortably
-  and has at least 8 GB of memory.
-
----
-
-## **Appendix: Effort**
-
-TutorTrack required more design effort than a direct AB3 extension because the product keeps the brownfield command and storage boundaries while introducing a tutor-specific student roster, profile, and session-history model. The following summary is qualitative rather than a claim of exact hours.
-
-### Difficulty
-
-* The main difficulty was changing the meaning of the application without breaking the supplied JavaFX, persistence, testing, and build structure.
-* The most demanding work crossed boundaries: a displayed roster index is temporary, while `StudentId` must remain stable across sorting, editing, deletion, and reload.
-* Session notes add a second entity type and a chronological selector model, so UI numbering, immutable histories, JSON order, and command parsing must agree.
-
-### Challenges
-
-* Keeping duplicate identity in one domain value object while accepting hand-edited JSON and migrating legacy records required validation at both command and storage boundaries.
-* Confirmed deletion had to preview without saving, bind the confirmation to the original stable target and immutable note history, and recover safely when a later command or save fails.
-* The JavaFX UI had to refresh profiles after cross-student commands while separating the open-profile identity from temporary list focus and preserving keyboard-first scrolling.
-* Documentation and diagrams had to explain these decisions to a new developer without repeating every method or storage field already visible in the source.
-
-### Effort and achievements compared with AB3
-
-* The AB3 baseline supplied the component structure, command routing, JavaFX shell, JSON adapter pattern, and test harness. TutorTrack work extended those foundations with `StudentId`, parent or guardian contact validation, subjects, current levels, profile projections, and session histories.
-* The team added domain and integration coverage for stable identity, natural roster ordering, note chronology, persistence and reload, malformed data recovery, confirmed deletion, save rollback, and profile refresh. These checks protect interactions that a simple contact list does not need.
-* The resulting product supports the tutor's core loop: maintain a roster, retrieve one student's lesson context, and record what mattered after a session. The remaining proposed archive flow is documented separately so future work has a bounded design rather than an undocumented promise.
-
+* **Typical modern computer**: A computer that can run Java `25` comfortably and has at least 8 GB of memory.
 
 ---
 
@@ -1059,27 +1166,35 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Adding a session note
 
-1. Prerequisites: add at least two students, and enter `view 2` to open student 2's profile.
-1. Enter `note 1 nt/Reviewed factorisation.`
-   Expected: TutorTrack reports `Added session note for <name of student 1>.`, that student's session-note count increases by one, and their profile replaces student 2's with the new note at the top and their roster card highlighted.
-1. Close and relaunch TutorTrack.
-   Expected: The student's session-note count is unchanged, and the data file contains the note under that student's `sessionNotes`.
-1. Enter `note 1 nt/Next: 3 sub/topics`.
-   Expected: The note is added with `sub/topics` as part of its text.
-1. Enter each of `note`, `note 1`, `note nt/text`, and `note 1 2 nt/text`.
-   Expected: The first two report `Missing nt/NOTE.`, the third `Missing INDEX.`, and the fourth `note takes only one INDEX.` Each is followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count, open profile, or roster highlight changes.
-1. Enter `note 1 NT/text` and `note 1 Nt/text`.
-   Expected: Each reports `Parameter prefixes must be typed in lowercase:` naming the prefix as typed, such as `NT/ should be nt/.`, followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`, and no note count changes.
-1. Enter each of `note 0 nt/text`, `note x nt/text`, and `note 2147483648 nt/text`.
-   Expected: The first two report `INDEX must be a positive whole number, e.g. 1.` and the third reports that `INDEX` is too large. None shows the format, and no note count changes.
-1. Enter `note 1 nt/` and `note 1 nt/a nt/b`.
-   Expected: The first reports `Session note is empty. Enter the note text after nt/.` and the second a duplicate prefix error; no note count changes.
-1. Enter `note 1 nt/Remember (nt/) notation`, then `view 1`.
-   Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
-1. Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter, then enter `view 1`.
-   Expected: The note is added with the text `First line Second line`; the words are not joined.
-1. Enter `note N nt/text`, where `N` is one more than the number of students.
-   Expected: TutorTrack reports that student index `N` is outside the roster and gives the valid range from 1 to the number of students, and no note count changes.
+1. Adding a note to a student
+
+   1. Prerequisites: Start with an empty roster. Enter `add n/Ari Tan p/9123 4567 sub/Mathematics l/Secondary 3` and `add n/Bea Tan p/9876 5432 sub/English l/Secondary 3`, then enter `view 2` to open Bea's profile.
+   1. Test case: `note 1 nt/Reviewed factorisation.`<br>
+      Expected: TutorTrack reports `Added session note for Ari Tan.` Ari's session-note count increases by one, and Ari's profile replaces Bea's with the new note at the top and Ari's roster card highlighted.
+   1. Test case: Close and relaunch TutorTrack, then enter `view 1`.<br>
+      Expected: The note is still shown, and `data/tutortrack.json` contains it under Ari's `sessionNotes`.
+
+1. Note text that looks like a parameter
+
+   1. Test case: `note 1 nt/Next: 3 sub/topics`<br>
+      Expected: The note is added with `sub/topics` as part of its text.
+   1. Test case: `note 1 nt/Remember (nt/) notation`<br>
+      Expected: The note is added with the text `Remember (nt/) notation`, because `nt/` without a space before it is not a prefix.
+   1. Test case: Copy two lines, `First line` and `Second line`, from a text editor. Type `note 1 nt/`, paste them, and press Enter.<br>
+      Expected: The note is added with the text `First line Second line`; the words are not joined.
+
+1. Rejecting invalid notes
+
+   1. Test case: `note 1`<br>
+      Expected: TutorTrack reports `Missing nt/NOTE.` followed by `Format: note INDEX nt/NOTE` and `Example: note 1 nt/Reviewed factorisation.`
+   1. Test case: `note 0 nt/text`<br>
+      Expected: TutorTrack reports `INDEX must be a positive whole number, e.g. 1.` without the format.
+   1. Test case: `note 3 nt/text`<br>
+      Expected: TutorTrack reports `Student index 3 is outside the roster. Enter a student index from 1 to 2.`
+   1. Test case: `note 1 nt/`<br>
+      Expected: TutorTrack reports `Session note is empty. Enter the note text after nt/.`
+
+   For each invalid note, no note is added and no session-note count changes. Other incorrect inputs to try: a repeated `nt/`, a prefix in another case such as `NT/`, and a note longer than 500 characters.
 
 ### Editing a session note
 
@@ -1195,22 +1310,51 @@ When manually testing roster resizing, start with a populated roster containing 
 
 ### Saving data
 
-1. Dealing with missing/corrupted data files
+1. Dealing with a missing data file
 
-   1. Replace the contents of `data/tutortrack.json` with invalid JSON, such as `invalid`.
-   1. Start TutorTrack.
-      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves the original content in a uniquely named backup such as `data/tutortrack.json.backup-<unique>.bak`.
-   1. Close TutorTrack without entering a command, replace the original data file with different invalid content, and start TutorTrack again.
-      Expected: TutorTrack preserves the new content in a second uniquely named backup and leaves the first backup unchanged.
-   1. Close TutorTrack without entering a command, and replace the data file with two complete JSON documents, one after the other: `{"students":[]}` on one line and `{"students":[]}` on the next. Start TutorTrack again.
-      Expected: TutorTrack starts with an empty roster, shows a data-load error, and preserves both documents in a new uniquely named backup.
+   1. Prerequisites: Close TutorTrack and move `data/tutortrack.json` out of the `data` folder.
+   1. Test case: Start TutorTrack.<br>
+      Expected: TutorTrack starts with an empty roster and no error. The data file is created again when the first change is saved, such as after an `add`.
+
+1. Dealing with a corrupted data file
+
+   1. Prerequisites: Close TutorTrack and keep a copy of `data/tutortrack.json`.
+   1. Test case: Replace the contents of `data/tutortrack.json` with `invalid`, then start TutorTrack.<br>
+      Expected: TutorTrack starts with an empty roster and reports `TutorTrack could not load your data file. A copy was kept at` followed by the backup path, which ends in `data/tutortrack.json.backup-<unique>.bak`. The backup holds the original content.
+   1. Test case: Close TutorTrack without entering a command, replace the data file with `{"students":[]}` on one line and `{"students":[]}` again on the next, then start TutorTrack.<br>
+      Expected: TutorTrack again starts with an empty roster and reports the data-load error, because content after the first JSON value is not allowed. The content is kept in a new backup, and the earlier backup is unchanged.
+
 1. Saving fails while TutorTrack is running
 
-   1. Prerequisites: at least one student in the roster, so that `data/tutortrack.json` exists. Run the `chmod` or `attrib` commands below in a terminal opened in the folder containing the JAR file.
-   1. With TutorTrack still running, make the data file read-only. On Linux or macOS, run `chmod a-w data/tutortrack.json`. On Windows, run `attrib +r data\tutortrack.json`.
-   1. Enter `note 1 nt/Reviewed factorisation.`
+   1. Prerequisites: At least one student in the roster, so that `data/tutortrack.json` exists. With TutorTrack still running, open a terminal in the folder containing the JAR file and make the data file read-only: `chmod a-w data/tutortrack.json` on Linux or macOS, or `attrib +r data\tutortrack.json` on Windows.
+   1. Test case: `note 1 nt/Reviewed factorisation.`<br>
       Expected: TutorTrack reports `Could not save data to file ./data/tutortrack.json because TutorTrack cannot write to the file or its folder. The command was cancelled and no data was changed.` Student 1's session-note count is unchanged.
-   1. Enter `view 1`.
-      Expected: Student 1's profile is shown without the rejected note and without a save error, because commands that change no data are not saved.
-   1. Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.
+   1. Test case: `view 1`<br>
+      Expected: Student 1's profile opens without the rejected note and without a save error, because commands that change no data are not saved.
+   1. Test case: Restore write access with `chmod u+w data/tutortrack.json` or `attrib -r data\tutortrack.json`, then enter `note 1 nt/Reviewed factorisation.` again.<br>
       Expected: The note is added and student 1's session-note count increases by one.
+
+---
+
+## **Appendix: Effort**
+
+TutorTrack required more design effort than a direct AB3 extension because the product keeps the brownfield command and storage boundaries while introducing a tutor-specific student roster, profile, and session-history model. The following summary is qualitative rather than a claim of exact hours.
+
+### Difficulty
+
+* The main difficulty was changing the meaning of the application without breaking the supplied JavaFX, persistence, testing, and build structure.
+* The most demanding work crossed boundaries: a displayed roster index is temporary, while `StudentId` must remain stable across sorting, editing, deletion, and reload.
+* Session notes add a second entity type and a chronological selector model, so UI numbering, immutable histories, JSON order, and command parsing must agree.
+
+### Challenges
+
+* Keeping duplicate identity in one domain value object while accepting hand-edited JSON and migrating legacy records required validation at both command and storage boundaries.
+* Confirmed deletion had to preview without saving, bind the confirmation to the original stable target and immutable note history, and recover safely when a later command or save fails.
+* The JavaFX UI had to refresh profiles after cross-student commands while separating the open-profile identity from temporary list focus and preserving keyboard-first scrolling.
+* Documentation and diagrams had to explain these decisions to a new developer without repeating every method or storage field already visible in the source.
+
+### Effort and achievements compared with AB3
+
+* The AB3 baseline supplied the component structure, command routing, JavaFX shell, JSON adapter pattern, and test harness. TutorTrack work extended those foundations with `StudentId`, parent or guardian contact validation, subjects, current levels, profile projections, and session histories.
+* The team added domain and integration coverage for stable identity, natural roster ordering, note chronology, persistence and reload, malformed data recovery, confirmed deletion, save rollback, and profile refresh. These checks protect interactions that a simple contact list does not need.
+* The resulting product supports the tutor's core loop: maintain a roster, retrieve one student's lesson context, and record what mattered after a session. The remaining proposed archive flow is documented separately so future work has a bounded design rather than an undocumented promise.

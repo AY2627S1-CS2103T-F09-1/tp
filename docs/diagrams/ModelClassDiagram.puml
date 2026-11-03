@@ -1,5 +1,4 @@
 @startuml
-!pragma layout smetana
 !include style.puml
 skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
@@ -7,19 +6,12 @@ skinparam classBackgroundColor MODEL_COLOR
 
 Package Model as ModelPackage {
 Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
-Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
 Class "<<interface>>\nModel" as Model
+Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
 Class AddressBook
 Class ModelManager
 Class UserPrefs
 
-Class UniquePersonList
-Class Person
-Class Address
-Class Email
-Class Name
-Class Phone
-Class Tag
 Class Student
 Class StudentId
 Class StudentName
@@ -29,49 +21,31 @@ Class CurrentLevel
 Class StudentSessionHistories
 Class SessionHistory
 Class SessionNote
-
-note left of StudentSessionHistories
-  Keys each SessionHistory
-  by the student's StudentId.
-end note
-
-Class I #FFFFFF
 }
 
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> Model
 
-AddressBook .up.|> ReadOnlyAddressBook
-
-ModelManager .up.|> Model
-Model .right.> ReadOnlyUserPrefs
 Model .left.> ReadOnlyAddressBook
+Model .right.> ReadOnlyUserPrefs
+ModelManager .up.|> Model
+AddressBook .up.|> ReadOnlyAddressBook
+UserPrefs .up.|> ReadOnlyUserPrefs
 ModelManager -left-> "1" AddressBook
 ModelManager -right-> "1" UserPrefs
-UserPrefs .up.|> ReadOnlyUserPrefs
 
-AddressBook *--> "1" UniquePersonList
-UniquePersonList --> "~* all" Person
 AddressBook *--> "*" Student : students
+AddressBook *--> "1" StudentSessionHistories
+
 Student *--> "1" StudentId
 Student *--> "1" StudentName
 Student *--> "1" ParentGuardianContact
 Student *--> "1" Subject
 Student *--> "1" CurrentLevel
-AddressBook *--> "1" StudentSessionHistories
+
 StudentSessionHistories --> "*" SessionHistory
 SessionHistory --> "*" SessionNote
-Person *--> Name
-Person *--> Phone
-Person *--> Email
-Person *--> Address
-Person *--> "*" Tag
 
-Person -[hidden]up--> I
-UniquePersonList -[hidden]right-> I
-
-Name -[hidden]right-> Phone
-Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
+Student -[hidden]right- StudentSessionHistories
 
 @enduml
