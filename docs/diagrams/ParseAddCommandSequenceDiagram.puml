@@ -1,5 +1,6 @@
 @startuml
 !include style.puml
+!pragma teoz true
 skinparam ArrowFontStyle plain
 
 mainframe **sd** Parse add command
@@ -12,7 +13,7 @@ participant "c:AddCommand" as AddCommand LOGIC_COLOR
 activate AddressBookParser
 
 create AddCommandParser
-AddressBookParser -> AddCommandParser
+AddressBookParser -> AddCommandParser : AddCommandParser()
 activate AddCommandParser
 AddCommandParser --> AddressBookParser
 deactivate AddCommandParser
@@ -21,7 +22,7 @@ AddressBookParser -> AddCommandParser : parse(arguments)
 activate AddCommandParser
 
 create AddCommand
-AddCommandParser -> AddCommand
+AddCommandParser -> AddCommand : AddCommand(student)
 activate AddCommand
 AddCommand --> AddCommandParser
 deactivate AddCommand

@@ -98,7 +98,9 @@ Here's a (partial) class diagram of the `Logic` component:
 
 The sequence diagram below shows the interactions within the `Logic` component, taking the `execute("add ...")` API call as an example. `Model` and `Storage` are treated as black boxes.
 
-<img src="images/AddSequenceDiagram.png" width="570" />
+<img src="images/AddSequenceDiagram.png" width="600" />
+
+The `Parse add command` reference creates `c`, so its lifeline starts below that frame.
 
 How the `Logic` component works:
 
@@ -111,10 +113,7 @@ Deletions differ: `LogicManager` handles their preview and confirmation itself, 
 
 The sequence diagram below shows how the `add` command is parsed:
 
-<img src="images/ParseAddCommandSequenceDiagram.png" width="600" />
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `AddCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</div>
+<img src="images/ParseAddCommandSequenceDiagram.png" width="740" />
 
 The following partial class diagram expands the parser classes, using `AddCommandParser` as a representative example. `AddCommandParser` uses `ParserUtil` to tokenize the student fields into an `ArgumentMultimap`, with `CliSyntax` defining the `Prefix` values (such as `n/` and `p/`) that identify each field. It then validates the values and constructs an `AddCommand`.
 

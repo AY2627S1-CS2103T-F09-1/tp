@@ -18,6 +18,7 @@ end box
 [-> LogicManager : execute("add ...")
 activate LogicManager
 
+create AddCommand
 ref over LogicManager, AddCommand : Parse add command
 
 LogicManager -> AddCommand : execute(model)
