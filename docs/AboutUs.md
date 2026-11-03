@@ -11,8 +11,8 @@ We are a team based in the [School of Computing, National University of Singapor
 
 <img src="images/rogerzhang888.png" width="200px">
 
-[[homepage](https://rogerzhang888.github.io)]
 [[github](https://github.com/rogerzhang888)]
+[[homepage](https://rogerzhang888.github.io)]
 
 * Role: Developer
 * Responsibilities: Developer Guide and UML diagrams
