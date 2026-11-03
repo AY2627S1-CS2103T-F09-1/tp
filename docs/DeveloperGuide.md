@@ -467,7 +467,13 @@ Selecting a note by its chronological number rather than a persistent note ID is
 
 `DeleteCommandParser` supports `delete STUDENT_INDEX [/confirm]` for a whole student and `delete note STUDENT_INDEX NOTE_NUMBER [/confirm]` for one session note. `/confirm` is an exact, case-sensitive terminal token. Duplicated, misplaced, differently cased, concatenated, or value-bearing confirmation tokens are rejected during parsing, before the model can change.
 
-A word matching `/confirm` only when case is ignored, such as `/CONFIRM`, is reported in both delete student and delete session note scenarios as `/confirm must be typed in lowercase.`, before the argument count is checked. A first word that matches `note` only when ignoring case, such as `NOTE`, is reported as `note must be typed in lowercase.` with the `delete note` format, as `edit` does for `edit note`. A typo of `note`, such as `notes`, is reported as `Unknown delete target`, with the suggestion `delete note`, using the same `ParserUtil#isMistypedTarget` check that `edit` uses for `edit note`. The parser creates either a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
+`DeleteCommandParser` handles these common input errors:
+
+* **Wrong-case confirmation flag:** `/CONFIRM` produces `/confirm must be typed in lowercase.` in both deletion forms. This check runs before the argument count is validated.
+* **Wrong-case target:** `delete NOTE 1 1` produces `note must be typed in lowercase.`, followed by the `delete note` format, as `edit` does for `edit note`.
+* **Mistyped target:** A likely typo such as `delete notes 1 1` produces `Unknown delete target` and suggests `delete note`. The parser uses the same `ParserUtil#isMistypedTarget` check as `edit note`.
+
+For valid input, the parser creates a `DeleteCommand` or `DeleteSessionNoteCommand` containing the parsed selectors and whether confirmation was supplied.
 
 The activity diagrams below show the preview and confirmation flows for deleting one session note. The following sections explain the pending-target checks, cancellation, and failure handling in more detail.
 
