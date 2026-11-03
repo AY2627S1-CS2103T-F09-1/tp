@@ -144,7 +144,7 @@ Examples:
 
 A successful edit reports the student's updated name, subject, and current level, opens their updated profile, highlights their roster card, and saves the change. TutorTrack rejects an edit that would give the student the same normalized name and parent phone as another student.
 
-For example, after `edit 1 l/Secondary 4`, the student's updated profile opens and their roster card is highlighted:
+For example, after `edit 1 l/Secondary 4`, the updated profile shows the new level:
 
 <img src="images/UiEditStudent.png" alt="Alicia Lim's updated profile after the level was edited to Secondary 4" width="670">
 
@@ -252,7 +252,7 @@ Example:
 
 <img src="images/UiDeleteStudent1.png" alt="Deletion preview prompt for Dev Patel showing the confirmation command" width="500">
 
-If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion.
+If the index is missing, invalid, contains more than one value, or is larger than the roster, TutorTrack shows an error and does not change the roster, session notes, open profile, or saved data. If TutorTrack cannot save a confirmed deletion, it restores the student and session notes and clears the pending deletion; start a new preview to try again.
 
 ### Deleting one session note: `delete note`
 
@@ -274,9 +274,9 @@ Format: `delete note STUDENT_INDEX NOTE_NUMBER /confirm` (confirmation)
 Example:
 
 1. Enter `view 1` and check the displayed note numbers.
-1. Enter `delete note 1 3`.
+1. Enter `delete note 1 1`.
 1. Check the open profile and highlighted note, then check the student name and note number in the prompt.
-1. Enter the displayed `delete note 1 3 /confirm` as the next correctly formatted command to delete that note, or enter another correctly formatted command to cancel.
+1. Enter the displayed `delete note 1 1 /confirm` as the next correctly formatted command to delete that note, or enter another correctly formatted command to cancel.
 
 For example, the preview for `delete note 1 1` highlights note `[1]` in red:
 
@@ -286,7 +286,7 @@ After `delete note 1 1 /confirm`, the remaining note is renumbered from `[2]` to
 
 <img src="images/UiDeleteNote2.png" alt="Alicia Lim's profile after deletion, with the remaining note renumbered to 1" width="670">
 
-If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and leaves stored data unchanged. An input that TutorTrack cannot parse keeps any pending preview and highlight active. An input that parses but fails when run cancels the preview and clears the highlight while the profile stays open. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
+If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and leaves stored data unchanged. An input that TutorTrack cannot parse keeps any pending preview and highlight active. An input that parses but fails when run cancels the preview and clears the highlight while the profile stays open. If saving fails, TutorTrack restores the complete original history and clears the pending deletion; start a new preview to try again.
 
 ### Exiting the program: `exit`
 
