@@ -1,15 +1,10 @@
 package seedu.address.ui;
 
-import java.awt.DisplayMode;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -39,7 +34,6 @@ public class MainWindow extends UiPart<Stage> {
     private static final double SAVED_ORIGIN_PROBE_SIZE = 1;
 
     private final Logger logger = LogsCenter.getLogger(getClass());
-    private final ListChangeListener<Screen> screenConfigurationListener = change -> updateWindowMaximumSize();
 
     private Stage primaryStage;
     private Logic logic;
@@ -84,7 +78,6 @@ public class MainWindow extends UiPart<Stage> {
 
         // Configure the UI
         setWindowDefaultSize(logic.getGuiSettings());
-        configureWindowMaximumSizeUpdates();
 
         setAccelerators();
 
@@ -154,51 +147,26 @@ public class MainWindow extends UiPart<Stage> {
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
         Rectangle2D visualBounds = getTargetScreenVisualBounds(guiSettings);
-        setWindowMaximumSize(visualBounds);
         primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), visualBounds.getHeight()));
         primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), visualBounds.getWidth()));
         Point windowCoordinates = guiSettings.getWindowCoordinates();
         if (windowCoordinates != null) {
             double maximumX = visualBounds.getMaxX() - primaryStage.getWidth();
             double maximumY = visualBounds.getMaxY() - primaryStage.getHeight();
-            primaryStage.setX(ScreenBoundsCalculator.clampCoordinate(
+            primaryStage.setX(clampCoordinate(
                     windowCoordinates.getX(), visualBounds.getMinX(), maximumX));
-            primaryStage.setY(ScreenBoundsCalculator.clampCoordinate(
+            primaryStage.setY(clampCoordinate(
                     windowCoordinates.getY(), visualBounds.getMinY(), maximumY));
         }
     }
 
-    private void configureWindowMaximumSizeUpdates() {
-        primaryStage.xProperty().addListener((observable, oldX, newX) -> updateWindowMaximumSize());
-        primaryStage.yProperty().addListener((observable, oldY, newY) -> updateWindowMaximumSize());
-        primaryStage.showingProperty().addListener((observable, wasShowing, isShowing) -> {
-            if (isShowing) {
-                Screen.getScreens().addListener(screenConfigurationListener);
-                updateWindowMaximumSize();
-            } else {
-                Screen.getScreens().removeListener(screenConfigurationListener);
-            }
-        });
-    }
-
-    private void updateWindowMaximumSize() {
-        setWindowMaximumSize(getScaleAdjustedVisualBounds(getCurrentScreen()));
-    }
-
-    private void setWindowMaximumSize(Rectangle2D visualBounds) {
-        primaryStage.setMaxWidth(visualBounds.getWidth());
-        primaryStage.setMaxHeight(visualBounds.getHeight());
-    }
-
-    private Screen getCurrentScreen() {
-        Rectangle2D windowBounds = new Rectangle2D(primaryStage.getX(), primaryStage.getY(),
-                primaryStage.getWidth(), primaryStage.getHeight());
-        List<Screen> screens = Screen.getScreensForRectangle(windowBounds);
-        if (screens.isEmpty()) {
-            return Screen.getPrimary();
-        }
-        List<Rectangle2D> screenBounds = screens.stream().map(Screen::getBounds).toList();
-        return screens.get(ScreenBoundsCalculator.findLargestOverlapIndex(windowBounds, screenBounds));
+    /**
+     * Returns {@code savedCoordinate} limited to the range from {@code minimumCoordinate} to
+     * {@code maximumCoordinate}.
+     */
+    private static double clampCoordinate(double savedCoordinate, double minimumCoordinate, double maximumCoordinate) {
+        double usableMaximum = Math.max(minimumCoordinate, maximumCoordinate);
+        return Math.max(minimumCoordinate, Math.min(savedCoordinate, usableMaximum));
     }
 
     /**
@@ -217,20 +185,7 @@ public class MainWindow extends UiPart<Stage> {
                     .findFirst()
                     .orElse(Screen.getPrimary());
         }
-        return getScaleAdjustedVisualBounds(targetScreen);
-    }
-
-    private Rectangle2D getScaleAdjustedVisualBounds(Screen targetScreen) {
-        GraphicsDevice[] graphicsDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-        int screenCount = Screen.getScreens().size();
-        if (!ScreenBoundsCalculator.canCorrectOutputScale(screenCount, graphicsDevices.length)) {
-            return targetScreen.getVisualBounds();
-        }
-        DisplayMode displayMode = graphicsDevices[0].getDisplayMode();
-        return ScreenBoundsCalculator.adjustVisualBoundsForOutputScale(
-                targetScreen.getBounds(), targetScreen.getVisualBounds(),
-                targetScreen.getOutputScaleX(), targetScreen.getOutputScaleY(),
-                displayMode.getWidth(), displayMode.getHeight());
+        return targetScreen.getVisualBounds();
     }
 
     /**

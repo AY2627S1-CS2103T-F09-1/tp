@@ -1381,13 +1381,15 @@ public class StudentRosterUiTest {
             logic.setInitialGuiSettings(new GuiSettings(visualBounds.getWidth() + 500,
                     visualBounds.getHeight() + 500, (int) visualBounds.getMinX(), (int) visualBounds.getMinY()));
             Stage stage = new Stage();
+            stage.setMaxWidth(Double.MAX_VALUE);
+            stage.setMaxHeight(Double.MAX_VALUE);
             MainWindow mainWindow = new MainWindow(stage, logic, Path.of("addressbook.json"));
             mainWindow.fillInnerParts();
 
             assertEquals(visualBounds.getWidth(), stage.getWidth());
             assertEquals(visualBounds.getHeight(), stage.getHeight());
-            assertEquals(visualBounds.getWidth(), stage.getMaxWidth());
-            assertEquals(visualBounds.getHeight(), stage.getMaxHeight());
+            assertEquals(Double.MAX_VALUE, stage.getMaxWidth());
+            assertEquals(Double.MAX_VALUE, stage.getMaxHeight());
             assertEquals(700, stage.getMinWidth());
             assertEquals(420, stage.getMinHeight());
             StackPane resultDisplay = (StackPane) stage.getScene().lookup("#resultDisplayPlaceholder");
@@ -1426,7 +1428,7 @@ public class StudentRosterUiTest {
     }
 
     @Test
-    public void mainWindow_movedAfterStartup_refreshesMaximumSizeFromCurrentScreen() throws Exception {
+    public void mainWindow_movedAfterStartup_doesNotChangeMaximumSize() throws Exception {
         TestLogic logic = new TestLogic(new StudentRoster(List.of()), new StudentRoster(List.of()));
 
         onFxThread(() -> {
@@ -1441,8 +1443,8 @@ public class StudentRosterUiTest {
 
             stage.setX(stage.getX() + 1);
 
-            assertEquals(visualBounds.getWidth(), stage.getMaxWidth());
-            assertEquals(visualBounds.getHeight(), stage.getMaxHeight());
+            assertEquals(visualBounds.getWidth() / 2, stage.getMaxWidth());
+            assertEquals(visualBounds.getHeight() / 2, stage.getMaxHeight());
             return null;
         });
     }
