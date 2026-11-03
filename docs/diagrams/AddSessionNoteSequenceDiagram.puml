@@ -34,7 +34,7 @@ Histories -> History : withNote(note)
 activate History
 
 create NewHistory
-History -> NewHistory
+History -> NewHistory : SessionHistory(\nupdatedNotes)
 activate NewHistory
 NewHistory --> History
 deactivate NewHistory
