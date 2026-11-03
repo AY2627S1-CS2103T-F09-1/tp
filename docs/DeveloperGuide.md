@@ -326,11 +326,11 @@ The sequence below shows how `view INDEX` resolves a temporary position in the s
 
 <img src="images/ViewCommandSequenceDiagram.png" width="950" />
 
-`ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks through `Command#getRosterEntry` that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
+`AddressBookParser` creates a new `ViewCommandParser` for each `view` command, and that parser is discarded once it returns the `ViewCommand`. `ViewCommandParser` accepts exactly one positive index. `ViewCommand` checks through `Command#getRosterEntry` that the index identifies an entry in the current roster and returns that entry's name and `StudentId` in `CommandResult`. Because the command does not change the model, `LogicManager` detects unchanged data and does not ask Storage to save it. A malformed or out-of-range index fails before the UI refreshes, leaving any displayed profile and roster highlight unchanged.
 
 #### Profile display and refresh
 
-The next sequence shows the detailed UI interactions after Logic returns a successful view result. Logic remains a black box here; its command execution is described in [View command execution](#view-command-execution).
+The next sequence shows the detailed UI interactions after Logic returns a successful view result. Logic remains a black box here; its command execution is described in [View command execution](#view-command-execution). The profile lookup returns a present `Optional<StudentProfile>` because the student was just resolved from the roster, and `MainWindow` unwraps it before updating the panel.
 
 <img src="images/ProfileDisplaySequenceDiagram.png" width="850" />
 

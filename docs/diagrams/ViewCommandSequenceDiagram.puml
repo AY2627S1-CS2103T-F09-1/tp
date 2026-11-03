@@ -23,6 +23,9 @@ MainWindow -> LogicManager : execute("view 2")
 activate LogicManager
 LogicManager -> AddressBookParser : parseCommand(...)
 activate AddressBookParser
+create ViewCommandParser
+AddressBookParser -> ViewCommandParser : new ViewCommandParser()
+ViewCommandParser --> AddressBookParser
 AddressBookParser -> ViewCommandParser : parse(arguments)
 activate ViewCommandParser
 create ViewCommand
@@ -30,6 +33,7 @@ ViewCommandParser -> ViewCommand : new ViewCommand(index)
 ViewCommand --> ViewCommandParser
 ViewCommandParser --> AddressBookParser : ViewCommand
 deactivate ViewCommandParser
+destroy ViewCommandParser
 AddressBookParser --> LogicManager : ViewCommand
 deactivate AddressBookParser
 

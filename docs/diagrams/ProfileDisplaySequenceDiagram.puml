@@ -38,7 +38,7 @@ note right of MainWindow
 end note
 MainWindow -> Logic : getStudentProfile(studentId)
 activate Logic
-Logic --> MainWindow : profile
+Logic --> MainWindow : Optional<StudentProfile> (present)
 deactivate Logic
 MainWindow -> StudentProfilePanel : setProfile(profile)
 activate StudentProfilePanel
