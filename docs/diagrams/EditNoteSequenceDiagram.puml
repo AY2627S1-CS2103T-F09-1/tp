@@ -6,20 +6,20 @@ skinparam ArrowFontSize 12
 start
 :UI submits `edit note 1 1 nt/Corrected summary.`;
 :Logic parses and validates the command;
-if (Input valid?) then (yes)
+if () then ([input valid])
     :Logic snapshots the address book;
     :Model resolves the student and note;
     :Model replaces the note text,\nkeeping its recorded timestamp;
     :Storage saves the updated address book;
-    if (Save succeeds?) then (yes)
+    if () then ([save succeeds])
         :Logic returns a success result;
         :UI refreshes the open profile;
-    else (no)
+    else ([save fails])
         :Model restores the address book snapshot;
         :Logic returns a save error;
         :UI keeps the profile unchanged;
     endif
-else (no)
+else ([input invalid])
     :Logic returns a validation error;
     :UI keeps the profile unchanged;
 endif
