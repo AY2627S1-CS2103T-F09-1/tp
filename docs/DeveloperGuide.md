@@ -100,6 +100,8 @@ The sequence diagram below shows the interactions within the `Logic` component, 
 
 <img src="images/AddSequenceDiagram.png" width="570" />
 
+The `Parse add command` reference covers the creation of `c`, which the parsing diagram below shows in detail.
+
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `AddCommandParser`) and uses it to parse the command. Commands without arguments, such as `help` and `exit`, are created directly by `AddressBookParser`.
@@ -111,10 +113,7 @@ Deletions differ: `LogicManager` handles their preview and confirmation itself, 
 
 The sequence diagram below shows how the `add` command is parsed:
 
-<img src="images/ParseAddCommandSequenceDiagram.png" width="600" />
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `AddCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-</div>
+<img src="images/ParseAddCommandSequenceDiagram.png" width="740" />
 
 The following partial class diagram expands the parser classes, using `AddCommandParser` as a representative example. `AddCommandParser` uses `ParserUtil` to tokenize the student fields into an `ArgumentMultimap`, with `CliSyntax` defining the `Prefix` values (such as `n/` and `p/`) that identify each field. It then validates the values and constructs an `AddCommand`.
 
