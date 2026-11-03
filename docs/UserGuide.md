@@ -218,7 +218,7 @@ In the note history shown next, notes run from newest to oldest with their recor
 
 <img src="images/UiViewSessionNotes.png" alt="Part of a session-note history showing notes 9 to 6 newest first, with note 8 marked as edited" width="640">
 
-Long profile fields and notes wrap within the panel, and the note history can be scrolled. Press `PageDown` or `PageUp` in the command box to scroll the profile and notes by one page (in a short window, the profile scrolls first so the notes come into view) without losing what you have typed. Profile text is read-only, but you can select profile values, session-note headers, and note text and copy them with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
+Long profile fields and notes wrap within the panel, and the note history can be scrolled. Press `PageDown` or `PageUp` in the command box to scroll the profile and notes by one page. In a short window, the entire profile section scrolls first so the notes come into view. Profile text is read-only, but you can select profile values, session-note headers, and note text and copy them with `Ctrl+C` on Windows/Linux or `Cmd+C` on macOS.
 
 The roster card belonging to the open profile remains highlighted even if the roster is refreshed or its indices change. Hovering over or clicking a card does not add a highlight or open another profile. The open profile refreshes after each successful command; a successful `edit`, `note`, or `edit note` opens the target student's profile even when another profile was previously open. The profile closes, together with its highlight, if that student is deleted; a failed command leaves both unchanged.
 
@@ -286,7 +286,7 @@ After `delete note 1 1 /confirm`, the remaining note is renumbered from `[2]` to
 
 <img src="images/UiDeleteNote2.png" alt="Alicia Lim's profile after deletion, with the remaining note renumbered to 1" width="670">
 
-If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and leaves stored data unchanged. An input that TutorTrack cannot parse keeps any pending preview and highlight active. An input that parses but fails validation cancels the preview and clears the highlight while the profile stays open. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
+If either number is missing or not a positive whole number, extra arguments are supplied, the student does not exist, the student has no notes, or the note number is outside the displayed range, TutorTrack shows a specific error and leaves stored data unchanged. An input that TutorTrack cannot parse keeps any pending preview and highlight active. An input that parses but fails when run cancels the preview and clears the highlight while the profile stays open. If saving fails, TutorTrack restores the complete original history and clears the pending deletion.
 
 ### Exiting the program: `exit`
 
