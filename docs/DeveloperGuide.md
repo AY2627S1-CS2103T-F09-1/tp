@@ -277,7 +277,7 @@ The class diagrams in [Logic](#logic-component), [Model](#model-component), [Sto
 
 An empty `e/` has deliberate command semantics: the edit descriptor records that email was supplied separately from its optional value, so `e/` removes the email while an omitted email retains it. Empty values for required fields remain invalid.
 
-The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile.
+The sequence below shows a successful student edit with that student's profile open. The command resolves the displayed roster index to a stable `StudentId`, updates the student, saves the address book, and refreshes the roster and open profile. The final profile lookup returns a present `Optional<StudentProfile>` for the existing student, which the UI unwraps before refreshing the profile.
 
 ![Student edit sequence diagram](images/EditStudentSequenceDiagram.png)
 

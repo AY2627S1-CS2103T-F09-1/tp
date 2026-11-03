@@ -38,7 +38,7 @@ logic --> ui : updated roster
 deactivate logic
 ui -> logic : getStudentProfile(studentId)
 activate logic
-logic --> ui : updated profile
+logic --> ui : Optional<StudentProfile> (present)
 deactivate logic
 ui --> user : refreshed roster and profile
 deactivate ui
