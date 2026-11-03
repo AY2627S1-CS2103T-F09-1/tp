@@ -6,13 +6,13 @@ title Respond to a session-note deletion preview
 
 start
 :Tutor enters next command;
-if (Command parses?) then (no)
+if () then ([command does not parse])
   :UI shows error and keeps preview pending;
   stop
-else (yes)
+else ([command parses])
 endif
 :Logic consumes pending deletion;
-if (Confirmation?) then (no)
+if () then ([not a confirmation])
   :Logic executes the new command;
   :UI clears or replaces the highlight;
   note right
@@ -20,20 +20,20 @@ if (Confirmation?) then (no)
     establishes a new pending target.
   end note
   stop
-else (yes)
+else ([confirmation])
 endif
 :Logic checks the pending target and history;
-if (Target matches and is current?) then (no)
+if () then ([mismatch or stale])
   :UI clears highlight and rejects confirmation;
   stop
-else (yes)
+else ([matches and current])
 endif
 :Logic snapshots data;
 :Model deletes selected note;
 :Storage saves updated data;
-if (Save succeeds?) then (yes)
+if () then ([save succeeds])
   :UI refreshes profile and shows success;
-else (no)
+else ([save fails])
   :Model restores snapshot;
   :UI shows save error;
   note right
