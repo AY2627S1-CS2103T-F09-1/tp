@@ -9,6 +9,9 @@ title Successful student addition
 start
 :Tutor enters
 add command;
+|UI|
+:Receive command and
+send it to Logic;
 |Logic|
 :Parse and validate
 student details;
