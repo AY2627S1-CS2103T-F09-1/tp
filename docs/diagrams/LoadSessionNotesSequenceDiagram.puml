@@ -12,7 +12,7 @@ participant "ab:AddressBook" as AddressBook MODEL_COLOR
 activate Jsab
 
 create AddressBook
-Jsab -> AddressBook
+Jsab -> AddressBook : AddressBook()
 activate AddressBook
 AddressBook --> Jsab
 deactivate AddressBook
