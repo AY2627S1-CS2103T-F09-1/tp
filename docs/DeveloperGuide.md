@@ -13,6 +13,7 @@ title: Developer Guide
 * Libraries: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for JSON storage, and [JUnit 5](https://junit.org/junit5/) for testing.
 * Diagrams are drawn with [PlantUML](https://plantuml.com/).
 * AI tools [Codex](https://openai.com/codex/), [Claude Code](https://www.anthropic.com/claude-code), and [Kiro](https://kiro.dev/) were used to help write and review code, tests, and documentation.
+* [Beryl](https://github.com/Praneeth-Suresh/Beryl) provided ideas and documentation that informed the development workflow.
 
 --------------------------------------------------------------------------------------------------------------------
 
