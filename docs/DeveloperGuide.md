@@ -98,9 +98,9 @@ Here's a (partial) class diagram of the `Logic` component:
 
 The sequence diagram below shows the interactions within the `Logic` component, taking the `execute("add ...")` API call as an example. `Model` and `Storage` are treated as black boxes.
 
-<img src="images/AddSequenceDiagram.png" width="600" />
+<img src="images/AddSequenceDiagram.png" width="570" />
 
-The `Parse add command` reference creates `c`, so its lifeline starts below that frame.
+The `Parse add command` reference covers the creation of `c`, which the parsing diagram below shows in detail.
 
 How the `Logic` component works:
 
